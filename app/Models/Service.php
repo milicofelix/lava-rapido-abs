@@ -5,6 +5,7 @@ namespace App\Models;
 use Database\Factories\ServiceFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class Service extends Model
 {
@@ -27,5 +28,12 @@ class Service extends Model
             'base_price' => 'decimal:2',
             'estimated_minutes' => 'integer',
         ];
+    }
+
+    public function washOrders(): BelongsToMany
+    {
+        return $this->belongsToMany(WashOrder::class)
+            ->withPivot(['service_name', 'price', 'estimated_minutes'])
+            ->withTimestamps();
     }
 }

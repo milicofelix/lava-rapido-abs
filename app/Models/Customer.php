@@ -24,4 +24,9 @@ class Customer extends Model
     {
         return $this->hasMany(Vehicle::class);
     }
+
+    public function washOrders(): HasMany
+    {
+        return $this->hasMany(WashOrder::class);
+    }
 }
