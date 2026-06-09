@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\App\CustomerController;
 use App\Http\Controllers\App\DashboardController;
+use App\Http\Controllers\App\EmployeeController;
 use App\Http\Controllers\App\FinanceController;
 use App\Http\Controllers\App\PaymentController;
 use App\Http\Controllers\App\ServiceController;
@@ -35,4 +36,5 @@ Route::middleware('auth')->group(function () {
     Route::resource('clientes', CustomerController::class)->parameters(['clientes' => 'customer'])->names('customers')->except(['show', 'destroy']);
     Route::resource('veiculos', VehicleController::class)->parameters(['veiculos' => 'vehicle'])->names('vehicles')->except(['show', 'destroy']);
     Route::resource('servicos', ServiceController::class)->parameters(['servicos' => 'service'])->names('services')->except(['show', 'destroy']);
+    Route::resource('funcionarios', EmployeeController::class)->parameters(['funcionarios' => 'employee'])->names('employees')->except(['show', 'destroy']);
 });

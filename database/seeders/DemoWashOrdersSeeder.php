@@ -20,15 +20,16 @@ class DemoWashOrdersSeeder extends Seeder
 {
     public function run(): void
     {
+        fake()->seed(20260609);
+
+        $users = $this->users();
+
         if (WashOrder::query()->where('code', 'like', 'DEMO-%')->exists()) {
             $this->command?->info('Dados demo de lavagens ja existem. Nenhum registro novo foi criado.');
 
             return;
         }
 
-        fake()->seed(20260609);
-
-        $users = $this->users();
         $services = Service::query()->where('active', true)->get();
         $customers = $this->customers();
         $vehicles = $this->fleet($customers);
@@ -92,6 +93,10 @@ class DemoWashOrdersSeeder extends Seeder
             ['name' => 'Lavador Bruno', 'email' => 'bruno@lavaabs.test', 'role' => 'operator'],
             ['name' => 'Lavador Carla', 'email' => 'carla@lavaabs.test', 'role' => 'operator'],
             ['name' => 'Caixa Diego', 'email' => 'diego@lavaabs.test', 'role' => 'attendant'],
+            ['name' => 'Lavador Everton', 'email' => 'everton@lavaabs.test', 'role' => 'operator'],
+            ['name' => 'Lavadora Fernanda', 'email' => 'fernanda@lavaabs.test', 'role' => 'operator'],
+            ['name' => 'Lavador Gabriel', 'email' => 'gabriel@lavaabs.test', 'role' => 'operator'],
+            ['name' => 'Atendente Helena', 'email' => 'helena@lavaabs.test', 'role' => 'attendant'],
         ])->each(fn (array $user) => User::query()->firstOrCreate(
             ['email' => $user['email']],
             [
@@ -107,6 +112,10 @@ class DemoWashOrdersSeeder extends Seeder
             'bruno@lavaabs.test',
             'carla@lavaabs.test',
             'diego@lavaabs.test',
+            'everton@lavaabs.test',
+            'fernanda@lavaabs.test',
+            'gabriel@lavaabs.test',
+            'helena@lavaabs.test',
         ])->get();
     }
 

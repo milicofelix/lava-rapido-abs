@@ -23,6 +23,7 @@
                     ['route' => 'customers.index', 'label' => 'Clientes'],
                     ['route' => 'vehicles.index', 'label' => 'Veiculos'],
                     ['route' => 'services.index', 'label' => 'Servicos'],
+                    ['route' => 'employees.index', 'label' => 'Funcionarios'],
                 ] as $item)
                     <a href="{{ route($item['route']) }}" class="block rounded-md px-3 py-2 text-sm font-medium {{ request()->routeIs($item['route']) || request()->routeIs(str_replace('.index', '.*', $item['route'])) ? 'bg-zinc-950 text-white' : 'text-zinc-700 hover:bg-zinc-100' }}">
                         {{ $item['label'] }}
@@ -58,6 +59,7 @@
                     <a href="{{ route('wash-orders.index') }}" class="rounded-md border border-zinc-200 px-3 py-2 text-sm">Lavagens</a>
                     <a href="{{ route('kanban') }}" class="rounded-md border border-zinc-200 px-3 py-2 text-sm">Kanban</a>
                     <a href="{{ route('finance.index') }}" class="rounded-md border border-zinc-200 px-3 py-2 text-sm">Financeiro</a>
+                    <a href="{{ route('employees.index') }}" class="rounded-md border border-zinc-200 px-3 py-2 text-sm">Funcionarios</a>
                 </nav>
             </header>
 
