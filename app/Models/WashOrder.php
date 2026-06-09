@@ -150,6 +150,11 @@ class WashOrder extends Model
         return $this->belongsTo(User::class, 'assigned_user_id');
     }
 
+    public function teamMembers(): BelongsToMany
+    {
+        return $this->belongsToMany(User::class)->withTimestamps();
+    }
+
     public function services(): BelongsToMany
     {
         return $this->belongsToMany(Service::class)

@@ -55,8 +55,13 @@
                                     <dd class="font-medium">{{ $washOrder->entered_at->diffForHumans(null, true) }}</dd>
                                 </div>
                                 <div class="flex justify-between gap-2">
-                                    <dt class="text-zinc-500">Funcionario</dt>
-                                    <dd class="max-w-24 truncate font-medium">{{ $washOrder->assignedUser?->name ?? 'Sem responsavel' }}</dd>
+                                    <dt class="text-zinc-500">Equipe</dt>
+                                    <dd class="max-w-28 truncate font-medium">
+                                        {{ $washOrder->teamMembers->isNotEmpty() ? $washOrder->teamMembers->pluck('name')->take(2)->join(', ') : 'Sem equipe' }}
+                                        @if ($washOrder->teamMembers->count() > 2)
+                                            +{{ $washOrder->teamMembers->count() - 2 }}
+                                        @endif
+                                    </dd>
                                 </div>
                                 <div class="flex justify-between gap-2">
                                     <dt class="text-zinc-500">Valor</dt>

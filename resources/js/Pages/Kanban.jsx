@@ -19,6 +19,10 @@ function StatusPill({ label }) {
 function OrderCard({ order, statuses, onMove }) {
     const nextStatus = nextStatusFor[order.status];
     const visibleServices = order.services.slice(0, 2);
+    const teamNames = order.team_members?.map((member) => member.name) ?? [];
+    const teamLabel = teamNames.length > 0
+        ? `${teamNames.slice(0, 2).join(', ')}${teamNames.length > 2 ? ` +${teamNames.length - 2}` : ''}`
+        : 'Sem equipe';
 
     const handleDragStart = (event) => {
         event.dataTransfer.effectAllowed = 'move';
@@ -53,8 +57,8 @@ function OrderCard({ order, statuses, onMove }) {
                     <dd className="font-medium">{order.entered_at_for_humans}</dd>
                 </div>
                 <div className="flex justify-between gap-2">
-                    <dt className="text-zinc-500">Funcionario</dt>
-                    <dd className="max-w-24 truncate font-medium">{order.assigned_user?.name ?? 'Sem responsavel'}</dd>
+                    <dt className="text-zinc-500">Equipe</dt>
+                    <dd className="max-w-28 truncate font-medium">{teamLabel}</dd>
                 </div>
                 <div className="flex justify-between gap-2">
                     <dt className="text-zinc-500">Valor</dt>

@@ -9,7 +9,7 @@
                 <div class="grid gap-4 md:grid-cols-2">
                     <label class="block">
                         <span class="text-sm font-medium">Cliente</span>
-                        <select name="customer_id" required class="mt-1 w-full rounded-md border border-zinc-300 px-3 py-2">
+                        <select name="customer_id" required data-customer-select class="mt-1 w-full rounded-md border border-zinc-300 px-3 py-2">
                             <option value="">Selecione</option>
                             @foreach ($customers as $customer)
                                 <option value="{{ $customer->id }}" @selected(old('customer_id') == $customer->id)>{{ $customer->name }} · {{ $customer->phone }}</option>
@@ -20,25 +20,30 @@
 
                     <label class="block">
                         <span class="text-sm font-medium">Veiculo</span>
-                        <select name="vehicle_id" required class="mt-1 w-full rounded-md border border-zinc-300 px-3 py-2">
-                            <option value="">Selecione</option>
-                            @foreach ($vehicles as $vehicle)
-                                <option value="{{ $vehicle->id }}" @selected(old('vehicle_id') == $vehicle->id)>{{ $vehicle->plate }} · {{ $vehicle->brand }} {{ $vehicle->model }} · {{ $vehicle->customer->name }}</option>
-                            @endforeach
+                        <select name="vehicle_id" required data-vehicle-select data-old-vehicle="{{ old('vehicle_id') }}" class="mt-1 w-full rounded-md border border-zinc-300 px-3 py-2">
+                            <option value="">Selecione um cliente primeiro</option>
                         </select>
+                        <p data-vehicle-help class="mt-1 text-xs text-zinc-500">Ao escolher o cliente, os veiculos vinculados aparecem aqui.</p>
                         @error('vehicle_id') <span class="text-sm text-red-600">{{ $message }}</span> @enderror
                     </label>
 
-                    <label class="block">
-                        <span class="text-sm font-medium">Funcionario responsavel</span>
-                        <select name="assigned_user_id" class="mt-1 w-full rounded-md border border-zinc-300 px-3 py-2">
-                            <option value="">Sem responsavel</option>
+                    <div class="md:col-span-2">
+                        <span class="text-sm font-medium">Equipe da lavagem</span>
+                        <div class="mt-2 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
                             @foreach ($users as $user)
-                                <option value="{{ $user->id }}" @selected(old('assigned_user_id') == $user->id)>{{ $user->name }} · {{ ucfirst($user->role) }}</option>
+                                <label class="flex items-center gap-3 rounded-md border border-zinc-200 px-3 py-2">
+                                    <input name="assigned_user_ids[]" type="checkbox" value="{{ $user->id }}" @checked(in_array($user->id, old('assigned_user_ids', []))) class="rounded border-zinc-300">
+                                    <span>
+                                        <span class="block text-sm font-medium">{{ $user->name }}</span>
+                                        <span class="block text-xs text-zinc-500">{{ ucfirst($user->role) }}</span>
+                                    </span>
+                                </label>
                             @endforeach
-                        </select>
-                        @error('assigned_user_id') <span class="text-sm text-red-600">{{ $message }}</span> @enderror
-                    </label>
+                        </div>
+                        <p class="mt-1 text-xs text-zinc-500">Selecione todos que participam. O primeiro selecionado sera o responsavel principal.</p>
+                        @error('assigned_user_ids') <span class="text-sm text-red-600">{{ $message }}</span> @enderror
+                        @error('assigned_user_ids.*') <span class="text-sm text-red-600">{{ $message }}</span> @enderror
+                    </div>
                 </div>
 
                 <label class="mt-4 block">
@@ -85,7 +90,61 @@
         </aside>
     </form>
 
+    <script type="application/json" data-customer-vehicles>
+        @json($customerVehicles)
+    </script>
     <script>
+        const customerSelect = document.querySelector('[data-customer-select]');
+        const vehicleSelect = document.querySelector('[data-vehicle-select]');
+        const vehicleHelp = document.querySelector('[data-vehicle-help]');
+        const customerVehicles = JSON.parse(document.querySelector('[data-customer-vehicles]').textContent);
+
+        const setVehicleOptions = () => {
+            const customerId = customerSelect.value;
+            const selectedVehicle = vehicleSelect.dataset.oldVehicle || vehicleSelect.value;
+            const vehicles = customerVehicles[customerId] || [];
+
+            vehicleSelect.innerHTML = '';
+
+            if (!customerId) {
+                vehicleSelect.append(new Option('Selecione um cliente primeiro', ''));
+                vehicleHelp.textContent = 'Ao escolher o cliente, os veiculos vinculados aparecem aqui.';
+                vehicleSelect.dataset.oldVehicle = '';
+                return;
+            }
+
+            if (vehicles.length === 0) {
+                vehicleSelect.append(new Option('Cliente sem veiculo cadastrado', ''));
+                vehicleHelp.textContent = 'Cadastre um veiculo para este cliente antes de abrir a lavagem.';
+                vehicleSelect.dataset.oldVehicle = '';
+                return;
+            }
+
+            if (vehicles.length > 1) {
+                vehicleSelect.append(new Option('Selecione o veiculo', ''));
+            }
+
+            vehicles.forEach((vehicle) => {
+                vehicleSelect.append(new Option(vehicle.label, vehicle.id));
+            });
+
+            if (vehicles.length === 1) {
+                vehicleSelect.value = vehicles[0].id;
+                vehicleHelp.textContent = 'Veiculo unico do cliente selecionado automaticamente.';
+            } else if (vehicles.some((vehicle) => String(vehicle.id) === String(selectedVehicle))) {
+                vehicleSelect.value = selectedVehicle;
+                vehicleHelp.textContent = 'Escolha um dos veiculos vinculados a este cliente.';
+            } else {
+                vehicleSelect.value = '';
+                vehicleHelp.textContent = 'Escolha um dos veiculos vinculados a este cliente.';
+            }
+
+            vehicleSelect.dataset.oldVehicle = '';
+        };
+
+        customerSelect.addEventListener('change', setVehicleOptions);
+        setVehicleOptions();
+
         const formatter = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
         const updateSummary = () => {
             const checked = [...document.querySelectorAll('input[name="service_ids[]"]:checked')];

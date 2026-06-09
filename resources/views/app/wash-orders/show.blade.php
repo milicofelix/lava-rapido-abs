@@ -25,8 +25,10 @@
                         <dd class="font-medium">{{ $washOrder->estimated_completion_at?->format('d/m/Y H:i') ?? '-' }}</dd>
                     </div>
                     <div>
-                        <dt class="text-sm text-zinc-500">Responsavel</dt>
-                        <dd class="font-medium">{{ $washOrder->assignedUser?->name ?? 'Sem responsavel' }}</dd>
+                        <dt class="text-sm text-zinc-500">Equipe</dt>
+                        <dd class="font-medium">
+                            {{ $washOrder->teamMembers->isNotEmpty() ? $washOrder->teamMembers->pluck('name')->join(', ') : 'Sem equipe definida' }}
+                        </dd>
                     </div>
                     <div>
                         <dt class="text-sm text-zinc-500">Total</dt>

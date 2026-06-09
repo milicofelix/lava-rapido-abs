@@ -5,6 +5,7 @@ namespace App\Models;
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -52,5 +53,10 @@ class User extends Authenticatable
     public function assignedWashOrders(): HasMany
     {
         return $this->hasMany(WashOrder::class, 'assigned_user_id');
+    }
+
+    public function washOrderTeams(): BelongsToMany
+    {
+        return $this->belongsToMany(WashOrder::class)->withTimestamps();
     }
 }

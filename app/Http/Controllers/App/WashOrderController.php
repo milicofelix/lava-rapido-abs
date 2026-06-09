@@ -25,7 +25,7 @@ class WashOrderController extends Controller
         $status = trim((string) $request->query('status'));
 
         $washOrders = WashOrder::query()
-            ->with(['customer', 'vehicle', 'assignedUser', 'services'])
+            ->with(['customer', 'vehicle', 'assignedUser', 'teamMembers', 'services'])
             ->when($status !== '', fn ($query) => $query->where('status', $status))
             ->when($search !== '', function ($query) use ($search) {
                 $query->where(function ($query) use ($search) {
@@ -48,9 +48,16 @@ class WashOrderController extends Controller
 
     public function create(): View
     {
+        $customers = Customer::with(['vehicles' => fn ($query) => $query->orderBy('plate')])->orderBy('name')->get();
+
         return view('app.wash-orders.create', [
-            'customers' => Customer::orderBy('name')->get(),
-            'vehicles' => Vehicle::with('customer')->orderBy('plate')->get(),
+            'customers' => $customers,
+            'customerVehicles' => $customers->mapWithKeys(fn (Customer $customer) => [
+                $customer->id => $customer->vehicles->map(fn (Vehicle $vehicle) => [
+                    'id' => $vehicle->id,
+                    'label' => "{$vehicle->plate} · {$vehicle->brand} {$vehicle->model}",
+                ])->values(),
+            ]),
             'services' => Service::where('active', true)->orderBy('category')->orderBy('name')->get(),
             'users' => User::orderBy('name')->get(),
         ]);
@@ -71,10 +78,9 @@ class WashOrderController extends Controller
         $washOrder = $creator->handle([
             'customer_id' => $data['customer_id'],
             'vehicle_id' => $data['vehicle_id'],
-            'assigned_user_id' => $data['assigned_user_id'] ?? null,
             'entered_at' => now(),
             'notes' => $data['notes'] ?? null,
-        ], $data['service_ids']);
+        ], $data['service_ids'], array_values(array_unique($data['assigned_user_ids'] ?? [])));
 
         return redirect()
             ->route('wash-orders.show', $washOrder)
@@ -84,7 +90,7 @@ class WashOrderController extends Controller
     public function show(WashOrder $washOrder): View
     {
         return view('app.wash-orders.show', [
-            'washOrder' => $washOrder->load(['customer', 'vehicle', 'assignedUser', 'services', 'statusHistories.user', 'payments.user']),
+            'washOrder' => $washOrder->load(['customer', 'vehicle', 'assignedUser', 'teamMembers', 'services', 'statusHistories.user', 'payments.user']),
             'statuses' => WashOrder::statuses(),
             'paymentMethods' => Payment::methods(),
         ]);
@@ -115,7 +121,8 @@ class WashOrderController extends Controller
         return $request->validate([
             'customer_id' => ['required', 'exists:customers,id'],
             'vehicle_id' => ['required', 'exists:vehicles,id'],
-            'assigned_user_id' => ['nullable', 'exists:users,id'],
+            'assigned_user_ids' => ['nullable', 'array'],
+            'assigned_user_ids.*' => ['integer', 'distinct', 'exists:users,id'],
             'service_ids' => ['required', 'array', 'min:1'],
             'service_ids.*' => [
                 'integer',

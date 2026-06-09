@@ -47,6 +47,7 @@ class DemoWashOrdersSeeder extends Seeder
                     );
                     $estimatedMinutes = (int) $selectedServices->sum('estimated_minutes');
                     $completedAt = $enteredAt->copy()->addMinutes($estimatedMinutes + fake()->numberBetween(-10, 35));
+                    $teamMemberIds = $users->random(fake()->numberBetween(1, min(4, $users->count())))->pluck('id')->values()->all();
                     $status = fake()->boolean(3) ? WashOrder::STATUS_CANCELED : fake()->randomElement([
                         WashOrder::STATUS_DELIVERED,
                         WashOrder::STATUS_DELIVERED,
@@ -57,7 +58,7 @@ class DemoWashOrdersSeeder extends Seeder
                         'code' => $this->codeFor($enteredAt, $index),
                         'customer_id' => $customer->id,
                         'vehicle_id' => $vehicle->id,
-                        'assigned_user_id' => $users->random()->id,
+                        'assigned_user_id' => $teamMemberIds[0],
                         'total_amount' => $selectedServices->sum('base_price'),
                         'status' => $status,
                         'payment_status' => WashOrder::PAYMENT_PENDING,
@@ -68,6 +69,7 @@ class DemoWashOrdersSeeder extends Seeder
                     ]);
 
                     $this->attachServices($washOrder, $selectedServices);
+                    $washOrder->teamMembers()->sync($teamMemberIds);
                     $this->createStatusHistory($washOrder, $users);
 
                     if ($status !== WashOrder::STATUS_CANCELED) {
