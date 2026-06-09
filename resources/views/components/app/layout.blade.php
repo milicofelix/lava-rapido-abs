@@ -4,15 +4,14 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>{{ $title ?? 'Lava Rapido ABS' }}</title>
+    <title>{{ $title ?? 'AutoFlow' }}</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 <body class="bg-zinc-50 text-zinc-950 antialiased">
     <div class="min-h-screen">
         <aside class="fixed inset-y-0 left-0 hidden w-64 border-r border-zinc-200 bg-white px-5 py-6 lg:block">
-            <a href="{{ route('dashboard') }}" class="block">
-                <span class="text-xs font-semibold uppercase tracking-wide text-cyan-700">Lava Rapido</span>
-                <span class="mt-1 block text-2xl font-bold">ABS</span>
+            <a href="{{ route('dashboard') }}" class="block rounded-md bg-white">
+                <img src="{{ asset('images/autoflow-logo.png') }}" alt="AutoFlow" class="h-auto w-36">
             </a>
 
             <nav class="mt-8 space-y-1">

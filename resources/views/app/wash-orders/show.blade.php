@@ -1,4 +1,4 @@
-<x-app.layout heading="Lavagem {{ $washOrder->code }}" title="Lavagem {{ $washOrder->code }} · Lava Rapido ABS">
+<x-app.layout heading="Lavagem {{ $washOrder->code }}" title="Lavagem {{ $washOrder->code }} · AutoFlow">
     <div class="grid gap-5 xl:grid-cols-[1fr_360px]">
         <div class="space-y-5">
             <section class="rounded-lg border border-zinc-200 bg-white p-5">

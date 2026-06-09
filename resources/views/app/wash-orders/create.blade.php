@@ -1,4 +1,4 @@
-<x-app.layout heading="Nova lavagem" title="Nova lavagem · Lava Rapido ABS">
+<x-app.layout heading="Nova lavagem" title="Nova lavagem · AutoFlow">
     <form method="POST" action="{{ route('wash-orders.store') }}" class="grid gap-5 xl:grid-cols-[1fr_360px]">
         @csrf
 

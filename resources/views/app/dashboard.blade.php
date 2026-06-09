@@ -1,4 +1,4 @@
-<x-app.layout heading="Dashboard" title="Dashboard · Lava Rapido ABS">
+<x-app.layout heading="Dashboard" title="Dashboard · AutoFlow">
     <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         @foreach ([
             ['label' => 'Clientes', 'value' => $customerCount],

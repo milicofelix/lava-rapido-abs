@@ -1,4 +1,4 @@
-<x-app.layout heading="Kanban operacional" title="Kanban · Lava Rapido ABS">
+<x-app.layout heading="Kanban operacional" title="Kanban · AutoFlow">
     <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
         <div>
             <p class="text-sm text-zinc-500">Fluxo de atendimento das lavagens abertas e entregues recentemente.</p>

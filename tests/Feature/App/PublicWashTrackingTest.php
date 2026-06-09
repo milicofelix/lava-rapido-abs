@@ -36,7 +36,7 @@ class PublicWashTrackingTest extends TestCase
 
         $this->get(route('tracking.show', 'ABS-TRACK-1'))
             ->assertOk()
-            ->assertSee('Lava Rapido ABS')
+            ->assertSee('AutoFlow')
             ->assertSee($washOrder->vehicle->plate)
             ->assertSee('Lavando')
             ->assertSee('Lavagem completa')

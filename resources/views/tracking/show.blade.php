@@ -4,39 +4,39 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta http-equiv="refresh" content="30">
-    <title>Acompanhamento {{ $washOrder->code }} · Lava Rapido ABS</title>
+    <title>Acompanhamento {{ $washOrder->code }} · AutoFlow</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
-<body class="bg-zinc-950 text-white antialiased">
+<body class="bg-zinc-50 text-zinc-950 antialiased">
     <main class="mx-auto min-h-screen max-w-5xl px-4 py-6 sm:px-6 lg:px-8">
-        <header class="flex flex-wrap items-start justify-between gap-4 border-b border-white/10 pb-6">
+        <header class="flex flex-wrap items-start justify-between gap-4 border-b border-zinc-200 bg-white px-4 py-5 sm:rounded-lg sm:border">
             <div>
-                <p class="text-sm font-semibold uppercase tracking-wide text-cyan-200">Lava Rapido ABS</p>
-                <h1 class="mt-2 text-3xl font-bold sm:text-4xl">{{ $washOrder->vehicle->model }} {{ $washOrder->vehicle->color }} - {{ $washOrder->vehicle->plate }}</h1>
-                <p class="mt-2 text-sm text-zinc-400">Codigo {{ $washOrder->code }}</p>
+                <img src="{{ asset('images/autoflow-logo.png') }}" alt="AutoFlow" class="w-40">
+                <h1 class="mt-4 text-3xl font-bold sm:text-4xl">{{ $washOrder->vehicle->model }} {{ $washOrder->vehicle->color }} - {{ $washOrder->vehicle->plate }}</h1>
+                <p class="mt-2 text-sm text-zinc-500">Codigo {{ $washOrder->code }}</p>
             </div>
-            <div class="rounded-lg border border-white/10 bg-white/10 px-4 py-3 text-right">
-                <p class="text-sm text-zinc-300">Status atual</p>
-                <p class="mt-1 text-xl font-semibold text-cyan-100">{{ $washOrder->statusLabel() }}</p>
+            <div class="rounded-lg border border-cyan-200 bg-cyan-50 px-4 py-3 text-right">
+                <p class="text-sm text-cyan-800">Status atual</p>
+                <p class="mt-1 text-xl font-semibold text-cyan-950">{{ $washOrder->statusLabel() }}</p>
             </div>
         </header>
 
         <section class="grid gap-4 py-6 md:grid-cols-3">
-            <div class="rounded-lg border border-white/10 bg-white/10 p-5">
-                <p class="text-sm text-zinc-300">Previsao</p>
+            <div class="rounded-lg border border-zinc-200 bg-white p-5">
+                <p class="text-sm text-zinc-500">Previsao</p>
                 <p class="mt-2 text-2xl font-semibold">{{ $washOrder->estimated_completion_at?->format('H:i') ?? '-' }}</p>
             </div>
-            <div class="rounded-lg border border-white/10 bg-white/10 p-5">
-                <p class="text-sm text-zinc-300">Entrada</p>
+            <div class="rounded-lg border border-zinc-200 bg-white p-5">
+                <p class="text-sm text-zinc-500">Entrada</p>
                 <p class="mt-2 text-2xl font-semibold">{{ $washOrder->entered_at->format('H:i') }}</p>
             </div>
-            <div class="rounded-lg border border-white/10 bg-white/10 p-5">
-                <p class="text-sm text-zinc-300">Servicos</p>
+            <div class="rounded-lg border border-zinc-200 bg-white p-5">
+                <p class="text-sm text-zinc-500">Servicos</p>
                 <p class="mt-2 text-2xl font-semibold">{{ $washOrder->services->count() }}</p>
             </div>
         </section>
 
-        <section class="rounded-lg border border-white/10 bg-white p-5 text-zinc-950">
+        <section class="rounded-lg border border-zinc-200 bg-white p-5">
             <h2 class="text-lg font-semibold">Andamento</h2>
             <div class="mt-5 grid gap-3 md:grid-cols-7">
                 @foreach ($progressStatuses as $progressStatus)
@@ -63,7 +63,7 @@
         </section>
 
         <div class="mt-5 grid gap-5 lg:grid-cols-[1fr_380px]">
-            <section class="rounded-lg border border-white/10 bg-white p-5 text-zinc-950">
+            <section class="rounded-lg border border-zinc-200 bg-white p-5">
                 <h2 class="text-lg font-semibold">Servicos</h2>
                 <div class="mt-4 divide-y divide-zinc-100">
                     @foreach ($washOrder->services as $service)
@@ -75,7 +75,7 @@
                 </div>
             </section>
 
-            <section class="rounded-lg border border-white/10 bg-white p-5 text-zinc-950">
+            <section class="rounded-lg border border-zinc-200 bg-white p-5">
                 <h2 class="text-lg font-semibold">Historico</h2>
                 <div class="mt-4 space-y-4">
                     @foreach ($washOrder->statusHistories->sortByDesc('created_at') as $history)

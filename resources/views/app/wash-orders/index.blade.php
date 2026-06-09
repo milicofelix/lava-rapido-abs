@@ -1,4 +1,4 @@
-<x-app.layout heading="Lavagens" title="Lavagens · Lava Rapido ABS">
+<x-app.layout heading="Lavagens" title="Lavagens · AutoFlow">
     <div class="mb-5 flex flex-wrap items-center justify-between gap-3">
         <form method="GET" class="flex w-full flex-wrap gap-2 sm:w-auto">
             <input name="search" value="{{ $search }}" placeholder="Buscar por codigo, cliente ou placa" class="w-full rounded-md border border-zinc-300 px-3 py-2 sm:w-80">
