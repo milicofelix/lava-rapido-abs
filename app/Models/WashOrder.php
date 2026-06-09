@@ -88,9 +88,27 @@ class WashOrder extends Model
         ]);
     }
 
+    public static function publicProgressStatuses(): array
+    {
+        return [
+            self::STATUS_AWAITING,
+            self::STATUS_PREPARING,
+            self::STATUS_WASHING,
+            self::STATUS_VACUUMING,
+            self::STATUS_WAXING,
+            self::STATUS_FINISHING,
+            self::STATUS_READY,
+        ];
+    }
+
     public function statusLabel(): string
     {
         return self::statuses()[$this->status] ?? $this->status;
+    }
+
+    public function trackingUrl(): string
+    {
+        return route('tracking.show', $this->code);
     }
 
     public function customer(): BelongsTo

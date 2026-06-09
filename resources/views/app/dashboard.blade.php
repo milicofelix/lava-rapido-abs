@@ -19,7 +19,10 @@
     <div class="mt-6 rounded-lg border border-zinc-200 bg-white">
         <div class="flex items-center justify-between border-b border-zinc-200 px-5 py-4">
             <h2 class="font-semibold">Lavagens recentes</h2>
-            <a href="{{ route('wash-orders.create') }}" class="rounded-md bg-cyan-700 px-3 py-2 text-sm font-medium text-white">Nova lavagem</a>
+            <div class="flex gap-2">
+                <a href="{{ route('kanban') }}" class="rounded-md border border-zinc-300 px-3 py-2 text-sm font-medium">Kanban</a>
+                <a href="{{ route('wash-orders.create') }}" class="rounded-md bg-cyan-700 px-3 py-2 text-sm font-medium text-white">Nova lavagem</a>
+            </div>
         </div>
         <div class="divide-y divide-zinc-100">
             @forelse ($recentWashOrders as $washOrder)

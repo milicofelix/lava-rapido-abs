@@ -3,6 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>{{ $title ?? 'Lava Rapido ABS' }}</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
@@ -18,6 +19,7 @@
                 @foreach ([
                     ['route' => 'dashboard', 'label' => 'Dashboard'],
                     ['route' => 'wash-orders.index', 'label' => 'Lavagens'],
+                    ['route' => 'kanban', 'label' => 'Kanban'],
                     ['route' => 'customers.index', 'label' => 'Clientes'],
                     ['route' => 'vehicles.index', 'label' => 'Veiculos'],
                     ['route' => 'services.index', 'label' => 'Servicos'],
@@ -49,6 +51,7 @@
                     <a href="{{ route('vehicles.index') }}" class="rounded-md border border-zinc-200 px-3 py-2 text-sm">Veiculos</a>
                     <a href="{{ route('services.index') }}" class="rounded-md border border-zinc-200 px-3 py-2 text-sm">Servicos</a>
                     <a href="{{ route('wash-orders.index') }}" class="rounded-md border border-zinc-200 px-3 py-2 text-sm">Lavagens</a>
+                    <a href="{{ route('kanban') }}" class="rounded-md border border-zinc-200 px-3 py-2 text-sm">Kanban</a>
                 </nav>
             </header>
 

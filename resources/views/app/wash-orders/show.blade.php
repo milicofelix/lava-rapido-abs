@@ -82,6 +82,11 @@
         </div>
 
         <aside class="h-fit rounded-lg border border-zinc-200 bg-white p-5">
+            <section class="mb-5 rounded-md border border-cyan-200 bg-cyan-50 p-4">
+                <h2 class="font-semibold text-cyan-950">Link do cliente</h2>
+                <a href="{{ $washOrder->trackingUrl() }}" target="_blank" class="mt-2 block break-all text-sm font-medium text-cyan-800">{{ $washOrder->trackingUrl() }}</a>
+            </section>
+
             <h2 class="font-semibold">Atualizar status</h2>
             <form method="POST" action="{{ route('wash-orders.update-status', $washOrder) }}" class="mt-4 space-y-4">
                 @csrf

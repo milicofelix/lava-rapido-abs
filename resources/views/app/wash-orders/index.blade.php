@@ -10,7 +10,10 @@
             </select>
             <button class="rounded-md border border-zinc-300 px-4 py-2 text-sm font-semibold">Filtrar</button>
         </form>
-        <a href="{{ route('wash-orders.create') }}" class="rounded-md bg-cyan-700 px-4 py-2 text-sm font-semibold text-white">Nova lavagem</a>
+        <div class="flex gap-2">
+            <a href="{{ route('kanban') }}" class="rounded-md border border-zinc-300 px-4 py-2 text-sm font-semibold">Kanban</a>
+            <a href="{{ route('wash-orders.create') }}" class="rounded-md bg-cyan-700 px-4 py-2 text-sm font-semibold text-white">Nova lavagem</a>
+        </div>
     </div>
 
     <div class="overflow-hidden rounded-lg border border-zinc-200 bg-white">
