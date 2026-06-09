@@ -6,6 +6,7 @@ use App\Models\Service;
 use App\Models\User;
 use App\Models\WashOrder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
 
 class PublicWashTrackingTest extends TestCase
@@ -36,11 +37,13 @@ class PublicWashTrackingTest extends TestCase
 
         $this->get(route('tracking.show', 'ABS-TRACK-1'))
             ->assertOk()
-            ->assertSee('AutoFlow')
-            ->assertSee($washOrder->vehicle->plate)
-            ->assertSee('Lavando')
-            ->assertSee('Lavagem completa')
-            ->assertSee('Historico');
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('Tracking')
+                ->where('washOrder.code', 'ABS-TRACK-1')
+                ->where('washOrder.vehicle.plate', $washOrder->vehicle->plate)
+                ->where('washOrder.status_label', 'Lavando')
+                ->where('washOrder.services.0.name', 'Lavagem completa')
+            );
     }
 
     public function test_unknown_tracking_code_returns_not_found(): void
@@ -55,8 +58,12 @@ class PublicWashTrackingTest extends TestCase
 
         $this->get(route('tracking.show', (string) $washOrder->id))
             ->assertOk()
-            ->assertSee($washOrder->vehicle->plate)
-            ->assertSee($washOrder->statusLabel());
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('Tracking')
+                ->where('washOrder.id', $washOrder->id)
+                ->where('washOrder.vehicle.plate', $washOrder->vehicle->plate)
+                ->where('washOrder.status_label', $washOrder->statusLabel())
+            );
     }
 
     public function test_internal_wash_order_detail_shows_customer_tracking_link(): void

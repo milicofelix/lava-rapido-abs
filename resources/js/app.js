@@ -1,4 +1,7 @@
 import './bootstrap';
+import { createInertiaApp } from '@inertiajs/react';
+import { createElement } from 'react';
+import { createRoot } from 'react-dom/client';
 
 const reloadWithRealtimeNotice = () => {
     const url = new URL(window.location.href);
@@ -30,3 +33,22 @@ document.addEventListener('DOMContentLoaded', () => {
     setupRealtimeKanban();
     setupRealtimeTracking();
 });
+
+const inertiaRoot = document.getElementById('app');
+const inertiaPage = document.querySelector('script[data-page="app"][type="application/json"]');
+
+if (inertiaRoot && inertiaPage) {
+    createInertiaApp({
+        resolve: (name) => {
+            const pages = import.meta.glob('./Pages/**/*.jsx', { eager: true });
+
+            return pages[`./Pages/${name}.jsx`].default;
+        },
+        setup({ el, App, props }) {
+            createRoot(el).render(createElement(App, props));
+        },
+        progress: {
+            color: '#0e7490',
+        },
+    });
+}

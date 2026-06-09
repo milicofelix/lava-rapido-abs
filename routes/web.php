@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Route;
 
 Route::redirect('/', '/dashboard');
 Route::get('/lavagens/acompanhamento/{code}', PublicWashTrackingController::class)->name('tracking.show');
+Route::get('/lavagens/acompanhamento/{code}/feed', [PublicWashTrackingController::class, 'feed'])->name('tracking.feed');
 
 Route::middleware('guest')->group(function () {
     Route::get('/login', [AuthenticatedSessionController::class, 'create'])->name('login');
@@ -23,6 +24,7 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/dashboard', DashboardController::class)->name('dashboard');
     Route::get('kanban', WashKanbanController::class)->name('kanban');
+    Route::get('kanban/feed', [WashKanbanController::class, 'feed'])->name('kanban.feed');
     Route::patch('lavagens/{wash_order}/status', [WashOrderController::class, 'updateStatus'])->name('wash-orders.update-status');
     Route::resource('lavagens', WashOrderController::class)->parameters(['lavagens' => 'wash_order'])->names('wash-orders')->only(['index', 'create', 'store', 'show']);
     Route::resource('clientes', CustomerController::class)->parameters(['clientes' => 'customer'])->names('customers')->except(['show', 'destroy']);

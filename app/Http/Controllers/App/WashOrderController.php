@@ -10,6 +10,7 @@ use App\Models\Vehicle;
 use App\Models\WashOrder;
 use App\Services\WashOrders\ChangeWashOrderStatusService;
 use App\Services\WashOrders\CreateWashOrderService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -87,14 +88,22 @@ class WashOrderController extends Controller
         ]);
     }
 
-    public function updateStatus(Request $request, WashOrder $washOrder, ChangeWashOrderStatusService $changer): RedirectResponse
+    public function updateStatus(Request $request, WashOrder $washOrder, ChangeWashOrderStatusService $changer): JsonResponse|RedirectResponse
     {
         $data = $request->validate([
             'status' => ['required', Rule::in(array_keys(WashOrder::statuses()))],
             'notes' => ['nullable', 'string', 'max:1000'],
         ]);
 
-        $changer->handle($washOrder, $data['status'], $request->user(), $data['notes'] ?? null);
+        $washOrder = $changer->handle($washOrder, $data['status'], $request->user(), $data['notes'] ?? null);
+
+        if ($request->wantsJson()) {
+            return response()->json([
+                'id' => $washOrder->id,
+                'status' => $washOrder->status,
+                'status_label' => $washOrder->statusLabel(),
+            ]);
+        }
 
         return back()->with('status', 'Status atualizado com sucesso.');
     }

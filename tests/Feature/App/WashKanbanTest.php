@@ -5,6 +5,7 @@ namespace Tests\Feature\App;
 use App\Models\User;
 use App\Models\WashOrder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
 
 class WashKanbanTest extends TestCase
@@ -21,14 +22,13 @@ class WashKanbanTest extends TestCase
 
         $this->actingAs($user)->get(route('kanban'))
             ->assertOk()
-            ->assertSee('Kanban operacional')
-            ->assertSee('Aguardando')
-            ->assertSee('Em lavagem')
-            ->assertSee('Finalizando')
-            ->assertSee('Pronto')
-            ->assertSee('Entregue')
-            ->assertSee($washOrder->vehicle->plate)
-            ->assertSee($washOrder->customer->name);
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('Kanban')
+                ->has('columns', 5)
+                ->where('columns.1.title', 'Em lavagem')
+                ->where('columns.1.orders.0.vehicle.plate', $washOrder->vehicle->plate)
+                ->where('columns.1.orders.0.customer.name', $washOrder->customer->name)
+            );
     }
 
     public function test_user_can_move_card_to_next_status_from_kanban_action(): void
