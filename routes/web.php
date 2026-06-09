@@ -2,6 +2,8 @@
 
 use App\Http\Controllers\App\CustomerController;
 use App\Http\Controllers\App\DashboardController;
+use App\Http\Controllers\App\FinanceController;
+use App\Http\Controllers\App\PaymentController;
 use App\Http\Controllers\App\ServiceController;
 use App\Http\Controllers\App\VehicleController;
 use App\Http\Controllers\App\WashKanbanController;
@@ -23,8 +25,11 @@ Route::middleware('auth')->group(function () {
     Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])->name('logout');
 
     Route::get('/dashboard', DashboardController::class)->name('dashboard');
+    Route::get('financeiro', [FinanceController::class, 'index'])->name('finance.index');
+    Route::get('financeiro/exportar', [FinanceController::class, 'export'])->name('finance.export');
     Route::get('kanban', WashKanbanController::class)->name('kanban');
     Route::get('kanban/feed', [WashKanbanController::class, 'feed'])->name('kanban.feed');
+    Route::post('lavagens/{wash_order}/pagamentos', [PaymentController::class, 'store'])->name('payments.store');
     Route::patch('lavagens/{wash_order}/status', [WashOrderController::class, 'updateStatus'])->name('wash-orders.update-status');
     Route::resource('lavagens', WashOrderController::class)->parameters(['lavagens' => 'wash_order'])->names('wash-orders')->only(['index', 'create', 'store', 'show']);
     Route::resource('clientes', CustomerController::class)->parameters(['clientes' => 'customer'])->names('customers')->except(['show', 'destroy']);

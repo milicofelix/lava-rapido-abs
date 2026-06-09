@@ -4,6 +4,7 @@ namespace App\Http\Controllers\App;
 
 use App\Http\Controllers\Controller;
 use App\Models\Customer;
+use App\Models\Payment;
 use App\Models\Service;
 use App\Models\User;
 use App\Models\Vehicle;
@@ -83,8 +84,9 @@ class WashOrderController extends Controller
     public function show(WashOrder $washOrder): View
     {
         return view('app.wash-orders.show', [
-            'washOrder' => $washOrder->load(['customer', 'vehicle', 'assignedUser', 'services', 'statusHistories.user']),
+            'washOrder' => $washOrder->load(['customer', 'vehicle', 'assignedUser', 'services', 'statusHistories.user', 'payments.user']),
             'statuses' => WashOrder::statuses(),
+            'paymentMethods' => Payment::methods(),
         ]);
     }
 

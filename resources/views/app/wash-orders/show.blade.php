@@ -33,6 +33,10 @@
                         <dd class="font-medium">R$ {{ number_format((float) $washOrder->total_amount, 2, ',', '.') }}</dd>
                     </div>
                     <div>
+                        <dt class="text-sm text-zinc-500">Financeiro</dt>
+                        <dd class="font-medium">{{ $washOrder->paymentStatusLabel() }}</dd>
+                    </div>
+                    <div>
                         <dt class="text-sm text-zinc-500">Conclusao</dt>
                         <dd class="font-medium">{{ $washOrder->completed_at?->format('d/m/Y H:i') ?? '-' }}</dd>
                     </div>
@@ -62,6 +66,32 @@
 
             <section class="rounded-lg border border-zinc-200 bg-white">
                 <div class="border-b border-zinc-200 px-5 py-4">
+                    <h2 class="font-semibold">Pagamentos</h2>
+                </div>
+                <div class="divide-y divide-zinc-100">
+                    @forelse ($washOrder->payments->sortByDesc('paid_at') as $payment)
+                        <div class="px-5 py-4">
+                            <div class="flex flex-wrap items-start justify-between gap-3">
+                                <div>
+                                    <p class="font-medium">{{ $payment->methodLabel() }}</p>
+                                    <p class="text-sm text-zinc-500">
+                                        {{ $payment->paid_at?->format('d/m/Y H:i') ?? '-' }} · {{ $payment->user?->name ?? 'Sistema' }}
+                                    </p>
+                                </div>
+                                <p class="font-semibold">R$ {{ number_format((float) $payment->amount, 2, ',', '.') }}</p>
+                            </div>
+                            @if ($payment->notes)
+                                <p class="mt-2 text-sm text-zinc-700">{{ $payment->notes }}</p>
+                            @endif
+                        </div>
+                    @empty
+                        <p class="px-5 py-4 text-sm text-zinc-500">Nenhum pagamento registrado.</p>
+                    @endforelse
+                </div>
+            </section>
+
+            <section class="rounded-lg border border-zinc-200 bg-white">
+                <div class="border-b border-zinc-200 px-5 py-4">
                     <h2 class="font-semibold">Historico de status</h2>
                 </div>
                 <div class="divide-y divide-zinc-100">
@@ -82,6 +112,33 @@
         </div>
 
         <aside class="h-fit rounded-lg border border-zinc-200 bg-white p-5">
+            <section class="mb-5 rounded-md border border-emerald-200 bg-emerald-50 p-4">
+                <h2 class="font-semibold text-emerald-950">Registrar pagamento</h2>
+                <form method="POST" action="{{ route('payments.store', $washOrder) }}" class="mt-4 space-y-3">
+                    @csrf
+                    <label class="block">
+                        <span class="text-sm font-medium">Metodo</span>
+                        <select name="method" class="mt-1 w-full rounded-md border border-emerald-200 bg-white px-3 py-2">
+                            @foreach ($paymentMethods as $value => $label)
+                                <option value="{{ $value }}" @selected(old('method', 'pix') === $value)>{{ $label }}</option>
+                            @endforeach
+                        </select>
+                        @error('method') <span class="text-sm text-red-600">{{ $message }}</span> @enderror
+                    </label>
+                    <label class="block">
+                        <span class="text-sm font-medium">Valor</span>
+                        <input name="amount" type="number" min="0" step="0.01" value="{{ old('amount', $washOrder->total_amount) }}" class="mt-1 w-full rounded-md border border-emerald-200 bg-white px-3 py-2">
+                        @error('amount') <span class="text-sm text-red-600">{{ $message }}</span> @enderror
+                    </label>
+                    <label class="block">
+                        <span class="text-sm font-medium">Observacao</span>
+                        <textarea name="notes" rows="3" class="mt-1 w-full rounded-md border border-emerald-200 bg-white px-3 py-2">{{ old('notes') }}</textarea>
+                        @error('notes') <span class="text-sm text-red-600">{{ $message }}</span> @enderror
+                    </label>
+                    <button class="w-full rounded-md bg-emerald-700 px-4 py-2.5 text-sm font-semibold text-white">Registrar pagamento</button>
+                </form>
+            </section>
+
             <section class="mb-5 rounded-md border border-cyan-200 bg-cyan-50 p-4">
                 <h2 class="font-semibold text-cyan-950">Link do cliente</h2>
                 <a href="{{ $washOrder->trackingUrl() }}" target="_blank" class="mt-2 block break-all text-sm font-medium text-cyan-800">{{ $washOrder->trackingUrl() }}</a>
