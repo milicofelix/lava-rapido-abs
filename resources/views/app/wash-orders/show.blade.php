@@ -144,6 +144,11 @@
             <section class="mb-5 rounded-md border border-cyan-200 bg-cyan-50 p-4">
                 <h2 class="font-semibold text-cyan-950">Link do cliente</h2>
                 <a href="{{ $washOrder->trackingUrl() }}" target="_blank" class="mt-2 block break-all text-sm font-medium text-cyan-800">{{ $washOrder->trackingUrl() }}</a>
+                @if ($whatsappUrl = $washOrder->customer->whatsappTrackingUrl($washOrder))
+                    <a href="{{ $whatsappUrl }}" target="_blank" rel="noopener" class="mt-3 block rounded-md bg-emerald-700 px-4 py-2.5 text-center text-sm font-semibold text-white">Compartilhar via WhatsApp</a>
+                @else
+                    <p class="mt-3 text-xs text-cyan-800">Cliente sem telefone valido para WhatsApp.</p>
+                @endif
             </section>
 
             <h2 class="font-semibold">Atualizar status</h2>
