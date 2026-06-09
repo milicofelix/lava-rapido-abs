@@ -2,6 +2,7 @@
 
 namespace App\Services\WashOrders;
 
+use App\Events\WashOrderStatusChanged;
 use App\Models\User;
 use App\Models\WashOrder;
 use InvalidArgumentException;
@@ -34,6 +35,10 @@ class ChangeWashOrderStatusService
             'notes' => $notes,
         ]);
 
-        return $washOrder->refresh();
+        $washOrder = $washOrder->refresh();
+
+        event(new WashOrderStatusChanged($washOrder, $fromStatus));
+
+        return $washOrder;
     }
 }

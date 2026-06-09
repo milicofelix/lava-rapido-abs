@@ -1,7 +1,10 @@
 <x-app.layout heading="Kanban operacional" title="Kanban · AutoFlow">
-    <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
+    <div class="mb-4 flex flex-wrap items-center justify-between gap-3" data-realtime-kanban>
         <div>
             <p class="text-sm text-zinc-500">Fluxo de atendimento das lavagens abertas e entregues recentemente.</p>
+            @if (request()->boolean('realtime'))
+                <p class="mt-1 text-xs font-medium text-cyan-700">Atualizado em tempo real.</p>
+            @endif
         </div>
         <a href="{{ route('wash-orders.create') }}" class="rounded-md bg-cyan-700 px-4 py-2 text-sm font-semibold text-white">Nova lavagem</a>
     </div>

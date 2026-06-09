@@ -8,12 +8,15 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 <body class="bg-zinc-50 text-zinc-950 antialiased">
-    <main class="mx-auto min-h-screen max-w-5xl px-4 py-6 sm:px-6 lg:px-8">
+    <main class="mx-auto min-h-screen max-w-5xl px-4 py-6 sm:px-6 lg:px-8" data-realtime-tracking data-wash-order-id="{{ $washOrder->id }}" data-wash-order-code="{{ $washOrder->code }}">
         <header class="flex flex-wrap items-start justify-between gap-4 border-b border-zinc-200 bg-white px-4 py-5 sm:rounded-lg sm:border">
             <div>
                 <img src="{{ asset('images/autoflow-logo.png') }}" alt="AutoFlow" class="w-40">
                 <h1 class="mt-4 text-3xl font-bold sm:text-4xl">{{ $washOrder->vehicle->model }} {{ $washOrder->vehicle->color }} - {{ $washOrder->vehicle->plate }}</h1>
                 <p class="mt-2 text-sm text-zinc-500">Codigo {{ $washOrder->code }}</p>
+                @if (request()->boolean('realtime'))
+                    <p class="mt-1 text-xs font-medium text-cyan-700">Atualizado em tempo real.</p>
+                @endif
             </div>
             <div class="rounded-lg border border-cyan-200 bg-cyan-50 px-4 py-3 text-right">
                 <p class="text-sm text-cyan-800">Status atual</p>
