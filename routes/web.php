@@ -12,16 +12,18 @@ use App\Http\Controllers\App\SettingsController;
 use App\Http\Controllers\App\VehicleController;
 use App\Http\Controllers\App\WashHistoryController;
 use App\Http\Controllers\App\WashKanbanController;
-use App\Http\Controllers\App\WashLocationMapController;
 use App\Http\Controllers\App\WashNotificationController;
 use App\Http\Controllers\App\WashOrderController;
 use App\Http\Controllers\App\WashOrderReceiptController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
+use App\Http\Controllers\PublicWashLocationMapController;
 use App\Http\Controllers\PublicWashTrackingController;
 use App\Models\User;
 use Illuminate\Support\Facades\Route;
 
-Route::redirect('/', '/dashboard');
+Route::redirect('/', '/lava-rapidos');
+Route::get('/lava-rapidos', PublicWashLocationMapController::class)->name('public.locations.index');
+Route::redirect('/unidades', '/lava-rapidos');
 Route::get('/lavagens/acompanhamento/{code}', PublicWashTrackingController::class)->name('tracking.show');
 Route::get('/lavagens/acompanhamento/{code}/feed', [PublicWashTrackingController::class, 'feed'])->name('tracking.feed');
 
@@ -36,7 +38,6 @@ Route::middleware('auth')->group(function () {
     Route::get('/dashboard', DashboardController::class)->name('dashboard');
     Route::get('kanban', WashKanbanController::class)->name('kanban');
     Route::get('kanban/feed', [WashKanbanController::class, 'feed'])->name('kanban.feed');
-    Route::get('mapa', WashLocationMapController::class)->name('locations.map');
     Route::get('historico', [WashHistoryController::class, 'index'])->name('history.index');
     Route::get('historico/exportar', [WashHistoryController::class, 'export'])->name('history.export');
 

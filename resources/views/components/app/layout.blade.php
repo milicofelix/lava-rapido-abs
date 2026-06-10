@@ -51,8 +51,6 @@
 
                 @foreach ([
                     ['label' => 'Relatorios', 'icon' => 'R', 'href' => auth()->user()->isAdmin() ? route('finance.index') : route('dashboard'), 'roles' => ['admin']],
-                    ['label' => 'Unidades', 'icon' => 'U', 'href' => route('locations.map')],
-                    ['label' => 'Mapa', 'icon' => 'M', 'href' => route('locations.map')],
                     ['label' => 'Configuracoes', 'icon' => 'G', 'href' => route('settings.edit'), 'roles' => ['admin']],
                 ] as $item)
                     @continue(($item['roles'] ?? null) && ! auth()->user()->hasAnyRole($item['roles']))
@@ -128,7 +126,6 @@
                         <a href="{{ route('employees.index') }}" class="rounded-lg border border-slate-200 px-3 py-2 text-sm">Funcionarios</a>
                         <a href="{{ route('settings.edit') }}" class="rounded-lg border border-slate-200 px-3 py-2 text-sm">Configuracoes</a>
                     @endif
-                    <a href="{{ route('locations.map') }}" class="rounded-lg border border-slate-200 px-3 py-2 text-sm">Mapa</a>
                 </nav>
             </header>
 

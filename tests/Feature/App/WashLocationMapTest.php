@@ -11,10 +11,8 @@ class WashLocationMapTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_user_can_view_lava_rapido_locations_on_map(): void
+    public function test_visitor_can_view_public_lava_rapido_map(): void
     {
-        $user = User::factory()->create();
-
         WashLocation::query()->create([
             'name' => 'Lava Rapido Central',
             'address' => 'Av. das Nacoes, 1580',
@@ -22,15 +20,38 @@ class WashLocationMapTest extends TestCase
             'status' => WashLocation::STATUS_OPEN,
             'map_x' => 62,
             'map_y' => 34,
+            'latitude' => -23.54891,
+            'longitude' => -46.63412,
             'active_orders_count' => 18,
+            'phone' => '(11) 98888-1101',
         ]);
 
-        $this->actingAs($user)->get(route('locations.map'))
+        $this->get(route('public.locations.index'))
             ->assertOk()
-            ->assertSee('Mapa de Unidades')
-            ->assertSee('Lava-rapidos no mapa')
+            ->assertSee('Lava-rápidos próximos')
+            ->assertSee('Encontre um lava-rápido próximo')
             ->assertSee('Lava Rapido Central')
             ->assertSee('Av. das Nacoes, 1580')
-            ->assertSee('18');
+            ->assertSee('-23.54891')
+            ->assertSee('-46.63412')
+            ->assertSee('https://wa.me/5511988881101', false);
+    }
+
+    public function test_internal_dashboard_does_not_show_old_map_link(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)->get(route('dashboard'))
+            ->assertOk()
+            ->assertDontSee('Unidades no mapa')
+            ->assertDontSee(route('public.locations.index'));
+    }
+
+    public function test_old_internal_map_route_was_removed(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)->get('/mapa')
+            ->assertNotFound();
     }
 }

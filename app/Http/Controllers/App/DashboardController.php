@@ -8,7 +8,6 @@ use App\Models\Payment;
 use App\Models\Service;
 use App\Models\StatusHistory;
 use App\Models\Vehicle;
-use App\Models\WashLocation;
 use App\Models\WashOrder;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -44,7 +43,6 @@ class DashboardController extends Controller
             'kanbanColumns' => $this->kanbanColumns(),
             'financeByMethod' => $this->financeByMethod($today),
             'recentActivities' => $this->recentActivities(),
-            'locations' => WashLocation::query()->orderByDesc('active_orders_count')->limit(4)->get(),
             'recentCustomers' => Customer::latest()->withCount('vehicles')->limit(5)->get(),
             'recentWashOrders' => WashOrder::with(['customer', 'vehicle'])->latest('entered_at')->limit(5)->get(),
         ]);
