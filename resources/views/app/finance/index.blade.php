@@ -1,9 +1,16 @@
 <x-app.layout heading="Financeiro" title="Financeiro · AutoFlow">
     <div class="space-y-5">
-        <div class="flex flex-wrap justify-end gap-2">
-            <a href="{{ route('finance.cash-registers.index') }}" class="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold">Caixa</a>
-            <a href="{{ route('finance.credit-receivables.index') }}" class="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold">Fiado / contas a receber</a>
-        </div>
+        @php($appSettings = \App\Models\AppSetting::allSettings())
+        @if (! empty($appSettings['module_cash_register']) || ! empty($appSettings['module_credit_receivables']))
+            <div class="flex flex-wrap justify-end gap-2">
+                @if (! empty($appSettings['module_cash_register']))
+                    <a href="{{ route('finance.cash-registers.index') }}" class="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold">Caixa</a>
+                @endif
+                @if (! empty($appSettings['module_credit_receivables']))
+                    <a href="{{ route('finance.credit-receivables.index') }}" class="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold">Fiado / contas a receber</a>
+                @endif
+            </div>
+        @endif
 
         <section class="rounded-lg border border-zinc-200 bg-white p-5">
             <form method="GET" action="{{ route('finance.index') }}" class="grid gap-4 md:grid-cols-[1fr_1fr_auto_auto] md:items-end">
@@ -37,10 +44,12 @@
                 <p class="text-sm text-zinc-500">Ordens pendentes</p>
                 <p class="mt-2 text-2xl font-semibold">{{ $pendingCount }}</p>
             </div>
-            <div class="rounded-lg border border-zinc-200 bg-white p-5">
-                <p class="text-sm text-zinc-500">Fiado / pendente</p>
-                <p class="mt-2 text-2xl font-semibold">{{ $creditPendingCount }}</p>
-            </div>
+            @if (! empty($appSettings['module_credit_receivables']))
+                <div class="rounded-lg border border-zinc-200 bg-white p-5">
+                    <p class="text-sm text-zinc-500">Fiado / pendente</p>
+                    <p class="mt-2 text-2xl font-semibold">{{ $creditPendingCount }}</p>
+                </div>
+            @endif
         </section>
 
         <section class="grid gap-5 xl:grid-cols-[360px_1fr]">

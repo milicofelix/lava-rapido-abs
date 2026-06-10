@@ -4,6 +4,7 @@ namespace App\Http\Controllers\App;
 
 use App\Http\Controllers\Controller;
 use App\Models\Customer;
+use App\Models\AppSetting;
 use App\Models\CustomerNotification;
 use App\Models\Payment;
 use App\Models\Service;
@@ -90,10 +91,16 @@ class WashOrderController extends Controller
 
     public function show(WashOrder $washOrder): View
     {
+        $paymentMethods = Payment::methods();
+
+        if (! AppSetting::isModuleEnabled('module_credit_receivables')) {
+            unset($paymentMethods[Payment::METHOD_CREDIT_PENDING]);
+        }
+
         return view('app.wash-orders.show', [
             'washOrder' => $washOrder->load(['customer', 'vehicle', 'assignedUser', 'teamMembers', 'services', 'statusHistories.user', 'payments.user', 'customerNotifications.user']),
             'statuses' => WashOrder::statuses(),
-            'paymentMethods' => Payment::methods(),
+            'paymentMethods' => $paymentMethods,
             'notificationTemplates' => CustomerNotification::templates(),
         ]);
     }

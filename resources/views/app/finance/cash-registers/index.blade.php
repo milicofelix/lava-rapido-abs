@@ -8,7 +8,9 @@
             </div>
             <div class="flex gap-2">
                 <a href="{{ route('finance.index') }}" class="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold">Financeiro</a>
-                <a href="{{ route('finance.credit-receivables.index') }}" class="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold">Fiado</a>
+                @if (\App\Models\AppSetting::isModuleEnabled('module_credit_receivables'))
+                    <a href="{{ route('finance.credit-receivables.index') }}" class="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold">Fiado</a>
+                @endif
             </div>
         </div>
 

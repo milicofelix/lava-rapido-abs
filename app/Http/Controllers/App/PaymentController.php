@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\App;
 
 use App\Http\Controllers\Controller;
+use App\Models\AppSetting;
 use App\Models\Payment;
 use App\Models\WashOrder;
 use App\Services\Payments\RegisterPaymentService;
@@ -14,8 +15,14 @@ class PaymentController extends Controller
 {
     public function store(Request $request, WashOrder $washOrder, RegisterPaymentService $registerPayment): RedirectResponse
     {
+        $allowedMethods = array_keys(Payment::methods());
+
+        if (! AppSetting::isModuleEnabled('module_credit_receivables')) {
+            $allowedMethods = array_values(array_diff($allowedMethods, [Payment::METHOD_CREDIT_PENDING]));
+        }
+
         $data = $request->validate([
-            'method' => ['required', Rule::in(array_keys(Payment::methods()))],
+            'method' => ['required', Rule::in($allowedMethods)],
             'amount' => ['nullable', 'numeric', 'min:0', 'max:999999.99'],
             'notes' => ['nullable', 'string', 'max:1000'],
         ]);
