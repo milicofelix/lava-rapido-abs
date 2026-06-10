@@ -10,6 +10,7 @@ use App\Http\Controllers\App\VehicleController;
 use App\Http\Controllers\App\WashHistoryController;
 use App\Http\Controllers\App\WashKanbanController;
 use App\Http\Controllers\App\WashLocationMapController;
+use App\Http\Controllers\App\WashNotificationController;
 use App\Http\Controllers\App\WashOrderController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\PublicWashTrackingController;
@@ -50,6 +51,13 @@ Route::middleware('auth')->group(function () {
     Route::patch('lavagens/{wash_order}/status', [WashOrderController::class, 'updateStatus'])
         ->middleware('role:'.User::ROLE_ADMIN.','.User::ROLE_OPERATOR)
         ->name('wash-orders.update-status');
+
+    Route::middleware('role:'.User::ROLE_ADMIN.','.User::ROLE_ATTENDANT.','.User::ROLE_OPERATOR)->group(function () {
+        Route::post('lavagens/{wash_order}/notificacoes/whatsapp-manual', [WashNotificationController::class, 'store'])
+            ->name('wash-orders.notifications.whatsapp-manual.store');
+        Route::patch('lavagens/{wash_order}/notificacoes/{notification}/enviada-manualmente', [WashNotificationController::class, 'markAsSent'])
+            ->name('wash-orders.notifications.mark-as-sent');
+    });
 
     Route::middleware('role:'.User::ROLE_ADMIN)->group(function () {
         Route::get('financeiro', [FinanceController::class, 'index'])->name('finance.index');

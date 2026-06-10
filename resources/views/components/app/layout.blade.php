@@ -146,6 +146,25 @@
             localStorage.setItem(sidebarStorageKey, collapsed ? 'true' : 'false');
             applySidebarState(collapsed);
         });
+
+        document.querySelectorAll('[data-copy-message-button]').forEach((button) => {
+            button.addEventListener('click', async () => {
+                const textarea = button.closest('section')?.querySelector('[data-copy-message]');
+
+                if (! textarea) {
+                    return;
+                }
+
+                try {
+                    await navigator.clipboard.writeText(textarea.value);
+                    button.textContent = 'Mensagem copiada';
+                } catch (error) {
+                    textarea.select();
+                    document.execCommand('copy');
+                    button.textContent = 'Mensagem copiada';
+                }
+            });
+        });
     </script>
 </body>
 </html>

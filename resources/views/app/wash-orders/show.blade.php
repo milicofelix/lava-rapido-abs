@@ -142,12 +142,51 @@
             </section>
 
             <section class="mb-5 rounded-md border border-cyan-200 bg-cyan-50 p-4">
-                <h2 class="font-semibold text-cyan-950">Link do cliente</h2>
-                <a href="{{ $washOrder->trackingUrl() }}" target="_blank" class="mt-2 block break-all text-sm font-medium text-cyan-800">{{ $washOrder->trackingUrl() }}</a>
-                @if ($whatsappUrl = $washOrder->customer->whatsappTrackingUrl($washOrder))
-                    <a href="{{ $whatsappUrl }}" target="_blank" rel="noopener" class="mt-3 block rounded-md bg-emerald-700 px-4 py-2.5 text-center text-sm font-semibold text-white">Compartilhar via WhatsApp</a>
-                @else
-                    <p class="mt-3 text-xs text-cyan-800">Cliente sem telefone valido para WhatsApp.</p>
+                <h2 class="font-semibold text-cyan-950">Notificacao manual</h2>
+                <p class="mt-1 text-xs text-cyan-800">Prepare a mensagem e envie manualmente pelo WhatsApp. Nenhuma API paga e usada nesta fase.</p>
+                <a href="{{ $washOrder->trackingUrl() }}" target="_blank" class="mt-3 block break-all text-sm font-medium text-cyan-800">{{ $washOrder->trackingUrl() }}</a>
+
+                <form method="POST" action="{{ route('wash-orders.notifications.whatsapp-manual.store', $washOrder) }}" class="mt-4 space-y-3">
+                    @csrf
+                    <label class="block">
+                        <span class="text-sm font-medium">Modelo de mensagem</span>
+                        <select name="template_key" class="mt-1 w-full rounded-md border border-cyan-200 bg-white px-3 py-2">
+                            @foreach ($notificationTemplates as $value => $label)
+                                <option value="{{ $value }}" @selected(old('template_key') === $value)>{{ $label }}</option>
+                            @endforeach
+                        </select>
+                        @error('template_key') <span class="text-sm text-red-600">{{ $message }}</span> @enderror
+                    </label>
+                    <label class="block">
+                        <span class="text-sm font-medium">Observacao opcional</span>
+                        <textarea name="notes" rows="2" class="mt-1 w-full rounded-md border border-cyan-200 bg-white px-3 py-2" placeholder="Ex.: Estamos finalizando a secagem.">{{ old('notes') }}</textarea>
+                        @error('notes') <span class="text-sm text-red-600">{{ $message }}</span> @enderror
+                    </label>
+                    <button class="w-full rounded-md bg-cyan-700 px-4 py-2.5 text-sm font-semibold text-white">Preparar mensagem</button>
+                </form>
+
+                @php($lastNotification = $washOrder->customerNotifications->sortByDesc('created_at')->first())
+                @if ($lastNotification)
+                    <div class="mt-4 rounded-md border border-cyan-200 bg-white p-3">
+                        <div class="flex items-start justify-between gap-3">
+                            <div>
+                                <p class="text-sm font-semibold text-slate-950">Ultima mensagem preparada</p>
+                                <p class="text-xs text-slate-500">{{ $lastNotification->templateLabel() }} · {{ $lastNotification->statusLabel() }}</p>
+                            </div>
+                            @if ($lastNotification->action_url)
+                                <a href="{{ $lastNotification->action_url }}" target="_blank" rel="noopener" class="shrink-0 rounded-md bg-emerald-700 px-3 py-2 text-xs font-semibold text-white">Abrir WhatsApp</a>
+                            @endif
+                        </div>
+                        <textarea readonly rows="5" data-copy-message class="mt-3 w-full rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700">{{ $lastNotification->message }}</textarea>
+                        <div class="mt-3 grid gap-2 sm:grid-cols-2">
+                            <button type="button" data-copy-message-button class="rounded-md border border-slate-300 px-3 py-2 text-xs font-semibold">Copiar mensagem</button>
+                            <form method="POST" action="{{ route('wash-orders.notifications.mark-as-sent', [$washOrder, $lastNotification]) }}">
+                                @csrf
+                                @method('PATCH')
+                                <button class="w-full rounded-md border border-emerald-300 px-3 py-2 text-xs font-semibold text-emerald-800">Marcar como enviada</button>
+                            </form>
+                        </div>
+                    </div>
                 @endif
             </section>
 

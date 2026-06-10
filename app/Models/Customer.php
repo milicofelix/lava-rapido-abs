@@ -49,7 +49,7 @@ class Customer extends Model
         return $digits;
     }
 
-    public function whatsappTrackingUrl(WashOrder $washOrder): ?string
+    public function whatsappManualUrl(string $message): ?string
     {
         $number = $this->whatsappNumber();
 
@@ -57,8 +57,11 @@ class Customer extends Model
             return null;
         }
 
-        $message = "Ola {$this->name}, acompanhe o status da lavagem do seu veiculo pelo link: {$washOrder->trackingUrl()}";
-
         return 'https://wa.me/'.$number.'?text='.rawurlencode($message);
+    }
+
+    public function whatsappTrackingUrl(WashOrder $washOrder): ?string
+    {
+        return $this->whatsappManualUrl("Ola {$this->name}, acompanhe o status da lavagem do seu veiculo pelo link: {$washOrder->trackingUrl()}");
     }
 }

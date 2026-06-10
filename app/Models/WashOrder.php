@@ -172,6 +172,11 @@ class WashOrder extends Model
         return $this->hasMany(Payment::class);
     }
 
+    public function customerNotifications(): HasMany
+    {
+        return $this->hasMany(CustomerNotification::class);
+    }
+
     private static function generateCode(): string
     {
         do {

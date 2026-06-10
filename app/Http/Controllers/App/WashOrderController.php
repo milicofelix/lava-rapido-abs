@@ -4,6 +4,7 @@ namespace App\Http\Controllers\App;
 
 use App\Http\Controllers\Controller;
 use App\Models\Customer;
+use App\Models\CustomerNotification;
 use App\Models\Payment;
 use App\Models\Service;
 use App\Models\User;
@@ -90,9 +91,10 @@ class WashOrderController extends Controller
     public function show(WashOrder $washOrder): View
     {
         return view('app.wash-orders.show', [
-            'washOrder' => $washOrder->load(['customer', 'vehicle', 'assignedUser', 'teamMembers', 'services', 'statusHistories.user', 'payments.user']),
+            'washOrder' => $washOrder->load(['customer', 'vehicle', 'assignedUser', 'teamMembers', 'services', 'statusHistories.user', 'payments.user', 'customerNotifications.user']),
             'statuses' => WashOrder::statuses(),
             'paymentMethods' => Payment::methods(),
+            'notificationTemplates' => CustomerNotification::templates(),
         ]);
     }
 
