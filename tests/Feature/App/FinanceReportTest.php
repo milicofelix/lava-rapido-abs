@@ -12,9 +12,9 @@ class FinanceReportTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_attendant_can_view_financial_report_for_period(): void
+    public function test_admin_can_view_financial_report_for_period(): void
     {
-        $user = User::factory()->create(['name' => 'Atendente Caixa']);
+        $user = User::factory()->create(['name' => 'Admin Caixa', 'role' => User::ROLE_ADMIN]);
         $washOrder = WashOrder::factory()->create(['total_amount' => 90]);
 
         Payment::factory()->for($washOrder)->for($user)->create([
@@ -34,9 +34,9 @@ class FinanceReportTest extends TestCase
             ->assertSee($washOrder->code);
     }
 
-    public function test_attendant_can_export_financial_report_as_csv(): void
+    public function test_admin_can_export_financial_report_as_csv(): void
     {
-        $user = User::factory()->create(['name' => 'Atendente Caixa']);
+        $user = User::factory()->create(['name' => 'Admin Caixa', 'role' => User::ROLE_ADMIN]);
         $washOrder = WashOrder::factory()->create(['total_amount' => 45]);
 
         Payment::factory()->for($washOrder)->for($user)->create([

@@ -15,6 +15,12 @@ class User extends Authenticatable
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable;
 
+    public const ROLE_ADMIN = 'admin';
+
+    public const ROLE_ATTENDANT = 'attendant';
+
+    public const ROLE_OPERATOR = 'operator';
+
     /**
      * The attributes that are mass assignable.
      *
@@ -58,5 +64,23 @@ class User extends Authenticatable
     public function washOrderTeams(): BelongsToMany
     {
         return $this->belongsToMany(WashOrder::class)->withTimestamps();
+    }
+
+    public function hasRole(string $role): bool
+    {
+        return $this->role === $role;
+    }
+
+    /**
+     * @param  array<int, string>  $roles
+     */
+    public function hasAnyRole(array $roles): bool
+    {
+        return in_array($this->role, $roles, true);
+    }
+
+    public function isAdmin(): bool
+    {
+        return $this->hasRole(self::ROLE_ADMIN);
     }
 }

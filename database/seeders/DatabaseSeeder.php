@@ -67,6 +67,7 @@ class DatabaseSeeder extends Seeder
             ],
         ));
 
+        $this->call(WashLocationSeeder::class);
         $this->call(DemoWashOrdersSeeder::class);
     }
 }

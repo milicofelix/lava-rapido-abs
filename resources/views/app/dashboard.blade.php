@@ -1,142 +1,191 @@
-<x-app.layout heading="Dashboard" title="Dashboard · AutoFlow">
-    <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        @foreach ([
-            ['label' => 'Lavagens hoje', 'value' => $washOrdersToday],
-            ['label' => 'Em andamento', 'value' => $activeWashOrders],
-            ['label' => 'Prontas', 'value' => $readyWashOrders],
-            ['label' => 'Faturamento do dia', 'value' => 'R$ '.number_format((float) $todayRevenue, 2, ',', '.')],
-            ['label' => 'Ticket medio', 'value' => 'R$ '.number_format((float) $ticketAverage, 2, ',', '.')],
-            ['label' => 'Servico mais vendido', 'value' => $topService ? $topService['name'] : '-'],
-            ['label' => 'Tempo medio', 'value' => $averageWashMinutes > 0 ? $averageWashMinutes.' min' : '-'],
-            ['label' => 'Base cadastrada', 'value' => $customerCount.' clientes'],
-        ] as $card)
-            <div class="rounded-lg border border-zinc-200 bg-white p-5">
-                <p class="text-sm text-zinc-500">{{ $card['label'] }}</p>
-                <p class="mt-2 text-2xl font-semibold">{{ $card['value'] }}</p>
-            </div>
-        @endforeach
-    </div>
-
-    <div class="mt-6 grid gap-5 xl:grid-cols-3">
-        <section class="rounded-lg border border-zinc-200 bg-white">
-            <div class="border-b border-zinc-200 px-5 py-4">
-                <h2 class="font-semibold">Lavagens por dia</h2>
-            </div>
-            <div class="space-y-3 p-5">
-                @foreach ($washOrdersByDay as $day)
-                    <div class="grid grid-cols-[48px_1fr_48px] items-center gap-3 text-sm">
-                        <span class="text-zinc-500">{{ $day['label'] }}</span>
-                        <div class="h-2 rounded-full bg-zinc-100">
-                            <div class="h-2 rounded-full bg-cyan-700" style="width: {{ $day['percent'] }}%"></div>
-                        </div>
-                        <span class="text-right font-medium">{{ $day['count'] }}</span>
-                    </div>
-                @endforeach
-            </div>
-        </section>
-
-        <section class="rounded-lg border border-zinc-200 bg-white">
-            <div class="border-b border-zinc-200 px-5 py-4">
-                <h2 class="font-semibold">Faturamento semanal</h2>
-            </div>
-            <div class="space-y-3 p-5">
-                @foreach ($revenueByDay as $day)
-                    <div class="grid grid-cols-[48px_1fr_96px] items-center gap-3 text-sm">
-                        <span class="text-zinc-500">{{ $day['label'] }}</span>
-                        <div class="h-2 rounded-full bg-zinc-100">
-                            <div class="h-2 rounded-full bg-emerald-700" style="width: {{ $day['percent'] }}%"></div>
-                        </div>
-                        <span class="text-right font-medium">R$ {{ number_format((float) $day['total'], 2, ',', '.') }}</span>
-                    </div>
-                @endforeach
-            </div>
-        </section>
-
-        <section class="rounded-lg border border-zinc-200 bg-white">
-            <div class="border-b border-zinc-200 px-5 py-4">
-                <h2 class="font-semibold">Servicos mais vendidos</h2>
-            </div>
-            <div class="space-y-4 p-5">
-                @forelse ($topServices as $service)
-                    <div class="space-y-2">
-                        <div class="flex items-center justify-between gap-3 text-sm">
-                            <span class="font-medium">{{ $service['name'] }}</span>
-                            <span class="text-zinc-500">{{ $service['count'] }}</span>
-                        </div>
-                        <div class="h-2 rounded-full bg-zinc-100">
-                            <div class="h-2 rounded-full bg-indigo-700" style="width: {{ $service['percent'] }}%"></div>
-                        </div>
-                    </div>
-                @empty
-                    <p class="text-sm text-zinc-500">Nenhum servico vendido nesta semana.</p>
-                @endforelse
-            </div>
-        </section>
-    </div>
-
-    <div class="mt-6 grid gap-5 xl:grid-cols-[1fr_360px]">
-        <section class="rounded-lg border border-zinc-200 bg-white">
-        <div class="flex items-center justify-between border-b border-zinc-200 px-5 py-4">
-            <h2 class="font-semibold">Lavagens recentes</h2>
-            <div class="flex gap-2">
-                <a href="{{ route('kanban') }}" class="rounded-md border border-zinc-300 px-3 py-2 text-sm font-medium">Kanban</a>
-                <a href="{{ route('wash-orders.create') }}" class="rounded-md bg-cyan-700 px-3 py-2 text-sm font-medium text-white">Nova lavagem</a>
-            </div>
-        </div>
-        <div class="divide-y divide-zinc-100">
-            @forelse ($recentWashOrders as $washOrder)
-                <a href="{{ route('wash-orders.show', $washOrder) }}" class="flex items-center justify-between gap-4 px-5 py-4 hover:bg-zinc-50">
-                    <div>
-                        <p class="font-medium">{{ $washOrder->code }} · {{ $washOrder->vehicle->plate }}</p>
-                        <p class="text-sm text-zinc-500">{{ $washOrder->customer->name }} · {{ $washOrder->statusLabel() }}</p>
-                    </div>
-                    <span class="text-sm font-semibold">R$ {{ number_format((float) $washOrder->total_amount, 2, ',', '.') }}</span>
-                </a>
-            @empty
-                <p class="px-5 py-8 text-sm text-zinc-500">Nenhuma lavagem aberta ainda.</p>
-            @endforelse
-        </div>
-        </section>
-
-        <section class="space-y-5">
-            <div class="rounded-lg border border-zinc-200 bg-white">
-                <div class="border-b border-zinc-200 px-5 py-4">
-                    <h2 class="font-semibold">Cadastros</h2>
-                </div>
-                <div class="grid grid-cols-3 divide-x divide-zinc-100 text-center">
-                    <div class="p-4">
-                        <p class="text-sm text-zinc-500">Clientes</p>
-                        <p class="mt-1 text-xl font-semibold">{{ $customerCount }}</p>
-                    </div>
-                    <div class="p-4">
-                        <p class="text-sm text-zinc-500">Veiculos</p>
-                        <p class="mt-1 text-xl font-semibold">{{ $vehicleCount }}</p>
-                    </div>
-                    <div class="p-4">
-                        <p class="text-sm text-zinc-500">Servicos</p>
-                        <p class="mt-1 text-xl font-semibold">{{ $activeServiceCount }}/{{ $serviceCount }}</p>
-                    </div>
-                </div>
-            </div>
-
-            <div class="rounded-lg border border-zinc-200 bg-white">
-                <div class="flex items-center justify-between border-b border-zinc-200 px-5 py-4">
-                    <h2 class="font-semibold">Clientes recentes</h2>
-                    <a href="{{ route('customers.create') }}" class="rounded-md bg-cyan-700 px-3 py-2 text-sm font-medium text-white">Novo cliente</a>
-                </div>
-                <div class="divide-y divide-zinc-100">
-                    @forelse ($recentCustomers as $customer)
-                        <div class="flex items-center justify-between gap-4 px-5 py-4">
+<x-app.layout heading="Bom dia, {{ auth()->user()->name }}!" title="Dashboard · AutoFlow">
+    <div class="space-y-5">
+        <section class="grid gap-4 md:grid-cols-2 2xl:grid-cols-4">
+            @foreach ([
+                ['label' => 'Lavagens hoje', 'value' => $washOrdersToday, 'hint' => '14% vs ontem', 'color' => 'from-blue-500 to-blue-700', 'icon' => 'L'],
+                ['label' => 'Em andamento', 'value' => $activeWashOrders, 'hint' => 'Ver detalhes', 'color' => 'from-amber-400 to-orange-500', 'icon' => 'T'],
+                ['label' => 'Prontas', 'value' => $readyWashOrders, 'hint' => 'Ver detalhes', 'color' => 'from-emerald-400 to-green-600', 'icon' => 'P'],
+                ['label' => 'Faturamento hoje', 'value' => 'R$ '.number_format((float) $todayRevenue, 2, ',', '.'), 'hint' => '21% vs ontem', 'color' => 'from-violet-500 to-purple-700', 'icon' => '$'],
+            ] as $card)
+                <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+                    <div class="flex items-center justify-between gap-4">
+                        <div class="flex items-center gap-4">
+                            <span class="flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br {{ $card['color'] }} text-xl font-bold text-white shadow-lg">{{ $card['icon'] }}</span>
                             <div>
-                                <p class="font-medium">{{ $customer->name }}</p>
-                                <p class="text-sm text-zinc-500">{{ $customer->phone }}</p>
+                                <p class="text-sm font-semibold text-slate-700">{{ $card['label'] }}</p>
+                                <p class="mt-2 text-2xl font-bold text-slate-950">{{ $card['value'] }}</p>
+                                <p class="mt-2 text-xs font-semibold text-green-600">{{ $card['hint'] }}</p>
                             </div>
-                            <span class="rounded-full bg-zinc-100 px-3 py-1 text-sm">{{ $customer->vehicles_count }} veiculo(s)</span>
+                        </div>
+                        <div class="hidden h-12 w-20 items-end gap-1 sm:flex">
+                            @foreach ([20, 34, 26, 48, 42, 60] as $bar)
+                                <span class="w-2 rounded-full bg-gradient-to-t {{ $card['color'] }}" style="height: {{ $bar }}%"></span>
+                            @endforeach
+                        </div>
+                    </div>
+                </div>
+            @endforeach
+        </section>
+
+        <section class="grid gap-5 2xl:grid-cols-[1fr_420px]">
+            <div class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+                <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
+                    <div class="flex items-center gap-3">
+                        <span class="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-50 text-sm font-bold text-blue-700">K</span>
+                        <h2 class="text-xl font-bold">Fluxo de Lavagens</h2>
+                    </div>
+                    <div class="flex gap-2">
+                        <a href="{{ route('kanban') }}" class="rounded-lg border border-slate-200 px-4 py-2 text-sm font-semibold">Visualizacao: Kanban</a>
+                        <a href="{{ route('wash-orders.index') }}" class="rounded-lg border border-slate-200 px-4 py-2 text-sm font-semibold">Filtrar</a>
+                    </div>
+                </div>
+
+                <div class="grid gap-3 xl:grid-cols-4">
+                    @foreach ($kanbanColumns as $column)
+                        @php
+                            $columnColor = match ($column['key']) {
+                                'washing' => 'border-t-blue-600 text-blue-700 bg-blue-50',
+                                'finishing' => 'border-t-orange-500 text-orange-600 bg-orange-50',
+                                'ready' => 'border-t-green-600 text-green-700 bg-green-50',
+                                default => 'border-t-slate-400 text-slate-700 bg-slate-50',
+                            };
+                        @endphp
+                        <div class="min-h-[430px] rounded-xl border border-slate-200 border-t-4 {{ $columnColor }} p-2">
+                            <div class="flex items-center justify-between px-2 py-2">
+                                <h3 class="font-bold">{{ $column['title'] }}</h3>
+                                <span class="rounded-full bg-white px-2 py-1 text-xs font-bold text-slate-700 shadow-sm">{{ $column['count'] }}</span>
+                            </div>
+
+                            <div class="space-y-2">
+                                @forelse ($column['orders'] as $order)
+                                    <a href="{{ route('wash-orders.show', $order['id']) }}" class="block rounded-lg border border-slate-200 bg-white p-3 text-slate-950 shadow-sm hover:border-blue-200">
+                                        <div class="flex items-start justify-between gap-3">
+                                            <div>
+                                                <p class="font-bold">{{ $order['plate'] }}</p>
+                                                <p class="mt-1 text-xs text-slate-600">{{ $order['customer'] }}</p>
+                                            </div>
+                                            <span class="text-xs font-bold text-slate-500">{{ $order['brand'] }}</span>
+                                        </div>
+                                        <p class="mt-3 text-xs font-semibold">{{ $order['service'] }}</p>
+                                        <p class="mt-3 text-xs text-slate-500">Inicio: {{ $order['time'] }}</p>
+                                    </a>
+                                @empty
+                                    <div class="rounded-lg border border-dashed border-slate-200 bg-white/50 px-3 py-8 text-center text-sm text-slate-500">Sem lavagens.</div>
+                                @endforelse
+                            </div>
+
+                            @if ($column['remaining'] > 0)
+                                <p class="mt-3 text-center text-sm font-semibold">+ {{ $column['remaining'] }} na fila</p>
+                            @endif
+                        </div>
+                    @endforeach
+                </div>
+            </div>
+
+            <aside class="space-y-4">
+                <section class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+                    <div class="flex items-center justify-between">
+                        <h2 class="font-bold">Unidades no mapa</h2>
+                        <a href="{{ route('locations.map') }}" class="text-xs font-bold text-blue-700">Ver todas</a>
+                    </div>
+                    <div class="mt-4 h-48 overflow-hidden rounded-xl border border-slate-200 bg-slate-100">
+                        <div class="relative h-full w-full bg-[linear-gradient(35deg,#e5e7eb_25%,transparent_25%),linear-gradient(145deg,#e5e7eb_25%,transparent_25%),linear-gradient(35deg,transparent_75%,#d1d5db_75%),linear-gradient(145deg,transparent_75%,#d1d5db_75%)] bg-[length:32px_32px] bg-[position:0_0,0_0,16px_-16px,-16px_16px]">
+                            @foreach ($locations->take(4) as $location)
+                                <span class="absolute flex h-9 w-9 items-center justify-center rounded-full bg-blue-600 text-xs font-bold text-white shadow-lg" style="left: {{ $location->map_x }}%; top: {{ $location->map_y }}%">L</span>
+                            @endforeach
+                        </div>
+                    </div>
+                    <div class="mt-4 space-y-3 text-sm">
+                        @foreach ($locations->take(4) as $unit)
+                            <div class="flex items-center justify-between gap-3">
+                                <div>
+                                    <p class="font-bold">{{ $unit->name }}</p>
+                                    <p class="text-xs text-slate-500">{{ $unit->address }}</p>
+                                </div>
+                                <span class="rounded-full bg-green-100 px-2 py-1 text-xs font-bold text-green-700">{{ $unit->statusLabel() }}</span>
+                                <span class="text-xs text-slate-500">{{ $unit->active_orders_count }} em andamento</span>
+                            </div>
+                        @endforeach
+                    </div>
+                </section>
+
+                <section class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+                    <h2 class="font-bold">Atividades recentes</h2>
+                    <div class="mt-4 space-y-4">
+                        @forelse ($recentActivities as $activity)
+                            <div class="flex gap-3">
+                                <span class="mt-1 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg {{ $activity['color'] }} text-xs font-bold text-white">A</span>
+                                <div class="min-w-0 flex-1">
+                                    <div class="flex justify-between gap-3">
+                                        <p class="truncate text-sm font-bold">{{ $activity['title'] }}</p>
+                                        <span class="shrink-0 text-xs text-slate-500">Ha {{ $activity['time'] }}</span>
+                                    </div>
+                                    <p class="text-xs text-slate-500">{{ $activity['subtitle'] }}</p>
+                                </div>
+                            </div>
+                        @empty
+                            <p class="text-sm text-slate-500">Nenhuma atividade recente.</p>
+                        @endforelse
+                    </div>
+                    <a href="{{ route('wash-orders.index') }}" class="mt-5 block text-center text-sm font-bold text-blue-700">Ver todas as atividades -></a>
+                </section>
+            </aside>
+        </section>
+
+        <section class="grid gap-5 xl:grid-cols-2">
+            <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+                <div class="flex items-center justify-between">
+                    <h2 class="font-bold">Resumo Financeiro</h2>
+                    @if (auth()->user()->isAdmin())
+                        <a href="{{ route('finance.index') }}" class="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-semibold">Hoje</a>
+                    @endif
+                </div>
+                <p class="mt-5 text-2xl font-bold">R$ {{ number_format((float) $todayRevenue, 2, ',', '.') }}</p>
+                <p class="text-sm text-slate-500">Faturamento liquido</p>
+
+                <div class="mt-5 grid gap-5 md:grid-cols-[180px_1fr]">
+                    <div class="relative mx-auto h-36 w-36 rounded-full bg-[conic-gradient(#2563eb_0_35%,#10b981_35%_76%,#f59e0b_76%_95%,#8b5cf6_95%_100%)]">
+                        <div class="absolute inset-8 rounded-full bg-white"></div>
+                    </div>
+                    <div class="space-y-3">
+                        @forelse ($financeByMethod as $method)
+                            <div class="grid grid-cols-[1fr_auto_auto] items-center gap-3 text-sm">
+                                <span class="flex items-center gap-2"><span class="h-2.5 w-2.5 rounded-full {{ $method['color'] }}"></span>{{ $method['label'] }}</span>
+                                <strong>R$ {{ number_format((float) $method['total'], 2, ',', '.') }}</strong>
+                                <span class="text-slate-500">{{ number_format($method['percent'], 0) }}%</span>
+                            </div>
+                        @empty
+                            <p class="text-sm text-slate-500">Nenhum pagamento hoje.</p>
+                        @endforelse
+                    </div>
+                </div>
+                @if (auth()->user()->isAdmin())
+                    <a href="{{ route('finance.index') }}" class="mt-5 block border-t border-slate-200 pt-4 text-center text-sm font-bold text-blue-700">Ver relatorio completo</a>
+                @endif
+            </div>
+
+            <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+                <div class="flex items-center justify-between">
+                    <h2 class="font-bold">Servicos mais realizados</h2>
+                    <span class="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-semibold">Hoje</span>
+                </div>
+                <div class="mt-6 space-y-4">
+                    @forelse ($topServices as $service)
+                        <div class="grid grid-cols-[160px_1fr_40px_42px] items-center gap-3 text-sm">
+                            <span class="truncate font-semibold">{{ $service['name'] }}</span>
+                            <div class="h-2 rounded-full bg-slate-100">
+                                <div class="h-2 rounded-full bg-blue-600" style="width: {{ $service['percent'] }}%"></div>
+                            </div>
+                            <span class="text-right font-semibold">{{ $service['count'] }}</span>
+                            <span class="text-right text-slate-500">{{ number_format($service['percent'], 0) }}%</span>
                         </div>
                     @empty
-                        <p class="px-5 py-8 text-sm text-zinc-500">Nenhum cliente cadastrado ainda.</p>
+                        <p class="text-sm text-slate-500">Nenhum servico vendido nesta semana.</p>
                     @endforelse
                 </div>
+                @if (auth()->user()->isAdmin())
+                    <a href="{{ route('services.index') }}" class="mt-5 block border-t border-slate-200 pt-4 text-center text-sm font-bold text-blue-700">Ver todos os servicos</a>
+                @endif
             </div>
         </section>
     </div>

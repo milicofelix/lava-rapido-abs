@@ -39,14 +39,12 @@ class DashboardMetricsTest extends TestCase
 
         $this->actingAs($user)->get(route('dashboard'))
             ->assertOk()
-            ->assertSee('Faturamento do dia')
+            ->assertSee('Faturamento hoje')
             ->assertSee('R$ 120,00')
-            ->assertSee('Ticket medio')
-            ->assertSee('Servico mais vendido')
+            ->assertSee('Fluxo de Lavagens')
+            ->assertSee('Resumo Financeiro')
+            ->assertSee('Servicos mais realizados')
             ->assertSee('Lavagem premium')
-            ->assertSee('Tempo medio')
-            ->assertSee('90 min')
-            ->assertSee('Faturamento semanal')
-            ->assertSee('Servicos mais vendidos');
+            ->assertSee('Atividades recentes');
     }
 }

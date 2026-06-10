@@ -7,65 +7,111 @@
     <title>{{ $title ?? 'AutoFlow' }}</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
-<body class="bg-zinc-50 text-zinc-950 antialiased">
-    <div class="min-h-screen" data-app-shell>
-        <aside data-sidebar class="fixed inset-y-0 left-0 hidden w-64 border-r border-zinc-200 bg-white px-5 py-6 transition-transform duration-200 lg:block">
-            <a href="{{ route('dashboard') }}" class="block rounded-md bg-white">
-                <img src="{{ asset('images/autoflow-logo.png') }}" alt="AutoFlow" class="h-auto w-36">
+<body class="bg-[#061832] text-slate-950 antialiased">
+    <div class="min-h-screen p-2 lg:p-3" data-app-shell>
+        <aside data-sidebar class="fixed inset-y-3 left-3 z-30 hidden w-72 flex-col rounded-2xl bg-[#061b36] px-3 py-3 text-white shadow-2xl shadow-black/30 transition-transform duration-200 lg:flex">
+            <a href="{{ route('dashboard') }}" class="block shrink-0 rounded-2xl bg-white px-6 py-6 shadow-inner shadow-slate-200">
+                <img src="{{ asset('images/autoflow-logo.png') }}" alt="AutoFlow" class="mx-auto h-auto w-52">
             </a>
 
-            <nav class="mt-8 space-y-1">
+            <nav class="mt-4 min-h-0 flex-1 space-y-1.5 overflow-y-auto pr-1">
                 @foreach ([
-                    ['route' => 'dashboard', 'label' => 'Dashboard'],
-                    ['route' => 'wash-orders.index', 'label' => 'Lavagens'],
-                    ['route' => 'kanban', 'label' => 'Kanban'],
-                    ['route' => 'finance.index', 'label' => 'Financeiro'],
-                    ['route' => 'customers.index', 'label' => 'Clientes'],
-                    ['route' => 'vehicles.index', 'label' => 'Veiculos'],
-                    ['route' => 'services.index', 'label' => 'Servicos'],
-                    ['route' => 'employees.index', 'label' => 'Funcionarios'],
+                    ['route' => 'dashboard', 'label' => 'Painel Principal', 'icon' => 'P', 'roles' => null],
+                    ['route' => 'wash-orders.index', 'label' => 'Lavagens', 'icon' => 'L', 'roles' => null],
+                    ['route' => 'kanban', 'label' => 'Kanban de Lavagens', 'icon' => 'K', 'roles' => null],
+                    ['route' => 'history.index', 'label' => 'Historico', 'icon' => 'H', 'roles' => null],
+                    ['route' => 'customers.index', 'label' => 'Clientes', 'icon' => 'C', 'roles' => ['admin', 'attendant']],
+                    ['route' => 'vehicles.index', 'label' => 'Veiculos', 'icon' => 'V', 'roles' => ['admin', 'attendant']],
+                    ['route' => 'services.index', 'label' => 'Servicos', 'icon' => 'S', 'roles' => ['admin']],
+                    ['route' => 'employees.index', 'label' => 'Funcionarios', 'icon' => 'F', 'roles' => ['admin']],
+                    ['route' => 'finance.index', 'label' => 'Financeiro', 'icon' => '$', 'roles' => ['admin']],
                 ] as $item)
-                    <a href="{{ route($item['route']) }}" class="block rounded-md px-3 py-2 text-sm font-medium {{ request()->routeIs($item['route']) || request()->routeIs(str_replace('.index', '.*', $item['route'])) ? 'bg-zinc-950 text-white' : 'text-zinc-700 hover:bg-zinc-100' }}">
+                    @continue($item['roles'] && ! auth()->user()->hasAnyRole($item['roles']))
+                    <a href="{{ route($item['route']) }}" class="flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium transition {{ request()->routeIs($item['route']) || request()->routeIs(str_replace('.index', '.*', $item['route'])) ? 'bg-blue-600 text-white shadow-lg shadow-blue-950/30' : 'text-slate-200 hover:bg-white/10 hover:text-white' }}">
+                        <span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-white/15 bg-white/10 text-xs font-bold">{{ $item['icon'] }}</span>
+                        {{ $item['label'] }}
+                    </a>
+                @endforeach
+
+                @foreach ([
+                    ['label' => 'Relatorios', 'icon' => 'R', 'href' => auth()->user()->isAdmin() ? route('finance.index') : route('dashboard'), 'roles' => ['admin']],
+                    ['label' => 'Unidades', 'icon' => 'U', 'href' => route('locations.map')],
+                    ['label' => 'Mapa', 'icon' => 'M', 'href' => route('locations.map')],
+                    ['label' => 'Configuracoes', 'icon' => 'G', 'href' => '#'],
+                ] as $item)
+                    @continue(($item['roles'] ?? null) && ! auth()->user()->hasAnyRole($item['roles']))
+                    <a href="{{ $item['href'] }}" class="flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium text-slate-200 transition hover:bg-white/10 hover:text-white">
+                        <span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-white/15 bg-white/10 text-xs font-bold">{{ $item['icon'] }}</span>
                         {{ $item['label'] }}
                     </a>
                 @endforeach
             </nav>
+
+            <div class="mt-4 shrink-0 rounded-2xl border border-white/10 bg-[#082646] p-3 text-center shadow-inner shadow-white/5">
+                <div class="mx-auto flex h-20 w-full items-end justify-center overflow-hidden rounded-xl bg-gradient-to-t from-blue-950 to-blue-700">
+                    <img src="{{ asset('images/autoflow-logo.png') }}" alt="AutoFlow" class="mb-2 w-24 opacity-90">
+                </div>
+                <p class="mt-3 text-sm font-semibold">Organize. Acompanhe.</p>
+                <p class="text-sm font-semibold text-cyan-300">Fidelize.</p>
+                <p class="mt-2 text-[11px] leading-4 text-slate-300">Mais controle, eficiencia e satisfacao para seus clientes.</p>
+            </div>
         </aside>
 
-        <div data-content class="transition-[padding] duration-200 lg:pl-64">
-            <header class="sticky top-0 z-10 border-b border-zinc-200 bg-white/95 px-4 py-4 backdrop-blur sm:px-6 lg:px-8">
-                <div class="flex flex-wrap items-center justify-between gap-3">
-                    <div class="flex items-center gap-3">
-                        <button type="button" data-sidebar-toggle aria-label="Ocultar menu" aria-expanded="true" class="hidden h-10 min-w-10 items-center justify-center rounded-md border border-zinc-300 px-2 text-sm font-semibold text-zinc-700 hover:bg-zinc-100 lg:inline-flex">
-                            <span data-sidebar-toggle-icon>Menu</span>
+        <div data-content class="min-h-[calc(100vh-16px)] overflow-hidden rounded-2xl bg-slate-50 shadow-2xl shadow-black/30 transition-[margin] duration-200 lg:ml-80">
+            <header class="sticky top-0 z-20 border-b border-slate-200 bg-white/95 px-4 py-4 backdrop-blur sm:px-6 lg:px-8">
+                <div class="flex flex-wrap items-center justify-between gap-4">
+                    <div class="flex items-center gap-4">
+                        <button type="button" data-sidebar-toggle aria-label="Ocultar menu" aria-expanded="true" class="hidden h-10 min-w-10 items-center justify-center rounded-lg border border-slate-200 px-3 text-sm font-semibold text-slate-700 hover:bg-slate-100 lg:inline-flex">
+                            <span data-sidebar-toggle-icon>Fechar</span>
                         </button>
                         <div>
-                            <p class="text-sm text-zinc-500">{{ auth()->user()->name }} · {{ ucfirst(auth()->user()->role) }}</p>
-                            <h1 class="text-2xl font-semibold">{{ $heading ?? 'Dashboard' }}</h1>
+                            <h1 class="text-xl font-bold text-slate-950 sm:text-2xl">{{ $heading ?? 'Painel Principal' }}</h1>
+                            <p class="text-sm text-slate-500">Aqui esta o resumo do que acontece hoje.</p>
                         </div>
                     </div>
-                    <div class="flex items-center gap-2">
-                        <a href="{{ route('dashboard') }}" class="rounded-md border border-zinc-300 px-3 py-2 text-sm font-medium lg:hidden">Inicio</a>
+
+                    <div class="flex items-center gap-3">
+                        <div class="hidden items-center gap-3 rounded-lg border border-slate-200 bg-white px-4 py-2 shadow-sm md:flex">
+                            <span class="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-50 text-sm font-bold text-blue-700">U</span>
+                            <div>
+                                <p class="text-xs text-slate-500">Unidade atual</p>
+                                <p class="text-sm font-semibold">Lava Rapido Central</p>
+                            </div>
+                        </div>
+                        <div class="relative hidden h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-sm font-bold text-slate-700 shadow-sm sm:flex">
+                            B
+                            <span class="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-600 text-[10px] text-white">3</span>
+                        </div>
+                        <div class="flex items-center gap-3 rounded-lg border border-slate-200 bg-white px-3 py-2 shadow-sm">
+                            <span class="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-cyan-400 text-sm font-bold text-white">{{ strtoupper(substr(auth()->user()->name, 0, 1)) }}</span>
+                            <div class="hidden sm:block">
+                                <p class="text-sm font-semibold">{{ auth()->user()->name }}</p>
+                                <p class="text-xs text-slate-500">{{ ucfirst(auth()->user()->role) }}</p>
+                            </div>
+                        </div>
                         <form method="POST" action="{{ route('logout') }}">
                             @csrf
-                            <button class="rounded-md bg-zinc-950 px-3 py-2 text-sm font-medium text-white">Sair</button>
+                            <button class="rounded-lg bg-slate-950 px-3 py-2 text-sm font-semibold text-white">Sair</button>
                         </form>
                     </div>
                 </div>
+
                 <nav class="mt-4 flex gap-2 overflow-x-auto lg:hidden">
-                    <a href="{{ route('customers.index') }}" class="rounded-md border border-zinc-200 px-3 py-2 text-sm">Clientes</a>
-                    <a href="{{ route('vehicles.index') }}" class="rounded-md border border-zinc-200 px-3 py-2 text-sm">Veiculos</a>
-                    <a href="{{ route('services.index') }}" class="rounded-md border border-zinc-200 px-3 py-2 text-sm">Servicos</a>
-                    <a href="{{ route('wash-orders.index') }}" class="rounded-md border border-zinc-200 px-3 py-2 text-sm">Lavagens</a>
-                    <a href="{{ route('kanban') }}" class="rounded-md border border-zinc-200 px-3 py-2 text-sm">Kanban</a>
-                    <a href="{{ route('finance.index') }}" class="rounded-md border border-zinc-200 px-3 py-2 text-sm">Financeiro</a>
-                    <a href="{{ route('employees.index') }}" class="rounded-md border border-zinc-200 px-3 py-2 text-sm">Funcionarios</a>
+                    <a href="{{ route('dashboard') }}" class="rounded-lg border border-slate-200 px-3 py-2 text-sm">Painel</a>
+                    <a href="{{ route('wash-orders.index') }}" class="rounded-lg border border-slate-200 px-3 py-2 text-sm">Lavagens</a>
+                    <a href="{{ route('kanban') }}" class="rounded-lg border border-slate-200 px-3 py-2 text-sm">Kanban</a>
+                    <a href="{{ route('history.index') }}" class="rounded-lg border border-slate-200 px-3 py-2 text-sm">Historico</a>
+                    @if (auth()->user()->isAdmin())
+                        <a href="{{ route('finance.index') }}" class="rounded-lg border border-slate-200 px-3 py-2 text-sm">Financeiro</a>
+                        <a href="{{ route('employees.index') }}" class="rounded-lg border border-slate-200 px-3 py-2 text-sm">Funcionarios</a>
+                    @endif
+                    <a href="{{ route('locations.map') }}" class="rounded-lg border border-slate-200 px-3 py-2 text-sm">Mapa</a>
                 </nav>
             </header>
 
-            <main class="px-4 py-6 sm:px-6 lg:px-8">
+            <main class="px-4 py-5 sm:px-6 lg:px-8">
                 @if (session('status'))
-                    <div class="mb-5 rounded-md border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">{{ session('status') }}</div>
+                    <div class="mb-5 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">{{ session('status') }}</div>
                 @endif
 
                 {{ $slot }}
@@ -82,9 +128,9 @@
         const sidebarStorageKey = 'autoflow.sidebar.collapsed';
 
         const applySidebarState = (collapsed) => {
-            sidebar.classList.toggle('-translate-x-full', collapsed);
-            content.classList.toggle('lg:pl-64', !collapsed);
-            content.classList.toggle('lg:pl-0', collapsed);
+            sidebar.classList.toggle('-translate-x-[calc(100%+1rem)]', collapsed);
+            content.classList.toggle('lg:ml-80', !collapsed);
+            content.classList.toggle('lg:ml-0', collapsed);
             sidebarToggle.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
             sidebarToggle.setAttribute('aria-label', collapsed ? 'Mostrar menu' : 'Ocultar menu');
             sidebarToggleIcon.textContent = collapsed ? 'Menu' : 'Fechar';

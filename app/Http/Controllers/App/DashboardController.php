@@ -6,7 +6,9 @@ use App\Http\Controllers\Controller;
 use App\Models\Customer;
 use App\Models\Payment;
 use App\Models\Service;
+use App\Models\StatusHistory;
 use App\Models\Vehicle;
+use App\Models\WashLocation;
 use App\Models\WashOrder;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -39,6 +41,10 @@ class DashboardController extends Controller
             'washOrdersByDay' => $this->washOrdersByDay($weekStart, $weekEnd),
             'revenueByDay' => $this->revenueByDay($weekStart, $weekEnd),
             'topServices' => $this->topServices($weekStart, $weekEnd),
+            'kanbanColumns' => $this->kanbanColumns(),
+            'financeByMethod' => $this->financeByMethod($today),
+            'recentActivities' => $this->recentActivities(),
+            'locations' => WashLocation::query()->orderByDesc('active_orders_count')->limit(4)->get(),
             'recentCustomers' => Customer::latest()->withCount('vehicles')->limit(5)->get(),
             'recentWashOrders' => WashOrder::with(['customer', 'vehicle'])->latest('entered_at')->limit(5)->get(),
         ]);
@@ -157,6 +163,89 @@ class DashboardController extends Controller
             'count' => (int) $row->total,
             'percent' => (((int) $row->total) / $max) * 100,
         ])->all();
+    }
+
+    /**
+     * @return array<int, array<string, mixed>>
+     */
+    private function kanbanColumns(): array
+    {
+        $washOrders = WashOrder::query()
+            ->with(['customer', 'vehicle', 'services'])
+            ->whereIn('status', collect(WashKanbanController::columns())->pluck('statuses')->flatten()->all())
+            ->oldest('entered_at')
+            ->limit(40)
+            ->get();
+
+        return collect(WashKanbanController::columns())
+            ->take(4)
+            ->map(function (array $column) use ($washOrders) {
+                $orders = $washOrders->whereIn('status', $column['statuses'])->values();
+
+                return [
+                    'title' => $column['title'],
+                    'key' => $column['key'],
+                    'count' => $orders->count(),
+                    'orders' => $orders->take(3)->map(fn (WashOrder $washOrder) => [
+                        'id' => $washOrder->id,
+                        'code' => $washOrder->code,
+                        'plate' => $washOrder->vehicle->plate,
+                        'brand' => $washOrder->vehicle->brand,
+                        'customer' => $washOrder->customer->name,
+                        'service' => $washOrder->services->first()?->pivot->service_name ?? 'Servico',
+                        'time' => $washOrder->entered_at->format('H:i'),
+                    ])->all(),
+                    'remaining' => max(0, $orders->count() - 3),
+                ];
+            })
+            ->values()
+            ->all();
+    }
+
+    /**
+     * @return array<int, array{label: string, total: float, percent: float, color: string}>
+     */
+    private function financeByMethod(Carbon $day): array
+    {
+        $rows = Payment::query()
+            ->whereBetween('paid_at', [$day->copy()->startOfDay(), $day->copy()->endOfDay()])
+            ->selectRaw('method, SUM(amount) as total')
+            ->groupBy('method')
+            ->orderByDesc('total')
+            ->get();
+
+        $total = max(1, (float) $rows->sum('total'));
+        $colors = ['bg-blue-600', 'bg-emerald-500', 'bg-amber-500', 'bg-violet-600', 'bg-slate-400'];
+
+        return $rows->values()->map(fn ($row, int $index) => [
+            'label' => Payment::methods()[$row->method] ?? $row->method,
+            'total' => (float) $row->total,
+            'percent' => ((float) $row->total / $total) * 100,
+            'color' => $colors[$index] ?? 'bg-slate-400',
+        ])->all();
+    }
+
+    /**
+     * @return array<int, array{title: string, subtitle: string, time: string, color: string}>
+     */
+    private function recentActivities(): array
+    {
+        return StatusHistory::query()
+            ->with(['washOrder.customer', 'washOrder.vehicle'])
+            ->latest()
+            ->limit(4)
+            ->get()
+            ->map(fn (StatusHistory $history) => [
+                'title' => 'Lavagem '.$history->washOrder->code.' '.$history->washOrder->statusLabel(),
+                'subtitle' => $history->washOrder->vehicle->plate.' - '.$history->washOrder->customer->name,
+                'time' => $history->created_at->diffForHumans(null, true),
+                'color' => match ($history->to_status) {
+                    WashOrder::STATUS_READY, WashOrder::STATUS_DELIVERED => 'bg-emerald-500',
+                    WashOrder::STATUS_WASHING, WashOrder::STATUS_PREPARING => 'bg-blue-500',
+                    WashOrder::STATUS_CANCELED => 'bg-red-500',
+                    default => 'bg-amber-500',
+                },
+            ])->all();
     }
 
     private function periodDays(Carbon $start, Carbon $end)
