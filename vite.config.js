@@ -1,6 +1,7 @@
 import { defineConfig } from 'vite';
 import laravel from 'laravel-vite-plugin';
 import tailwindcss from '@tailwindcss/vite';
+import react from '@vitejs/plugin-react';
 
 export default defineConfig({
     plugins: [
@@ -8,9 +9,21 @@ export default defineConfig({
             input: ['resources/css/app.css', 'resources/js/app.js'],
             refresh: true,
         }),
+        react(),
         tailwindcss(),
     ],
     server: {
+        host: '0.0.0.0',
+        port: 5179,
+        strictPort: true,
+        origin: 'http://localhost:5179',
+        hmr: {
+            host: 'localhost',
+            port: 5179,
+        },
+        cors: {
+            origin: ['http://localhost:8089', 'http://127.0.0.1:8089'],
+        },
         watch: {
             ignored: ['**/storage/framework/views/**'],
         },

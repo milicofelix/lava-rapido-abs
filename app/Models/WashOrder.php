@@ -1,0 +1,149 @@
+<?php
+
+namespace App\Models;
+
+use Database\Factories\WashOrderFactory;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Str;
+
+class WashOrder extends Model
+{
+    /** @use HasFactory<WashOrderFactory> */
+    use HasFactory;
+
+    public const STATUS_AWAITING = 'aguardando';
+
+    public const STATUS_PREPARING = 'em_preparacao';
+
+    public const STATUS_WASHING = 'lavando';
+
+    public const STATUS_VACUUMING = 'aspirando';
+
+    public const STATUS_WAXING = 'aplicando_cera';
+
+    public const STATUS_FINISHING = 'finalizando';
+
+    public const STATUS_READY = 'pronto_para_retirada';
+
+    public const STATUS_DELIVERED = 'entregue';
+
+    public const STATUS_CANCELED = 'cancelado';
+
+    protected $fillable = [
+        'code',
+        'customer_id',
+        'vehicle_id',
+        'assigned_user_id',
+        'total_amount',
+        'status',
+        'entered_at',
+        'estimated_completion_at',
+        'completed_at',
+        'notes',
+    ];
+
+    protected function casts(): array
+    {
+        return [
+            'entered_at' => 'datetime',
+            'estimated_completion_at' => 'datetime',
+            'completed_at' => 'datetime',
+            'total_amount' => 'decimal:2',
+        ];
+    }
+
+    protected static function booted(): void
+    {
+        static::creating(function (WashOrder $washOrder) {
+            $washOrder->code ??= self::generateCode();
+            $washOrder->entered_at ??= now();
+            $washOrder->status ??= self::STATUS_AWAITING;
+        });
+    }
+
+    public static function statuses(): array
+    {
+        return [
+            self::STATUS_AWAITING => 'Aguardando',
+            self::STATUS_PREPARING => 'Em preparacao',
+            self::STATUS_WASHING => 'Lavando',
+            self::STATUS_VACUUMING => 'Aspirando',
+            self::STATUS_WAXING => 'Aplicando cera',
+            self::STATUS_FINISHING => 'Finalizando',
+            self::STATUS_READY => 'Pronto para retirada',
+            self::STATUS_DELIVERED => 'Entregue',
+            self::STATUS_CANCELED => 'Cancelado',
+        ];
+    }
+
+    public static function activeStatuses(): array
+    {
+        return array_diff(array_keys(self::statuses()), [
+            self::STATUS_DELIVERED,
+            self::STATUS_CANCELED,
+        ]);
+    }
+
+    public static function publicProgressStatuses(): array
+    {
+        return [
+            self::STATUS_AWAITING,
+            self::STATUS_PREPARING,
+            self::STATUS_WASHING,
+            self::STATUS_VACUUMING,
+            self::STATUS_WAXING,
+            self::STATUS_FINISHING,
+            self::STATUS_READY,
+        ];
+    }
+
+    public function statusLabel(): string
+    {
+        return self::statuses()[$this->status] ?? $this->status;
+    }
+
+    public function trackingUrl(): string
+    {
+        return route('tracking.show', $this->code);
+    }
+
+    public function customer(): BelongsTo
+    {
+        return $this->belongsTo(Customer::class);
+    }
+
+    public function vehicle(): BelongsTo
+    {
+        return $this->belongsTo(Vehicle::class);
+    }
+
+    public function assignedUser(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'assigned_user_id');
+    }
+
+    public function services(): BelongsToMany
+    {
+        return $this->belongsToMany(Service::class)
+            ->withPivot(['service_name', 'price', 'estimated_minutes'])
+            ->withTimestamps();
+    }
+
+    public function statusHistories(): HasMany
+    {
+        return $this->hasMany(StatusHistory::class);
+    }
+
+    private static function generateCode(): string
+    {
+        do {
+            $code = 'ABS-'.now()->format('ymd').'-'.Str::upper(Str::random(5));
+        } while (self::where('code', $code)->exists());
+
+        return $code;
+    }
+}
