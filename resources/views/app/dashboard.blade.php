@@ -84,32 +84,6 @@
 
             <aside class="space-y-4">
                 <section class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-                    <div class="flex items-center justify-between">
-                        <h2 class="font-bold">Unidades no mapa</h2>
-                        <a href="{{ route('locations.map') }}" class="text-xs font-bold text-blue-700">Ver todas</a>
-                    </div>
-                    <div class="mt-4 h-48 overflow-hidden rounded-xl border border-slate-200 bg-slate-100">
-                        <div class="relative h-full w-full bg-[linear-gradient(35deg,#e5e7eb_25%,transparent_25%),linear-gradient(145deg,#e5e7eb_25%,transparent_25%),linear-gradient(35deg,transparent_75%,#d1d5db_75%),linear-gradient(145deg,transparent_75%,#d1d5db_75%)] bg-[length:32px_32px] bg-[position:0_0,0_0,16px_-16px,-16px_16px]">
-                            @foreach ($locations->take(4) as $location)
-                                <span class="absolute flex h-9 w-9 items-center justify-center rounded-full bg-blue-600 text-xs font-bold text-white shadow-lg" style="left: {{ $location->map_x }}%; top: {{ $location->map_y }}%">L</span>
-                            @endforeach
-                        </div>
-                    </div>
-                    <div class="mt-4 space-y-3 text-sm">
-                        @foreach ($locations->take(4) as $unit)
-                            <div class="flex items-center justify-between gap-3">
-                                <div>
-                                    <p class="font-bold">{{ $unit->name }}</p>
-                                    <p class="text-xs text-slate-500">{{ $unit->address }}</p>
-                                </div>
-                                <span class="rounded-full bg-green-100 px-2 py-1 text-xs font-bold text-green-700">{{ $unit->statusLabel() }}</span>
-                                <span class="text-xs text-slate-500">{{ $unit->active_orders_count }} em andamento</span>
-                            </div>
-                        @endforeach
-                    </div>
-                </section>
-
-                <section class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
                     <h2 class="font-bold">Atividades recentes</h2>
                     <div class="mt-4 space-y-4">
                         @forelse ($recentActivities as $activity)
