@@ -33,7 +33,7 @@ class WashKanbanTest extends TestCase
 
     public function test_user_can_move_card_to_next_status_from_kanban_action(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->create(['role' => User::ROLE_OPERATOR]);
         $washOrder = WashOrder::factory()->create(['status' => WashOrder::STATUS_AWAITING]);
 
         $this->actingAs($user)->patch(route('wash-orders.update-status', $washOrder), [

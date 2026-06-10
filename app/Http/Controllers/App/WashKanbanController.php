@@ -26,7 +26,7 @@ class WashKanbanController extends Controller
     private function payload(): array
     {
         $washOrders = WashOrder::query()
-            ->with(['customer', 'vehicle', 'assignedUser', 'services'])
+            ->with(['customer', 'vehicle', 'assignedUser', 'teamMembers', 'services'])
             ->whereIn('status', collect(self::columns())->pluck('statuses')->flatten()->all())
             ->oldest('entered_at')
             ->get();
@@ -74,6 +74,9 @@ class WashKanbanController extends Controller
             'assigned_user' => $washOrder->assignedUser ? [
                 'name' => $washOrder->assignedUser->name,
             ] : null,
+            'team_members' => $washOrder->teamMembers->map(fn ($user) => [
+                'name' => $user->name,
+            ])->all(),
             'services' => $washOrder->services->map(fn ($service) => [
                 'name' => $service->pivot->service_name,
             ])->all(),

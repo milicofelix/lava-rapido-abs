@@ -33,6 +33,14 @@ class WashOrder extends Model
 
     public const STATUS_CANCELED = 'cancelado';
 
+    public const PAYMENT_PENDING = 'pending';
+
+    public const PAYMENT_PAID = 'paid';
+
+    public const PAYMENT_COURTESY = 'courtesy';
+
+    public const PAYMENT_CREDIT_PENDING = 'credit_pending';
+
     protected $fillable = [
         'code',
         'customer_id',
@@ -40,6 +48,7 @@ class WashOrder extends Model
         'assigned_user_id',
         'total_amount',
         'status',
+        'payment_status',
         'entered_at',
         'estimated_completion_at',
         'completed_at',
@@ -106,6 +115,21 @@ class WashOrder extends Model
         return self::statuses()[$this->status] ?? $this->status;
     }
 
+    public static function paymentStatuses(): array
+    {
+        return [
+            self::PAYMENT_PENDING => 'Pendente',
+            self::PAYMENT_PAID => 'Pago',
+            self::PAYMENT_COURTESY => 'Cortesia',
+            self::PAYMENT_CREDIT_PENDING => 'Fiado / pendente',
+        ];
+    }
+
+    public function paymentStatusLabel(): string
+    {
+        return self::paymentStatuses()[$this->payment_status] ?? $this->payment_status;
+    }
+
     public function trackingUrl(): string
     {
         return route('tracking.show', $this->code);
@@ -126,6 +150,11 @@ class WashOrder extends Model
         return $this->belongsTo(User::class, 'assigned_user_id');
     }
 
+    public function teamMembers(): BelongsToMany
+    {
+        return $this->belongsToMany(User::class)->withTimestamps();
+    }
+
     public function services(): BelongsToMany
     {
         return $this->belongsToMany(Service::class)
@@ -136,6 +165,16 @@ class WashOrder extends Model
     public function statusHistories(): HasMany
     {
         return $this->hasMany(StatusHistory::class);
+    }
+
+    public function payments(): HasMany
+    {
+        return $this->hasMany(Payment::class);
+    }
+
+    public function customerNotifications(): HasMany
+    {
+        return $this->hasMany(CustomerNotification::class);
     }
 
     private static function generateCode(): string

@@ -16,9 +16,13 @@ function StatusPill({ label }) {
     );
 }
 
-function OrderCard({ order, statuses, onMove }) {
+function OrderCard({ order, statuses, onMove, canUpdateStatus }) {
     const nextStatus = nextStatusFor[order.status];
     const visibleServices = order.services.slice(0, 2);
+    const teamNames = order.team_members?.map((member) => member.name) ?? [];
+    const teamLabel = teamNames.length > 0
+        ? `${teamNames.slice(0, 2).join(', ')}${teamNames.length > 2 ? ` +${teamNames.length - 2}` : ''}`
+        : 'Sem equipe';
 
     const handleDragStart = (event) => {
         event.dataTransfer.effectAllowed = 'move';
@@ -32,7 +36,7 @@ function OrderCard({ order, statuses, onMove }) {
     return (
         <article
             className="rounded-md border border-zinc-200 bg-white p-3 shadow-sm transition hover:border-cyan-300"
-            draggable
+            draggable={canUpdateStatus}
             onDragStart={handleDragStart}
         >
             <div className="flex items-start justify-between gap-2">
@@ -53,8 +57,8 @@ function OrderCard({ order, statuses, onMove }) {
                     <dd className="font-medium">{order.entered_at_for_humans}</dd>
                 </div>
                 <div className="flex justify-between gap-2">
-                    <dt className="text-zinc-500">Funcionario</dt>
-                    <dd className="max-w-24 truncate font-medium">{order.assigned_user?.name ?? 'Sem responsavel'}</dd>
+                    <dt className="text-zinc-500">Equipe</dt>
+                    <dd className="max-w-28 truncate font-medium">{teamLabel}</dd>
                 </div>
                 <div className="flex justify-between gap-2">
                     <dt className="text-zinc-500">Valor</dt>
@@ -75,7 +79,7 @@ function OrderCard({ order, statuses, onMove }) {
 
             <div className="mt-3 grid grid-cols-2 gap-1.5">
                 <a href={order.show_url} className="rounded-md border border-zinc-300 px-2 py-1.5 text-center text-xs font-semibold">Detalhes</a>
-                {nextStatus ? (
+                {nextStatus && canUpdateStatus ? (
                     <button
                         type="button"
                         onClick={() => onMove(order.update_url, nextStatus)}
@@ -91,12 +95,16 @@ function OrderCard({ order, statuses, onMove }) {
     );
 }
 
-function Column({ column, statuses, onMove }) {
+function Column({ column, statuses, onMove, canUpdateStatus }) {
     const [isDraggingOver, setIsDraggingOver] = useState(false);
 
     const handleDrop = async (event) => {
         event.preventDefault();
         setIsDraggingOver(false);
+
+        if (!canUpdateStatus) {
+            return;
+        }
 
         const payload = JSON.parse(event.dataTransfer.getData('application/json') || '{}');
 
@@ -111,6 +119,10 @@ function Column({ column, statuses, onMove }) {
         <section
             className={`min-h-[520px] min-w-56 rounded-lg border bg-zinc-100 ${isDraggingOver ? 'border-cyan-400' : 'border-zinc-200'}`}
             onDragOver={(event) => {
+                if (!canUpdateStatus) {
+                    return;
+                }
+
                 event.preventDefault();
                 setIsDraggingOver(true);
             }}
@@ -124,7 +136,7 @@ function Column({ column, statuses, onMove }) {
 
             <div className="space-y-2.5 p-2.5">
                 {column.orders.length ? column.orders.map((order) => (
-                    <OrderCard key={order.id} order={order} statuses={statuses} onMove={onMove} />
+                    <OrderCard key={order.id} order={order} statuses={statuses} onMove={onMove} canUpdateStatus={canUpdateStatus} />
                 )) : (
                     <div className="rounded-md border border-dashed border-zinc-300 bg-white px-3 py-6 text-center text-sm text-zinc-500">
                         Sem lavagens nesta etapa.
@@ -138,6 +150,8 @@ function Column({ column, statuses, onMove }) {
 export default function Kanban({ columns: initialColumns, statuses, feedUrl, createUrl, dashboardUrl, logoUrl, auth }) {
     const [columns, setColumns] = useState(initialColumns);
     const [realtimeUpdated, setRealtimeUpdated] = useState(false);
+    const canCreateWashOrder = ['admin', 'attendant'].includes(auth?.user?.role);
+    const canUpdateStatus = ['admin', 'operator'].includes(auth?.user?.role);
 
     const refreshFeed = async () => {
         const { data } = await window.axios.get(feedUrl);
@@ -193,7 +207,9 @@ export default function Kanban({ columns: initialColumns, statuses, feedUrl, cre
                         </div>
                         <div className="flex gap-2">
                             <a href={dashboardUrl} className="rounded-md border border-zinc-300 px-4 py-2 text-sm font-semibold">Dashboard</a>
-                            <a href={createUrl} className="rounded-md bg-cyan-700 px-4 py-2 text-sm font-semibold text-white">Nova lavagem</a>
+                            {canCreateWashOrder && (
+                                <a href={createUrl} className="rounded-md bg-cyan-700 px-4 py-2 text-sm font-semibold text-white">Nova lavagem</a>
+                            )}
                         </div>
                     </div>
                 </header>
@@ -201,7 +217,7 @@ export default function Kanban({ columns: initialColumns, statuses, feedUrl, cre
                 <main className="px-4 py-6 sm:px-6 lg:px-8">
                     <div className="grid gap-3 overflow-x-auto pb-4 xl:grid-cols-5">
                         {columns.map((column) => (
-                            <Column key={column.key} column={column} statuses={statuses} onMove={moveOrder} />
+                            <Column key={column.key} column={column} statuses={statuses} onMove={moveOrder} canUpdateStatus={canUpdateStatus} />
                         ))}
                     </div>
                 </main>

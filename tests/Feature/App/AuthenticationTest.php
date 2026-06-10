@@ -21,6 +21,9 @@ class AuthenticationTest extends TestCase
 
         $this->actingAs($user)->get('/dashboard')
             ->assertOk()
-            ->assertSee('Dashboard');
+            ->assertSee('Dashboard')
+            ->assertSee('data-app-shell', false)
+            ->assertSee('data-sidebar-toggle', false)
+            ->assertSee('autoflow.sidebar.collapsed', false);
     }
 }

@@ -38,12 +38,10 @@ const inertiaRoot = document.getElementById('app');
 const inertiaPage = document.querySelector('script[data-page="app"][type="application/json"]');
 
 if (inertiaRoot && inertiaPage) {
-    createInertiaApp({
-        resolve: (name) => {
-            const pages = import.meta.glob('./Pages/**/*.jsx', { eager: true });
+    const pages = import.meta.glob('./Pages/**/*.jsx');
 
-            return pages[`./Pages/${name}.jsx`].default;
-        },
+    createInertiaApp({
+        resolve: async (name) => (await pages[`./Pages/${name}.jsx`]()).default,
         setup({ el, App, props }) {
             createRoot(el).render(createElement(App, props));
         },

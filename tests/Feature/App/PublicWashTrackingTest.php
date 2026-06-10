@@ -70,10 +70,14 @@ class PublicWashTrackingTest extends TestCase
     {
         $user = User::factory()->create();
         $washOrder = WashOrder::factory()->create(['code' => 'ABS-LINK-1']);
+        $washOrder->customer->update(['phone' => '(11) 98888-7777']);
 
         $this->actingAs($user)->get(route('wash-orders.show', $washOrder))
             ->assertOk()
             ->assertSee('Link do cliente')
-            ->assertSee(route('tracking.show', 'ABS-LINK-1'));
+            ->assertSee(route('tracking.show', 'ABS-LINK-1'))
+            ->assertSee('Compartilhar via WhatsApp')
+            ->assertSee('https://wa.me/5511988887777', false)
+            ->assertSee(rawurlencode(route('tracking.show', 'ABS-LINK-1')), false);
     }
 }

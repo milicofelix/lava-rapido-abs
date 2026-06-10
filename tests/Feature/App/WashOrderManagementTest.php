@@ -14,9 +14,44 @@ class WashOrderManagementTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_create_form_embeds_customer_vehicle_mapping(): void
+    {
+        $user = User::factory()->create();
+        $customer = Customer::factory()->create(['name' => 'Maria Cliente']);
+        $otherCustomer = Customer::factory()->create(['name' => 'Outro Cliente']);
+        $vehicle = Vehicle::factory()->for($customer)->create([
+            'plate' => 'ABC1D23',
+            'brand' => 'Toyota',
+            'model' => 'Corolla',
+        ]);
+        $otherVehicle = Vehicle::factory()->for($otherCustomer)->create([
+            'plate' => 'XYZ9K88',
+            'brand' => 'Hyundai',
+            'model' => 'HB20',
+        ]);
+
+        $response = $this->actingAs($user)->get(route('wash-orders.create'));
+
+        $response
+            ->assertOk()
+            ->assertSee('data-customer-select', false)
+            ->assertSee('data-vehicle-select', false)
+            ->assertSee('assigned_user_ids[]', false)
+            ->assertSee('Equipe da lavagem')
+            ->assertSee('Selecione um cliente primeiro')
+            ->assertSee((string) $customer->id)
+            ->assertSee((string) $vehicle->id)
+            ->assertSee('ABC1D23')
+            ->assertSee('Toyota Corolla')
+            ->assertSee((string) $otherCustomer->id)
+            ->assertSee((string) $otherVehicle->id)
+            ->assertSee('Hyundai HB20');
+    }
+
     public function test_attendant_can_open_wash_order_with_selected_services(): void
     {
         $user = User::factory()->create();
+        $teammate = User::factory()->create(['name' => 'Colega Lavador']);
         $customer = Customer::factory()->create();
         $vehicle = Vehicle::factory()->for($customer)->create(['plate' => 'ABC1D23']);
         $services = Service::factory()->count(2)->sequence(
@@ -27,7 +62,7 @@ class WashOrderManagementTest extends TestCase
         $this->actingAs($user)->post(route('wash-orders.store'), [
             'customer_id' => $customer->id,
             'vehicle_id' => $vehicle->id,
-            'assigned_user_id' => $user->id,
+            'assigned_user_ids' => [$user->id, $teammate->id],
             'service_ids' => $services->pluck('id')->all(),
             'notes' => 'Cliente vai buscar no fim da tarde.',
         ])->assertRedirect();
@@ -35,8 +70,17 @@ class WashOrderManagementTest extends TestCase
         $washOrder = WashOrder::query()->firstOrFail();
 
         $this->assertSame('125.00', (string) $washOrder->total_amount);
+        $this->assertSame($user->id, $washOrder->assigned_user_id);
         $this->assertSame(WashOrder::STATUS_AWAITING, $washOrder->status);
         $this->assertCount(2, $washOrder->services);
+        $this->assertDatabaseHas('user_wash_order', [
+            'wash_order_id' => $washOrder->id,
+            'user_id' => $user->id,
+        ]);
+        $this->assertDatabaseHas('user_wash_order', [
+            'wash_order_id' => $washOrder->id,
+            'user_id' => $teammate->id,
+        ]);
         $this->assertDatabaseHas('status_histories', [
             'wash_order_id' => $washOrder->id,
             'from_status' => null,

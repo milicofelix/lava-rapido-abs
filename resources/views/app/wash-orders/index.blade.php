@@ -23,6 +23,7 @@
                     <th class="px-4 py-3">Codigo</th>
                     <th class="px-4 py-3">Cliente</th>
                     <th class="px-4 py-3">Veiculo</th>
+                    <th class="px-4 py-3">Equipe</th>
                     <th class="px-4 py-3">Status</th>
                     <th class="px-4 py-3">Previsao</th>
                     <th class="px-4 py-3">Total</th>
@@ -35,13 +36,14 @@
                         <td class="px-4 py-3 font-semibold">{{ $washOrder->code }}</td>
                         <td class="px-4 py-3">{{ $washOrder->customer->name }}</td>
                         <td class="px-4 py-3">{{ $washOrder->vehicle->plate }}<br><span class="text-zinc-500">{{ $washOrder->vehicle->brand }} {{ $washOrder->vehicle->model }}</span></td>
+                        <td class="px-4 py-3 text-zinc-600">{{ $washOrder->teamMembers->isNotEmpty() ? $washOrder->teamMembers->pluck('name')->join(', ') : '-' }}</td>
                         <td class="px-4 py-3">@include('app.wash-orders._status-badge', ['status' => $washOrder->status, 'label' => $washOrder->statusLabel()])</td>
                         <td class="px-4 py-3">{{ $washOrder->estimated_completion_at?->format('H:i') ?? '-' }}</td>
                         <td class="px-4 py-3">R$ {{ number_format((float) $washOrder->total_amount, 2, ',', '.') }}</td>
                         <td class="px-4 py-3 text-right"><a href="{{ route('wash-orders.show', $washOrder) }}" class="font-semibold text-cyan-700">Abrir</a></td>
                     </tr>
                 @empty
-                    <tr><td colspan="7" class="px-4 py-8 text-center text-zinc-500">Nenhuma lavagem encontrada.</td></tr>
+                    <tr><td colspan="8" class="px-4 py-8 text-center text-zinc-500">Nenhuma lavagem encontrada.</td></tr>
                 @endforelse
             </tbody>
         </table>

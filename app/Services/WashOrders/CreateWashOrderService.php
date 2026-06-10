@@ -15,14 +15,16 @@ class CreateWashOrderService
     /**
      * @param  array<string, mixed>  $data
      * @param  array<int>  $serviceIds
+     * @param  array<int>  $teamMemberIds
      */
-    public function handle(array $data, array $serviceIds): WashOrder
+    public function handle(array $data, array $serviceIds, array $teamMemberIds = []): WashOrder
     {
-        return DB::transaction(function () use ($data, $serviceIds) {
+        return DB::transaction(function () use ($data, $serviceIds, $teamMemberIds) {
             $calculation = $this->calculator->handle($serviceIds);
 
             $washOrder = WashOrder::create([
                 ...$data,
+                'assigned_user_id' => $teamMemberIds[0] ?? null,
                 'status' => WashOrder::STATUS_AWAITING,
                 'total_amount' => $calculation['total'],
                 'estimated_completion_at' => now()->addMinutes($calculation['estimated_minutes']),
@@ -38,6 +40,8 @@ class CreateWashOrderService
                 ])->all()
             );
 
+            $washOrder->teamMembers()->sync($teamMemberIds);
+
             $washOrder->statusHistories()->create([
                 'user_id' => auth()->id(),
                 'from_status' => null,
@@ -45,7 +49,7 @@ class CreateWashOrderService
                 'notes' => 'Ordem de lavagem criada.',
             ]);
 
-            return $washOrder->load(['customer', 'vehicle', 'services', 'statusHistories']);
+            return $washOrder->load(['customer', 'vehicle', 'services', 'statusHistories', 'teamMembers']);
         });
     }
 }
