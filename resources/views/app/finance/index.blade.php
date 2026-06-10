@@ -1,5 +1,10 @@
 <x-app.layout heading="Financeiro" title="Financeiro · AutoFlow">
     <div class="space-y-5">
+        <div class="flex flex-wrap justify-end gap-2">
+            <a href="{{ route('finance.cash-registers.index') }}" class="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold">Caixa</a>
+            <a href="{{ route('finance.credit-receivables.index') }}" class="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold">Fiado / contas a receber</a>
+        </div>
+
         <section class="rounded-lg border border-zinc-200 bg-white p-5">
             <form method="GET" action="{{ route('finance.index') }}" class="grid gap-4 md:grid-cols-[1fr_1fr_auto_auto] md:items-end">
                 <label class="block">

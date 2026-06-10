@@ -1,11 +1,14 @@
 <?php
 
+use App\Http\Controllers\App\CashRegisterController;
+use App\Http\Controllers\App\CreditReceivableController;
 use App\Http\Controllers\App\CustomerController;
 use App\Http\Controllers\App\DashboardController;
 use App\Http\Controllers\App\EmployeeController;
 use App\Http\Controllers\App\FinanceController;
 use App\Http\Controllers\App\PaymentController;
 use App\Http\Controllers\App\ServiceController;
+use App\Http\Controllers\App\SettingsController;
 use App\Http\Controllers\App\VehicleController;
 use App\Http\Controllers\App\WashHistoryController;
 use App\Http\Controllers\App\WashKanbanController;
@@ -62,6 +65,14 @@ Route::middleware('auth')->group(function () {
     Route::middleware('role:'.User::ROLE_ADMIN)->group(function () {
         Route::get('financeiro', [FinanceController::class, 'index'])->name('finance.index');
         Route::get('financeiro/exportar', [FinanceController::class, 'export'])->name('finance.export');
+        Route::get('financeiro/caixa', [CashRegisterController::class, 'index'])->name('finance.cash-registers.index');
+        Route::post('financeiro/caixa', [CashRegisterController::class, 'store'])->name('finance.cash-registers.store');
+        Route::post('financeiro/caixa/{cashRegister}/movimentacoes', [CashRegisterController::class, 'movement'])->name('finance.cash-registers.movements.store');
+        Route::patch('financeiro/caixa/{cashRegister}/fechar', [CashRegisterController::class, 'close'])->name('finance.cash-registers.close');
+        Route::get('financeiro/fiado', [CreditReceivableController::class, 'index'])->name('finance.credit-receivables.index');
+        Route::patch('financeiro/fiado/{washOrder}/receber', [CreditReceivableController::class, 'receive'])->name('finance.credit-receivables.receive');
+        Route::get('configuracoes', [SettingsController::class, 'edit'])->name('settings.edit');
+        Route::put('configuracoes', [SettingsController::class, 'update'])->name('settings.update');
         Route::resource('servicos', ServiceController::class)->parameters(['servicos' => 'service'])->names('services')->except(['show', 'destroy']);
         Route::resource('funcionarios', EmployeeController::class)->parameters(['funcionarios' => 'employee'])->names('employees')->except(['show', 'destroy']);
     });

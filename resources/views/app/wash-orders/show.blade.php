@@ -142,9 +142,17 @@
             </section>
 
             <section class="mb-5 rounded-md border border-cyan-200 bg-cyan-50 p-4">
-                <h2 class="font-semibold text-cyan-950">Notificacao manual</h2>
-                <p class="mt-1 text-xs text-cyan-800">Prepare a mensagem e envie manualmente pelo WhatsApp. Nenhuma API paga e usada nesta fase.</p>
+                <h2 class="font-semibold text-cyan-950">Link do cliente</h2>
+                <p class="mt-1 text-xs text-cyan-800">Compartilhe este link para o cliente acompanhar a lavagem em tempo real.</p>
                 <a href="{{ $washOrder->trackingUrl() }}" target="_blank" class="mt-3 block break-all text-sm font-medium text-cyan-800">{{ $washOrder->trackingUrl() }}</a>
+                @if ($washOrder->customer->whatsappTrackingUrl($washOrder))
+                    <a href="{{ $washOrder->customer->whatsappTrackingUrl($washOrder) }}" target="_blank" rel="noopener" class="mt-3 inline-flex rounded-md bg-emerald-700 px-3 py-2 text-xs font-semibold text-white">Compartilhar via WhatsApp</a>
+                @endif
+
+                <div class="mt-5 border-t border-cyan-200 pt-4">
+                    <h3 class="font-semibold text-cyan-950">Notificacao manual</h3>
+                    <p class="mt-1 text-xs text-cyan-800">Prepare a mensagem e envie manualmente pelo WhatsApp. Nenhuma API paga e usada nesta fase.</p>
+                </div>
 
                 <form method="POST" action="{{ route('wash-orders.notifications.whatsapp-manual.store', $washOrder) }}" class="mt-4 space-y-3">
                     @csrf

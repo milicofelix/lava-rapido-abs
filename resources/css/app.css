@@ -9,3 +9,82 @@
     --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
         'Segoe UI Symbol', 'Noto Color Emoji';
 }
+
+
+/* AutoFlow theme layer: keeps the first dark-mode patch low-risk even before every Blade is fully componentized. */
+:root {
+    color-scheme: light;
+}
+
+body[data-theme-effective="dark"] {
+    color-scheme: dark;
+}
+
+body[data-theme-effective="dark"] .bg-white,
+body[data-theme-effective="dark"] .bg-slate-50,
+body[data-theme-effective="dark"] .bg-zinc-50 {
+    background-color: rgb(15 23 42 / 1) !important;
+}
+
+body[data-theme-effective="dark"] .bg-white\/95 {
+    background-color: rgb(2 6 23 / 0.95) !important;
+}
+
+body[data-theme-effective="dark"] .bg-slate-100,
+body[data-theme-effective="dark"] .hover\:bg-slate-50:hover,
+body[data-theme-effective="dark"] .hover\:bg-slate-100:hover {
+    background-color: rgb(30 41 59 / 1) !important;
+}
+
+body[data-theme-effective="dark"] .bg-blue-50 {
+    background-color: rgb(23 37 84 / 0.55) !important;
+}
+
+body[data-theme-effective="dark"] .bg-emerald-50 {
+    background-color: rgb(6 78 59 / 0.35) !important;
+}
+
+body[data-theme-effective="dark"] .border-slate-200,
+body[data-theme-effective="dark"] .border-slate-300,
+body[data-theme-effective="dark"] .border-blue-100,
+body[data-theme-effective="dark"] .border-emerald-200 {
+    border-color: rgb(51 65 85 / 1) !important;
+}
+
+body[data-theme-effective="dark"] .text-slate-950,
+body[data-theme-effective="dark"] .text-zinc-950,
+body[data-theme-effective="dark"] .text-slate-900,
+body[data-theme-effective="dark"] .text-slate-800,
+body[data-theme-effective="dark"] .text-slate-700,
+body[data-theme-effective="dark"] .text-blue-950,
+body[data-theme-effective="dark"] .text-emerald-900 {
+    color: rgb(241 245 249 / 1) !important;
+}
+
+body[data-theme-effective="dark"] .text-slate-600,
+body[data-theme-effective="dark"] .text-slate-500 {
+    color: rgb(148 163 184 / 1) !important;
+}
+
+body[data-theme-effective="dark"] .text-blue-700 {
+    color: rgb(125 211 252 / 1) !important;
+}
+
+body[data-theme-effective="dark"] input,
+body[data-theme-effective="dark"] select,
+body[data-theme-effective="dark"] textarea {
+    background-color: rgb(15 23 42 / 1);
+    border-color: rgb(51 65 85 / 1);
+    color: rgb(241 245 249 / 1);
+}
+
+body[data-theme-effective="dark"] input::placeholder,
+body[data-theme-effective="dark"] textarea::placeholder {
+    color: rgb(100 116 139 / 1);
+}
+
+body[data-theme-effective="dark"] .shadow-sm,
+body[data-theme-effective="dark"] .shadow,
+body[data-theme-effective="dark"] .shadow-lg {
+    box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.35) !important;
+}
