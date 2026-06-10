@@ -15,6 +15,7 @@ use App\Http\Controllers\App\WashKanbanController;
 use App\Http\Controllers\App\WashLocationMapController;
 use App\Http\Controllers\App\WashNotificationController;
 use App\Http\Controllers\App\WashOrderController;
+use App\Http\Controllers\App\WashOrderReceiptController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\PublicWashTrackingController;
 use App\Models\User;
@@ -50,6 +51,7 @@ Route::middleware('auth')->group(function () {
 
     Route::get('lavagens', [WashOrderController::class, 'index'])->name('wash-orders.index');
     Route::get('lavagens/{wash_order}', [WashOrderController::class, 'show'])->name('wash-orders.show');
+    Route::get('lavagens/{wash_order}/recibo', WashOrderReceiptController::class)->name('wash-orders.receipt');
 
     Route::patch('lavagens/{wash_order}/status', [WashOrderController::class, 'updateStatus'])
         ->middleware('role:'.User::ROLE_ADMIN.','.User::ROLE_OPERATOR)
