@@ -680,6 +680,7 @@
 
                                 <div class="mt-4 flex flex-wrap gap-2">
                                     <a href="#" data-focus-location="{{ $location->id }}" class="rounded-xl border border-slate-200 px-3 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50">Ver no mapa</a>
+                                    <a href="{{ route('public.locations.show', $location) }}" class="rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-xs font-bold text-blue-700 hover:bg-blue-100">Ver detalhes</a>
                                     @if ($whatsapp)
                                         <a href="{{ $whatsapp }}" target="_blank" rel="noopener" class="rounded-xl bg-green-600 px-3 py-2 text-xs font-bold text-white">Chamar no WhatsApp</a>
                                     @endif
@@ -860,7 +861,10 @@
                                 ${whatsappButton}
                                 <a class="autoflow-popup-button" href="${escapeHtml(directionsUrl)}" target="_blank" rel="noopener">Como chegar</a>
                             </div>
-                            <a class="autoflow-popup-button is-full" href="#unidade-${escapeHtml(location.id)}" data-popup-focus-location="${escapeHtml(location.id)}">Ver na lista</a>
+                            <div class="autoflow-popup-action-row">
+                                <a class="autoflow-popup-button" href="#unidade-${escapeHtml(location.id)}" data-popup-focus-location="${escapeHtml(location.id)}">Ver na lista</a>
+                                <a class="autoflow-popup-button" href="${escapeHtml(location.detail_url || '#')}">Ver detalhes</a>
+                            </div>
                         </div>
                     </div>
                 `;

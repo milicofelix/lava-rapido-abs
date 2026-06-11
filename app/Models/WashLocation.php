@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Str;
 
 class WashLocation extends Model
 {
@@ -14,6 +15,7 @@ class WashLocation extends Model
 
     protected $fillable = [
         'name',
+        'slug',
         'address',
         'district',
         'city',
@@ -25,6 +27,42 @@ class WashLocation extends Model
         'active_orders_count',
         'phone',
     ];
+
+
+    protected static function booted(): void
+    {
+        static::saving(function (WashLocation $location): void {
+            if ($location->slug !== null && $location->slug !== '') {
+                $location->slug = Str::slug($location->slug);
+            }
+
+            if ($location->slug === null || $location->slug === '' || $location->isDirty('name')) {
+                $location->slug = static::uniqueSlugFor($location->name, $location->id);
+            }
+        });
+    }
+
+    public function getRouteKeyName(): string
+    {
+        return 'slug';
+    }
+
+    public static function uniqueSlugFor(string $name, ?int $ignoreId = null): string
+    {
+        $baseSlug = Str::slug($name) ?: 'lava-rapido';
+        $slug = $baseSlug;
+        $suffix = 2;
+
+        while (static::query()
+            ->when($ignoreId, fn ($query) => $query->whereKeyNot($ignoreId))
+            ->where('slug', $slug)
+            ->exists()) {
+            $slug = $baseSlug.'-'.$suffix;
+            $suffix++;
+        }
+
+        return $slug;
+    }
 
     protected function casts(): array
     {

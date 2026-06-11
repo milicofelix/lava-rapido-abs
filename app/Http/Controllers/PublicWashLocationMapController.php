@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Service;
 use App\Models\WashLocation;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -43,6 +44,7 @@ class PublicWashLocationMapController extends Controller
             'mapLocations' => $locations->map(fn (WashLocation $location) => [
                 'id' => $location->id,
                 'name' => $location->name,
+                'detail_url' => route('public.locations.show', $location),
                 'address' => $location->fullAddress(),
                 'district' => $location->district,
                 'city' => $location->city,
@@ -54,5 +56,30 @@ class PublicWashLocationMapController extends Controller
                 'longitude' => $location->mapLongitude(),
             ])->values(),
         ]);
+    }
+
+    public function show(WashLocation $location): View
+    {
+        $services = Service::query()
+            ->where('active', true)
+            ->orderBy('category')
+            ->orderBy('name')
+            ->get();
+
+        return view('public.locations.show', [
+            'location' => $location,
+            'services' => $services,
+            'whatsappUrl' => $location->whatsappUrl(),
+            'directionsUrl' => $this->directionsUrl($location),
+        ]);
+    }
+
+    private function directionsUrl(WashLocation $location): string
+    {
+        return sprintf(
+            'https://www.google.com/maps/dir/?api=1&destination=%s,%s',
+            $location->mapLatitude(),
+            $location->mapLongitude(),
+        );
     }
 }

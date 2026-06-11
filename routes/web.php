@@ -23,6 +23,7 @@ use Illuminate\Support\Facades\Route;
 
 Route::redirect('/', '/lava-rapidos');
 Route::get('/lava-rapidos', PublicWashLocationMapController::class)->name('public.locations.index');
+Route::get('/lava-rapidos/{location:slug}', [PublicWashLocationMapController::class, 'show'])->name('public.locations.show');
 Route::redirect('/unidades', '/lava-rapidos');
 Route::get('/lavagens/acompanhamento/{code}', PublicWashTrackingController::class)->name('tracking.show');
 Route::get('/lavagens/acompanhamento/{code}/feed', [PublicWashTrackingController::class, 'feed'])->name('tracking.feed');

@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\App;
 
+use App\Models\Service;
 use App\Models\User;
 use App\Models\WashLocation;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -36,6 +37,8 @@ class WashLocationMapTest extends TestCase
             ->assertSee('Como chegar')
             ->assertSee('Ver na lista')
             ->assertSee('Lava Rapido Central')
+            ->assertSee('Ver detalhes')
+            ->assertSee('/lava-rapidos/lava-rapido-central', false)
             ->assertSee('Av. das Nacoes, 1580')
             ->assertSee('-23.54891')
             ->assertSee('-46.63412')
@@ -125,4 +128,40 @@ class WashLocationMapTest extends TestCase
         $this->actingAs($user)->get('/mapa')
             ->assertNotFound();
     }
+
+    public function test_visitor_can_view_public_location_detail_page(): void
+    {
+        $location = WashLocation::query()->create([
+            'name' => 'Lava Rapido Central',
+            'address' => 'Av. das Nacoes, 1580',
+            'district' => 'Centro',
+            'city' => 'Sao Paulo',
+            'status' => WashLocation::STATUS_OPEN,
+            'latitude' => -23.54891,
+            'longitude' => -46.63412,
+            'active_orders_count' => 18,
+            'phone' => '(11) 98888-1101',
+        ]);
+
+        Service::query()->create([
+            'name' => 'Lavagem completa',
+            'description' => 'Lavagem externa e interna.',
+            'base_price' => 60,
+            'estimated_minutes' => 50,
+            'active' => true,
+            'category' => 'Lavagem',
+        ]);
+
+        $this->get(route('public.locations.show', $location))
+            ->assertOk()
+            ->assertSee('Detalhes da unidade')
+            ->assertSee('Lava Rapido Central')
+            ->assertSee('Av. das Nacoes, 1580')
+            ->assertSee('Serviços disponíveis')
+            ->assertSee('Lavagem completa')
+            ->assertSee('Chamar no WhatsApp')
+            ->assertSee('Como chegar')
+            ->assertSee('https://wa.me/5511988881101', false);
+    }
+
 }
