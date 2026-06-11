@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Service;
 use App\Models\WashLocation;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -11,10 +12,25 @@ class PublicWashLocationMapController extends Controller
     public function __invoke(Request $request): View
     {
         $status = trim((string) $request->query('status'));
+        $search = trim((string) $request->query('q'));
+        $onlyOpen = $request->boolean('only_open');
 
         $locations = WashLocation::query()
-            ->when($status !== '', fn ($query) => $query->where('status', $status))
-            ->orderByRaw("status = ? desc", [WashLocation::STATUS_OPEN])
+            ->when($onlyOpen, fn ($query) => $query->where('status', WashLocation::STATUS_OPEN))
+            ->when(! $onlyOpen && $status !== '', fn ($query) => $query->where('status', $status))
+            ->when($search !== '', function ($query) use ($search) {
+                $like = '%'.$search.'%';
+
+                $query->where(function ($query) use ($like) {
+                    $query
+                        ->where('name', 'like', $like)
+                        ->orWhere('address', 'like', $like)
+                        ->orWhere('district', 'like', $like)
+                        ->orWhere('city', 'like', $like)
+                        ->orWhere('phone', 'like', $like);
+                });
+            })
+            ->orderByRaw('status = ? desc', [WashLocation::STATUS_OPEN])
             ->orderByDesc('active_orders_count')
             ->orderBy('name')
             ->get();
@@ -22,10 +38,13 @@ class PublicWashLocationMapController extends Controller
         return view('public.locations.index', [
             'locations' => $locations,
             'status' => $status,
+            'search' => $search,
+            'onlyOpen' => $onlyOpen,
             'statuses' => WashLocation::statuses(),
             'mapLocations' => $locations->map(fn (WashLocation $location) => [
                 'id' => $location->id,
                 'name' => $location->name,
+                'detail_url' => route('public.locations.show', $location),
                 'address' => $location->fullAddress(),
                 'district' => $location->district,
                 'city' => $location->city,
@@ -37,5 +56,30 @@ class PublicWashLocationMapController extends Controller
                 'longitude' => $location->mapLongitude(),
             ])->values(),
         ]);
+    }
+
+    public function show(WashLocation $location): View
+    {
+        $services = Service::query()
+            ->where('active', true)
+            ->orderBy('category')
+            ->orderBy('name')
+            ->get();
+
+        return view('public.locations.show', [
+            'location' => $location,
+            'services' => $services,
+            'whatsappUrl' => $location->whatsappUrl(),
+            'directionsUrl' => $this->directionsUrl($location),
+        ]);
+    }
+
+    private function directionsUrl(WashLocation $location): string
+    {
+        return sprintf(
+            'https://www.google.com/maps/dir/?api=1&destination=%s,%s',
+            $location->mapLatitude(),
+            $location->mapLongitude(),
+        );
     }
 }
