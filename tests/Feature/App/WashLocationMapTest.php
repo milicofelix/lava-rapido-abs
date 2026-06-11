@@ -33,6 +33,8 @@ class WashLocationMapTest extends TestCase
             ->assertSee('Buscar por nome, bairro ou endereço')
             ->assertSee('Somente abertos')
             ->assertSee('Todos os status')
+            ->assertSee('Como chegar')
+            ->assertSee('Ver na lista')
             ->assertSee('Lava Rapido Central')
             ->assertSee('Av. das Nacoes, 1580')
             ->assertSee('-23.54891')

@@ -265,6 +265,66 @@
             font-weight: 900;
         }
 
+
+
+        #autoflow-public-map .autoflow-popup-actions {
+            display: grid;
+            gap: 8px;
+            padding: 0 12px 12px;
+        }
+
+        #autoflow-public-map .autoflow-popup-action-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+
+        #autoflow-public-map .autoflow-popup-button {
+            display: inline-flex;
+            min-height: 38px;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            border-radius: 12px;
+            border: 1px solid #e2e8f0;
+            background: #ffffff;
+            padding: 8px 10px;
+            color: #334155;
+            font-size: 12px;
+            font-weight: 900;
+            text-align: center;
+            text-decoration: none;
+            transition: background 150ms ease, border-color 150ms ease, transform 150ms ease;
+        }
+
+        #autoflow-public-map .autoflow-popup-button:hover {
+            border-color: #bfdbfe;
+            background: #eff6ff;
+            color: #1d4ed8;
+            transform: translateY(-1px);
+        }
+
+        #autoflow-public-map .autoflow-popup-button.is-whatsapp {
+            border-color: #bbf7d0;
+            background: #16a34a;
+            color: #ffffff;
+        }
+
+        #autoflow-public-map .autoflow-popup-button.is-whatsapp:hover {
+            background: #15803d;
+            color: #ffffff;
+        }
+
+        #autoflow-public-map .autoflow-popup-button.is-full {
+            grid-column: 1 / -1;
+        }
+
+        .autoflow-location-card.is-active {
+            border-color: #2563eb;
+            background: linear-gradient(135deg, #dbeafe, #ffffff 64%);
+            box-shadow: 0 22px 44px rgba(37, 99, 235, 0.18);
+        }
+
         #autoflow-public-map .autoflow-map-marker span {
             display: grid;
             width: 34px;
@@ -698,6 +758,52 @@
                 return earthRadiusInKm * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
             };
 
+
+            const buildWhatsappUrl = (phone, locationName) => {
+                const digits = String(phone || '').replace(/\D/g, '');
+
+                if (! digits) {
+                    return null;
+                }
+
+                const normalized = digits.startsWith('55') ? digits : `55${digits}`;
+                const message = `Olá! Vim pelo AutoFlow e gostaria de informações sobre ${locationName || 'a unidade'}.`;
+
+                return `https://wa.me/${normalized}?text=${encodeURIComponent(message)}`;
+            };
+
+            const buildDirectionsUrl = (location) => {
+                const latitude = Number(location.latitude);
+                const longitude = Number(location.longitude);
+
+                if (Number.isFinite(latitude) && Number.isFinite(longitude)) {
+                    return `https://www.google.com/maps/dir/?api=1&destination=${latitude},${longitude}`;
+                }
+
+                return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent([location.address, location.city].filter(Boolean).join(' '))}`;
+            };
+
+            const clearActiveLocationCards = () => {
+                document.querySelectorAll('[data-location-card].is-active').forEach((card) => {
+                    card.classList.remove('is-active');
+                });
+            };
+
+            const highlightLocationCard = (locationId, shouldScroll = true) => {
+                const card = document.querySelector(`[data-location-card][data-location-id="${locationId}"]`);
+
+                if (! card) {
+                    return;
+                }
+
+                clearActiveLocationCards();
+                card.classList.add('is-active');
+
+                if (shouldScroll) {
+                    card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+            };
+
             const formatDistance = (distanceInKm) => {
                 if (! Number.isFinite(distanceInKm)) {
                     return 'Distância indisponível';
@@ -719,6 +825,11 @@
                     : (location.status === 'busy' ? 'background:#ffedd5;color:#c2410c;' : 'background:#dcfce7;color:#15803d;');
                 const popupAddress = [location.address, location.city].filter(Boolean).join(' - ');
                 const popupPhone = location.phone || 'Não informado';
+                const whatsappUrl = buildWhatsappUrl(location.phone, location.name);
+                const directionsUrl = buildDirectionsUrl(location);
+                const whatsappButton = whatsappUrl
+                    ? `<a class="autoflow-popup-button is-whatsapp" href="${escapeHtml(whatsappUrl)}" target="_blank" rel="noopener">WhatsApp</a>`
+                    : `<span class="autoflow-popup-button" aria-disabled="true">Sem WhatsApp</span>`;
 
                 return `
                     <div class="autoflow-popup-card">
@@ -744,6 +855,13 @@
                                 <span class="autoflow-popup-value">${escapeHtml(popupPhone)}</span>
                             </div>
                         </div>
+                        <div class="autoflow-popup-actions">
+                            <div class="autoflow-popup-action-row">
+                                ${whatsappButton}
+                                <a class="autoflow-popup-button" href="${escapeHtml(directionsUrl)}" target="_blank" rel="noopener">Como chegar</a>
+                            </div>
+                            <a class="autoflow-popup-button is-full" href="#unidade-${escapeHtml(location.id)}" data-popup-focus-location="${escapeHtml(location.id)}">Ver na lista</a>
+                        </div>
                     </div>
                 `;
             };
@@ -754,6 +872,9 @@
                     maxWidth: 260,
                     className: 'autoflow-location-popup',
                 });
+
+                marker.off('popupopen');
+                marker.on('popupopen', () => highlightLocationCard(location.id, false));
             };
 
             locations.forEach((location) => {
@@ -800,6 +921,17 @@
             if ('ResizeObserver' in window) {
                 new ResizeObserver(() => map.invalidateSize({ animate: false })).observe(mapElement);
             }
+
+            mapElement.addEventListener('click', (event) => {
+                const focusLink = event.target.closest('[data-popup-focus-location]');
+
+                if (! focusLink) {
+                    return;
+                }
+
+                event.preventDefault();
+                highlightLocationCard(focusLink.dataset.popupFocusLocation, true);
+            });
 
             const applyUserLocationDistances = (latitude, longitude) => {
                 const rankedLocations = locations
@@ -917,6 +1049,7 @@
                     map.invalidateSize({ animate: false });
                     map.setView(marker.getLatLng(), 15);
                     marker.openPopup();
+                    highlightLocationCard(link.dataset.focusLocation, true);
                 });
             });
         });
