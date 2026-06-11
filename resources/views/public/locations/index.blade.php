@@ -504,6 +504,87 @@
             display: none;
         }
 
+        .autoflow-favorites-toggle {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.45rem;
+            border-radius: 999px;
+            border: 1px solid #fde68a;
+            background: #fffbeb;
+            padding: 0.45rem 0.75rem;
+            color: #92400e;
+            font-size: 0.72rem;
+            font-weight: 900;
+            transition: transform 150ms ease, box-shadow 150ms ease, background 150ms ease;
+        }
+
+        .autoflow-favorites-toggle:hover,
+        .autoflow-favorites-toggle.is-active {
+            background: #f59e0b;
+            color: #ffffff;
+            box-shadow: 0 12px 24px rgba(245, 158, 11, 0.24);
+            transform: translateY(-1px);
+        }
+
+        .autoflow-favorite-button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.35rem;
+            border-radius: 999px;
+            border: 1px solid #e2e8f0;
+            background: #ffffff;
+            padding: 0.5rem 0.75rem;
+            color: #475569;
+            font-size: 0.75rem;
+            font-weight: 900;
+            transition: transform 150ms ease, border-color 150ms ease, background 150ms ease, color 150ms ease;
+        }
+
+        .autoflow-favorite-button:hover,
+        .autoflow-favorite-button.is-favorite {
+            border-color: #fbbf24;
+            background: #fffbeb;
+            color: #92400e;
+            transform: translateY(-1px);
+        }
+
+        .autoflow-favorite-badge {
+            display: none;
+            align-items: center;
+            gap: 0.3rem;
+            border-radius: 999px;
+            background: #fef3c7;
+            padding: 0.35rem 0.65rem;
+            color: #92400e;
+            font-size: 0.7rem;
+            font-weight: 900;
+        }
+
+        .autoflow-location-card.is-favorite .autoflow-favorite-badge {
+            display: inline-flex;
+        }
+
+        .autoflow-location-card.is-hidden-by-favorites {
+            display: none;
+        }
+
+        .autoflow-empty-favorites-message {
+            display: none;
+            border-radius: 1rem;
+            border: 1px dashed #fbbf24;
+            background: #fffbeb;
+            padding: 1rem;
+            color: #92400e;
+            font-size: 0.85rem;
+            font-weight: 800;
+            text-align: center;
+        }
+
+        .autoflow-empty-favorites-message.is-visible {
+            display: block;
+        }
+
         @media (max-width: 640px) {
             #autoflow-public-map {
                 height: 520px;
@@ -639,6 +720,10 @@
                             </p>
                         </div>
                         <div class="flex flex-wrap items-center gap-2">
+                            <button type="button" data-favorites-filter class="autoflow-favorites-toggle" aria-pressed="false">
+                                ⭐ Meus favoritos
+                                <span data-favorites-count>0</span>
+                            </button>
                             <span data-proximity-summary class="autoflow-proximity-summary">📍 Use sua localização para ordenar por proximidade</span>
                             <span class="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-600">{{ $locations->count() }}</span>
                         </div>
@@ -662,6 +747,7 @@
                                         <div class="mt-3 flex flex-wrap items-center gap-2">
                                             <span data-distance-label class="autoflow-distance-pill">📍 Distância após localização</span>
                                             <span data-closest-badge class="autoflow-closest-badge hidden">Mais próximo</span>
+                                            <span class="autoflow-favorite-badge">⭐ Favorito</span>
                                         </div>
                                     </div>
                                     <span class="shrink-0 rounded-full px-2.5 py-1 text-xs font-black {{ $badgeClass }}">{{ $location->statusLabel() }}</span>
@@ -679,6 +765,7 @@
                                 </div>
 
                                 <div class="mt-4 flex flex-wrap gap-2">
+                                    <button type="button" data-favorite-toggle data-location-id="{{ $location->id }}" class="autoflow-favorite-button" aria-pressed="false">☆ Favoritar</button>
                                     <a href="#" data-focus-location="{{ $location->id }}" class="rounded-xl border border-slate-200 px-3 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50">Ver no mapa</a>
                                     <a href="{{ route('public.locations.show', $location) }}" class="rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-xs font-bold text-blue-700 hover:bg-blue-100">Ver detalhes</a>
                                     @if ($whatsapp)
@@ -689,6 +776,9 @@
                         @empty
                             <p class="rounded-2xl border border-dashed border-slate-200 px-4 py-10 text-center text-sm text-slate-500">Nenhum lava-rápido encontrado com os filtros atuais.</p>
                         @endforelse
+                        <div data-empty-favorites class="autoflow-empty-favorites-message">
+                            Nenhum lava-rápido favorito ainda. Clique em “Favoritar” em uma unidade para vê-la aqui.
+                        </div>
                     </div>
                 </section>
             </aside>
@@ -705,6 +795,11 @@
             const toastElement = document.querySelector('[data-map-toast]');
             const locationsListElement = document.querySelector('[data-locations-list]');
             const proximitySummaryElement = document.querySelector('[data-proximity-summary]');
+            const favoritesFilterButton = document.querySelector('[data-favorites-filter]');
+            const favoritesCountElement = document.querySelector('[data-favorites-count]');
+            const emptyFavoritesElement = document.querySelector('[data-empty-favorites]');
+            const favoriteStorageKey = 'autoflow.favoriteLocations';
+            let showOnlyFavorites = false;
 
             if (! mapElement || ! window.L) {
                 return;
@@ -817,6 +912,67 @@
                 return `${distanceInKm.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} km de você`;
             };
 
+            const readFavoriteLocations = () => {
+                try {
+                    return new Set(JSON.parse(window.localStorage.getItem(favoriteStorageKey) || '[]').map(String));
+                } catch (error) {
+                    return new Set();
+                }
+            };
+
+            const writeFavoriteLocations = (favorites) => {
+                window.localStorage.setItem(favoriteStorageKey, JSON.stringify([...favorites]));
+            };
+
+            const refreshFavoriteUi = () => {
+                const favorites = readFavoriteLocations();
+                let visibleFavoriteCards = 0;
+
+                document.querySelectorAll('[data-location-card]').forEach((card) => {
+                    const isFavorite = favorites.has(String(card.dataset.locationId));
+                    card.classList.toggle('is-favorite', isFavorite);
+                    card.classList.toggle('is-hidden-by-favorites', showOnlyFavorites && ! isFavorite);
+
+                    if (showOnlyFavorites && isFavorite) {
+                        visibleFavoriteCards += 1;
+                    }
+                });
+
+                document.querySelectorAll('[data-favorite-toggle]').forEach((button) => {
+                    const isFavorite = favorites.has(String(button.dataset.locationId));
+                    button.classList.toggle('is-favorite', isFavorite);
+                    button.setAttribute('aria-pressed', isFavorite ? 'true' : 'false');
+                    button.textContent = isFavorite ? '★ Favorito' : '☆ Favoritar';
+                });
+
+                if (favoritesCountElement) {
+                    favoritesCountElement.textContent = String(favorites.size);
+                }
+
+                if (favoritesFilterButton) {
+                    favoritesFilterButton.classList.toggle('is-active', showOnlyFavorites);
+                    favoritesFilterButton.setAttribute('aria-pressed', showOnlyFavorites ? 'true' : 'false');
+                }
+
+                emptyFavoritesElement?.classList.toggle('is-visible', showOnlyFavorites && visibleFavoriteCards === 0);
+            };
+
+            const toggleFavoriteLocation = (locationId) => {
+                const favorites = readFavoriteLocations();
+                const normalizedLocationId = String(locationId);
+
+                if (favorites.has(normalizedLocationId)) {
+                    favorites.delete(normalizedLocationId);
+                    showMapToast('Lava-rápido removido dos favoritos.');
+                } else {
+                    favorites.add(normalizedLocationId);
+                    showMapToast('Lava-rápido salvo nos favoritos.');
+                }
+
+                writeFavoriteLocations(favorites);
+                refreshFavoriteUi();
+            };
+
             const buildPopupContent = (location) => {
                 const distanceLabel = locationDistances.has(String(location.id))
                     ? formatDistance(locationDistances.get(String(location.id)))
@@ -857,6 +1013,9 @@
                             </div>
                         </div>
                         <div class="autoflow-popup-actions">
+                            <div class="autoflow-popup-action-row">
+                                <a class="autoflow-popup-button is-full" href="#" data-popup-favorite-location="${escapeHtml(location.id)}">Favoritar unidade</a>
+                            </div>
                             <div class="autoflow-popup-action-row">
                                 ${whatsappButton}
                                 <a class="autoflow-popup-button" href="${escapeHtml(directionsUrl)}" target="_blank" rel="noopener">Como chegar</a>
@@ -927,6 +1086,14 @@
             }
 
             mapElement.addEventListener('click', (event) => {
+                const favoriteLink = event.target.closest('[data-popup-favorite-location]');
+
+                if (favoriteLink) {
+                    event.preventDefault();
+                    toggleFavoriteLocation(favoriteLink.dataset.popupFavoriteLocation);
+                    return;
+                }
+
                 const focusLink = event.target.closest('[data-popup-focus-location]');
 
                 if (! focusLink) {
@@ -1040,6 +1207,17 @@
                     geolocationButton.querySelector('span:last-child').textContent = 'Minha localização';
                 }, 1200);
             });
+
+            document.querySelectorAll('[data-favorite-toggle]').forEach((button) => {
+                button.addEventListener('click', () => toggleFavoriteLocation(button.dataset.locationId));
+            });
+
+            favoritesFilterButton?.addEventListener('click', () => {
+                showOnlyFavorites = ! showOnlyFavorites;
+                refreshFavoriteUi();
+            });
+
+            refreshFavoriteUi();
 
             document.querySelectorAll('[data-focus-location]').forEach((link) => {
                 link.addEventListener('click', (event) => {
