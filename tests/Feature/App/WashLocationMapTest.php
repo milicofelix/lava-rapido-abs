@@ -34,6 +34,18 @@ class WashLocationMapTest extends TestCase
             ->assertSee('Av. das Nacoes, 1580')
             ->assertSee('-23.54891')
             ->assertSee('-46.63412')
+            ->assertSee('Minha localização')
+            ->assertSee('Centralizar')
+            ->assertSee('Use sua localização para ordenar por proximidade')
+            ->assertSee('Distância após localização')
+            ->assertSee('Mais próximo')
+            ->assertSee('calculateDistanceInKm', false)
+            ->assertSee('data-locations-list', false)
+            ->assertSee('data-distance-label', false)
+            ->assertSee('data-closest-badge', false)
+            ->assertSee('Não foi possível acessar sua localização')
+            ->assertSee('data-map-geolocation', false)
+            ->assertSee('data-map-reset', false)
             ->assertSee('https://wa.me/5511988881101', false);
     }
 

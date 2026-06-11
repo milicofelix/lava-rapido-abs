@@ -278,9 +278,194 @@
             box-shadow: 0 12px 24px rgba(15, 23, 42, 0.28);
         }
 
+
+        #autoflow-public-map .leaflet-control-zoom {
+            border: 0 !important;
+            border-radius: 18px;
+            overflow: hidden;
+            box-shadow: 0 18px 36px rgba(15, 23, 42, 0.22);
+        }
+
+        #autoflow-public-map .leaflet-control-zoom a {
+            display: grid;
+            width: 46px;
+            height: 46px;
+            place-items: center;
+            border: 0 !important;
+            color: #0f172a;
+            font-size: 1.35rem;
+            font-weight: 900;
+            line-height: 1;
+        }
+
+        #autoflow-public-map .leaflet-control-zoom a:first-child {
+            border-bottom: 1px solid #e2e8f0 !important;
+        }
+
+        #autoflow-public-map .leaflet-control-attribution {
+            border-radius: 999px 0 0 0;
+            background: rgba(255, 255, 255, 0.86);
+            padding: 4px 8px;
+            font-size: 0.68rem;
+            backdrop-filter: blur(10px);
+        }
+
+        .autoflow-map-actions {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            z-index: 900;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            pointer-events: none;
+        }
+
+        .autoflow-map-action-button {
+            display: inline-flex;
+            min-height: 44px;
+            align-items: center;
+            justify-content: center;
+            gap: 0.45rem;
+            border-radius: 999px;
+            border: 1px solid rgba(226, 232, 240, 0.92);
+            background: rgba(255, 255, 255, 0.94);
+            padding: 0.72rem 0.95rem;
+            color: #0f172a;
+            font-size: 0.78rem;
+            font-weight: 900;
+            box-shadow: 0 18px 38px rgba(15, 23, 42, 0.20);
+            backdrop-filter: blur(12px);
+            pointer-events: auto;
+            transition: transform 150ms ease, box-shadow 150ms ease, background 150ms ease;
+        }
+
+        .autoflow-map-action-button:hover {
+            transform: translateY(-1px);
+            background: #ffffff;
+            box-shadow: 0 22px 44px rgba(15, 23, 42, 0.24);
+        }
+
+        .autoflow-map-action-button:disabled {
+            cursor: not-allowed;
+            opacity: 0.7;
+            transform: none;
+        }
+
+        .autoflow-map-action-button.is-primary {
+            border-color: rgba(37, 99, 235, 0.2);
+            background: #2563eb;
+            color: #ffffff;
+        }
+
+        .autoflow-map-toast {
+            position: absolute;
+            right: 1rem;
+            bottom: 1rem;
+            z-index: 910;
+            display: none;
+            max-width: min(360px, calc(100% - 2rem));
+            border-radius: 18px;
+            border: 1px solid rgba(226, 232, 240, 0.95);
+            background: rgba(15, 23, 42, 0.94);
+            padding: 0.85rem 1rem;
+            color: #ffffff;
+            font-size: 0.82rem;
+            font-weight: 700;
+            box-shadow: 0 24px 52px rgba(15, 23, 42, 0.34);
+            backdrop-filter: blur(12px);
+        }
+
+        .autoflow-map-toast.is-visible {
+            display: block;
+        }
+
+        #autoflow-public-map .autoflow-user-marker span {
+            display: grid;
+            width: 22px;
+            height: 22px;
+            place-items: center;
+            border: 4px solid #fff;
+            border-radius: 999px;
+            background: #0ea5e9;
+            box-shadow: 0 0 0 8px rgba(14, 165, 233, 0.20), 0 12px 24px rgba(15, 23, 42, 0.28);
+        }
+
+
+        .autoflow-proximity-summary {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.45rem;
+            border-radius: 999px;
+            background: #eff6ff;
+            padding: 0.45rem 0.75rem;
+            color: #1d4ed8;
+            font-size: 0.72rem;
+            font-weight: 900;
+        }
+
+        .autoflow-location-card.is-closest {
+            border-color: #93c5fd;
+            background: linear-gradient(135deg, #eff6ff, #ffffff 62%);
+            box-shadow: 0 18px 36px rgba(37, 99, 235, 0.14);
+        }
+
+        .autoflow-distance-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            border-radius: 999px;
+            background: #f1f5f9;
+            padding: 0.35rem 0.65rem;
+            color: #475569;
+            font-size: 0.72rem;
+            font-weight: 900;
+        }
+
+        .autoflow-distance-pill.has-distance {
+            background: #dbeafe;
+            color: #1d4ed8;
+        }
+
+        .autoflow-closest-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+            border-radius: 999px;
+            background: #2563eb;
+            padding: 0.35rem 0.65rem;
+            color: #ffffff;
+            font-size: 0.7rem;
+            font-weight: 900;
+            box-shadow: 0 12px 24px rgba(37, 99, 235, 0.24);
+        }
+
+        .autoflow-closest-badge.hidden {
+            display: none;
+        }
+
         @media (max-width: 640px) {
             #autoflow-public-map {
                 height: 520px;
+            }
+
+            .autoflow-map-actions {
+                left: 0.75rem;
+                right: 0.75rem;
+                top: 0.75rem;
+                flex-direction: row;
+                flex-wrap: wrap;
+            }
+
+            .autoflow-map-action-button {
+                min-height: 46px;
+                flex: 1 1 auto;
+                padding-inline: 0.8rem;
+            }
+
+            #autoflow-public-map .leaflet-control-zoom a {
+                width: 48px;
+                height: 48px;
             }
         }
     </style>
@@ -324,6 +509,17 @@
 
                 <div class="relative">
                     <div id="autoflow-public-map" class="w-full" data-locations='@json($mapLocations)'></div>
+                    <div class="autoflow-map-actions" aria-label="Controles do mapa">
+                        <button type="button" class="autoflow-map-action-button is-primary" data-map-geolocation>
+                            <span aria-hidden="true">📍</span>
+                            <span>Minha localização</span>
+                        </button>
+                        <button type="button" class="autoflow-map-action-button" data-map-reset>
+                            <span aria-hidden="true">🎯</span>
+                            <span>Centralizar</span>
+                        </button>
+                    </div>
+                    <div class="autoflow-map-toast" data-map-toast role="status" aria-live="polite"></div>
                     <div class="pointer-events-none absolute bottom-4 left-4 max-w-xs rounded-2xl bg-white/95 p-4 text-sm shadow-xl ring-1 ring-slate-200 backdrop-blur">
                         <p class="font-bold text-slate-950">Mapa com OpenStreetMap</p>
                         <p class="mt-1 text-xs leading-5 text-slate-500">Clique nos marcadores para ver endereço, status e WhatsApp da unidade.</p>
@@ -350,15 +546,18 @@
                 </section>
 
                 <section class="rounded-3xl border border-white/10 bg-white p-5 shadow-2xl shadow-black/20">
-                    <div class="flex items-center justify-between gap-3">
+                    <div class="flex flex-wrap items-center justify-between gap-3">
                         <div>
                             <h2 class="text-lg font-black text-slate-950">Lava-rápidos cadastrados</h2>
                             <p class="text-sm text-slate-500">Lista pública das unidades disponíveis.</p>
                         </div>
-                        <span class="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-600">{{ $locations->count() }}</span>
+                        <div class="flex flex-wrap items-center gap-2">
+                            <span data-proximity-summary class="autoflow-proximity-summary">📍 Use sua localização para ordenar por proximidade</span>
+                            <span class="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-600">{{ $locations->count() }}</span>
+                        </div>
                     </div>
 
-                    <div class="mt-5 max-h-[68vh] space-y-3 overflow-y-auto pr-1">
+                    <div data-locations-list class="mt-5 max-h-[68vh] space-y-3 overflow-y-auto pr-1">
                         @forelse ($locations as $location)
                             @php
                                 $badgeClass = match ($location->status) {
@@ -368,11 +567,15 @@
                                 };
                                 $whatsapp = $location->whatsappUrl();
                             @endphp
-                            <article id="unidade-{{ $location->id }}" class="rounded-2xl border border-slate-200 p-4 transition hover:border-blue-200 hover:shadow-sm">
+                            <article id="unidade-{{ $location->id }}" data-location-card data-location-id="{{ $location->id }}" data-latitude="{{ $location->mapLatitude() }}" data-longitude="{{ $location->mapLongitude() }}" class="autoflow-location-card rounded-2xl border border-slate-200 p-4 transition hover:border-blue-200 hover:shadow-sm">
                                 <div class="flex items-start justify-between gap-3">
                                     <div class="min-w-0">
                                         <h3 class="truncate font-black text-slate-950">{{ $location->name }}</h3>
                                         <p class="mt-1 text-sm leading-5 text-slate-500">{{ $location->fullAddress() }}</p>
+                                        <div class="mt-3 flex flex-wrap items-center gap-2">
+                                            <span data-distance-label class="autoflow-distance-pill">📍 Distância após localização</span>
+                                            <span data-closest-badge class="autoflow-closest-badge hidden">Mais próximo</span>
+                                        </div>
                                     </div>
                                     <span class="shrink-0 rounded-full px-2.5 py-1 text-xs font-black {{ $badgeClass }}">{{ $location->statusLabel() }}</span>
                                 </div>
@@ -409,13 +612,35 @@
         document.addEventListener('DOMContentLoaded', () => {
             const mapElement = document.getElementById('autoflow-public-map');
             const locations = JSON.parse(mapElement?.dataset.locations || '[]');
+            const geolocationButton = document.querySelector('[data-map-geolocation]');
+            const resetButton = document.querySelector('[data-map-reset]');
+            const toastElement = document.querySelector('[data-map-toast]');
+            const locationsListElement = document.querySelector('[data-locations-list]');
+            const proximitySummaryElement = document.querySelector('[data-proximity-summary]');
 
             if (! mapElement || ! window.L) {
                 return;
             }
 
             const defaultCenter = [-23.55052, -46.63331];
-            const map = L.map(mapElement, { scrollWheelZoom: true }).setView(defaultCenter, 12);
+            const map = L.map(mapElement, { scrollWheelZoom: true, zoomControl: true }).setView(defaultCenter, 12);
+            let userMarker = null;
+            let toastTimeout = null;
+            const locationDistances = new Map();
+
+            const showMapToast = (message) => {
+                if (! toastElement) {
+                    return;
+                }
+
+                toastElement.textContent = message;
+                toastElement.classList.add('is-visible');
+
+                window.clearTimeout(toastTimeout);
+                toastTimeout = window.setTimeout(() => {
+                    toastElement.classList.remove('is-visible');
+                }, 4200);
+            };
 
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                 maxZoom: 19,
@@ -430,6 +655,79 @@
                 .replace(/>/g, '&gt;')
                 .replace(/"/g, '&quot;')
                 .replace(/'/g, '&#039;');
+
+            const calculateDistanceInKm = (originLatitude, originLongitude, destinationLatitude, destinationLongitude) => {
+                const earthRadiusInKm = 6371;
+                const toRadians = (degrees) => degrees * Math.PI / 180;
+                const latitudeDelta = toRadians(destinationLatitude - originLatitude);
+                const longitudeDelta = toRadians(destinationLongitude - originLongitude);
+                const originLatitudeInRadians = toRadians(originLatitude);
+                const destinationLatitudeInRadians = toRadians(destinationLatitude);
+
+                const a = Math.sin(latitudeDelta / 2) ** 2
+                    + Math.cos(originLatitudeInRadians) * Math.cos(destinationLatitudeInRadians)
+                    * Math.sin(longitudeDelta / 2) ** 2;
+
+                return earthRadiusInKm * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+            };
+
+            const formatDistance = (distanceInKm) => {
+                if (! Number.isFinite(distanceInKm)) {
+                    return 'Distância indisponível';
+                }
+
+                if (distanceInKm < 1) {
+                    return `${Math.max(1, Math.round(distanceInKm * 1000))} m de você`;
+                }
+
+                return `${distanceInKm.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} km de você`;
+            };
+
+            const buildPopupContent = (location) => {
+                const distanceLabel = locationDistances.has(String(location.id))
+                    ? formatDistance(locationDistances.get(String(location.id)))
+                    : 'Use sua localização para calcular distância';
+                const statusBadgeStyle = location.status === 'closed'
+                    ? 'background:#f1f5f9;color:#475569;'
+                    : (location.status === 'busy' ? 'background:#ffedd5;color:#c2410c;' : 'background:#dcfce7;color:#15803d;');
+                const popupAddress = [location.address, location.city].filter(Boolean).join(' - ');
+                const popupPhone = location.phone || 'Não informado';
+
+                return `
+                    <div class="autoflow-popup-card">
+                        <div class="autoflow-popup-header">
+                            <p class="autoflow-popup-title">${escapeHtml(location.name)}</p>
+                            <p class="autoflow-popup-address">${escapeHtml(popupAddress)}</p>
+                        </div>
+                        <div class="autoflow-popup-body">
+                            <div class="autoflow-popup-info">
+                                <span class="autoflow-popup-label">Status</span>
+                                <span class="autoflow-popup-status" style="${statusBadgeStyle}">${escapeHtml(location.status_label)}</span>
+                            </div>
+                            <div class="autoflow-popup-info">
+                                <span class="autoflow-popup-label">Distância</span>
+                                <span class="autoflow-popup-value">${escapeHtml(distanceLabel)}</span>
+                            </div>
+                            <div class="autoflow-popup-info">
+                                <span class="autoflow-popup-label">Em atendimento</span>
+                                <span class="autoflow-popup-value">${Number(location.active_orders_count || 0)}</span>
+                            </div>
+                            <div class="autoflow-popup-info">
+                                <span class="autoflow-popup-label">Contato</span>
+                                <span class="autoflow-popup-value">${escapeHtml(popupPhone)}</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            };
+
+            const bindLocationPopup = (marker, location) => {
+                marker.bindPopup(buildPopupContent(location), {
+                    minWidth: 260,
+                    maxWidth: 260,
+                    className: 'autoflow-location-popup',
+                });
+            };
 
             locations.forEach((location) => {
                 if (! location.latitude || ! location.longitude) {
@@ -448,34 +746,7 @@
                 });
 
                 const marker = L.marker(latLng, { icon }).addTo(map);
-                const statusBadgeStyle = location.status === 'closed'
-                    ? 'background:#f1f5f9;color:#475569;'
-                    : (location.status === 'busy' ? 'background:#ffedd5;color:#c2410c;' : 'background:#dcfce7;color:#15803d;');
-                const popupAddress = [location.address, location.city].filter(Boolean).join(' - ');
-                const popupPhone = location.phone || 'Não informado';
-
-                marker.bindPopup(`
-                    <div class="autoflow-popup-card">
-                        <div class="autoflow-popup-header">
-                            <p class="autoflow-popup-title">${escapeHtml(location.name)}</p>
-                            <p class="autoflow-popup-address">${escapeHtml(popupAddress)}</p>
-                        </div>
-                        <div class="autoflow-popup-body">
-                            <div class="autoflow-popup-info">
-                                <span class="autoflow-popup-label">Status</span>
-                                <span class="autoflow-popup-status" style="${statusBadgeStyle}">${escapeHtml(location.status_label)}</span>
-                            </div>
-                            <div class="autoflow-popup-info">
-                                <span class="autoflow-popup-label">Em atendimento</span>
-                                <span class="autoflow-popup-value">${Number(location.active_orders_count || 0)}</span>
-                            </div>
-                            <div class="autoflow-popup-info" style="grid-column:1 / -1">
-                                <span class="autoflow-popup-label">Contato</span>
-                                <span class="autoflow-popup-value">${escapeHtml(popupPhone)}</span>
-                            </div>
-                        </div>
-                    </div>
-                `, { minWidth: 260, maxWidth: 260, className: 'autoflow-location-popup' });
+                bindLocationPopup(marker, location);
 
                 markers.set(String(location.id), marker);
             });
@@ -502,6 +773,110 @@
             if ('ResizeObserver' in window) {
                 new ResizeObserver(() => map.invalidateSize({ animate: false })).observe(mapElement);
             }
+
+            const applyUserLocationDistances = (latitude, longitude) => {
+                const rankedLocations = locations
+                    .map((location) => {
+                        const destinationLatitude = Number(location.latitude);
+                        const destinationLongitude = Number(location.longitude);
+
+                        if (! Number.isFinite(destinationLatitude) || ! Number.isFinite(destinationLongitude)) {
+                            return { location, distance: Number.POSITIVE_INFINITY };
+                        }
+
+                        const distance = calculateDistanceInKm(latitude, longitude, destinationLatitude, destinationLongitude);
+                        locationDistances.set(String(location.id), distance);
+
+                        return { location, distance };
+                    })
+                    .sort((first, second) => first.distance - second.distance);
+
+                rankedLocations.forEach(({ location, distance }, index) => {
+                    const card = document.querySelector(`[data-location-card][data-location-id="${location.id}"]`);
+                    const distanceLabel = card?.querySelector('[data-distance-label]');
+                    const closestBadge = card?.querySelector('[data-closest-badge]');
+                    const marker = markers.get(String(location.id));
+
+                    if (distanceLabel) {
+                        distanceLabel.textContent = `📍 ${formatDistance(distance)}`;
+                        distanceLabel.classList.add('has-distance');
+                    }
+
+                    if (closestBadge) {
+                        closestBadge.classList.toggle('hidden', index !== 0 || ! Number.isFinite(distance));
+                    }
+
+                    card?.classList.toggle('is-closest', index === 0 && Number.isFinite(distance));
+
+                    if (locationsListElement && card) {
+                        locationsListElement.appendChild(card);
+                    }
+
+                    if (marker) {
+                        bindLocationPopup(marker, location);
+                    }
+                });
+
+                if (proximitySummaryElement) {
+                    proximitySummaryElement.textContent = '📍 Lista ordenada por proximidade';
+                }
+            };
+
+            resetButton?.addEventListener('click', (event) => {
+                event.preventDefault();
+                fitMapToLocations();
+            });
+
+            geolocationButton?.addEventListener('click', (event) => {
+                event.preventDefault();
+
+                if (! navigator.geolocation) {
+                    showMapToast('Seu navegador não oferece suporte à localização.');
+                    return;
+                }
+
+                geolocationButton.disabled = true;
+                geolocationButton.querySelector('span:last-child').textContent = 'Localizando...';
+
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        const latLng = [position.coords.latitude, position.coords.longitude];
+
+                        if (! userMarker) {
+                            const userIcon = L.divIcon({
+                                className: 'autoflow-user-marker',
+                                html: '<span></span>',
+                                iconSize: [22, 22],
+                                iconAnchor: [11, 11],
+                            });
+
+                            userMarker = L.marker(latLng, { icon: userIcon }).addTo(map);
+                            userMarker.bindPopup('<strong>Você está aqui</strong>');
+                        } else {
+                            userMarker.setLatLng(latLng);
+                        }
+
+                        map.invalidateSize({ animate: false });
+                        map.setView(latLng, 15);
+                        userMarker.openPopup();
+                        applyUserLocationDistances(latLng[0], latLng[1]);
+                        showMapToast('Localização encontrada. Lista ordenada por proximidade.');
+                    },
+                    () => {
+                        showMapToast('Não foi possível acessar sua localização. Verifique as permissões do navegador.');
+                    },
+                    {
+                        enableHighAccuracy: true,
+                        timeout: 10000,
+                        maximumAge: 60000,
+                    },
+                );
+
+                window.setTimeout(() => {
+                    geolocationButton.disabled = false;
+                    geolocationButton.querySelector('span:last-child').textContent = 'Minha localização';
+                }, 1200);
+            });
 
             document.querySelectorAll('[data-focus-location]').forEach((link) => {
                 link.addEventListener('click', (event) => {
