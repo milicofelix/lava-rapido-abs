@@ -496,14 +496,35 @@
                         <p class="mt-1 text-sm text-slate-500">Visualize unidades cadastradas, status operacional e contato direto.</p>
                     </div>
 
-                    <form method="GET" class="flex flex-wrap gap-2">
-                        <select name="status" class="rounded-xl border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-700">
-                            <option value="">Todos os status</option>
-                            @foreach ($statuses as $value => $label)
-                                <option value="{{ $value }}" @selected($status === $value)>{{ $label }}</option>
-                            @endforeach
-                        </select>
+                    <form method="GET" class="grid w-full gap-2 sm:w-auto sm:min-w-[440px] sm:grid-cols-[1fr_auto] xl:min-w-[520px]" data-public-map-filters>
+                        <label class="sr-only" for="public-location-search">Buscar lava-rápido, bairro ou endereço</label>
+                        <input
+                            id="public-location-search"
+                            name="q"
+                            value="{{ $search ?? '' }}"
+                            placeholder="Buscar por nome, bairro ou endereço"
+                            class="rounded-xl border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-700 placeholder:text-slate-400 focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100"
+                        >
+
                         <button class="rounded-xl bg-slate-950 px-4 py-2 text-sm font-bold text-white">Filtrar</button>
+
+                        <div class="flex flex-wrap items-center gap-2 sm:col-span-2">
+                            <select name="status" class="rounded-xl border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-700" @disabled($onlyOpen ?? false)>
+                                <option value="">Todos os status</option>
+                                @foreach ($statuses as $value => $label)
+                                    <option value="{{ $value }}" @selected($status === $value)>{{ $label }}</option>
+                                @endforeach
+                            </select>
+
+                            <label class="inline-flex cursor-pointer items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50">
+                                <input type="checkbox" name="only_open" value="1" @checked($onlyOpen ?? false) class="rounded border-slate-300 text-blue-600 focus:ring-blue-500">
+                                Somente abertos
+                            </label>
+
+                            @if (($search ?? '') !== '' || ($status ?? '') !== '' || ($onlyOpen ?? false))
+                                <a href="{{ route('public.locations.index') }}" class="rounded-xl border border-slate-200 px-3 py-2 text-sm font-bold text-slate-600 hover:bg-slate-50">Limpar filtros</a>
+                            @endif
+                        </div>
                     </form>
                 </div>
 
@@ -532,7 +553,7 @@
                     <div class="grid grid-cols-3 gap-3 text-center">
                         <div class="rounded-2xl bg-blue-50 p-3">
                             <p class="text-2xl font-black text-blue-700">{{ $locations->count() }}</p>
-                            <p class="text-xs font-semibold text-slate-500">Unidades</p>
+                            <p class="text-xs font-semibold text-slate-500">Encontradas</p>
                         </div>
                         <div class="rounded-2xl bg-emerald-50 p-3">
                             <p class="text-2xl font-black text-emerald-700">{{ $locations->where('status', \App\Models\WashLocation::STATUS_OPEN)->count() }}</p>
@@ -549,7 +570,13 @@
                     <div class="flex flex-wrap items-center justify-between gap-3">
                         <div>
                             <h2 class="text-lg font-black text-slate-950">Lava-rápidos cadastrados</h2>
-                            <p class="text-sm text-slate-500">Lista pública das unidades disponíveis.</p>
+                            <p class="text-sm text-slate-500">
+                                @if (($search ?? '') !== '' || ($status ?? '') !== '' || ($onlyOpen ?? false))
+                                    Resultado filtrado do mapa público.
+                                @else
+                                    Lista pública das unidades disponíveis.
+                                @endif
+                            </p>
                         </div>
                         <div class="flex flex-wrap items-center gap-2">
                             <span data-proximity-summary class="autoflow-proximity-summary">📍 Use sua localização para ordenar por proximidade</span>
@@ -599,7 +626,7 @@
                                 </div>
                             </article>
                         @empty
-                            <p class="rounded-2xl border border-dashed border-slate-200 px-4 py-10 text-center text-sm text-slate-500">Nenhum lava-rápido encontrado.</p>
+                            <p class="rounded-2xl border border-dashed border-slate-200 px-4 py-10 text-center text-sm text-slate-500">Nenhum lava-rápido encontrado com os filtros atuais.</p>
                         @endforelse
                     </div>
                 </section>
