@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class WashLocationRequest extends Model
 {
@@ -28,12 +29,17 @@ class WashLocationRequest extends Model
         'employees_count',
         'notes',
         'status',
+        'decision_notes',
+        'decided_at',
+        'decided_by_user_id',
+        'wash_location_id',
     ];
 
     protected function casts(): array
     {
         return [
             'employees_count' => 'integer',
+            'decided_at' => 'datetime',
         ];
     }
 
@@ -54,6 +60,21 @@ class WashLocationRequest extends Model
     public function normalizedPhone(): string
     {
         return preg_replace('/\D+/', '', $this->phone) ?? '';
+    }
+
+    public function decidedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'decided_by_user_id');
+    }
+
+    public function washLocation(): BelongsTo
+    {
+        return $this->belongsTo(WashLocation::class);
+    }
+
+    public function isPending(): bool
+    {
+        return $this->status === self::STATUS_PENDING_REVIEW;
     }
 
     public static function hasPendingContact(string $email, string $phone): bool

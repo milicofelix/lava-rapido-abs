@@ -16,6 +16,8 @@ class PublicWashLocationMapController extends Controller
         $onlyOpen = $request->boolean('only_open');
 
         $locations = WashLocation::query()
+            ->where('public_visible', true)
+            ->whereIn('account_status', [WashLocation::ACCOUNT_STATUS_TRIAL, WashLocation::ACCOUNT_STATUS_ACTIVE])
             ->when($onlyOpen, fn ($query) => $query->where('status', WashLocation::STATUS_OPEN))
             ->when(! $onlyOpen && $status !== '', fn ($query) => $query->where('status', $status))
             ->when($search !== '', function ($query) use ($search) {
@@ -60,6 +62,8 @@ class PublicWashLocationMapController extends Controller
 
     public function show(WashLocation $location): View
     {
+        abort_unless($location->isPubliclyVisible(), 404);
+
         $services = Service::query()
             ->where('active', true)
             ->orderBy('category')

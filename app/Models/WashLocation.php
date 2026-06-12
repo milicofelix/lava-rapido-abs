@@ -13,6 +13,14 @@ class WashLocation extends Model
 
     public const STATUS_CLOSED = 'closed';
 
+    public const ACCOUNT_STATUS_TRIAL = 'trial';
+
+    public const ACCOUNT_STATUS_ACTIVE = 'active';
+
+    public const ACCOUNT_STATUS_SUSPENDED = 'suspended';
+
+    public const ACCOUNT_STATUS_EXPIRED = 'expired';
+
     protected $fillable = [
         'name',
         'slug',
@@ -20,6 +28,11 @@ class WashLocation extends Model
         'district',
         'city',
         'status',
+        'account_status',
+        'public_visible',
+        'trial_started_at',
+        'trial_ends_at',
+        'approved_location_request_id',
         'map_x',
         'map_y',
         'latitude',
@@ -27,7 +40,6 @@ class WashLocation extends Model
         'active_orders_count',
         'phone',
     ];
-
 
     protected static function booted(): void
     {
@@ -72,6 +84,9 @@ class WashLocation extends Model
             'latitude' => 'decimal:7',
             'longitude' => 'decimal:7',
             'active_orders_count' => 'integer',
+            'public_visible' => 'boolean',
+            'trial_started_at' => 'datetime',
+            'trial_ends_at' => 'datetime',
         ];
     }
 
@@ -84,6 +99,15 @@ class WashLocation extends Model
         ];
     }
 
+    public static function accountStatuses(): array
+    {
+        return [
+            self::ACCOUNT_STATUS_TRIAL => 'Trial',
+            self::ACCOUNT_STATUS_ACTIVE => 'Ativo',
+            self::ACCOUNT_STATUS_SUSPENDED => 'Suspenso',
+            self::ACCOUNT_STATUS_EXPIRED => 'Expirado',
+        ];
+    }
 
     public function fullAddress(): string
     {
@@ -128,5 +152,16 @@ class WashLocation extends Model
     public function statusLabel(): string
     {
         return self::statuses()[$this->status] ?? $this->status;
+    }
+
+    public function accountStatusLabel(): string
+    {
+        return self::accountStatuses()[$this->account_status] ?? $this->account_status;
+    }
+
+    public function isPubliclyVisible(): bool
+    {
+        return $this->public_visible
+            && in_array($this->account_status, [self::ACCOUNT_STATUS_TRIAL, self::ACCOUNT_STATUS_ACTIVE], true);
     }
 }
