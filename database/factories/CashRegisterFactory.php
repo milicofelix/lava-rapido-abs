@@ -3,6 +3,7 @@
 namespace Database\Factories;
 
 use App\Models\CashRegister;
+use App\Models\WashLocation;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
@@ -12,6 +13,7 @@ class CashRegisterFactory extends Factory
     public function definition(): array
     {
         return [
+            'wash_location_id' => WashLocation::factory(),
             'opened_by_user_id' => User::factory(),
             'status' => CashRegister::STATUS_OPEN,
             'opening_balance' => 100,

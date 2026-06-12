@@ -4,6 +4,7 @@ namespace Database\Factories;
 
 use App\Models\Customer;
 use App\Models\Vehicle;
+use App\Models\WashLocation;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /** @extends Factory<Vehicle> */
@@ -14,6 +15,7 @@ class VehicleFactory extends Factory
         $vehicle = fake()->randomElement(self::catalog());
 
         return [
+            'wash_location_id' => WashLocation::factory(),
             'customer_id' => Customer::factory(),
             'plate' => strtoupper(fake()->unique()->bothify('???#?##')),
             'model' => $vehicle['model'],

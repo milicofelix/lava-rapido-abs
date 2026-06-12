@@ -18,6 +18,7 @@ class CashRegister extends Model
     public const STATUS_CLOSED = 'closed';
 
     protected $fillable = [
+        'wash_location_id',
         'opened_by_user_id',
         'closed_by_user_id',
         'status',
@@ -43,9 +44,18 @@ class CashRegister extends Model
         ];
     }
 
-    public static function openRegister(): ?self
+    public static function openRegister(?int $washLocationId = null): ?self
     {
-        return self::query()->where('status', self::STATUS_OPEN)->latest('opened_at')->first();
+        return self::query()
+            ->when($washLocationId !== null, fn ($query) => $query->where('wash_location_id', $washLocationId))
+            ->where('status', self::STATUS_OPEN)
+            ->latest('opened_at')
+            ->first();
+    }
+
+    public function washLocation(): BelongsTo
+    {
+        return $this->belongsTo(WashLocation::class);
     }
 
     public function statusLabel(): string

@@ -5,6 +5,7 @@ namespace App\Services\CashRegisters;
 use App\Models\CashMovement;
 use App\Models\CashRegister;
 use App\Models\Payment;
+use App\Support\TenantContext;
 use App\Models\User;
 use DomainException;
 
@@ -40,7 +41,7 @@ class CloseCashRegisterService
         $openedAt = $cashRegister->opened_at;
         $closedAt = $cashRegister->closed_at ?? now();
 
-        $cashPayments = Payment::query()
+        $cashPayments = TenantContext::scopePayments(Payment::query())
             ->where('method', Payment::METHOD_CASH)
             ->whereBetween('paid_at', [$openedAt, $closedAt])
             ->sum('amount');

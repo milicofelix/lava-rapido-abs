@@ -5,6 +5,7 @@ namespace App\Models;
 use Database\Factories\CustomerFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Customer extends Model
@@ -13,12 +14,18 @@ class Customer extends Model
     use HasFactory;
 
     protected $fillable = [
+        'wash_location_id',
         'name',
         'phone',
         'email',
         'cpf',
         'notes',
     ];
+
+    public function washLocation(): BelongsTo
+    {
+        return $this->belongsTo(WashLocation::class);
+    }
 
     public function vehicles(): HasMany
     {

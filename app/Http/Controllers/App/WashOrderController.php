@@ -13,6 +13,7 @@ use App\Models\Vehicle;
 use App\Models\WashOrder;
 use App\Services\WashOrders\ChangeWashOrderStatusService;
 use App\Services\WashOrders\CreateWashOrderService;
+use App\Support\TenantContext;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -26,7 +27,7 @@ class WashOrderController extends Controller
         $search = trim((string) $request->query('search'));
         $status = trim((string) $request->query('status'));
 
-        $washOrders = WashOrder::query()
+        $washOrders = TenantContext::scopeWashOrders(WashOrder::query())
             ->with(['customer', 'vehicle', 'assignedUser', 'teamMembers', 'services'])
             ->when($status !== '', fn ($query) => $query->where('status', $status))
             ->when($search !== '', function ($query) use ($search) {
@@ -50,7 +51,10 @@ class WashOrderController extends Controller
 
     public function create(): View
     {
-        $customers = Customer::with(['vehicles' => fn ($query) => $query->orderBy('plate')])->orderBy('name')->get();
+        $customers = TenantContext::scopeCustomers(Customer::query())
+            ->with(['vehicles' => fn ($query) => TenantContext::scopeVehicles($query)->orderBy('plate')])
+            ->orderBy('name')
+            ->get();
 
         return view('app.wash-orders.create', [
             'customers' => $customers,
@@ -60,8 +64,8 @@ class WashOrderController extends Controller
                     'label' => "{$vehicle->plate} · {$vehicle->brand} {$vehicle->model}",
                 ])->values(),
             ]),
-            'services' => Service::where('active', true)->orderBy('category')->orderBy('name')->get(),
-            'users' => User::orderBy('name')->get(),
+            'services' => TenantContext::scopeServices(Service::query())->where('active', true)->orderBy('category')->orderBy('name')->get(),
+            'users' => TenantContext::scopeUsers(User::query())->orderBy('name')->get(),
         ]);
     }
 
@@ -69,7 +73,7 @@ class WashOrderController extends Controller
     {
         $data = $this->validated($request);
 
-        $vehicle = Vehicle::findOrFail($data['vehicle_id']);
+        $vehicle = TenantContext::scopeVehicles(Vehicle::query())->findOrFail($data['vehicle_id']);
 
         if ((int) $vehicle->customer_id !== (int) $data['customer_id']) {
             return back()
@@ -78,6 +82,7 @@ class WashOrderController extends Controller
         }
 
         $washOrder = $creator->handle([
+            'wash_location_id' => TenantContext::currentLocationId(),
             'customer_id' => $data['customer_id'],
             'vehicle_id' => $data['vehicle_id'],
             'entered_at' => now(),
@@ -91,6 +96,8 @@ class WashOrderController extends Controller
 
     public function show(WashOrder $washOrder): View
     {
+        TenantContext::abortUnlessModelBelongsToTenant($washOrder);
+
         $paymentMethods = Payment::methods();
 
         if (! AppSetting::isModuleEnabled('module_credit_receivables')) {
@@ -107,6 +114,8 @@ class WashOrderController extends Controller
 
     public function updateStatus(Request $request, WashOrder $washOrder, ChangeWashOrderStatusService $changer): JsonResponse|RedirectResponse
     {
+        TenantContext::abortUnlessModelBelongsToTenant($washOrder);
+
         $data = $request->validate([
             'status' => ['required', Rule::in(array_keys(WashOrder::statuses()))],
             'notes' => ['nullable', 'string', 'max:1000'],

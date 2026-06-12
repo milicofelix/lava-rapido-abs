@@ -5,6 +5,7 @@ namespace App\Http\Controllers\App;
 use App\Http\Controllers\Controller;
 use App\Models\Payment;
 use App\Models\WashOrder;
+use App\Support\TenantContext;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -33,8 +34,8 @@ class FinanceController extends Controller
             'total' => $total,
             'count' => $count,
             'ticketAverage' => $count > 0 ? $total / $count : 0,
-            'pendingCount' => WashOrder::where('payment_status', WashOrder::PAYMENT_PENDING)->count(),
-            'creditPendingCount' => WashOrder::where('payment_status', WashOrder::PAYMENT_CREDIT_PENDING)->count(),
+            'pendingCount' => TenantContext::scopeWashOrders(WashOrder::query())->where('payment_status', WashOrder::PAYMENT_PENDING)->count(),
+            'creditPendingCount' => TenantContext::scopeWashOrders(WashOrder::query())->where('payment_status', WashOrder::PAYMENT_CREDIT_PENDING)->count(),
             'totalsByMethod' => (clone $payments)
                 ->selectRaw('method, SUM(amount) as total, COUNT(*) as count')
                 ->groupBy('method')
@@ -95,6 +96,6 @@ class FinanceController extends Controller
 
     private function paymentsForPeriod(Carbon $start, Carbon $end): Builder
     {
-        return Payment::query()->whereBetween('paid_at', [$start, $end]);
+        return TenantContext::scopePayments(Payment::query())->whereBetween('paid_at', [$start, $end]);
     }
 }

@@ -7,6 +7,7 @@ use App\Models\AppSetting;
 use App\Models\Payment;
 use App\Models\WashOrder;
 use App\Services\CreditPayments\ReceiveCreditPaymentService;
+use App\Support\TenantContext;
 use DomainException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -21,7 +22,7 @@ class CreditReceivableController extends Controller
             return redirect()->route('settings.edit')->with('status', 'Modulo Fiado esta desabilitado. Habilite em Configuracoes para usar.');
         }
 
-        $creditQuery = WashOrder::query()
+        $creditQuery = TenantContext::scopeWashOrders(WashOrder::query())
             ->where('payment_status', WashOrder::PAYMENT_CREDIT_PENDING);
 
         $orders = (clone $creditQuery)
@@ -40,6 +41,8 @@ class CreditReceivableController extends Controller
 
     public function receive(Request $request, WashOrder $washOrder, ReceiveCreditPaymentService $receiveCreditPayment): RedirectResponse
     {
+        TenantContext::abortUnlessModelBelongsToTenant($washOrder);
+
         $allowedMethods = array_diff(array_keys(Payment::methods()), [
             Payment::METHOD_COURTESY,
             Payment::METHOD_CREDIT_PENDING,

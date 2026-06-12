@@ -7,6 +7,7 @@ use App\Models\AppSetting;
 use App\Models\Payment;
 use App\Models\WashOrder;
 use App\Services\Payments\RegisterPaymentService;
+use App\Support\TenantContext;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -15,6 +16,8 @@ class PaymentController extends Controller
 {
     public function store(Request $request, WashOrder $washOrder, RegisterPaymentService $registerPayment): RedirectResponse
     {
+        TenantContext::abortUnlessModelBelongsToTenant($washOrder);
+
         $allowedMethods = array_keys(Payment::methods());
 
         if (! AppSetting::isModuleEnabled('module_credit_receivables')) {

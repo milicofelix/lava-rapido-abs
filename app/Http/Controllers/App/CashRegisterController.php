@@ -10,6 +10,7 @@ use App\Models\Payment;
 use App\Services\CashRegisters\CloseCashRegisterService;
 use App\Services\CashRegisters\OpenCashRegisterService;
 use App\Services\CashRegisters\RegisterCashMovementService;
+use App\Support\TenantContext;
 use DomainException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -24,16 +25,16 @@ class CashRegisterController extends Controller
             return redirect()->route('settings.edit')->with('status', 'Modulo Caixa esta desabilitado. Habilite em Configuracoes para usar.');
         }
 
-        $openRegister = CashRegister::openRegister()?->load(['openedBy', 'movements.user']);
+        $openRegister = CashRegister::openRegister(TenantContext::currentLocationId())?->load(['openedBy', 'movements.user']);
 
         return view('app.finance.cash-registers.index', [
             'openRegister' => $openRegister,
             'expectedCash' => $openRegister ? $closeCashRegister->expectedCash($openRegister) : 0,
-            'cashPaymentTotal' => $openRegister ? Payment::query()
+            'cashPaymentTotal' => $openRegister ? TenantContext::scopePayments(Payment::query())
                 ->where('method', Payment::METHOD_CASH)
                 ->where('paid_at', '>=', $openRegister->opened_at)
                 ->sum('amount') : 0,
-            'recentRegisters' => CashRegister::query()
+            'recentRegisters' => TenantContext::scopeCashRegisters(CashRegister::query())
                 ->with(['openedBy', 'closedBy'])
                 ->latest('opened_at')
                 ->paginate(10),
@@ -59,6 +60,8 @@ class CashRegisterController extends Controller
 
     public function movement(Request $request, CashRegister $cashRegister, RegisterCashMovementService $registerMovement): RedirectResponse
     {
+        TenantContext::abortUnlessModelBelongsToTenant($cashRegister);
+
         $data = $request->validate([
             'type' => ['required', Rule::in(array_keys(CashMovement::types()))],
             'amount' => ['required', 'numeric', 'min:0.01', 'max:999999.99'],
@@ -76,6 +79,8 @@ class CashRegisterController extends Controller
 
     public function close(Request $request, CashRegister $cashRegister, CloseCashRegisterService $closeCashRegister): RedirectResponse
     {
+        TenantContext::abortUnlessModelBelongsToTenant($cashRegister);
+
         $data = $request->validate([
             'counted_cash' => ['required', 'numeric', 'min:0', 'max:999999.99'],
             'closing_notes' => ['nullable', 'string', 'max:1000'],

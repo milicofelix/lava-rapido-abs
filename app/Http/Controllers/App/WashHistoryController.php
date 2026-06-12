@@ -8,6 +8,7 @@ use App\Models\Payment;
 use App\Models\Service;
 use App\Models\User;
 use App\Models\WashOrder;
+use App\Support\TenantContext;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -39,9 +40,9 @@ class WashHistoryController extends Controller
             'filters' => $filters,
             'washOrders' => $washOrders,
             'summary' => $summary,
-            'customers' => Customer::query()->orderBy('name')->get(['id', 'name']),
-            'services' => Service::query()->orderBy('name')->get(['id', 'name']),
-            'employees' => User::query()->orderBy('name')->get(['id', 'name']),
+            'customers' => TenantContext::scopeCustomers(Customer::query())->orderBy('name')->get(['id', 'name']),
+            'services' => TenantContext::scopeServices(Service::query())->orderBy('name')->get(['id', 'name']),
+            'employees' => TenantContext::scopeUsers(User::query())->orderBy('name')->get(['id', 'name']),
             'statuses' => WashOrder::statuses(),
             'paymentMethods' => Payment::methods(),
         ]);
@@ -129,7 +130,7 @@ class WashHistoryController extends Controller
         $start = Carbon::parse($filters['start'])->startOfDay();
         $end = Carbon::parse($filters['end'])->endOfDay();
 
-        return WashOrder::query()
+        return TenantContext::scopeWashOrders(WashOrder::query())
             ->whereBetween('entered_at', [$start, $end])
             ->when($filters['customer_id'], fn (Builder $query, string $customerId) => $query->where('customer_id', $customerId))
             ->when($filters['plate'], function (Builder $query, string $plate) {

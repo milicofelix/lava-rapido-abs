@@ -4,6 +4,7 @@ namespace App\Http\Controllers\App;
 
 use App\Http\Controllers\Controller;
 use App\Models\Service;
+use App\Support\TenantContext;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -14,7 +15,7 @@ class ServiceController extends Controller
     {
         $search = trim((string) $request->query('search'));
 
-        $services = Service::query()
+        $services = TenantContext::scopeServices(Service::query())
             ->when($search !== '', function ($query) use ($search) {
                 $query->where('name', 'like', "%{$search}%")
                     ->orWhere('category', 'like', "%{$search}%");
@@ -35,18 +36,25 @@ class ServiceController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
-        Service::create($this->validated($request));
+        $data = $this->validated($request);
+        $data['wash_location_id'] = TenantContext::currentLocationId();
+
+        Service::create($data);
 
         return redirect()->route('services.index')->with('status', 'Servico cadastrado com sucesso.');
     }
 
     public function edit(Service $service): View
     {
+        TenantContext::abortUnlessModelBelongsToTenant($service);
+
         return view('app.services.edit', compact('service'));
     }
 
     public function update(Request $request, Service $service): RedirectResponse
     {
+        TenantContext::abortUnlessModelBelongsToTenant($service);
+
         $service->update($this->validated($request));
 
         return redirect()->route('services.index')->with('status', 'Servico atualizado com sucesso.');

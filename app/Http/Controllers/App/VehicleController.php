@@ -5,6 +5,7 @@ namespace App\Http\Controllers\App;
 use App\Http\Controllers\Controller;
 use App\Models\Customer;
 use App\Models\Vehicle;
+use App\Support\TenantContext;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -16,7 +17,7 @@ class VehicleController extends Controller
     {
         $search = trim((string) $request->query('search'));
 
-        $vehicles = Vehicle::query()
+        $vehicles = TenantContext::scopeVehicles(Vehicle::query())
             ->with('customer')
             ->when($search !== '', function ($query) use ($search) {
                 $query->where(function ($query) use ($search) {
@@ -37,30 +38,42 @@ class VehicleController extends Controller
     {
         return view('app.vehicles.create', [
             'vehicle' => new Vehicle,
-            'customers' => Customer::orderBy('name')->get(),
+            'customers' => TenantContext::scopeCustomers(Customer::query())->orderBy('name')->get(),
             'types' => $this->types(),
         ]);
     }
 
     public function store(Request $request): RedirectResponse
     {
-        Vehicle::create($this->validated($request));
+        $data = $this->validated($request);
+        $customer = TenantContext::scopeCustomers(Customer::query())->findOrFail($data['customer_id']);
+        $data['wash_location_id'] = $customer->wash_location_id;
+
+        Vehicle::create($data);
 
         return redirect()->route('vehicles.index')->with('status', 'Veiculo cadastrado com sucesso.');
     }
 
     public function edit(Vehicle $vehicle): View
     {
+        TenantContext::abortUnlessModelBelongsToTenant($vehicle);
+
         return view('app.vehicles.edit', [
             'vehicle' => $vehicle,
-            'customers' => Customer::orderBy('name')->get(),
+            'customers' => TenantContext::scopeCustomers(Customer::query())->orderBy('name')->get(),
             'types' => $this->types(),
         ]);
     }
 
     public function update(Request $request, Vehicle $vehicle): RedirectResponse
     {
-        $vehicle->update($this->validated($request, $vehicle));
+        TenantContext::abortUnlessModelBelongsToTenant($vehicle);
+
+        $data = $this->validated($request, $vehicle);
+        $customer = TenantContext::scopeCustomers(Customer::query())->findOrFail($data['customer_id']);
+        $data['wash_location_id'] = $customer->wash_location_id;
+
+        $vehicle->update($data);
 
         return redirect()->route('vehicles.index')->with('status', 'Veiculo atualizado com sucesso.');
     }
