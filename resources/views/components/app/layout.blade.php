@@ -20,6 +20,11 @@
 </head>
 @php($appSettings = \App\Models\AppSetting::allSettings())
 @php($appTheme = \App\Models\AppSetting::theme())
+@php($currentLocation = \App\Support\TenantContext::currentLocation())
+@php($isSuperAdmin = auth()->user()->isSuperAdmin())
+@php($unitDisplayName = $currentLocation?->name ?? ($isSuperAdmin ? 'AutoFlow Admin' : ($appSettings['company_name'] ?? 'AutoFlow')))
+@php($unitStatusLabel = $currentLocation?->accountStatusLabel())
+@php($trialDaysRemaining = $currentLocation?->trial_ends_at ? max(0, (int) now()->startOfDay()->diffInDays($currentLocation->trial_ends_at->copy()->startOfDay(), false)) : null)
 <body class="{{ $appTheme === 'dark' ? 'bg-slate-950' : 'bg-[#061832]' }} text-slate-950 antialiased" data-theme="{{ $appTheme }}" data-theme-effective="{{ $appTheme === 'system' ? 'light' : $appTheme }}">
     <div class="min-h-screen p-2 lg:p-3" data-app-shell>
         <aside data-sidebar class="fixed inset-y-3 left-3 z-30 hidden w-72 flex-col rounded-2xl {{ $appTheme === 'dark' ? 'bg-slate-950' : 'bg-[#061b36]' }} px-3 py-3 text-white shadow-2xl shadow-black/30 transition-transform duration-200 lg:flex">
@@ -40,7 +45,6 @@
                     ['route' => 'finance.index', 'label' => 'Financeiro', 'icon' => '$', 'roles' => ['admin']],
                     ['route' => 'finance.cash-registers.index', 'label' => 'Caixa', 'icon' => 'CX', 'roles' => ['admin'], 'module' => 'module_cash_register'],
                     ['route' => 'finance.credit-receivables.index', 'label' => 'Fiado', 'icon' => 'F$', 'roles' => ['admin'], 'module' => 'module_credit_receivables'],
-                    ['route' => 'super-admin.location-requests.index', 'label' => 'Solicitações', 'icon' => 'SA', 'roles' => ['super_admin']],
                 ] as $item)
                     @continue($item['roles'] && ! auth()->user()->hasAnyRole($item['roles']))
                     @continue(($item['module'] ?? null) && empty($appSettings[$item['module']]))
@@ -86,11 +90,19 @@
                     </div>
 
                     <div class="flex items-center gap-3">
-                        <div class="hidden items-center gap-3 rounded-lg border border-slate-200 bg-white px-4 py-2 shadow-sm md:flex">
-                            <span class="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-50 text-sm font-bold text-blue-700">U</span>
-                            <div>
-                                <p class="text-xs text-slate-500">Unidade atual</p>
-                                <p class="text-sm font-semibold">{{ $appSettings['company_name'] ?? 'Lava Rapido Central' }}</p>
+                        <div class="hidden max-w-xs items-center gap-3 rounded-lg border {{ $appTheme === 'dark' ? 'border-slate-700 bg-slate-900' : 'border-slate-200 bg-white' }} px-4 py-2 shadow-sm md:flex">
+                            <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg {{ $currentLocation ? 'bg-blue-50 text-blue-700' : 'bg-slate-100 text-slate-700' }} text-sm font-black">{{ $currentLocation ? strtoupper(substr($currentLocation->name, 0, 1)) : 'A' }}</span>
+                            <div class="min-w-0">
+                                <p class="text-xs text-slate-500">{{ $isSuperAdmin ? 'Administração do produto' : 'Unidade atual' }}</p>
+                                <p class="truncate text-sm font-semibold {{ $appTheme === 'dark' ? 'text-white' : 'text-slate-950' }}">{{ $unitDisplayName }}</p>
+                                @if ($currentLocation)
+                                    <p class="truncate text-[11px] font-semibold text-slate-500">
+                                        {{ $unitStatusLabel }}
+                                        @if ($trialDaysRemaining !== null && $currentLocation->account_status === \App\Models\WashLocation::ACCOUNT_STATUS_TRIAL)
+                                            · Trial: {{ $trialDaysRemaining }} dia{{ $trialDaysRemaining === 1 ? '' : 's' }}
+                                        @endif
+                                    </p>
+                                @endif
                             </div>
                         </div>
                         <div class="hidden items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-600 shadow-sm md:flex" data-theme-status>
@@ -116,9 +128,6 @@
                     <a href="{{ route('wash-orders.index') }}" class="rounded-lg border border-slate-200 px-3 py-2 text-sm">Lavagens</a>
                     <a href="{{ route('kanban') }}" class="rounded-lg border border-slate-200 px-3 py-2 text-sm">Kanban</a>
                     <a href="{{ route('history.index') }}" class="rounded-lg border border-slate-200 px-3 py-2 text-sm">Historico</a>
-                    @if (auth()->user()->isSuperAdmin())
-                        <a href="{{ route('super-admin.location-requests.index') }}" class="rounded-lg border border-slate-200 px-3 py-2 text-sm">Solicitações</a>
-                    @endif
                     @if (auth()->user()->isAdmin())
                         <a href="{{ route('finance.index') }}" class="rounded-lg border border-slate-200 px-3 py-2 text-sm">Financeiro</a>
                         @if (! empty($appSettings['module_cash_register']))
