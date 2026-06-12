@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Str;
 
 class WashLocation extends Model
@@ -88,6 +89,16 @@ class WashLocation extends Model
             'trial_started_at' => 'datetime',
             'trial_ends_at' => 'datetime',
         ];
+    }
+
+    public function users(): HasMany
+    {
+        return $this->hasMany(User::class);
+    }
+
+    public function owners(): HasMany
+    {
+        return $this->users()->where('role', User::ROLE_OWNER);
     }
 
     public static function statuses(): array

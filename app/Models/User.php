@@ -5,6 +5,7 @@ namespace App\Models;
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -16,6 +17,8 @@ class User extends Authenticatable
     use HasFactory, Notifiable;
 
     public const ROLE_SUPER_ADMIN = 'super_admin';
+
+    public const ROLE_OWNER = 'owner';
 
     public const ROLE_ADMIN = 'admin';
 
@@ -32,6 +35,7 @@ class User extends Authenticatable
         'name',
         'email',
         'role',
+        'wash_location_id',
         'password',
     ];
 
@@ -58,6 +62,11 @@ class User extends Authenticatable
         ];
     }
 
+    public function washLocation(): BelongsTo
+    {
+        return $this->belongsTo(WashLocation::class);
+    }
+
     public function assignedWashOrders(): HasMany
     {
         return $this->hasMany(WashOrder::class, 'assigned_user_id');
@@ -81,13 +90,39 @@ class User extends Authenticatable
         return in_array($this->role, $roles, true);
     }
 
+    public function isSuperAdmin(): bool
+    {
+        return $this->hasRole(self::ROLE_SUPER_ADMIN);
+    }
+
+    public function isOwner(): bool
+    {
+        return $this->hasRole(self::ROLE_OWNER);
+    }
+
     public function isAdmin(): bool
     {
         return $this->hasRole(self::ROLE_ADMIN);
     }
 
-    public function isSuperAdmin(): bool
+    public function isOperationalUser(): bool
     {
-        return $this->hasRole(self::ROLE_SUPER_ADMIN);
+        return $this->hasAnyRole([
+            self::ROLE_OWNER,
+            self::ROLE_ADMIN,
+            self::ROLE_ATTENDANT,
+            self::ROLE_OPERATOR,
+        ]);
+    }
+
+    public function belongsToWashLocation(WashLocation|int|null $location): bool
+    {
+        if ($location === null || $this->wash_location_id === null) {
+            return false;
+        }
+
+        $locationId = $location instanceof WashLocation ? $location->id : $location;
+
+        return (int) $this->wash_location_id === (int) $locationId;
     }
 }

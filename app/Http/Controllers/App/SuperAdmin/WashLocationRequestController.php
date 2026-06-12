@@ -3,12 +3,15 @@
 namespace App\Http\Controllers\App\SuperAdmin;
 
 use App\Http\Controllers\Controller;
+use App\Models\User;
 use App\Models\WashLocation;
 use App\Models\WashLocationRequest;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 
 class WashLocationRequestController extends Controller
 {
@@ -89,6 +92,8 @@ class WashLocationRequestController extends Controller
                 'phone' => $locationRequest->phone,
             ]);
 
+            $this->createOrAttachOwnerUser($locationRequest, $location);
+
             $locationRequest->forceFill([
                 'status' => WashLocationRequest::STATUS_APPROVED,
                 'decision_notes' => $validated['decision_notes'] ?? null,
@@ -100,7 +105,7 @@ class WashLocationRequestController extends Controller
 
         return redirect()
             ->route('super-admin.location-requests.show', $locationRequest)
-            ->with('success', 'Solicitação aprovada. A unidade entrou em trial por 15 dias.');
+            ->with('success', 'Solicitação aprovada. A unidade entrou em trial por 15 dias e o responsável foi vinculado como owner.');
     }
 
     public function reject(Request $request, WashLocationRequest $locationRequest): RedirectResponse
@@ -123,5 +128,23 @@ class WashLocationRequestController extends Controller
         return redirect()
             ->route('super-admin.location-requests.show', $locationRequest)
             ->with('success', 'Solicitação rejeitada com segurança. Nenhuma unidade foi criada no mapa.');
+    }
+
+    private function createOrAttachOwnerUser(WashLocationRequest $locationRequest, WashLocation $location): User
+    {
+        $email = trim(strtolower($locationRequest->email));
+
+        $user = User::query()->firstOrNew(['email' => $email]);
+
+        if (! $user->exists) {
+            $user->name = $locationRequest->responsible_name;
+            $user->password = Hash::make(Str::password(32));
+        }
+
+        $user->role = User::ROLE_OWNER;
+        $user->wash_location_id = $location->id;
+        $user->save();
+
+        return $user;
     }
 }
