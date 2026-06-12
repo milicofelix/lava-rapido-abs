@@ -9,6 +9,7 @@ use App\Models\Service;
 use App\Models\StatusHistory;
 use App\Models\Vehicle;
 use App\Models\WashOrder;
+use App\Support\TenantContext;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
@@ -21,18 +22,22 @@ class DashboardController extends Controller
         $weekStart = $today->copy()->subDays(6)->startOfDay();
         $weekEnd = $today->copy()->endOfDay();
 
-        $todayPayments = Payment::query()->whereBetween('paid_at', [$today->copy()->startOfDay(), $today->copy()->endOfDay()]);
+        $currentLocation = TenantContext::currentLocation();
+        $todayPayments = TenantContext::scopePayments(
+            Payment::query()->whereBetween('paid_at', [$today->copy()->startOfDay(), $today->copy()->endOfDay()])
+        );
         $todayRevenue = (clone $todayPayments)->sum('amount');
         $todayPaymentCount = (clone $todayPayments)->count();
 
         return view('app.dashboard', [
+            'currentLocation' => $currentLocation,
             'customerCount' => Customer::count(),
             'vehicleCount' => Vehicle::count(),
             'serviceCount' => Service::count(),
             'activeServiceCount' => Service::where('active', true)->count(),
-            'washOrdersToday' => WashOrder::whereDate('entered_at', $today)->count(),
-            'activeWashOrders' => WashOrder::whereIn('status', WashOrder::activeStatuses())->count(),
-            'readyWashOrders' => WashOrder::where('status', WashOrder::STATUS_READY)->count(),
+            'washOrdersToday' => TenantContext::scopeWashOrders(WashOrder::query())->whereDate('entered_at', $today)->count(),
+            'activeWashOrders' => TenantContext::scopeWashOrders(WashOrder::query())->whereIn('status', WashOrder::activeStatuses())->count(),
+            'readyWashOrders' => TenantContext::scopeWashOrders(WashOrder::query())->where('status', WashOrder::STATUS_READY)->count(),
             'todayRevenue' => $todayRevenue,
             'ticketAverage' => $todayPaymentCount > 0 ? $todayRevenue / $todayPaymentCount : 0,
             'topService' => $this->topService($today),
@@ -44,7 +49,7 @@ class DashboardController extends Controller
             'financeByMethod' => $this->financeByMethod($today),
             'recentActivities' => $this->recentActivities(),
             'recentCustomers' => Customer::latest()->withCount('vehicles')->limit(5)->get(),
-            'recentWashOrders' => WashOrder::with(['customer', 'vehicle'])->latest('entered_at')->limit(5)->get(),
+            'recentWashOrders' => TenantContext::scopeWashOrders(WashOrder::query())->with(['customer', 'vehicle'])->latest('entered_at')->limit(5)->get(),
         ]);
     }
 
@@ -55,6 +60,7 @@ class DashboardController extends Controller
     {
         $service = DB::table('service_wash_order')
             ->join('wash_orders', 'wash_orders.id', '=', 'service_wash_order.wash_order_id')
+            ->when(TenantContext::currentLocationId(), fn ($query, $locationId) => $query->where('wash_orders.wash_location_id', $locationId))
             ->whereDate('wash_orders.entered_at', $day)
             ->select('service_wash_order.service_name', DB::raw('COUNT(*) as total'))
             ->groupBy('service_wash_order.service_name')
@@ -73,7 +79,7 @@ class DashboardController extends Controller
 
     private function averageWashMinutes(Carbon $day): int
     {
-        $durations = WashOrder::query()
+        $durations = TenantContext::scopeWashOrders(WashOrder::query())
             ->whereDate('entered_at', $day)
             ->whereNotNull('completed_at')
             ->get(['entered_at', 'completed_at'])
@@ -91,7 +97,7 @@ class DashboardController extends Controller
      */
     private function washOrdersByDay(Carbon $start, Carbon $end): array
     {
-        $rows = WashOrder::query()
+        $rows = TenantContext::scopeWashOrders(WashOrder::query())
             ->whereBetween('entered_at', [$start, $end])
             ->selectRaw('DATE(entered_at) as day, COUNT(*) as total')
             ->groupBy('day')
@@ -118,7 +124,7 @@ class DashboardController extends Controller
      */
     private function revenueByDay(Carbon $start, Carbon $end): array
     {
-        $rows = Payment::query()
+        $rows = TenantContext::scopePayments(Payment::query())
             ->whereBetween('paid_at', [$start, $end])
             ->selectRaw('DATE(paid_at) as day, SUM(amount) as total')
             ->groupBy('day')
@@ -147,6 +153,7 @@ class DashboardController extends Controller
     {
         $rows = DB::table('service_wash_order')
             ->join('wash_orders', 'wash_orders.id', '=', 'service_wash_order.wash_order_id')
+            ->when(TenantContext::currentLocationId(), fn ($query, $locationId) => $query->where('wash_orders.wash_location_id', $locationId))
             ->whereBetween('wash_orders.entered_at', [$start, $end])
             ->select('service_wash_order.service_name', DB::raw('COUNT(*) as total'))
             ->groupBy('service_wash_order.service_name')
@@ -168,7 +175,7 @@ class DashboardController extends Controller
      */
     private function kanbanColumns(): array
     {
-        $washOrders = WashOrder::query()
+        $washOrders = TenantContext::scopeWashOrders(WashOrder::query())
             ->with(['customer', 'vehicle', 'services'])
             ->whereIn('status', collect(WashKanbanController::columns())->pluck('statuses')->flatten()->all())
             ->oldest('entered_at')
@@ -205,7 +212,7 @@ class DashboardController extends Controller
      */
     private function financeByMethod(Carbon $day): array
     {
-        $rows = Payment::query()
+        $rows = TenantContext::scopePayments(Payment::query())
             ->whereBetween('paid_at', [$day->copy()->startOfDay(), $day->copy()->endOfDay()])
             ->selectRaw('method, SUM(amount) as total')
             ->groupBy('method')
@@ -228,7 +235,7 @@ class DashboardController extends Controller
      */
     private function recentActivities(): array
     {
-        return StatusHistory::query()
+        return TenantContext::scopeStatusHistories(StatusHistory::query())
             ->with(['washOrder.customer', 'washOrder.vehicle'])
             ->latest()
             ->limit(4)

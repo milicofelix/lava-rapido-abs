@@ -1,5 +1,18 @@
 <x-app.layout heading="Bom dia, {{ auth()->user()->name }}!" title="Dashboard · AutoFlow">
     <div class="space-y-5">
+        @if ($currentLocation)
+            <section class="rounded-2xl border border-blue-100 bg-blue-50 p-4 text-sm text-blue-950 shadow-sm">
+                <div class="flex flex-wrap items-center justify-between gap-3">
+                    <div>
+                        <p class="text-xs font-black uppercase tracking-[0.18em] text-blue-700">Unidade atual</p>
+                        <h2 class="mt-1 text-lg font-black">{{ $currentLocation->name }}</h2>
+                        <p class="mt-1 text-blue-700">Os indicadores desta tela estao filtrados por este lava-rapido.</p>
+                    </div>
+                    <span class="rounded-full bg-white px-3 py-1 text-xs font-black text-blue-700">{{ $currentLocation->accountStatusLabel() }}</span>
+                </div>
+            </section>
+        @endif
+
         <section class="grid gap-4 md:grid-cols-2 2xl:grid-cols-4">
             @foreach ([
                 ['label' => 'Lavagens hoje', 'value' => $washOrdersToday, 'hint' => '14% vs ontem', 'color' => 'from-blue-500 to-blue-700', 'icon' => 'L'],

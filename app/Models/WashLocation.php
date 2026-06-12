@@ -91,6 +91,11 @@ class WashLocation extends Model
         ];
     }
 
+    public function washOrders(): HasMany
+    {
+        return $this->hasMany(WashOrder::class);
+    }
+
     public function users(): HasMany
     {
         return $this->hasMany(User::class);

@@ -43,6 +43,7 @@ class WashOrder extends Model
 
     protected $fillable = [
         'code',
+        'wash_location_id',
         'customer_id',
         'vehicle_id',
         'assigned_user_id',
@@ -133,6 +134,11 @@ class WashOrder extends Model
     public function trackingUrl(): string
     {
         return route('tracking.show', $this->code);
+    }
+
+    public function washLocation(): BelongsTo
+    {
+        return $this->belongsTo(WashLocation::class);
     }
 
     public function customer(): BelongsTo

@@ -4,6 +4,7 @@ namespace App\Services\WashOrders;
 
 use App\Models\Service;
 use App\Models\WashOrder;
+use App\Support\TenantContext;
 use Illuminate\Support\Facades\DB;
 
 class CreateWashOrderService
@@ -24,6 +25,7 @@ class CreateWashOrderService
 
             $washOrder = WashOrder::create([
                 ...$data,
+                'wash_location_id' => $data['wash_location_id'] ?? TenantContext::currentLocationId(),
                 'assigned_user_id' => $teamMemberIds[0] ?? null,
                 'status' => WashOrder::STATUS_AWAITING,
                 'total_amount' => $calculation['total'],

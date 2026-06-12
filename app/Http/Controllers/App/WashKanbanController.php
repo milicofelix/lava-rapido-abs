@@ -4,6 +4,7 @@ namespace App\Http\Controllers\App;
 
 use App\Http\Controllers\Controller;
 use App\Models\WashOrder;
+use App\Support\TenantContext;
 use Illuminate\Http\JsonResponse;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -25,7 +26,7 @@ class WashKanbanController extends Controller
      */
     private function payload(): array
     {
-        $washOrders = WashOrder::query()
+        $washOrders = TenantContext::scopeWashOrders(WashOrder::query())
             ->with(['customer', 'vehicle', 'assignedUser', 'teamMembers', 'services'])
             ->whereIn('status', collect(self::columns())->pluck('statuses')->flatten()->all())
             ->oldest('entered_at')
@@ -46,6 +47,11 @@ class WashKanbanController extends Controller
             'createUrl' => route('wash-orders.create'),
             'dashboardUrl' => route('dashboard'),
             'logoUrl' => asset('images/autoflow-logo.png'),
+            'currentLocation' => TenantContext::currentLocation() ? [
+                'id' => TenantContext::currentLocation()->id,
+                'name' => TenantContext::currentLocation()->name,
+                'account_status' => TenantContext::currentLocation()->accountStatusLabel(),
+            ] : null,
         ];
     }
 

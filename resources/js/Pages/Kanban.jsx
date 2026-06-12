@@ -147,11 +147,11 @@ function Column({ column, statuses, onMove, canUpdateStatus }) {
     );
 }
 
-export default function Kanban({ columns: initialColumns, statuses, feedUrl, createUrl, dashboardUrl, logoUrl, auth }) {
+export default function Kanban({ columns: initialColumns, statuses, feedUrl, createUrl, dashboardUrl, logoUrl, auth, currentLocation }) {
     const [columns, setColumns] = useState(initialColumns);
     const [realtimeUpdated, setRealtimeUpdated] = useState(false);
-    const canCreateWashOrder = ['admin', 'attendant'].includes(auth?.user?.role);
-    const canUpdateStatus = ['admin', 'operator'].includes(auth?.user?.role);
+    const canCreateWashOrder = ['owner', 'admin', 'attendant'].includes(auth?.user?.role);
+    const canUpdateStatus = ['owner', 'admin', 'operator'].includes(auth?.user?.role);
 
     const refreshFeed = async () => {
         const { data } = await window.axios.get(feedUrl);
@@ -215,6 +215,13 @@ export default function Kanban({ columns: initialColumns, statuses, feedUrl, cre
                 </header>
 
                 <main className="px-4 py-6 sm:px-6 lg:px-8">
+                    {currentLocation && (
+                        <section className="mb-5 rounded-2xl border border-cyan-100 bg-cyan-50 px-4 py-3 text-sm text-cyan-950">
+                            <strong>Unidade atual:</strong> {currentLocation.name}
+                            <span className="ml-2 rounded-full bg-white px-2 py-1 text-xs font-bold text-cyan-700">{currentLocation.account_status}</span>
+                        </section>
+                    )}
+
                     <div className="grid gap-3 overflow-x-auto pb-4 xl:grid-cols-5">
                         {columns.map((column) => (
                             <Column key={column.key} column={column} statuses={statuses} onMove={moveOrder} canUpdateStatus={canUpdateStatus} />

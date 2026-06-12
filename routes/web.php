@@ -47,7 +47,7 @@ Route::middleware('auth')->group(function () {
     Route::get('historico', [WashHistoryController::class, 'index'])->name('history.index');
     Route::get('historico/exportar', [WashHistoryController::class, 'export'])->name('history.export');
 
-    Route::middleware('role:'.User::ROLE_ADMIN.','.User::ROLE_ATTENDANT)->group(function () {
+    Route::middleware('role:'.User::ROLE_OWNER.','.User::ROLE_ADMIN.','.User::ROLE_ATTENDANT)->group(function () {
         Route::get('lavagens/create', [WashOrderController::class, 'create'])->name('wash-orders.create');
         Route::post('lavagens', [WashOrderController::class, 'store'])->name('wash-orders.store');
         Route::post('lavagens/{wash_order}/pagamentos', [PaymentController::class, 'store'])->name('payments.store');
@@ -61,10 +61,10 @@ Route::middleware('auth')->group(function () {
     Route::get('lavagens/{wash_order}/recibo', WashOrderReceiptController::class)->name('wash-orders.receipt');
 
     Route::patch('lavagens/{wash_order}/status', [WashOrderController::class, 'updateStatus'])
-        ->middleware('role:'.User::ROLE_ADMIN.','.User::ROLE_OPERATOR)
+        ->middleware('role:'.User::ROLE_OWNER.','.User::ROLE_ADMIN.','.User::ROLE_OPERATOR)
         ->name('wash-orders.update-status');
 
-    Route::middleware('role:'.User::ROLE_ADMIN.','.User::ROLE_ATTENDANT.','.User::ROLE_OPERATOR)->group(function () {
+    Route::middleware('role:'.User::ROLE_OWNER.','.User::ROLE_ADMIN.','.User::ROLE_ATTENDANT.','.User::ROLE_OPERATOR)->group(function () {
         Route::post('lavagens/{wash_order}/notificacoes/whatsapp-manual', [WashNotificationController::class, 'store'])
             ->name('wash-orders.notifications.whatsapp-manual.store');
         Route::patch('lavagens/{wash_order}/notificacoes/{notification}/enviada-manualmente', [WashNotificationController::class, 'markAsSent'])
@@ -78,7 +78,7 @@ Route::middleware('auth')->group(function () {
         Route::patch('solicitacoes-lava-rapidos/{locationRequest}/rejeitar', [SuperAdminWashLocationRequestController::class, 'reject'])->name('location-requests.reject');
     });
 
-    Route::middleware('role:'.User::ROLE_ADMIN)->group(function () {
+    Route::middleware('role:'.User::ROLE_OWNER.','.User::ROLE_ADMIN)->group(function () {
         Route::get('financeiro', [FinanceController::class, 'index'])->name('finance.index');
         Route::get('financeiro/exportar', [FinanceController::class, 'export'])->name('finance.export');
         Route::get('financeiro/caixa', [CashRegisterController::class, 'index'])->name('finance.cash-registers.index');
