@@ -624,6 +624,7 @@
 
             <div class="flex flex-wrap items-center gap-2">
                 <a href="{{ route('login') }}" class="rounded-xl border border-slate-200 px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50">Entrar</a>
+                <a href="{{ route('public.location-requests.create') }}" class="rounded-xl border border-blue-200 bg-blue-50 px-4 py-2 text-sm font-bold text-blue-700 hover:bg-blue-100">Cadastrar lava-rápido</a>
                 <a href="#lista" class="rounded-xl bg-blue-600 px-4 py-2 text-sm font-bold text-white shadow-lg shadow-blue-900/20">Ver unidades</a>
             </div>
         </header>
@@ -635,6 +636,7 @@
                         <p class="text-xs font-bold uppercase tracking-[0.24em] text-blue-600">Mapa público</p>
                         <h1 class="mt-1 text-2xl font-black text-slate-950 sm:text-3xl">Encontre um lava-rápido próximo</h1>
                         <p class="mt-1 text-sm text-slate-500">Visualize unidades cadastradas, status operacional e contato direto.</p>
+                        <p class="mt-2 text-xs font-semibold text-slate-500">Tem um lava-rápido? <a href="{{ route('public.location-requests.create') }}" class="font-black text-blue-600 hover:text-blue-700">Solicite seu cadastro no AutoFlow</a>.</p>
                     </div>
 
                     <form method="GET" class="grid w-full gap-2 sm:w-auto sm:min-w-[440px] sm:grid-cols-[1fr_auto] xl:min-w-[520px]" data-public-map-filters>

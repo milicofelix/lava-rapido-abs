@@ -40,6 +40,7 @@
                     ['route' => 'finance.index', 'label' => 'Financeiro', 'icon' => '$', 'roles' => ['admin']],
                     ['route' => 'finance.cash-registers.index', 'label' => 'Caixa', 'icon' => 'CX', 'roles' => ['admin'], 'module' => 'module_cash_register'],
                     ['route' => 'finance.credit-receivables.index', 'label' => 'Fiado', 'icon' => 'F$', 'roles' => ['admin'], 'module' => 'module_credit_receivables'],
+                    ['route' => 'super-admin.location-requests.index', 'label' => 'Solicitações', 'icon' => 'SA', 'roles' => ['super_admin']],
                 ] as $item)
                     @continue($item['roles'] && ! auth()->user()->hasAnyRole($item['roles']))
                     @continue(($item['module'] ?? null) && empty($appSettings[$item['module']]))
@@ -115,6 +116,9 @@
                     <a href="{{ route('wash-orders.index') }}" class="rounded-lg border border-slate-200 px-3 py-2 text-sm">Lavagens</a>
                     <a href="{{ route('kanban') }}" class="rounded-lg border border-slate-200 px-3 py-2 text-sm">Kanban</a>
                     <a href="{{ route('history.index') }}" class="rounded-lg border border-slate-200 px-3 py-2 text-sm">Historico</a>
+                    @if (auth()->user()->isSuperAdmin())
+                        <a href="{{ route('super-admin.location-requests.index') }}" class="rounded-lg border border-slate-200 px-3 py-2 text-sm">Solicitações</a>
+                    @endif
                     @if (auth()->user()->isAdmin())
                         <a href="{{ route('finance.index') }}" class="rounded-lg border border-slate-200 px-3 py-2 text-sm">Financeiro</a>
                         @if (! empty($appSettings['module_cash_register']))

@@ -9,6 +9,7 @@ use App\Http\Controllers\App\FinanceController;
 use App\Http\Controllers\App\PaymentController;
 use App\Http\Controllers\App\ServiceController;
 use App\Http\Controllers\App\SettingsController;
+use App\Http\Controllers\App\SuperAdmin\WashLocationRequestController as SuperAdminWashLocationRequestController;
 use App\Http\Controllers\App\VehicleController;
 use App\Http\Controllers\App\WashHistoryController;
 use App\Http\Controllers\App\WashKanbanController;
@@ -17,11 +18,15 @@ use App\Http\Controllers\App\WashOrderController;
 use App\Http\Controllers\App\WashOrderReceiptController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\PublicWashLocationMapController;
+use App\Http\Controllers\PublicWashLocationRequestController;
 use App\Http\Controllers\PublicWashTrackingController;
 use App\Models\User;
 use Illuminate\Support\Facades\Route;
 
 Route::redirect('/', '/lava-rapidos');
+Route::get('/quero-cadastrar-meu-lava-rapido', [PublicWashLocationRequestController::class, 'create'])->name('public.location-requests.create');
+Route::post('/quero-cadastrar-meu-lava-rapido', [PublicWashLocationRequestController::class, 'store'])->name('public.location-requests.store');
+Route::get('/cadastro-enviado', [PublicWashLocationRequestController::class, 'thankYou'])->name('public.location-requests.thank-you');
 Route::get('/lava-rapidos', PublicWashLocationMapController::class)->name('public.locations.index');
 Route::get('/lava-rapidos/{location:slug}', [PublicWashLocationMapController::class, 'show'])->name('public.locations.show');
 Route::redirect('/unidades', '/lava-rapidos');
@@ -64,6 +69,11 @@ Route::middleware('auth')->group(function () {
             ->name('wash-orders.notifications.whatsapp-manual.store');
         Route::patch('lavagens/{wash_order}/notificacoes/{notification}/enviada-manualmente', [WashNotificationController::class, 'markAsSent'])
             ->name('wash-orders.notifications.mark-as-sent');
+    });
+
+    Route::middleware('role:'.User::ROLE_SUPER_ADMIN)->prefix('admin-produto')->name('super-admin.')->group(function () {
+        Route::get('solicitacoes-lava-rapidos', [SuperAdminWashLocationRequestController::class, 'index'])->name('location-requests.index');
+        Route::get('solicitacoes-lava-rapidos/{locationRequest}', [SuperAdminWashLocationRequestController::class, 'show'])->name('location-requests.show');
     });
 
     Route::middleware('role:'.User::ROLE_ADMIN)->group(function () {
