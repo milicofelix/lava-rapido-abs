@@ -43,6 +43,10 @@
                         <span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-white/15 bg-white/10 text-xs font-bold">U</span>
                         Unidades
                     </a>
+                    <a href="{{ route('super-admin.plans.index') }}" class="flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium transition {{ request()->routeIs('super-admin.plans.*') ? 'bg-blue-600 text-white shadow-lg shadow-blue-950/30' : 'text-slate-200 hover:bg-white/10 hover:text-white' }}">
+                        <span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-white/15 bg-white/10 text-xs font-bold">P</span>
+                        Planos
+                    </a>
                 @else
                     @foreach ([
                         ['route' => 'dashboard', 'label' => 'Painel Principal', 'icon' => 'P', 'roles' => null],
@@ -67,6 +71,7 @@
 
                     @foreach ([
                         ['label' => 'Relatorios', 'icon' => 'R', 'href' => auth()->user()->isTeamManager() ? route('finance.index') : route('dashboard'), 'roles' => ['owner', 'admin']],
+                        ['label' => 'Assinatura', 'icon' => 'A', 'href' => route('subscriptions.show'), 'roles' => ['owner']],
                         ['label' => 'Configuracoes', 'icon' => 'G', 'href' => route('settings.edit'), 'roles' => ['owner', 'admin']],
                     ] as $item)
                         @continue(($item['roles'] ?? null) && ! auth()->user()->hasAnyRole($item['roles']))
@@ -139,6 +144,8 @@
                 <nav class="mt-4 flex gap-2 overflow-x-auto lg:hidden">
                     @if ($isSuperAdmin)
                         <a href="{{ route('super-admin.location-requests.index') }}" class="rounded-lg border border-slate-200 px-3 py-2 text-sm">Solicitações</a>
+                        <a href="{{ route('super-admin.locations.index') }}" class="rounded-lg border border-slate-200 px-3 py-2 text-sm">Unidades</a>
+                        <a href="{{ route('super-admin.plans.index') }}" class="rounded-lg border border-slate-200 px-3 py-2 text-sm">Planos</a>
                     @else
                         <a href="{{ route('dashboard') }}" class="rounded-lg border border-slate-200 px-3 py-2 text-sm">Painel</a>
                         <a href="{{ route('wash-orders.index') }}" class="rounded-lg border border-slate-200 px-3 py-2 text-sm">Lavagens</a>
@@ -153,6 +160,9 @@
                                 <a href="{{ route('finance.credit-receivables.index') }}" class="rounded-lg border border-slate-200 px-3 py-2 text-sm">Fiado</a>
                             @endif
                             <a href="{{ route('employees.index') }}" class="rounded-lg border border-slate-200 px-3 py-2 text-sm">Equipe</a>
+                            @if (auth()->user()->isOwner())
+                                <a href="{{ route('subscriptions.show') }}" class="rounded-lg border border-slate-200 px-3 py-2 text-sm">Assinatura</a>
+                            @endif
                             <a href="{{ route('settings.edit') }}" class="rounded-lg border border-slate-200 px-3 py-2 text-sm">Configuracoes</a>
                         @endif
                     @endif

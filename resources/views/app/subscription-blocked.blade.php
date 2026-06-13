@@ -19,5 +19,11 @@
         <p class="mt-5 text-sm text-slate-600">
             Fale com o dono do produto para ativar a assinatura da unidade e liberar novamente o painel, lavagens, kanban, clientes, equipe e financeiro.
         </p>
+
+        @if (auth()->user()->isOwner())
+            <div class="mt-5">
+                <a href="{{ route('subscriptions.show') }}" class="inline-flex rounded-xl bg-blue-700 px-5 py-3 text-sm font-black text-white hover:bg-blue-800">Escolher plano</a>
+            </div>
+        @endif
     </section>
 </x-app.layout>

@@ -6,10 +6,12 @@ use App\Http\Controllers\App\CustomerController;
 use App\Http\Controllers\App\DashboardController;
 use App\Http\Controllers\App\EmployeeController;
 use App\Http\Controllers\App\FinanceController;
+use App\Http\Controllers\App\OwnerSubscriptionController;
 use App\Http\Controllers\App\PaymentController;
 use App\Http\Controllers\App\ServiceController;
 use App\Http\Controllers\App\SettingsController;
 use App\Http\Controllers\App\SubscriptionBlockedController;
+use App\Http\Controllers\App\SuperAdmin\PlanController as SuperAdminPlanController;
 use App\Http\Controllers\App\SuperAdmin\WashLocationManagementController as SuperAdminWashLocationManagementController;
 use App\Http\Controllers\App\SuperAdmin\WashLocationRequestController as SuperAdminWashLocationRequestController;
 use App\Http\Controllers\App\VehicleController;
@@ -55,6 +57,16 @@ Route::middleware('auth')->group(function () {
         Route::patch('unidades/{washLocation:id}/ativar-assinatura', [SuperAdminWashLocationManagementController::class, 'activateSubscription'])->name('locations.activate-subscription');
         Route::patch('unidades/{washLocation:id}/suspender', [SuperAdminWashLocationManagementController::class, 'suspend'])->name('locations.suspend');
         Route::patch('unidades/{washLocation:id}/reativar', [SuperAdminWashLocationManagementController::class, 'reactivate'])->name('locations.reactivate');
+
+        Route::get('planos', [SuperAdminPlanController::class, 'index'])->name('plans.index');
+        Route::post('planos', [SuperAdminPlanController::class, 'store'])->name('plans.store');
+        Route::put('planos/{plan}', [SuperAdminPlanController::class, 'update'])->name('plans.update');
+        Route::patch('planos/{plan}/desativar', [SuperAdminPlanController::class, 'deactivate'])->name('plans.deactivate');
+    });
+
+    Route::middleware('role:'.User::ROLE_OWNER)->group(function () {
+        Route::get('configuracoes/assinatura', [OwnerSubscriptionController::class, 'show'])->name('subscriptions.show');
+        Route::post('configuracoes/assinatura/escolher-plano', [OwnerSubscriptionController::class, 'choose'])->name('subscriptions.choose');
     });
 
     Route::middleware('active.subscription')->group(function () {

@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\App\SuperAdmin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Plan;
+use App\Models\Subscription;
 use App\Models\User;
 use App\Models\WashLocation;
 use Illuminate\Contracts\View\View;
@@ -56,6 +58,7 @@ class WashLocationManagementController extends Controller
 
         return view('app.super-admin.locations.index', [
             'locations' => $locations,
+            'plans' => Plan::query()->active()->orderBy('price')->orderBy('name')->get(),
             'statuses' => WashLocation::accountStatuses(),
             'status' => $status,
             'search' => $search,
@@ -89,7 +92,19 @@ class WashLocationManagementController extends Controller
     public function activateSubscription(Request $request, WashLocation $washLocation): RedirectResponse
     {
         $validated = $request->validate([
+            'plan_id' => ['required', 'integer', Rule::exists('plans', 'id')->where('is_active', true)],
             'subscription_ends_at' => ['required', 'date', 'after_or_equal:today'],
+        ]);
+
+        $washLocation->subscriptions()
+            ->whereIn('status', [Subscription::STATUS_PENDING, Subscription::STATUS_ACTIVE])
+            ->update(['status' => Subscription::STATUS_CANCELED]);
+
+        $washLocation->subscriptions()->create([
+            'plan_id' => $validated['plan_id'],
+            'status' => Subscription::STATUS_ACTIVE,
+            'started_at' => now(),
+            'ends_at' => $validated['subscription_ends_at'],
         ]);
 
         $washLocation->forceFill([

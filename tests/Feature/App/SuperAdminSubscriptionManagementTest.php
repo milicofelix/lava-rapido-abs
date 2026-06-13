@@ -2,6 +2,8 @@
 
 namespace Tests\Feature\App;
 
+use App\Models\Plan;
+use App\Models\Subscription;
 use App\Models\User;
 use App\Models\WashLocation;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -113,11 +115,13 @@ class SuperAdminSubscriptionManagementTest extends TestCase
             'subscription_ends_at' => null,
             'blocked_at' => null,
         ]);
+        $plan = Plan::factory()->create(['name' => 'Professional']);
 
         $endsAt = now()->addDays(30)->format('Y-m-d');
 
         $this->actingAs($superAdmin)
             ->patch(route('super-admin.locations.activate-subscription', ['washLocation' => $location->id]), [
+                'plan_id' => $plan->id,
                 'subscription_ends_at' => $endsAt,
             ])
             ->assertRedirect();
@@ -129,6 +133,11 @@ class SuperAdminSubscriptionManagementTest extends TestCase
         $this->assertNull($location->blocked_at);
         $this->assertTrue($location->public_visible);
         $this->assertSame($endsAt, $location->subscription_ends_at->format('Y-m-d'));
+        $this->assertDatabaseHas('subscriptions', [
+            'wash_location_id' => $location->id,
+            'plan_id' => $plan->id,
+            'status' => Subscription::STATUS_ACTIVE,
+        ]);
     }
 
     public function test_super_admin_suspende_unidade(): void

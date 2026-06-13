@@ -136,6 +136,12 @@
                             <form method="POST" action="{{ route('super-admin.locations.activate-subscription', ['washLocation' => $location->id]) }}" class="grid gap-2 sm:grid-cols-[1fr_auto]">
                                 @csrf
                                 @method('PATCH')
+                                <select name="plan_id" required class="rounded-xl border border-slate-300 px-3 py-2 text-sm">
+                                    <option value="">Selecionar plano</option>
+                                    @foreach ($plans as $plan)
+                                        <option value="{{ $plan->id }}">{{ $plan->name }} - {{ $plan->formattedPrice() }}</option>
+                                    @endforeach
+                                </select>
                                 <input type="date" name="subscription_ends_at" value="{{ now()->addMonth()->format('Y-m-d') }}" class="rounded-xl border border-slate-300 px-3 py-2 text-sm">
                                 <button class="rounded-xl border border-emerald-300 bg-emerald-50 px-4 py-2 text-sm font-bold text-emerald-800 hover:bg-emerald-100">Ativar</button>
                             </form>

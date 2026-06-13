@@ -67,6 +67,8 @@ class DatabaseSeeder extends Seeder
             ],
         ));
 
+        $this->call(PlanSeeder::class);
+
         $this->call(WashLocationSeeder::class);
         $this->call(DemoWashOrdersSeeder::class);
     }

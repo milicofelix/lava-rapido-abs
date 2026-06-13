@@ -5,11 +5,13 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Str;
 
 class WashLocation extends Model
 {
     use HasFactory;
+
     public const STATUS_OPEN = 'open';
 
     public const STATUS_BUSY = 'busy';
@@ -101,6 +103,23 @@ class WashLocation extends Model
     public function washOrders(): HasMany
     {
         return $this->hasMany(WashOrder::class);
+    }
+
+    public function subscriptions(): HasMany
+    {
+        return $this->hasMany(Subscription::class);
+    }
+
+    public function currentSubscription(): HasOne
+    {
+        return $this->hasOne(Subscription::class)->latestOfMany();
+    }
+
+    public function activeSubscription(): HasOne
+    {
+        return $this->hasOne(Subscription::class)
+            ->where('status', Subscription::STATUS_ACTIVE)
+            ->latestOfMany();
     }
 
     public function users(): HasMany
@@ -239,4 +258,3 @@ class WashLocation extends Model
         return $this->public_visible && $this->canAccessOperationalArea();
     }
 }
-
