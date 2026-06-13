@@ -76,6 +76,29 @@ class SuperAdminWashLocationRequestManagementTest extends TestCase
             ->assertSee('Quero testar o AutoFlow.');
     }
 
+
+    public function test_super_admin_dashboard_redirects_to_location_requests(): void
+    {
+        $superAdmin = User::factory()->create(['role' => User::ROLE_SUPER_ADMIN]);
+
+        $this->actingAs($superAdmin)
+            ->get(route('dashboard'))
+            ->assertRedirect(route('super-admin.location-requests.index'));
+    }
+
+    public function test_super_admin_menu_shows_product_admin_items_only(): void
+    {
+        $superAdmin = User::factory()->create(['role' => User::ROLE_SUPER_ADMIN]);
+
+        $this->actingAs($superAdmin)
+            ->get(route('super-admin.location-requests.index'))
+            ->assertOk()
+            ->assertSee('Solicitações de cadastros')
+            ->assertDontSee('Kanban de Lavagens')
+            ->assertDontSee('Lavagens')
+            ->assertDontSee('Financeiro');
+    }
+
     public function test_regular_admin_cannot_access_super_admin_requests(): void
     {
         $admin = User::factory()->create(['role' => User::ROLE_ADMIN]);

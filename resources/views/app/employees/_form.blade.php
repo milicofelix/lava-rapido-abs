@@ -14,6 +14,12 @@
     </label>
 
     <label class="block">
+        <span class="text-sm font-medium">Telefone</span>
+        <input name="phone" value="{{ old('phone', $employee->phone) }}" class="mt-1 w-full rounded-md border border-zinc-300 px-3 py-2" placeholder="(11) 99999-9999">
+        @error('phone') <span class="text-sm text-red-600">{{ $message }}</span> @enderror
+    </label>
+
+    <label class="block">
         <span class="text-sm font-medium">Perfil</span>
         <select name="role" required class="mt-1 w-full rounded-md border border-zinc-300 px-3 py-2">
             @foreach ($roles as $value => $label)
@@ -24,13 +30,24 @@
     </label>
 
     <label class="block">
-        <span class="text-sm font-medium">Senha {{ $employee->exists ? '(opcional)' : '' }}</span>
+        <span class="text-sm font-medium">Senha provisoria {{ $employee->exists ? '/ reset de senha opcional' : '' }}</span>
         <input name="password" type="password" @required(! $employee->exists) class="mt-1 w-full rounded-md border border-zinc-300 px-3 py-2">
         @if ($employee->exists)
-            <span class="mt-1 block text-xs text-zinc-500">Preencha apenas se quiser alterar a senha.</span>
+            <span class="mt-1 block text-xs text-zinc-500">Preencha apenas se quiser resetar a senha deste usuario.</span>
         @endif
         @error('password') <span class="text-sm text-red-600">{{ $message }}</span> @enderror
     </label>
+
+    @if ($employee->exists && ! $employee->is(auth()->user()))
+        <label class="block">
+            <span class="text-sm font-medium">Status</span>
+            <select name="is_active" class="mt-1 w-full rounded-md border border-zinc-300 px-3 py-2">
+                <option value="1" @selected((string) old('is_active', (int) $employee->is_active) === '1')>Ativo</option>
+                <option value="0" @selected((string) old('is_active', (int) $employee->is_active) === '0')>Inativo</option>
+            </select>
+            @error('is_active') <span class="text-sm text-red-600">{{ $message }}</span> @enderror
+        </label>
+    @endif
 </div>
 
 <div class="mt-5 flex gap-2">

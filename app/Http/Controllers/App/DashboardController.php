@@ -12,12 +12,17 @@ use App\Models\WashOrder;
 use App\Support\TenantContext;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
 
 class DashboardController extends Controller
 {
-    public function __invoke(): View
+    public function __invoke(): RedirectResponse|View
     {
+        if (auth()->user()?->isSuperAdmin()) {
+            return redirect()->route('super-admin.location-requests.index');
+        }
+
         $today = today();
         $weekStart = $today->copy()->subDays(6)->startOfDay();
         $weekEnd = $today->copy()->endOfDay();

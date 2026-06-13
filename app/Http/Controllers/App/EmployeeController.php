@@ -4,6 +4,7 @@ namespace App\Http\Controllers\App;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Support\TenantContext;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -15,11 +16,12 @@ class EmployeeController extends Controller
     {
         $search = trim((string) $request->query('search'));
 
-        $employees = User::query()
+        $employees = TenantContext::scopeUsers(User::query())
             ->when($search !== '', function ($query) use ($search) {
                 $query->where(function ($query) use ($search) {
                     $query->where('name', 'like', "%{$search}%")
                         ->orWhere('email', 'like', "%{$search}%")
+                        ->orWhere('phone', 'like', "%{$search}%")
                         ->orWhere('role', 'like', "%{$search}%");
                 });
             })
@@ -31,7 +33,7 @@ class EmployeeController extends Controller
         return view('app.employees.index', [
             'employees' => $employees,
             'search' => $search,
-            'roles' => self::roles(),
+            'roles' => self::rolesFor(auth()->user()),
         ]);
     }
 
@@ -39,39 +41,71 @@ class EmployeeController extends Controller
     {
         return view('app.employees.create', [
             'employee' => new User,
-            'roles' => self::roles(),
+            'roles' => self::rolesFor(auth()->user()),
         ]);
     }
 
     public function store(Request $request): RedirectResponse
     {
-        User::query()->create($this->validated($request));
+        $data = $this->validated($request);
+        $data['wash_location_id'] = auth()->user()->wash_location_id;
+        $data['is_active'] = true;
 
-        return redirect()->route('employees.index')->with('status', 'Funcionario cadastrado com sucesso.');
+        User::query()->create($data);
+
+        return redirect()->route('employees.index')->with('status', 'Usuario da equipe cadastrado com sucesso.');
     }
 
     public function edit(User $employee): View
     {
+        $this->abortUnlessManageable($employee);
+
         return view('app.employees.edit', [
             'employee' => $employee,
-            'roles' => self::roles(),
+            'roles' => self::rolesFor(auth()->user()),
         ]);
     }
 
     public function update(Request $request, User $employee): RedirectResponse
     {
+        $this->abortUnlessManageable($employee);
+
         $employee->update($this->validated($request, $employee));
 
-        return redirect()->route('employees.index')->with('status', 'Funcionario atualizado com sucesso.');
+        return redirect()->route('employees.index')->with('status', 'Usuario da equipe atualizado com sucesso.');
     }
 
-    public static function roles(): array
+    public function destroy(User $employee): RedirectResponse
     {
-        return [
-            'admin' => 'Admin / Dono',
-            'attendant' => 'Atendente',
-            'operator' => 'Lavador / Operacional',
+        $this->abortUnlessManageable($employee);
+
+        if ($employee->is(auth()->user())) {
+            return back()->withErrors(['employee' => 'Voce nao pode desativar o proprio usuario.']);
+        }
+
+        if ($employee->isOwner() && $this->activeOwnersCount() <= 1) {
+            return back()->withErrors(['employee' => 'Nao e possivel desativar o ultimo Owner da unidade.']);
+        }
+
+        $employee->update(['is_active' => false]);
+
+        return redirect()->route('employees.index')->with('status', 'Usuario da equipe desativado com sucesso.');
+    }
+
+    public static function rolesFor(?User $user): array
+    {
+        $roles = [
+            User::ROLE_OWNER => 'Owner',
+            User::ROLE_ADMIN => 'Admin',
+            User::ROLE_ATTENDANT => 'Atendente',
+            User::ROLE_OPERATOR => 'Operador',
         ];
+
+        if (! $user?->isOwner()) {
+            unset($roles[User::ROLE_OWNER]);
+        }
+
+        return $roles;
     }
 
     /**
@@ -79,19 +113,56 @@ class EmployeeController extends Controller
      */
     private function validated(Request $request, ?User $employee = null): array
     {
+        $roles = array_keys(self::rolesFor($request->user()));
+
         $rules = [
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email', 'max:255', Rule::unique('users', 'email')->ignore($employee)],
-            'role' => ['required', Rule::in(array_keys(self::roles()))],
+            'phone' => ['nullable', 'string', 'max:30'],
+            'role' => ['required', Rule::in($roles)],
             'password' => [$employee ? 'nullable' : 'required', 'string', 'min:6', 'max:255'],
+            'is_active' => ['nullable', 'boolean'],
         ];
 
         $data = $request->validate($rules);
+
+        if ($employee && $employee->is($request->user())) {
+            unset($data['is_active']);
+        }
+
+        if ($employee && $employee->isOwner() && ($data['role'] ?? $employee->role) !== User::ROLE_OWNER && $this->activeOwnersCount() <= 1) {
+            abort(422, 'Nao e possivel remover o ultimo Owner da unidade.');
+        }
 
         if (($data['password'] ?? '') === '') {
             unset($data['password']);
         }
 
+        if (! array_key_exists('is_active', $data) && $employee) {
+            unset($data['is_active']);
+        }
+
         return $data;
+    }
+
+    private function abortUnlessManageable(User $employee): void
+    {
+        TenantContext::abortUnlessModelBelongsToTenant($employee);
+
+        if ($employee->isSuperAdmin()) {
+            abort(404);
+        }
+
+        if ($employee->isOwner() && ! auth()->user()->isOwner()) {
+            abort(403);
+        }
+    }
+
+    private function activeOwnersCount(): int
+    {
+        return TenantContext::scopeUsers(User::query())
+            ->where('role', User::ROLE_OWNER)
+            ->where('is_active', true)
+            ->count();
     }
 }

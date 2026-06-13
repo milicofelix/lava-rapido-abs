@@ -34,8 +34,11 @@ class User extends Authenticatable
     protected $fillable = [
         'name',
         'email',
+        'phone',
         'role',
         'wash_location_id',
+        'is_active',
+        'last_login_at',
         'password',
     ];
 
@@ -59,6 +62,8 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'is_active' => 'boolean',
+            'last_login_at' => 'datetime',
         ];
     }
 
@@ -103,6 +108,11 @@ class User extends Authenticatable
     public function isAdmin(): bool
     {
         return $this->hasRole(self::ROLE_ADMIN);
+    }
+
+    public function isTeamManager(): bool
+    {
+        return $this->hasAnyRole([self::ROLE_OWNER, self::ROLE_ADMIN]);
     }
 
     public function isOperationalUser(): bool

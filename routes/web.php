@@ -90,6 +90,6 @@ Route::middleware('auth')->group(function () {
         Route::get('configuracoes', [SettingsController::class, 'edit'])->name('settings.edit');
         Route::put('configuracoes', [SettingsController::class, 'update'])->name('settings.update');
         Route::resource('servicos', ServiceController::class)->parameters(['servicos' => 'service'])->names('services')->except(['show', 'destroy']);
-        Route::resource('funcionarios', EmployeeController::class)->parameters(['funcionarios' => 'employee'])->names('employees')->except(['show', 'destroy']);
+        Route::resource('equipe', EmployeeController::class)->parameters(['equipe' => 'employee'])->names('employees')->except(['show']);
     });
 });
