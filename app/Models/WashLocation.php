@@ -32,9 +32,12 @@ class WashLocation extends Model
         'city',
         'status',
         'account_status',
+        'subscription_status',
         'public_visible',
         'trial_started_at',
         'trial_ends_at',
+        'subscription_ends_at',
+        'blocked_at',
         'approved_location_request_id',
         'map_x',
         'map_y',
@@ -90,6 +93,8 @@ class WashLocation extends Model
             'public_visible' => 'boolean',
             'trial_started_at' => 'datetime',
             'trial_ends_at' => 'datetime',
+            'subscription_ends_at' => 'datetime',
+            'blocked_at' => 'datetime',
         ];
     }
 
@@ -172,14 +177,66 @@ class WashLocation extends Model
         return self::statuses()[$this->status] ?? $this->status;
     }
 
+    public function subscriptionStatus(): string
+    {
+        return $this->subscription_status ?: $this->account_status;
+    }
+
     public function accountStatusLabel(): string
     {
-        return self::accountStatuses()[$this->account_status] ?? $this->account_status;
+        return self::accountStatuses()[$this->subscriptionStatus()] ?? $this->subscriptionStatus();
+    }
+
+    public function isTrialActive(): bool
+    {
+        return $this->subscriptionStatus() === self::ACCOUNT_STATUS_TRIAL
+            && $this->trial_ends_at !== null
+            && $this->trial_ends_at->endOfDay()->isFuture();
+    }
+
+    public function isSubscriptionActive(): bool
+    {
+        if ($this->subscriptionStatus() !== self::ACCOUNT_STATUS_ACTIVE) {
+            return false;
+        }
+
+        return $this->subscription_ends_at === null || $this->subscription_ends_at->endOfDay()->isFuture();
+    }
+
+    public function isSubscriptionExpired(): bool
+    {
+        if (in_array($this->subscriptionStatus(), [self::ACCOUNT_STATUS_EXPIRED, self::ACCOUNT_STATUS_SUSPENDED], true)) {
+            return true;
+        }
+
+        if ($this->subscriptionStatus() === self::ACCOUNT_STATUS_TRIAL) {
+            return $this->trial_ends_at !== null && $this->trial_ends_at->endOfDay()->isPast();
+        }
+
+        if ($this->subscriptionStatus() === self::ACCOUNT_STATUS_ACTIVE) {
+            return $this->subscription_ends_at !== null && $this->subscription_ends_at->endOfDay()->isPast();
+        }
+
+        return false;
+    }
+
+    public function canAccessOperationalArea(): bool
+    {
+        return $this->isTrialActive() || $this->isSubscriptionActive();
+    }
+
+    public function trialDaysRemaining(): ?int
+    {
+        if (! $this->trial_ends_at || $this->subscriptionStatus() !== self::ACCOUNT_STATUS_TRIAL) {
+            return null;
+        }
+
+        return max(0, (int) now()->startOfDay()->diffInDays($this->trial_ends_at->copy()->startOfDay(), false));
     }
 
     public function isPubliclyVisible(): bool
     {
-        return $this->public_visible
-            && in_array($this->account_status, [self::ACCOUNT_STATUS_TRIAL, self::ACCOUNT_STATUS_ACTIVE], true);
+        return $this->public_visible && $this->canAccessOperationalArea();
     }
 }
+

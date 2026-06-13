@@ -2,7 +2,7 @@
     <div class="space-y-5">
         <div class="rounded-2xl border border-amber-200 bg-amber-50 p-5 text-sm text-amber-950">
             <p class="font-bold">Área do dono do produto</p>
-            <p class="mt-1">Essas solicitações ainda não criam unidades no mapa. A aprovação e o trial entram na próxima fase.</p>
+            <p class="mt-1">Ao aprovar uma solicitação, a unidade nasce em trial e passa a seguir as regras de assinatura do SaaS.</p>
         </div>
 
         <section class="grid gap-4 md:grid-cols-4">
@@ -62,6 +62,9 @@
                             <p class="mt-2 text-sm text-slate-600">Responsável: <strong>{{ $requestItem->responsible_name }}</strong></p>
                             <p class="mt-1 text-sm text-slate-500">{{ $requestItem->city }}/{{ $requestItem->state }} · {{ $requestItem->phone }} · {{ $requestItem->email }}</p>
                             <p class="mt-1 text-xs text-slate-400">Solicitado em {{ $requestItem->created_at?->format('d/m/Y H:i') }}</p>
+                            @if ($requestItem->washLocation)
+                                <p class="mt-2 text-xs font-bold text-emerald-700">Unidade: {{ $requestItem->washLocation->accountStatusLabel() }}</p>
+                            @endif
                         </div>
                         <div class="flex items-center justify-start lg:justify-end">
                             <a href="{{ route('super-admin.location-requests.show', $requestItem) }}" class="rounded-xl border border-slate-300 px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50">Ver detalhes</a>

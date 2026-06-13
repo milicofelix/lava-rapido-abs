@@ -14,7 +14,10 @@ class SuperAdminWashLocationRequestApprovalTest extends TestCase
 
     public function test_super_admin_can_approve_request_and_start_trial(): void
     {
-        $superAdmin = User::factory()->create(['role' => User::ROLE_SUPER_ADMIN]);
+        $superAdmin = User::factory()->create([
+            'role' => User::ROLE_SUPER_ADMIN,
+            'wash_location_id' => null,
+        ]);
 
         $request = WashLocationRequest::factory()->create([
             'business_name' => 'Lava Rapido Central',
@@ -39,7 +42,9 @@ class SuperAdminWashLocationRequestApprovalTest extends TestCase
         $this->assertSame($superAdmin->id, $request->decided_by_user_id);
         $this->assertSame('Dados conferidos por contato manual.', $request->decision_notes);
 
-        $location = WashLocation::query()->firstOrFail();
+        $location = WashLocation::query()
+            ->where('approved_location_request_id', $request->id)
+            ->firstOrFail();
 
         $this->assertSame('Lava Rapido Central', $location->name);
         $this->assertSame(WashLocation::ACCOUNT_STATUS_TRIAL, $location->account_status);

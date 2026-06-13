@@ -24,7 +24,7 @@
 @php($isSuperAdmin = auth()->user()->isSuperAdmin())
 @php($unitDisplayName = $currentLocation?->name ?? ($isSuperAdmin ? 'AutoFlow Admin' : ($appSettings['company_name'] ?? 'AutoFlow')))
 @php($unitStatusLabel = $currentLocation?->accountStatusLabel())
-@php($trialDaysRemaining = $currentLocation?->trial_ends_at ? max(0, (int) now()->startOfDay()->diffInDays($currentLocation->trial_ends_at->copy()->startOfDay(), false)) : null)
+@php($trialDaysRemaining = $currentLocation?->trialDaysRemaining())
 @php($homeRoute = $isSuperAdmin ? route('super-admin.location-requests.index') : route('dashboard'))
 <body class="{{ $appTheme === 'dark' ? 'bg-slate-950' : 'bg-[#061832]' }} text-slate-950 antialiased" data-theme="{{ $appTheme }}" data-theme-effective="{{ $appTheme === 'system' ? 'light' : $appTheme }}">
     <div class="min-h-screen p-2 lg:p-3" data-app-shell>
@@ -47,11 +47,11 @@
                         ['route' => 'history.index', 'label' => 'Historico', 'icon' => 'H', 'roles' => null],
                         ['route' => 'customers.index', 'label' => 'Clientes', 'icon' => 'C', 'roles' => ['admin', 'attendant']],
                         ['route' => 'vehicles.index', 'label' => 'Veiculos', 'icon' => 'V', 'roles' => ['admin', 'attendant']],
-                        ['route' => 'services.index', 'label' => 'Servicos', 'icon' => 'S', 'roles' => ['admin']],
-                        ['route' => 'employees.index', 'label' => 'Equipe', 'icon' => 'E', 'roles' => ['admin']],
-                        ['route' => 'finance.index', 'label' => 'Financeiro', 'icon' => '$', 'roles' => ['admin']],
-                        ['route' => 'finance.cash-registers.index', 'label' => 'Caixa', 'icon' => 'CX', 'roles' => ['admin'], 'module' => 'module_cash_register'],
-                        ['route' => 'finance.credit-receivables.index', 'label' => 'Fiado', 'icon' => 'F$', 'roles' => ['admin'], 'module' => 'module_credit_receivables'],
+                        ['route' => 'services.index', 'label' => 'Servicos', 'icon' => 'S', 'roles' => ['owner', 'admin']],
+                        ['route' => 'employees.index', 'label' => 'Equipe', 'icon' => 'E', 'roles' => ['owner', 'admin']],
+                        ['route' => 'finance.index', 'label' => 'Financeiro', 'icon' => '$', 'roles' => ['owner', 'admin']],
+                        ['route' => 'finance.cash-registers.index', 'label' => 'Caixa', 'icon' => 'CX', 'roles' => ['owner', 'admin'], 'module' => 'module_cash_register'],
+                        ['route' => 'finance.credit-receivables.index', 'label' => 'Fiado', 'icon' => 'F$', 'roles' => ['owner', 'admin'], 'module' => 'module_credit_receivables'],
                     ] as $item)
                         @continue($item['roles'] && ! auth()->user()->hasAnyRole($item['roles']))
                         @continue(($item['module'] ?? null) && empty($appSettings[$item['module']]))
@@ -62,8 +62,8 @@
                     @endforeach
 
                     @foreach ([
-                        ['label' => 'Relatorios', 'icon' => 'R', 'href' => auth()->user()->isAdmin() ? route('finance.index') : route('dashboard'), 'roles' => ['admin']],
-                        ['label' => 'Configuracoes', 'icon' => 'G', 'href' => route('settings.edit'), 'roles' => ['admin']],
+                        ['label' => 'Relatorios', 'icon' => 'R', 'href' => auth()->user()->isTeamManager() ? route('finance.index') : route('dashboard'), 'roles' => ['owner', 'admin']],
+                        ['label' => 'Configuracoes', 'icon' => 'G', 'href' => route('settings.edit'), 'roles' => ['owner', 'admin']],
                     ] as $item)
                         @continue(($item['roles'] ?? null) && ! auth()->user()->hasAnyRole($item['roles']))
                         <a href="{{ $item['href'] }}" class="flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium text-slate-200 transition hover:bg-white/10 hover:text-white">
@@ -140,7 +140,7 @@
                         <a href="{{ route('wash-orders.index') }}" class="rounded-lg border border-slate-200 px-3 py-2 text-sm">Lavagens</a>
                         <a href="{{ route('kanban') }}" class="rounded-lg border border-slate-200 px-3 py-2 text-sm">Kanban</a>
                         <a href="{{ route('history.index') }}" class="rounded-lg border border-slate-200 px-3 py-2 text-sm">Historico</a>
-                        @if (auth()->user()->isAdmin())
+                        @if (auth()->user()->isTeamManager())
                             <a href="{{ route('finance.index') }}" class="rounded-lg border border-slate-200 px-3 py-2 text-sm">Financeiro</a>
                             @if (! empty($appSettings['module_cash_register']))
                                 <a href="{{ route('finance.cash-registers.index') }}" class="rounded-lg border border-slate-200 px-3 py-2 text-sm">Caixa</a>
@@ -158,6 +158,13 @@
             <main class="px-4 py-5 sm:px-6 lg:px-8">
                 @if (session('status'))
                     <div class="mb-5 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">{{ session('status') }}</div>
+                @endif
+
+                @if ($currentLocation && $currentLocation->subscriptionStatus() === \App\Models\WashLocation::ACCOUNT_STATUS_TRIAL && $trialDaysRemaining !== null && $trialDaysRemaining <= 5)
+                    <div class="mb-5 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+                        <strong>Trial em andamento:</strong>
+                        restam {{ $trialDaysRemaining }} dia{{ $trialDaysRemaining === 1 ? '' : 's' }} para ativar a assinatura da unidade.
+                    </div>
                 @endif
 
                 {{ $slot }}

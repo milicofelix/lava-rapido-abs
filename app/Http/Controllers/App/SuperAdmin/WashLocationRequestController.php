@@ -84,9 +84,12 @@ class WashLocationRequestController extends Controller
                 'city' => trim($locationRequest->city.'/'.$locationRequest->state, '/'),
                 'status' => WashLocation::STATUS_OPEN,
                 'account_status' => WashLocation::ACCOUNT_STATUS_TRIAL,
+                'subscription_status' => WashLocation::ACCOUNT_STATUS_TRIAL,
                 'public_visible' => true,
                 'trial_started_at' => $now,
                 'trial_ends_at' => $now->copy()->addDays(15),
+                'subscription_ends_at' => null,
+                'blocked_at' => null,
                 'approved_location_request_id' => $locationRequest->id,
                 'active_orders_count' => 0,
                 'phone' => $locationRequest->phone,
@@ -143,6 +146,7 @@ class WashLocationRequestController extends Controller
 
         $user->role = User::ROLE_OWNER;
         $user->wash_location_id = $location->id;
+        $user->is_active = true;
         $user->save();
 
         return $user;

@@ -72,7 +72,11 @@
                     <div class="mt-3 flex flex-wrap items-center justify-between gap-3">
                         <div>
                             <p class="text-lg font-black text-slate-950">{{ $locationRequest->washLocation->name }}</p>
+                            <p class="text-sm text-slate-600">Status: {{ $locationRequest->washLocation->accountStatusLabel() }}</p>
                             <p class="text-sm text-slate-600">Trial até {{ $locationRequest->washLocation->trial_ends_at?->format('d/m/Y') }}</p>
+                            @if ($locationRequest->washLocation->subscription_ends_at)
+                                <p class="text-sm text-slate-600">Assinatura até {{ $locationRequest->washLocation->subscription_ends_at->format('d/m/Y') }}</p>
+                            @endif
                         </div>
                         <a href="{{ route('public.locations.show', $locationRequest->washLocation) }}" target="_blank" class="rounded-xl bg-emerald-600 px-4 py-2 text-sm font-black text-white">Ver página pública</a>
                     </div>

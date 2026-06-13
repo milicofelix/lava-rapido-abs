@@ -12,7 +12,7 @@ class ServiceFactory extends Factory
     public function definition(): array
     {
         return [
-            'wash_location_id' => WashLocation::factory(),
+            'wash_location_id' => WashLocation::query()->value('id') ?? WashLocation::factory(),
             'name' => fake()->randomElement(['Lavagem completa', 'Ducha simples', 'Cera', 'Higienizacao interna']),
             'description' => fake()->sentence(),
             'base_price' => fake()->randomFloat(2, 25, 250),

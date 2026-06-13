@@ -42,6 +42,10 @@ class TenantHeaderBrandingTest extends TestCase
 
         $this->actingAs($superAdmin)
             ->get(route('dashboard'))
+            ->assertRedirect(route('super-admin.location-requests.index'));
+
+        $this->actingAs($superAdmin)
+            ->get(route('super-admin.location-requests.index'))
             ->assertOk()
             ->assertSee('Administração do produto')
             ->assertSee('AutoFlow Admin');

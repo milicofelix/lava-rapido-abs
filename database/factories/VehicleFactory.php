@@ -10,12 +10,21 @@ use Illuminate\Database\Eloquent\Factories\Factory;
 /** @extends Factory<Vehicle> */
 class VehicleFactory extends Factory
 {
+    public function configure(): static
+    {
+        return $this->afterMaking(function (Vehicle $vehicle): void {
+            if ($vehicle->customer_id !== null && $vehicle->customer !== null) {
+                $vehicle->wash_location_id = $vehicle->customer->wash_location_id;
+            }
+        });
+    }
+
     public function definition(): array
     {
         $vehicle = fake()->randomElement(self::catalog());
 
         return [
-            'wash_location_id' => WashLocation::factory(),
+            'wash_location_id' => WashLocation::query()->value('id') ?? WashLocation::factory(),
             'customer_id' => Customer::factory(),
             'plate' => strtoupper(fake()->unique()->bothify('???#?##')),
             'model' => $vehicle['model'],

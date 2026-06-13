@@ -13,7 +13,7 @@ class CashRegisterFactory extends Factory
     public function definition(): array
     {
         return [
-            'wash_location_id' => WashLocation::factory(),
+            'wash_location_id' => WashLocation::query()->value('id') ?? WashLocation::factory(),
             'opened_by_user_id' => User::factory(),
             'status' => CashRegister::STATUS_OPEN,
             'opening_balance' => 100,
