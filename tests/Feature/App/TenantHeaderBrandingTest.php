@@ -33,6 +33,44 @@ class TenantHeaderBrandingTest extends TestCase
             ->assertDontSee('Lava Rapido Central');
     }
 
+    public function test_owner_sees_customer_and_vehicle_menu_links(): void
+    {
+        $location = WashLocation::factory()->create([
+            'account_status' => WashLocation::ACCOUNT_STATUS_TRIAL,
+            'trial_ends_at' => now()->addDays(12),
+        ]);
+
+        $owner = User::factory()->create([
+            'role' => User::ROLE_OWNER,
+            'wash_location_id' => $location->id,
+        ]);
+
+        $this->actingAs($owner)
+            ->get(route('dashboard'))
+            ->assertOk()
+            ->assertSee('href="'.route('customers.index').'"', false)
+            ->assertSee('href="'.route('vehicles.index').'"', false);
+    }
+
+    public function test_operator_does_not_see_customer_and_vehicle_menu_links(): void
+    {
+        $location = WashLocation::factory()->create([
+            'account_status' => WashLocation::ACCOUNT_STATUS_TRIAL,
+            'trial_ends_at' => now()->addDays(12),
+        ]);
+
+        $operator = User::factory()->create([
+            'role' => User::ROLE_OPERATOR,
+            'wash_location_id' => $location->id,
+        ]);
+
+        $this->actingAs($operator)
+            ->get(route('dashboard'))
+            ->assertOk()
+            ->assertDontSee('href="'.route('customers.index').'"', false)
+            ->assertDontSee('href="'.route('vehicles.index').'"', false);
+    }
+
     public function test_super_admin_sees_product_admin_branding_in_header(): void
     {
         $superAdmin = User::factory()->create([

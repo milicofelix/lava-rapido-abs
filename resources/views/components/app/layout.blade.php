@@ -53,8 +53,8 @@
                         ['route' => 'wash-orders.index', 'label' => 'Lavagens', 'icon' => 'L', 'roles' => null],
                         ['route' => 'kanban', 'label' => 'Kanban de Lavagens', 'icon' => 'K', 'roles' => null],
                         ['route' => 'history.index', 'label' => 'Historico', 'icon' => 'H', 'roles' => null],
-                        ['route' => 'customers.index', 'label' => 'Clientes', 'icon' => 'C', 'roles' => ['admin', 'attendant']],
-                        ['route' => 'vehicles.index', 'label' => 'Veiculos', 'icon' => 'V', 'roles' => ['admin', 'attendant']],
+                        ['route' => 'customers.index', 'label' => 'Clientes', 'icon' => 'C', 'roles' => ['owner', 'admin', 'attendant']],
+                        ['route' => 'vehicles.index', 'label' => 'Veiculos', 'icon' => 'V', 'roles' => ['owner', 'admin', 'attendant']],
                         ['route' => 'services.index', 'label' => 'Servicos', 'icon' => 'S', 'roles' => ['owner', 'admin']],
                         ['route' => 'employees.index', 'label' => 'Equipe', 'icon' => 'E', 'roles' => ['owner', 'admin']],
                         ['route' => 'finance.index', 'label' => 'Financeiro', 'icon' => '$', 'roles' => ['owner', 'admin']],
@@ -171,6 +171,10 @@
                         <a href="{{ route('wash-orders.index') }}" class="shrink-0 rounded-lg border border-slate-200 px-3 py-1.5 text-sm font-medium">Lavagens</a>
                         <a href="{{ route('kanban') }}" class="shrink-0 rounded-lg border border-slate-200 px-3 py-1.5 text-sm font-medium">Kanban</a>
                         <a href="{{ route('history.index') }}" class="shrink-0 rounded-lg border border-slate-200 px-3 py-1.5 text-sm font-medium">Historico</a>
+                        @if (auth()->user()->hasAnyRole([\App\Models\User::ROLE_OWNER, \App\Models\User::ROLE_ADMIN, \App\Models\User::ROLE_ATTENDANT]))
+                            <a href="{{ route('customers.index') }}" class="shrink-0 rounded-lg border border-slate-200 px-3 py-1.5 text-sm font-medium">Clientes</a>
+                            <a href="{{ route('vehicles.index') }}" class="shrink-0 rounded-lg border border-slate-200 px-3 py-1.5 text-sm font-medium">Veiculos</a>
+                        @endif
                         @if (auth()->user()->isTeamManager())
                             <a href="{{ route('finance.index') }}" class="shrink-0 rounded-lg border border-slate-200 px-3 py-1.5 text-sm font-medium">Financeiro</a>
                             @if (! empty($appSettings['module_cash_register']))

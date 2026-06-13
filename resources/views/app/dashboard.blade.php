@@ -13,6 +13,90 @@
             </section>
         @endif
 
+        <section class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+            <div class="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                    <p class="text-xs font-black uppercase tracking-[0.18em] text-blue-700">Dashboard executivo</p>
+                    <h2 class="mt-1 text-xl font-black text-slate-950">Visao do mes</h2>
+                    <p class="mt-1 text-sm text-slate-500">{{ ucfirst($monthLabel) }}</p>
+                </div>
+                @if (auth()->user()->isTeamManager())
+                    <a href="{{ route('finance.index') }}" class="rounded-xl border border-slate-200 px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50">Abrir financeiro</a>
+                @endif
+            </div>
+
+            <div class="mt-5 grid gap-4 lg:grid-cols-4">
+                @foreach ([
+                    ['label' => 'Lavagens do mes', 'value' => number_format($monthlyWashOrders, 0, ',', '.'), 'hint' => 'Volume acumulado', 'color' => 'bg-blue-50 text-blue-700', 'icon' => 'M'],
+                    ['label' => 'Receita do mes', 'value' => 'R$ '.number_format((float) $monthlyRevenue, 2, ',', '.'), 'hint' => 'Pagamentos recebidos', 'color' => 'bg-emerald-50 text-emerald-700', 'icon' => '$'],
+                    ['label' => 'Ticket medio', 'value' => 'R$ '.number_format((float) $monthlyTicketAverage, 2, ',', '.'), 'hint' => 'Media por pagamento', 'color' => 'bg-violet-50 text-violet-700', 'icon' => 'T'],
+                    ['label' => 'Clientes recorrentes', 'value' => count($monthlyRecurringCustomers), 'hint' => 'Com 2+ lavagens no mes', 'color' => 'bg-amber-50 text-amber-700', 'icon' => 'R'],
+                ] as $metric)
+                    <div class="rounded-xl border border-slate-200 bg-slate-50/60 p-4">
+                        <div class="flex items-center gap-3">
+                            <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl {{ $metric['color'] }} text-sm font-black">{{ $metric['icon'] }}</span>
+                            <div class="min-w-0">
+                                <p class="truncate text-sm font-bold text-slate-700">{{ $metric['label'] }}</p>
+                                <p class="mt-1 text-2xl font-black text-slate-950">{{ $metric['value'] }}</p>
+                                <p class="mt-1 text-xs font-semibold text-slate-500">{{ $metric['hint'] }}</p>
+                            </div>
+                        </div>
+                    </div>
+                @endforeach
+            </div>
+
+            <div class="mt-5 grid gap-5 xl:grid-cols-2">
+                <div class="rounded-xl border border-slate-200 p-4">
+                    <div class="flex items-center justify-between gap-3">
+                        <h3 class="font-black text-slate-950">Top servicos do mes</h3>
+                        <span class="rounded-lg bg-blue-50 px-3 py-1 text-xs font-bold text-blue-700">{{ count($monthlyTopServices) }} servicos</span>
+                    </div>
+                    <div class="mt-4 space-y-3">
+                        @forelse ($monthlyTopServices as $service)
+                            <div class="grid grid-cols-[1fr_auto] gap-3 text-sm">
+                                <div class="min-w-0">
+                                    <div class="flex items-center justify-between gap-3">
+                                        <span class="truncate font-bold text-slate-800">{{ $service['name'] }}</span>
+                                        <span class="shrink-0 text-xs font-bold text-slate-500">{{ $service['count'] }} venda{{ $service['count'] === 1 ? '' : 's' }}</span>
+                                    </div>
+                                    <div class="mt-2 h-2 rounded-full bg-slate-100">
+                                        <div class="h-2 rounded-full bg-blue-600" style="width: {{ $service['percent'] }}%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        @empty
+                            <p class="text-sm text-slate-500">Nenhum servico vendido neste mes.</p>
+                        @endforelse
+                    </div>
+                </div>
+
+                <div class="rounded-xl border border-slate-200 p-4">
+                    <div class="flex items-center justify-between gap-3">
+                        <h3 class="font-black text-slate-950">Clientes recorrentes</h3>
+                        <span class="rounded-lg bg-amber-50 px-3 py-1 text-xs font-bold text-amber-700">2+ lavagens</span>
+                    </div>
+                    <div class="mt-4 space-y-3">
+                        @forelse ($monthlyRecurringCustomers as $customer)
+                            <div class="grid grid-cols-[1fr_auto] items-center gap-3 rounded-lg bg-slate-50 px-3 py-2 text-sm">
+                                <div class="min-w-0">
+                                    <p class="truncate font-bold text-slate-800">{{ $customer['name'] }}</p>
+                                    <div class="mt-2 h-2 rounded-full bg-white">
+                                        <div class="h-2 rounded-full bg-amber-500" style="width: {{ $customer['percent'] }}%"></div>
+                                    </div>
+                                </div>
+                                <div class="text-right">
+                                    <p class="font-black text-slate-950">{{ $customer['count'] }}</p>
+                                    <p class="text-xs text-slate-500">R$ {{ number_format((float) $customer['revenue'], 2, ',', '.') }}</p>
+                                </div>
+                            </div>
+                        @empty
+                            <p class="text-sm text-slate-500">Nenhum cliente recorrente neste mes.</p>
+                        @endforelse
+                    </div>
+                </div>
+            </div>
+        </section>
+
         <section class="grid gap-4 md:grid-cols-2 2xl:grid-cols-4">
             @foreach ([
                 ['label' => 'Lavagens hoje', 'value' => $washOrdersToday, 'hint' => '14% vs ontem', 'color' => 'from-blue-500 to-blue-700', 'icon' => 'L'],
@@ -123,7 +207,7 @@
             <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
                 <div class="flex items-center justify-between">
                     <h2 class="font-bold">Resumo Financeiro</h2>
-                    @if (auth()->user()->isAdmin())
+                    @if (auth()->user()->isTeamManager())
                         <a href="{{ route('finance.index') }}" class="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-semibold">Hoje</a>
                     @endif
                 </div>
@@ -146,7 +230,7 @@
                         @endforelse
                     </div>
                 </div>
-                @if (auth()->user()->isAdmin())
+                @if (auth()->user()->isTeamManager())
                     <a href="{{ route('finance.index') }}" class="mt-5 block border-t border-slate-200 pt-4 text-center text-sm font-bold text-blue-700">Ver relatorio completo</a>
                 @endif
             </div>
@@ -170,7 +254,7 @@
                         <p class="text-sm text-slate-500">Nenhum servico vendido nesta semana.</p>
                     @endforelse
                 </div>
-                @if (auth()->user()->isAdmin())
+                @if (auth()->user()->isTeamManager())
                     <a href="{{ route('services.index') }}" class="mt-5 block border-t border-slate-200 pt-4 text-center text-sm font-bold text-blue-700">Ver todos os servicos</a>
                 @endif
             </div>

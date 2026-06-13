@@ -24,6 +24,8 @@ class DashboardController extends Controller
         }
 
         $today = today();
+        $monthStart = $today->copy()->startOfMonth();
+        $monthEnd = $today->copy()->endOfMonth();
         $weekStart = $today->copy()->subDays(6)->startOfDay();
         $weekEnd = $today->copy()->endOfDay();
 
@@ -33,18 +35,32 @@ class DashboardController extends Controller
         );
         $todayRevenue = (clone $todayPayments)->sum('amount');
         $todayPaymentCount = (clone $todayPayments)->count();
+        $monthlyPayments = TenantContext::scopePayments(
+            Payment::query()->whereBetween('paid_at', [$monthStart->copy()->startOfDay(), $monthEnd->copy()->endOfDay()])
+        );
+        $monthlyRevenue = (clone $monthlyPayments)->sum('amount');
+        $monthlyPaymentCount = (clone $monthlyPayments)->count();
+        $monthlyWashOrders = TenantContext::scopeWashOrders(WashOrder::query())
+            ->whereBetween('entered_at', [$monthStart->copy()->startOfDay(), $monthEnd->copy()->endOfDay()])
+            ->count();
 
         return view('app.dashboard', [
             'currentLocation' => $currentLocation,
-            'customerCount' => Customer::count(),
-            'vehicleCount' => Vehicle::count(),
-            'serviceCount' => Service::count(),
-            'activeServiceCount' => Service::where('active', true)->count(),
+            'customerCount' => TenantContext::scopeCustomers(Customer::query())->count(),
+            'vehicleCount' => TenantContext::scopeVehicles(Vehicle::query())->count(),
+            'serviceCount' => TenantContext::scopeServices(Service::query())->count(),
+            'activeServiceCount' => TenantContext::scopeServices(Service::query())->where('active', true)->count(),
             'washOrdersToday' => TenantContext::scopeWashOrders(WashOrder::query())->whereDate('entered_at', $today)->count(),
             'activeWashOrders' => TenantContext::scopeWashOrders(WashOrder::query())->whereIn('status', WashOrder::activeStatuses())->count(),
             'readyWashOrders' => TenantContext::scopeWashOrders(WashOrder::query())->where('status', WashOrder::STATUS_READY)->count(),
             'todayRevenue' => $todayRevenue,
             'ticketAverage' => $todayPaymentCount > 0 ? $todayRevenue / $todayPaymentCount : 0,
+            'monthLabel' => $today->translatedFormat('F Y'),
+            'monthlyWashOrders' => $monthlyWashOrders,
+            'monthlyRevenue' => $monthlyRevenue,
+            'monthlyTicketAverage' => $monthlyPaymentCount > 0 ? $monthlyRevenue / $monthlyPaymentCount : 0,
+            'monthlyRecurringCustomers' => $this->monthlyRecurringCustomers($monthStart, $monthEnd),
+            'monthlyTopServices' => $this->topServices($monthStart, $monthEnd),
             'topService' => $this->topService($today),
             'averageWashMinutes' => $this->averageWashMinutes($today),
             'washOrdersByDay' => $this->washOrdersByDay($weekStart, $weekEnd),
@@ -53,7 +69,7 @@ class DashboardController extends Controller
             'kanbanColumns' => $this->kanbanColumns(),
             'financeByMethod' => $this->financeByMethod($today),
             'recentActivities' => $this->recentActivities(),
-            'recentCustomers' => Customer::latest()->withCount('vehicles')->limit(5)->get(),
+            'recentCustomers' => TenantContext::scopeCustomers(Customer::query())->latest()->withCount('vehicles')->limit(5)->get(),
             'recentWashOrders' => TenantContext::scopeWashOrders(WashOrder::query())->with(['customer', 'vehicle'])->latest('entered_at')->limit(5)->get(),
         ]);
     }
@@ -171,6 +187,33 @@ class DashboardController extends Controller
         return $rows->map(fn ($row) => [
             'name' => $row->service_name,
             'count' => (int) $row->total,
+            'percent' => (((int) $row->total) / $max) * 100,
+        ])->all();
+    }
+
+    /**
+     * @return array<int, array{name: string, count: int, revenue: float, percent: float}>
+     */
+    private function monthlyRecurringCustomers(Carbon $start, Carbon $end): array
+    {
+        $rows = DB::table('wash_orders')
+            ->join('customers', 'customers.id', '=', 'wash_orders.customer_id')
+            ->when(TenantContext::currentLocationId(), fn ($query, $locationId) => $query->where('wash_orders.wash_location_id', $locationId))
+            ->whereBetween('wash_orders.entered_at', [$start->copy()->startOfDay(), $end->copy()->endOfDay()])
+            ->select('customers.name', DB::raw('COUNT(*) as total'), DB::raw('SUM(wash_orders.total_amount) as revenue'))
+            ->groupBy('customers.id', 'customers.name')
+            ->havingRaw('COUNT(*) >= 2')
+            ->orderByDesc('total')
+            ->orderByDesc('revenue')
+            ->limit(5)
+            ->get();
+
+        $max = max(1, (int) $rows->max('total'));
+
+        return $rows->map(fn ($row) => [
+            'name' => $row->name,
+            'count' => (int) $row->total,
+            'revenue' => (float) $row->revenue,
             'percent' => (((int) $row->total) / $max) * 100,
         ])->all();
     }

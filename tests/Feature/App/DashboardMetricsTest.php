@@ -3,8 +3,10 @@
 namespace Tests\Feature\App;
 
 use App\Models\Payment;
+use App\Models\Customer;
 use App\Models\Service;
 use App\Models\User;
+use App\Models\Vehicle;
 use App\Models\WashOrder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -16,8 +18,12 @@ class DashboardMetricsTest extends TestCase
     public function test_dashboard_shows_operational_and_financial_metrics(): void
     {
         $user = User::factory()->create();
+        $customer = Customer::factory()->create(['name' => 'Cliente Recorrente']);
+        $vehicle = Vehicle::factory()->for($customer)->create();
         $service = Service::factory()->create(['name' => 'Lavagem premium']);
         $washOrder = WashOrder::factory()->create([
+            'customer_id' => $customer->id,
+            'vehicle_id' => $vehicle->id,
             'entered_at' => now()->subMinutes(90),
             'completed_at' => now(),
             'total_amount' => 120,
@@ -31,6 +37,22 @@ class DashboardMetricsTest extends TestCase
             'estimated_minutes' => 90,
         ]);
 
+        $secondWashOrder = WashOrder::factory()->create([
+            'customer_id' => $customer->id,
+            'vehicle_id' => $vehicle->id,
+            'entered_at' => now()->subDays(2),
+            'completed_at' => now()->subDays(2)->addMinutes(70),
+            'total_amount' => 80,
+            'status' => WashOrder::STATUS_DELIVERED,
+            'payment_status' => WashOrder::PAYMENT_PENDING,
+        ]);
+
+        $secondWashOrder->services()->attach($service, [
+            'service_name' => $service->name,
+            'price' => 80,
+            'estimated_minutes' => 70,
+        ]);
+
         Payment::factory()->for($washOrder)->for($user)->create([
             'method' => Payment::METHOD_PIX,
             'amount' => 120,
@@ -39,6 +61,13 @@ class DashboardMetricsTest extends TestCase
 
         $this->actingAs($user)->get(route('dashboard'))
             ->assertOk()
+            ->assertSee('Dashboard executivo')
+            ->assertSee('Lavagens do mes')
+            ->assertSee('Receita do mes')
+            ->assertSee('Ticket medio')
+            ->assertSee('Clientes recorrentes')
+            ->assertSee('Top servicos do mes')
+            ->assertSee('Cliente Recorrente')
             ->assertSee('Faturamento hoje')
             ->assertSee('R$ 120,00')
             ->assertSee('Fluxo de Lavagens')
