@@ -39,6 +39,10 @@
                         <span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-white/15 bg-white/10 text-xs font-bold">S</span>
                         Solicitações de cadastros
                     </a>
+                    <a href="{{ route('super-admin.locations.index') }}" class="flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium transition {{ request()->routeIs('super-admin.locations.*') ? 'bg-blue-600 text-white shadow-lg shadow-blue-950/30' : 'text-slate-200 hover:bg-white/10 hover:text-white' }}">
+                        <span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-white/15 bg-white/10 text-xs font-bold">U</span>
+                        Unidades
+                    </a>
                 @else
                     @foreach ([
                         ['route' => 'dashboard', 'label' => 'Painel Principal', 'icon' => 'P', 'roles' => null],

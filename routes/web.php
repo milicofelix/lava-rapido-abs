@@ -10,6 +10,7 @@ use App\Http\Controllers\App\PaymentController;
 use App\Http\Controllers\App\ServiceController;
 use App\Http\Controllers\App\SettingsController;
 use App\Http\Controllers\App\SubscriptionBlockedController;
+use App\Http\Controllers\App\SuperAdmin\WashLocationManagementController as SuperAdminWashLocationManagementController;
 use App\Http\Controllers\App\SuperAdmin\WashLocationRequestController as SuperAdminWashLocationRequestController;
 use App\Http\Controllers\App\VehicleController;
 use App\Http\Controllers\App\WashHistoryController;
@@ -48,6 +49,12 @@ Route::middleware('auth')->group(function () {
         Route::get('solicitacoes-lava-rapidos/{locationRequest}', [SuperAdminWashLocationRequestController::class, 'show'])->name('location-requests.show');
         Route::patch('solicitacoes-lava-rapidos/{locationRequest}/aprovar', [SuperAdminWashLocationRequestController::class, 'approve'])->name('location-requests.approve');
         Route::patch('solicitacoes-lava-rapidos/{locationRequest}/rejeitar', [SuperAdminWashLocationRequestController::class, 'reject'])->name('location-requests.reject');
+
+        Route::get('unidades', [SuperAdminWashLocationManagementController::class, 'index'])->name('locations.index');
+        Route::patch('unidades/{washLocation:id}/prorrogar-trial', [SuperAdminWashLocationManagementController::class, 'extendTrial'])->name('locations.extend-trial');
+        Route::patch('unidades/{washLocation:id}/ativar-assinatura', [SuperAdminWashLocationManagementController::class, 'activateSubscription'])->name('locations.activate-subscription');
+        Route::patch('unidades/{washLocation:id}/suspender', [SuperAdminWashLocationManagementController::class, 'suspend'])->name('locations.suspend');
+        Route::patch('unidades/{washLocation:id}/reativar', [SuperAdminWashLocationManagementController::class, 'reactivate'])->name('locations.reactivate');
     });
 
     Route::middleware('active.subscription')->group(function () {

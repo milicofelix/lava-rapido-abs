@@ -6,6 +6,7 @@ use App\Models\Service;
 use App\Models\User;
 use App\Models\WashLocation;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 class WashLocationMapTest extends TestCase
@@ -61,6 +62,25 @@ class WashLocationMapTest extends TestCase
             ->assertSee('data-map-geolocation', false)
             ->assertSee('data-map-reset', false)
             ->assertSee('https://wa.me/5511988881101', false);
+    }
+
+    public function test_public_map_ignores_legacy_visible_location_without_slug(): void
+    {
+        $location = WashLocation::factory()->create([
+            'name' => 'Unidade Publica Sem Slug',
+            'public_visible' => true,
+            'account_status' => WashLocation::ACCOUNT_STATUS_TRIAL,
+            'subscription_status' => WashLocation::ACCOUNT_STATUS_TRIAL,
+            'trial_ends_at' => now()->addDays(10),
+        ]);
+
+        DB::table('wash_locations')
+            ->where('id', $location->id)
+            ->update(['slug' => null]);
+
+        $this->get(route('public.locations.index'))
+            ->assertOk()
+            ->assertDontSee('Unidade Publica Sem Slug');
     }
 
     public function test_visitor_can_filter_public_map_by_search_term(): void
@@ -169,5 +189,4 @@ class WashLocationMapTest extends TestCase
             ->assertSee('Como chegar')
             ->assertSee('https://wa.me/5511988881101', false);
     }
-
 }

@@ -769,7 +769,7 @@
                                 <div class="mt-4 flex flex-wrap gap-2">
                                     <button type="button" data-favorite-toggle data-location-id="{{ $location->id }}" class="autoflow-favorite-button" aria-pressed="false">☆ Favoritar</button>
                                     <a href="#" data-focus-location="{{ $location->id }}" class="rounded-xl border border-slate-200 px-3 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50">Ver no mapa</a>
-                                    <a href="{{ route('public.locations.show', $location) }}" class="rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-xs font-bold text-blue-700 hover:bg-blue-100">Ver detalhes</a>
+                                    <a href="{{ route('public.locations.show', ['location' => $location->slug]) }}" class="rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-xs font-bold text-blue-700 hover:bg-blue-100">Ver detalhes</a>
                                     @if ($whatsapp)
                                         <a href="{{ $whatsapp }}" target="_blank" rel="noopener" class="rounded-xl bg-green-600 px-3 py-2 text-xs font-bold text-white">Chamar no WhatsApp</a>
                                     @endif

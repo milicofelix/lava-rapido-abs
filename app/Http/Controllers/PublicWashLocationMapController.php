@@ -17,6 +17,8 @@ class PublicWashLocationMapController extends Controller
 
         $locations = WashLocation::query()
             ->where('public_visible', true)
+            ->whereNotNull('slug')
+            ->where('slug', '!=', '')
             ->whereIn('account_status', [WashLocation::ACCOUNT_STATUS_TRIAL, WashLocation::ACCOUNT_STATUS_ACTIVE])
             ->when($onlyOpen, fn ($query) => $query->where('status', WashLocation::STATUS_OPEN))
             ->when(! $onlyOpen && $status !== '', fn ($query) => $query->where('status', $status))
@@ -46,7 +48,7 @@ class PublicWashLocationMapController extends Controller
             'mapLocations' => $locations->map(fn (WashLocation $location) => [
                 'id' => $location->id,
                 'name' => $location->name,
-                'detail_url' => route('public.locations.show', $location),
+                'detail_url' => route('public.locations.show', ['location' => $location->slug]),
                 'address' => $location->fullAddress(),
                 'district' => $location->district,
                 'city' => $location->city,
