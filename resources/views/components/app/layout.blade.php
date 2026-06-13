@@ -98,8 +98,17 @@
             <header class="sticky top-0 z-20 border-b {{ $appTheme === 'dark' ? 'border-slate-800 bg-slate-950/95' : 'border-slate-200 bg-white/95' }} px-4 py-4 backdrop-blur sm:px-6 lg:px-8">
                 <div class="flex flex-wrap items-center justify-between gap-4">
                     <div class="flex items-center gap-4">
-                        <button type="button" data-sidebar-toggle aria-label="Ocultar menu" aria-expanded="true" class="hidden h-10 min-w-10 items-center justify-center rounded-lg border border-slate-200 px-3 text-sm font-semibold text-slate-700 hover:bg-slate-100 lg:inline-flex">
-                            <span data-sidebar-toggle-icon>Fechar</span>
+                        <button type="button" data-sidebar-toggle aria-label="Ocultar menu" title="Ocultar menu" aria-expanded="true" class="hidden h-10 w-10 items-center justify-center rounded-lg border border-slate-200 text-slate-700 shadow-sm transition hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-100 lg:inline-flex">
+                            <svg data-sidebar-icon-open xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <rect x="3" y="4" width="18" height="16" rx="2"></rect>
+                                <path d="M9 4v16"></path>
+                                <path d="M14 10l-2 2 2 2"></path>
+                            </svg>
+                            <svg data-sidebar-icon-closed xmlns="http://www.w3.org/2000/svg" class="hidden h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <path d="M4 6h16"></path>
+                                <path d="M4 12h16"></path>
+                                <path d="M4 18h16"></path>
+                            </svg>
                         </button>
                         <div>
                             <h1 class="text-xl font-bold {{ $appTheme === 'dark' ? 'text-white' : 'text-slate-950' }} sm:text-2xl">{{ $heading ?? 'Painel Principal' }}</h1>
@@ -204,7 +213,8 @@
         const sidebar = document.querySelector('[data-sidebar]');
         const content = document.querySelector('[data-content]');
         const sidebarToggle = document.querySelector('[data-sidebar-toggle]');
-        const sidebarToggleIcon = document.querySelector('[data-sidebar-toggle-icon]');
+        const sidebarIconOpen = document.querySelector('[data-sidebar-icon-open]');
+        const sidebarIconClosed = document.querySelector('[data-sidebar-icon-closed]');
         const sidebarStorageKey = 'autoflow.sidebar.collapsed';
 
         const applySidebarState = (collapsed) => {
@@ -213,7 +223,9 @@
             content.classList.toggle('lg:ml-0', collapsed);
             sidebarToggle.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
             sidebarToggle.setAttribute('aria-label', collapsed ? 'Mostrar menu' : 'Ocultar menu');
-            sidebarToggleIcon.textContent = collapsed ? 'Menu' : 'Fechar';
+            sidebarToggle.setAttribute('title', collapsed ? 'Mostrar menu' : 'Ocultar menu');
+            sidebarIconOpen.classList.toggle('hidden', collapsed);
+            sidebarIconClosed.classList.toggle('hidden', !collapsed);
             shell.dataset.sidebarCollapsed = collapsed ? 'true' : 'false';
         };
 
