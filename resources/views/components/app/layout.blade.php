@@ -140,7 +140,7 @@
                             <span class="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-cyan-400 text-sm font-bold text-white">{{ strtoupper(substr(auth()->user()->name, 0, 1)) }}</span>
                             <div class="hidden sm:block">
                                 <p class="text-sm font-semibold">{{ auth()->user()->name }}</p>
-                                <p class="text-xs text-slate-500">{{ ucfirst(auth()->user()->role) }}</p>
+                                <p class="text-xs text-slate-500">{{ auth()->user()->roleLabel() }}</p>
                             </div>
                         </div>
                         <form method="POST" action="{{ route('logout') }}">

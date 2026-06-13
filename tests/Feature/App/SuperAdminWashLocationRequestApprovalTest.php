@@ -52,6 +52,24 @@ class SuperAdminWashLocationRequestApprovalTest extends TestCase
         $this->assertNotNull($location->trial_started_at);
         $this->assertNotNull($location->trial_ends_at);
         $this->assertSame($request->id, $location->approved_location_request_id);
+
+        foreach ([
+            'Lavagem completa',
+            'Ducha simples',
+            'Ducha + aspiração',
+            'Cera',
+            'Higienização interna',
+            'Lavagem de motor',
+            'Polimento',
+            'Cristalização',
+            'Lavagem de moto',
+        ] as $serviceName) {
+            $this->assertDatabaseHas('services', [
+                'wash_location_id' => $location->id,
+                'name' => $serviceName,
+                'active' => true,
+            ]);
+        }
     }
 
     public function test_approved_trial_location_appears_on_public_map(): void

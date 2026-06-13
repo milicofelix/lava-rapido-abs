@@ -47,7 +47,7 @@
 
         <section class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
             <form method="GET" class="grid gap-3 lg:grid-cols-[1fr_240px_auto_auto]">
-                <input name="search" value="{{ $search }}" placeholder="Buscar por unidade, owner, e-mail, endereço ou cidade" class="rounded-xl border border-slate-300 px-4 py-2 text-sm">
+                <input name="search" value="{{ $search }}" placeholder="Buscar por unidade, dono, e-mail, endereço ou cidade" class="rounded-xl border border-slate-300 px-4 py-2 text-sm">
                 <select name="status" class="rounded-xl border border-slate-300 px-4 py-2 text-sm">
                     <option value="">Todos os status</option>
                     @foreach ($statuses as $value => $label)
@@ -91,8 +91,8 @@
 
                             <dl class="mt-4 grid gap-3 text-sm text-slate-600 md:grid-cols-2 lg:grid-cols-3">
                                 <div>
-                                    <dt class="text-xs font-bold uppercase text-slate-400">Owner</dt>
-                                    <dd class="mt-1 font-semibold text-slate-800">{{ $owner?->name ?? 'Sem owner vinculado' }}</dd>
+                                    <dt class="text-xs font-bold uppercase text-slate-400">Dono</dt>
+                                    <dd class="mt-1 font-semibold text-slate-800">{{ $owner?->name ?? 'Sem dono vinculado' }}</dd>
                                     @if ($owner?->email)
                                         <dd class="text-xs text-slate-500">{{ $owner->email }}</dd>
                                     @endif

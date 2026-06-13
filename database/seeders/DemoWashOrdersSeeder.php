@@ -186,10 +186,9 @@ class DemoWashOrdersSeeder extends Seeder
     {
         $baseService = match ($vehicle->type) {
             'moto' => $services->firstWhere('name', 'Lavagem de moto'),
-            'suv' => $services->firstWhere('name', 'Lavagem de SUV'),
-            'caminhonete' => $services->firstWhere('name', 'Lavagem de caminhonete'),
+            'suv', 'caminhonete' => $services->firstWhere('name', 'Lavagem completa'),
             default => $services
-                ->whereIn('name', ['Lavagem completa', 'Ducha simples', 'Ducha + aspiracao'])
+                ->whereIn('name', ['Lavagem completa', 'Ducha simples', 'Ducha + aspiração'])
                 ->random(),
         };
 

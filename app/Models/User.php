@@ -82,6 +82,22 @@ class User extends Authenticatable
         return $this->belongsToMany(WashOrder::class)->withTimestamps();
     }
 
+    public static function roleLabels(): array
+    {
+        return [
+            self::ROLE_SUPER_ADMIN => 'Dono do software',
+            self::ROLE_OWNER => 'Dono',
+            self::ROLE_ADMIN => 'Administrador',
+            self::ROLE_ATTENDANT => 'Atendente',
+            self::ROLE_OPERATOR => 'Operador',
+        ];
+    }
+
+    public function roleLabel(): string
+    {
+        return self::roleLabels()[$this->role] ?? $this->role;
+    }
+
     public function hasRole(string $role): bool
     {
         return $this->role === $role;

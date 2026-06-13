@@ -84,7 +84,7 @@ class EmployeeController extends Controller
         }
 
         if ($employee->isOwner() && $this->activeOwnersCount() <= 1) {
-            return back()->withErrors(['employee' => 'Nao e possivel desativar o ultimo Owner da unidade.']);
+            return back()->withErrors(['employee' => 'Nao e possivel desativar o ultimo dono da unidade.']);
         }
 
         $employee->update(['is_active' => false]);
@@ -94,12 +94,8 @@ class EmployeeController extends Controller
 
     public static function rolesFor(?User $user): array
     {
-        $roles = [
-            User::ROLE_OWNER => 'Owner',
-            User::ROLE_ADMIN => 'Admin',
-            User::ROLE_ATTENDANT => 'Atendente',
-            User::ROLE_OPERATOR => 'Operador',
-        ];
+        $roles = User::roleLabels();
+        unset($roles[User::ROLE_SUPER_ADMIN]);
 
         if (! $user?->isOwner()) {
             unset($roles[User::ROLE_OWNER]);
@@ -131,7 +127,7 @@ class EmployeeController extends Controller
         }
 
         if ($employee && $employee->isOwner() && ($data['role'] ?? $employee->role) !== User::ROLE_OWNER && $this->activeOwnersCount() <= 1) {
-            abort(422, 'Nao e possivel remover o ultimo Owner da unidade.');
+            abort(422, 'Nao e possivel remover o ultimo dono da unidade.');
         }
 
         if (($data['password'] ?? '') === '') {

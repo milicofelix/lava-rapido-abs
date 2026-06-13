@@ -35,7 +35,7 @@
                                     <input name="assigned_user_ids[]" type="checkbox" value="{{ $user->id }}" @checked(in_array($user->id, old('assigned_user_ids', []))) class="rounded border-zinc-300">
                                     <span>
                                         <span class="block text-sm font-medium">{{ $user->name }}</span>
-                                        <span class="block text-xs text-zinc-500">{{ ucfirst($user->role) }}</span>
+                                        <span class="block text-xs text-zinc-500">{{ $user->roleLabel() }}</span>
                                     </span>
                                 </label>
                             @endforeach

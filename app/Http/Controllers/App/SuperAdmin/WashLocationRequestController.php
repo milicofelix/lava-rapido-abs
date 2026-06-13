@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Models\WashLocation;
 use App\Models\WashLocationRequest;
+use App\Support\DefaultServices;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -95,6 +96,8 @@ class WashLocationRequestController extends Controller
                 'phone' => $locationRequest->phone,
             ]);
 
+            DefaultServices::seedForLocation($location);
+
             $this->createOrAttachOwnerUser($locationRequest, $location);
 
             $locationRequest->forceFill([
@@ -108,7 +111,7 @@ class WashLocationRequestController extends Controller
 
         return redirect()
             ->route('super-admin.location-requests.show', $locationRequest)
-            ->with('success', 'Solicitação aprovada. A unidade entrou em trial por 15 dias e o responsável foi vinculado como owner.');
+            ->with('success', 'Solicitação aprovada. A unidade entrou em trial por 15 dias, recebeu os serviços padrão e o responsável foi vinculado como dono.');
     }
 
     public function reject(Request $request, WashLocationRequest $locationRequest): RedirectResponse

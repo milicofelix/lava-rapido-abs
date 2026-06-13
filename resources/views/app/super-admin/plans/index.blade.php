@@ -2,7 +2,7 @@
     <div class="space-y-5">
         <div class="rounded-2xl border border-blue-200 bg-blue-50 p-5 text-sm text-blue-950">
             <p class="font-bold">Planos comerciais</p>
-            <p class="mt-1">Crie, edite e desative planos sem alterar codigo. Estes planos aparecem para o Owner escolher a assinatura.</p>
+            <p class="mt-1">Crie, edite e desative planos sem alterar codigo. Estes planos aparecem para o dono escolher a assinatura.</p>
         </div>
 
         @if (session('success'))

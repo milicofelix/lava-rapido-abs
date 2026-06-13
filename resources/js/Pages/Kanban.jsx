@@ -220,7 +220,7 @@ export default function Kanban({ columns: initialColumns, statuses, feedUrl, cre
             return null;
         }
 
-        return `${auth.user.name} · ${auth.user.role}`;
+        return `${auth.user.name} · ${auth.user.role_label ?? auth.user.role}`;
     }, [auth]);
 
     return (

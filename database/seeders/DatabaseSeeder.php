@@ -3,7 +3,6 @@
 namespace Database\Seeders;
 
 use App\Models\Customer;
-use App\Models\Service;
 use App\Models\User;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
@@ -41,35 +40,10 @@ class DatabaseSeeder extends Seeder
             ],
         );
 
-        collect([
-            ['Lavagem completa', 'Lavagem', 80, 70],
-            ['Ducha simples', 'Lavagem', 35, 25],
-            ['Ducha + aspiracao', 'Lavagem', 55, 45],
-            ['Cera', 'Estetica', 45, 35],
-            ['Higienizacao interna', 'Estetica', 180, 180],
-            ['Lavagem de motor', 'Estetica', 120, 90],
-            ['Polimento', 'Estetica', 260, 180],
-            ['Cristalizacao', 'Estetica', 320, 210],
-            ['Vitrificacao de pintura', 'Estetica', 650, 360],
-            ['Limpeza de bancos', 'Estetica', 160, 120],
-            ['Oxi-sanitizacao', 'Estetica', 95, 45],
-            ['Lavagem de SUV', 'Lavagem', 100, 85],
-            ['Lavagem de caminhonete', 'Lavagem', 130, 100],
-            ['Lavagem de moto', 'Moto', 30, 25],
-        ])->each(fn ($service) => Service::updateOrCreate(
-            ['name' => $service[0]],
-            [
-                'category' => $service[1],
-                'base_price' => $service[2],
-                'estimated_minutes' => $service[3],
-                'active' => true,
-                'description' => 'Servico inicial do catalogo Lava Rapido ABS.',
-            ],
-        ));
-
         $this->call(PlanSeeder::class);
 
         $this->call(WashLocationSeeder::class);
+        $this->call(DefaultServicesSeeder::class);
         $this->call(DemoWashOrdersSeeder::class);
     }
 }
