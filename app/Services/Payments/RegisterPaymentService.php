@@ -2,9 +2,11 @@
 
 namespace App\Services\Payments;
 
+use App\Models\AuditLog;
 use App\Models\Payment;
 use App\Models\User;
 use App\Models\WashOrder;
+use App\Support\AuditLogger;
 use Illuminate\Support\Facades\DB;
 
 class RegisterPaymentService
@@ -35,6 +37,18 @@ class RegisterPaymentService
                     default => WashOrder::PAYMENT_PAID,
                 },
             ])->save();
+
+            AuditLogger::record(
+                AuditLog::ACTION_PAYMENT_REGISTERED,
+                ($user?->name ?? 'Sistema').' registrou pagamento em '.$payment->methodLabel().' na lavagem '.$washOrder->code.'.',
+                $washOrder,
+                [
+                    'payment_id' => $payment->id,
+                    'method' => $method,
+                    'amount' => (float) $amount,
+                ],
+                $user,
+            );
 
             return $payment;
         });

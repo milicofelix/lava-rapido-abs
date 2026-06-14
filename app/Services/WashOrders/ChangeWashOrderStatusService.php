@@ -3,8 +3,10 @@
 namespace App\Services\WashOrders;
 
 use App\Events\WashOrderStatusChanged;
+use App\Models\AuditLog;
 use App\Models\User;
 use App\Models\WashOrder;
+use App\Support\AuditLogger;
 use InvalidArgumentException;
 
 class ChangeWashOrderStatusService
@@ -36,6 +38,18 @@ class ChangeWashOrderStatusService
         ]);
 
         $washOrder = $washOrder->refresh();
+
+        AuditLogger::record(
+            AuditLog::ACTION_WASH_ORDER_STATUS_CHANGED,
+            ($user?->name ?? 'Sistema').' alterou a lavagem '.$washOrder->code.' de '.(WashOrder::statuses()[$fromStatus] ?? $fromStatus).' para '.$washOrder->statusLabel().'.',
+            $washOrder,
+            [
+                'from_status' => $fromStatus,
+                'to_status' => $status,
+                'notes' => $notes,
+            ],
+            $user,
+        );
 
         event(new WashOrderStatusChanged($washOrder, $fromStatus));
 

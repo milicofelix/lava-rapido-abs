@@ -3,6 +3,7 @@
 use App\Http\Controllers\App\CashRegisterController;
 use App\Http\Controllers\App\CreditReceivableController;
 use App\Http\Controllers\App\CustomerController;
+use App\Http\Controllers\App\AuditLogController;
 use App\Http\Controllers\App\DashboardController;
 use App\Http\Controllers\App\EmployeeController;
 use App\Http\Controllers\App\FinanceController;
@@ -101,6 +102,7 @@ Route::middleware('auth')->group(function () {
         });
 
         Route::middleware('role:'.User::ROLE_OWNER.','.User::ROLE_ADMIN)->group(function () {
+            Route::get('auditoria', [AuditLogController::class, 'index'])->name('audit-logs.index');
             Route::get('financeiro', [FinanceController::class, 'index'])->name('finance.index');
             Route::get('financeiro/exportar', [FinanceController::class, 'export'])->name('finance.export');
             Route::get('financeiro/caixa', [CashRegisterController::class, 'index'])->name('finance.cash-registers.index');

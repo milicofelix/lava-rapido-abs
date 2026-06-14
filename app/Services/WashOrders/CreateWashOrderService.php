@@ -2,8 +2,10 @@
 
 namespace App\Services\WashOrders;
 
+use App\Models\AuditLog;
 use App\Models\Service;
 use App\Models\WashOrder;
+use App\Support\AuditLogger;
 use App\Support\TenantContext;
 use Illuminate\Support\Facades\DB;
 
@@ -51,7 +53,21 @@ class CreateWashOrderService
                 'notes' => 'Ordem de lavagem criada.',
             ]);
 
-            return $washOrder->load(['customer', 'vehicle', 'services', 'statusHistories', 'teamMembers']);
+            $washOrder = $washOrder->load(['customer', 'vehicle', 'services', 'statusHistories', 'teamMembers']);
+
+            AuditLogger::record(
+                AuditLog::ACTION_WASH_ORDER_CREATED,
+                auth()->user()?->name.' abriu a lavagem '.$washOrder->code.' para '.$washOrder->customer->name.'.',
+                $washOrder,
+                [
+                    'customer_id' => $washOrder->customer_id,
+                    'vehicle_id' => $washOrder->vehicle_id,
+                    'team_member_ids' => $teamMemberIds,
+                    'service_ids' => $serviceIds,
+                ],
+            );
+
+            return $washOrder;
         });
     }
 }

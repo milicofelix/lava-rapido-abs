@@ -4,6 +4,8 @@ namespace App\Http\Controllers\App;
 
 use App\Http\Controllers\Controller;
 use App\Models\Customer;
+use App\Models\AuditLog;
+use App\Support\AuditLogger;
 use App\Support\TenantContext;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -41,7 +43,14 @@ class CustomerController extends Controller
         $data = $this->validated($request);
         $data['wash_location_id'] = TenantContext::currentLocationId();
 
-        Customer::create($data);
+        $customer = Customer::create($data);
+
+        AuditLogger::record(
+            AuditLog::ACTION_CUSTOMER_CREATED,
+            auth()->user()->name.' cadastrou o cliente '.$customer->name.'.',
+            $customer,
+            ['fields' => array_keys($data)],
+        );
 
         return redirect()->route('customers.index')->with('status', 'Cliente cadastrado com sucesso.');
     }
@@ -57,7 +66,17 @@ class CustomerController extends Controller
     {
         TenantContext::abortUnlessModelBelongsToTenant($customer);
 
+        $before = $customer->only(['name', 'phone', 'email', 'cpf', 'notes']);
         $customer->update($this->validated($request));
+        $after = $customer->only(['name', 'phone', 'email', 'cpf', 'notes']);
+        $changedFields = array_keys(array_diff_assoc($after, $before));
+
+        AuditLogger::record(
+            AuditLog::ACTION_CUSTOMER_UPDATED,
+            auth()->user()->name.' editou o cliente '.$customer->name.'.',
+            $customer,
+            ['changed_fields' => $changedFields],
+        );
 
         return redirect()->route('customers.index')->with('status', 'Cliente atualizado com sucesso.');
     }

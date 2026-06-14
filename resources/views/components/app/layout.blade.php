@@ -57,6 +57,7 @@
                         ['route' => 'vehicles.index', 'label' => 'Veiculos', 'icon' => 'V', 'roles' => ['owner', 'admin', 'attendant']],
                         ['route' => 'services.index', 'label' => 'Servicos', 'icon' => 'S', 'roles' => ['owner', 'admin']],
                         ['route' => 'employees.index', 'label' => 'Equipe', 'icon' => 'E', 'roles' => ['owner', 'admin']],
+                        ['route' => 'audit-logs.index', 'label' => 'Auditoria', 'icon' => 'A', 'roles' => ['owner', 'admin']],
                         ['route' => 'finance.index', 'label' => 'Financeiro', 'icon' => '$', 'roles' => ['owner', 'admin']],
                         ['route' => 'finance.cash-registers.index', 'label' => 'Caixa', 'icon' => 'CX', 'roles' => ['owner', 'admin'], 'module' => 'module_cash_register'],
                         ['route' => 'finance.credit-receivables.index', 'label' => 'Fiado', 'icon' => 'F$', 'roles' => ['owner', 'admin'], 'module' => 'module_credit_receivables'],
@@ -184,6 +185,7 @@
                                 <a href="{{ route('finance.credit-receivables.index') }}" class="shrink-0 rounded-lg border border-slate-200 px-3 py-1.5 text-sm font-medium">Fiado</a>
                             @endif
                             <a href="{{ route('employees.index') }}" class="shrink-0 rounded-lg border border-slate-200 px-3 py-1.5 text-sm font-medium">Equipe</a>
+                            <a href="{{ route('audit-logs.index') }}" class="shrink-0 rounded-lg border border-slate-200 px-3 py-1.5 text-sm font-medium">Auditoria</a>
                             @if (auth()->user()->isOwner())
                                 <a href="{{ route('subscriptions.show') }}" class="shrink-0 rounded-lg border border-slate-200 px-3 py-1.5 text-sm font-medium">Assinatura</a>
                             @endif
