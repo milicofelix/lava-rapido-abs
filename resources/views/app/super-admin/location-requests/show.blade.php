@@ -5,6 +5,13 @@
             \App\Models\WashLocationRequest::STATUS_REJECTED => 'bg-rose-100 text-rose-700',
             default => 'bg-amber-100 text-amber-800',
         };
+        $mapsSearchUrl = 'https://www.google.com/maps/search/?api=1&query='.rawurlencode(collect([
+            $locationRequest->address,
+            $locationRequest->district,
+            $locationRequest->city,
+            $locationRequest->state,
+            $locationRequest->zip_code,
+        ])->filter()->implode(' '));
     @endphp
 
     <div class="space-y-5">
@@ -35,10 +42,31 @@
 
                 @if ($locationRequest->isPending())
                     <div class="grid gap-3 sm:grid-cols-2">
-                        <form method="POST" action="{{ route('super-admin.location-requests.approve', $locationRequest) }}" class="rounded-2xl border border-emerald-200 bg-emerald-50 p-4">
+                        <form method="POST" action="{{ route('super-admin.location-requests.approve', $locationRequest) }}" class="rounded-2xl border border-emerald-200 bg-emerald-50 p-4" data-location-approval-form>
                             @csrf
                             @method('PATCH')
                             <label class="text-xs font-black uppercase tracking-[0.18em] text-emerald-700">Aprovar</label>
+                            <div class="mt-3 rounded-xl border border-emerald-200 bg-white/80 p-3">
+                                <div class="flex flex-wrap items-start justify-between gap-2">
+                                    <div>
+                                        <p class="text-sm font-black text-slate-950">Localização no mapa</p>
+                                        <p class="mt-1 text-xs leading-5 text-slate-600">Informe latitude e longitude reais antes de aprovar. Isso evita marcador em local incorreto.</p>
+                                    </div>
+                                    <a href="{{ $mapsSearchUrl }}" target="_blank" rel="noopener" class="rounded-lg border border-emerald-200 px-2.5 py-1.5 text-xs font-black text-emerald-700 hover:bg-emerald-100">Abrir no Maps</a>
+                                </div>
+                                <div class="mt-3 grid gap-2 sm:grid-cols-2">
+                                    <label class="block">
+                                        <span class="text-xs font-bold text-slate-600">Latitude</span>
+                                        <input type="hidden" name="latitude" value="{{ old('latitude') }}" data-coordinate-payload="latitude">
+                                        <input value="{{ old('latitude') }}" required inputmode="decimal" placeholder="-23.5489100" data-coordinate-display="latitude" class="mt-1 w-full rounded-lg border border-emerald-200 px-3 py-2 text-sm disabled:bg-white disabled:text-slate-900">
+                                    </label>
+                                    <label class="block">
+                                        <span class="text-xs font-bold text-slate-600">Longitude</span>
+                                        <input type="hidden" name="longitude" value="{{ old('longitude') }}" data-coordinate-payload="longitude">
+                                        <input value="{{ old('longitude') }}" required inputmode="decimal" placeholder="-46.6341200" data-coordinate-display="longitude" class="mt-1 w-full rounded-lg border border-emerald-200 px-3 py-2 text-sm disabled:bg-white disabled:text-slate-900">
+                                    </label>
+                                </div>
+                            </div>
                             <textarea name="decision_notes" rows="3" class="mt-3 w-full rounded-xl border border-emerald-200 px-3 py-2 text-sm" placeholder="Observação opcional"></textarea>
                             <button class="mt-3 w-full rounded-xl bg-emerald-600 px-4 py-2 text-sm font-black text-white">Aprovar e iniciar trial</button>
                         </form>
@@ -65,6 +93,12 @@
             @error('decision_notes')
                 <p class="mt-4 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-bold text-rose-700">{{ $message }}</p>
             @enderror
+            @error('latitude')
+                <p class="mt-4 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-bold text-rose-700">{{ $message }}</p>
+            @enderror
+            @error('longitude')
+                <p class="mt-4 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-bold text-rose-700">{{ $message }}</p>
+            @enderror
 
             @if ($locationRequest->washLocation)
                 <div class="mt-5 rounded-2xl border border-emerald-200 bg-emerald-50 p-5">
@@ -74,6 +108,7 @@
                             <p class="text-lg font-black text-slate-950">{{ $locationRequest->washLocation->name }}</p>
                             <p class="text-sm text-slate-600">Status: {{ $locationRequest->washLocation->accountStatusLabel() }}</p>
                             <p class="text-sm text-slate-600">Trial até {{ $locationRequest->washLocation->trial_ends_at?->format('d/m/Y') }}</p>
+                            <p class="text-sm text-slate-600">Mapa: {{ $locationRequest->washLocation->hasCoordinates() ? $locationRequest->washLocation->mapLatitude().', '.$locationRequest->washLocation->mapLongitude() : 'coordenadas pendentes' }}</p>
                             @if ($locationRequest->washLocation->subscription_ends_at)
                                 <p class="text-sm text-slate-600">Assinatura até {{ $locationRequest->washLocation->subscription_ends_at->format('d/m/Y') }}</p>
                             @endif
@@ -118,4 +153,23 @@
             @endif
         </section>
     </div>
+
+    <script>
+        document.querySelectorAll('[data-location-approval-form]').forEach((form) => {
+            const syncCoordinates = () => {
+                form.querySelectorAll('[data-coordinate-display]').forEach((displayInput) => {
+                    const field = displayInput.dataset.coordinateDisplay;
+                    const payloadInput = form.querySelector(`[data-coordinate-payload="${field}"]`);
+
+                    if (payloadInput) {
+                        payloadInput.value = displayInput.value;
+                    }
+                });
+            };
+
+            form.addEventListener('input', syncCoordinates);
+            form.addEventListener('change', syncCoordinates);
+            form.addEventListener('submit', syncCoordinates);
+        });
+    </script>
 </x-app.layout>

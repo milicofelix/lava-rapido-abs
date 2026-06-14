@@ -22,6 +22,8 @@ class AuditLog extends Model
 
     public const ACTION_PAYMENT_REGISTERED = 'payment.registered';
 
+    public const ACTION_LOCATION_PROFILE_UPDATED = 'location.profile_updated';
+
     protected $fillable = [
         'wash_location_id',
         'user_id',
@@ -50,6 +52,7 @@ class AuditLog extends Model
             self::ACTION_WASH_ORDER_CREATED => 'Lavagem criada',
             self::ACTION_WASH_ORDER_STATUS_CHANGED => 'Status alterado',
             self::ACTION_PAYMENT_REGISTERED => 'Pagamento registrado',
+            self::ACTION_LOCATION_PROFILE_UPDATED => 'Perfil da unidade atualizado',
         ];
     }
 

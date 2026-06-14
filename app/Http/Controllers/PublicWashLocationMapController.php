@@ -82,10 +82,14 @@ class PublicWashLocationMapController extends Controller
 
     private function directionsUrl(WashLocation $location): string
     {
-        return sprintf(
-            'https://www.google.com/maps/dir/?api=1&destination=%s,%s',
-            $location->mapLatitude(),
-            $location->mapLongitude(),
-        );
+        if ($location->hasCoordinates()) {
+            return sprintf(
+                'https://www.google.com/maps/dir/?api=1&destination=%s,%s',
+                $location->mapLatitude(),
+                $location->mapLongitude(),
+            );
+        }
+
+        return 'https://www.google.com/maps/search/?api=1&query='.rawurlencode($location->fullAddress());
     }
 }

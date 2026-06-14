@@ -31,6 +31,8 @@ class SuperAdminWashLocationRequestApprovalTest extends TestCase
 
         $this->actingAs($superAdmin)
             ->patch(route('super-admin.location-requests.approve', $request), [
+                'latitude' => -23.54891,
+                'longitude' => -46.63412,
                 'decision_notes' => 'Dados conferidos por contato manual.',
             ])
             ->assertRedirect(route('super-admin.location-requests.show', $request));
@@ -47,6 +49,10 @@ class SuperAdminWashLocationRequestApprovalTest extends TestCase
             ->firstOrFail();
 
         $this->assertSame('Lava Rapido Central', $location->name);
+        $this->assertSame('Sao Paulo', $location->city);
+        $this->assertSame('SP', $location->state);
+        $this->assertSame('-23.5489100', (string) $location->latitude);
+        $this->assertSame('-46.6341200', (string) $location->longitude);
         $this->assertSame(WashLocation::ACCOUNT_STATUS_TRIAL, $location->account_status);
         $this->assertTrue($location->public_visible);
         $this->assertNotNull($location->trial_started_at);
@@ -82,11 +88,33 @@ class SuperAdminWashLocationRequestApprovalTest extends TestCase
         ]);
 
         $this->actingAs($superAdmin)
-            ->patch(route('super-admin.location-requests.approve', $request));
+            ->patch(route('super-admin.location-requests.approve', $request), [
+                'latitude' => -23.54891,
+                'longitude' => -46.63412,
+            ]);
 
         $this->get(route('public.locations.index'))
             ->assertOk()
-            ->assertSee('Lava Trial Publico');
+            ->assertSee('Lava Trial Publico')
+            ->assertSee('-23.54891')
+            ->assertSee('-46.63412');
+    }
+
+    public function test_approval_requires_real_map_coordinates(): void
+    {
+        $superAdmin = User::factory()->create(['role' => User::ROLE_SUPER_ADMIN]);
+        $request = WashLocationRequest::factory()->create([
+            'status' => WashLocationRequest::STATUS_PENDING_REVIEW,
+        ]);
+
+        $this->actingAs($superAdmin)
+            ->patch(route('super-admin.location-requests.approve', $request), [
+                'decision_notes' => 'Sem coordenadas.',
+            ])
+            ->assertSessionHasErrors(['latitude', 'longitude']);
+
+        $this->assertSame(WashLocationRequest::STATUS_PENDING_REVIEW, $request->fresh()->status);
+        $this->assertDatabaseCount('wash_locations', 0);
     }
 
     public function test_super_admin_can_reject_request_without_creating_location(): void

@@ -29,9 +29,13 @@ class WashLocation extends Model
     protected $fillable = [
         'name',
         'slug',
+        'logo_path',
+        'legal_name',
+        'document',
         'address',
         'district',
         'city',
+        'state',
         'status',
         'account_status',
         'subscription_status',
@@ -47,6 +51,7 @@ class WashLocation extends Model
         'longitude',
         'active_orders_count',
         'phone',
+        'opening_hours',
     ];
 
     protected static function booted(): void
@@ -153,27 +158,43 @@ class WashLocation extends Model
 
     public function fullAddress(): string
     {
-        return collect([$this->address, $this->district, $this->city])
+        $cityState = trim(($this->city ?? '').'/'.($this->state ?? ''), '/');
+
+        return collect([$this->address, $this->district, $cityState])
             ->filter()
             ->implode(' - ');
     }
 
-    public function mapLatitude(): float
+    public function logoUrl(): string
+    {
+        if ($this->logo_path) {
+            return asset('storage/'.$this->logo_path);
+        }
+
+        return asset('images/autoflow-logo.png');
+    }
+
+    public function hasCoordinates(): bool
+    {
+        return $this->latitude !== null && $this->longitude !== null;
+    }
+
+    public function mapLatitude(): ?float
     {
         if ($this->latitude !== null) {
             return (float) $this->latitude;
         }
 
-        return -23.55052 + (((int) $this->map_y - 50) / 1000);
+        return null;
     }
 
-    public function mapLongitude(): float
+    public function mapLongitude(): ?float
     {
         if ($this->longitude !== null) {
             return (float) $this->longitude;
         }
 
-        return -46.63331 + (((int) $this->map_x - 50) / 1000);
+        return null;
     }
 
     public function whatsappUrl(): ?string

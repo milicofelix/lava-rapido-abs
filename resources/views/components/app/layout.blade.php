@@ -26,11 +26,13 @@
 @php($unitStatusLabel = $currentLocation?->accountStatusLabel())
 @php($trialDaysRemaining = $currentLocation?->trialDaysRemaining())
 @php($homeRoute = $isSuperAdmin ? route('super-admin.location-requests.index') : route('dashboard'))
+@php($brandLogoUrl = $currentLocation?->logoUrl() ?? asset('images/autoflow-logo.png'))
+@php($brandLogoAlt = $currentLocation?->name ?? 'AutoFlow')
 <body class="{{ $appTheme === 'dark' ? 'bg-slate-950' : 'bg-[#061832]' }} text-slate-950 antialiased" data-theme="{{ $appTheme }}" data-theme-effective="{{ $appTheme === 'system' ? 'light' : $appTheme }}">
     <div class="min-h-screen p-2 lg:p-3" data-app-shell>
         <aside data-sidebar class="fixed inset-y-3 left-3 z-30 hidden w-[17rem] flex-col rounded-2xl {{ $appTheme === 'dark' ? 'bg-slate-950' : 'bg-[#061b36]' }} px-3 py-3 text-white shadow-2xl shadow-black/30 transition-transform duration-200 lg:flex">
             <a href="{{ $homeRoute }}" class="block shrink-0 rounded-xl bg-white px-4 py-4 shadow-inner shadow-slate-200">
-                <img src="{{ asset('images/autoflow-logo.png') }}" alt="AutoFlow" class="mx-auto h-auto w-40">
+                <img src="{{ $brandLogoUrl }}" alt="{{ $brandLogoAlt }}" class="mx-auto h-auto max-h-24 w-40 object-contain">
             </a>
 
             <nav class="mt-3 min-h-0 flex-1 space-y-1 overflow-y-auto pr-1">

@@ -16,6 +16,7 @@ class TenantOperationalScopeTest extends TestCase
     public function test_owner_sees_only_own_location_wash_orders_on_kanban(): void
     {
         $locationA = $this->createLocation('AutoFlow Unidade A');
+        $locationA->update(['logo_path' => 'wash-location-logos/kanban-a.png']);
         $locationB = $this->createLocation('AutoFlow Unidade B');
         $owner = User::factory()->create([
             'role' => User::ROLE_OWNER,
@@ -37,6 +38,7 @@ class TenantOperationalScopeTest extends TestCase
             ->assertInertia(fn (Assert $page) => $page
                 ->component('Kanban')
                 ->where('currentLocation.name', 'AutoFlow Unidade A')
+                ->where('logoUrl', $locationA->logoUrl())
                 ->where('columns.1.orders.0.id', $ownOrder->id)
                 ->missing('columns.1.orders.1')
             );

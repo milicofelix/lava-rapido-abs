@@ -27,10 +27,11 @@ class PublicWashTrackingController extends Controller
         $washOrder = WashOrder::query()
             ->where('code', $code)
             ->when(ctype_digit($code), fn ($query) => $query->orWhere('id', (int) $code))
-            ->with(['vehicle', 'services', 'statusHistories'])
+            ->with(['vehicle', 'services', 'statusHistories', 'washLocation'])
             ->firstOrFail();
 
         return [
+            'logoUrl' => $washOrder->washLocation?->logoUrl() ?? asset('images/autoflow-logo.png'),
             'washOrder' => [
                 'id' => $washOrder->id,
                 'code' => $washOrder->code,

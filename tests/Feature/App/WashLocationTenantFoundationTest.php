@@ -34,6 +34,8 @@ class WashLocationTenantFoundationTest extends TestCase
 
         $this->actingAs($superAdmin)
             ->patch(route('super-admin.location-requests.approve', $request), [
+                'latitude' => -23.52345,
+                'longitude' => -46.19123,
                 'decision_notes' => 'Aprovado para teste.',
             ])
             ->assertRedirect(route('super-admin.location-requests.show', $request));
@@ -74,6 +76,8 @@ class WashLocationTenantFoundationTest extends TestCase
 
         $this->actingAs($superAdmin)
             ->patch(route('super-admin.location-requests.approve', $request), [
+                'latitude' => -23.52456,
+                'longitude' => -46.19234,
                 'decision_notes' => 'Aprovado com usuário existente.',
             ])
             ->assertRedirect(route('super-admin.location-requests.show', $request));

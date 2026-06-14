@@ -16,7 +16,7 @@ function ProgressStep({ label, done, current }) {
     );
 }
 
-export default function Tracking({ washOrder: initialWashOrder, statuses, progressStatuses, feedUrl }) {
+export default function Tracking({ washOrder: initialWashOrder, statuses, progressStatuses, feedUrl, logoUrl }) {
     const [washOrder, setWashOrder] = useState(initialWashOrder);
     const [realtimeUpdated, setRealtimeUpdated] = useState(false);
 
@@ -46,7 +46,7 @@ export default function Tracking({ washOrder: initialWashOrder, statuses, progre
             <main className="mx-auto min-h-screen max-w-5xl bg-zinc-50 px-4 py-6 text-zinc-950 sm:px-6 lg:px-8">
                 <header className="flex flex-wrap items-start justify-between gap-4 border-b border-zinc-200 bg-white px-4 py-5 sm:rounded-lg sm:border">
                     <div>
-                        <img src="/images/autoflow-logo.png" alt="AutoFlow" className="w-40" />
+                        <img src={logoUrl || '/images/autoflow-logo.png'} alt="AutoFlow" className="max-h-24 w-40 object-contain" />
                         <h1 className="mt-4 text-3xl font-bold sm:text-4xl">
                             {washOrder.vehicle.model} {washOrder.vehicle.color} - {washOrder.vehicle.plate}
                         </h1>

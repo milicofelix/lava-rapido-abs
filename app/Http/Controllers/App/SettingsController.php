@@ -3,9 +3,13 @@
 namespace App\Http\Controllers\App;
 
 use App\Http\Controllers\Controller;
+use App\Models\AuditLog;
 use App\Models\AppSetting;
+use App\Support\AuditLogger;
+use App\Support\TenantContext;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
@@ -15,6 +19,7 @@ class SettingsController extends Controller
     {
         return view('app.settings.edit', [
             'settings' => AppSetting::allSettings(),
+            'currentLocation' => TenantContext::currentLocation(),
             'themes' => [
                 AppSetting::THEME_LIGHT => 'Padrao claro',
                 AppSetting::THEME_DARK => 'Dark',
@@ -25,9 +30,21 @@ class SettingsController extends Controller
 
     public function update(Request $request): RedirectResponse
     {
+        $currentLocation = TenantContext::currentLocation();
+
         $data = $request->validate([
             'company_name' => ['required', 'string', 'max:120'],
             'company_whatsapp' => ['nullable', 'string', 'max:30'],
+            'legal_name' => ['nullable', 'string', 'max:160'],
+            'document' => ['nullable', 'string', 'max:30'],
+            'address' => ['nullable', 'string', 'max:255'],
+            'district' => ['nullable', 'string', 'max:120'],
+            'city' => ['nullable', 'string', 'max:120'],
+            'state' => ['nullable', 'string', 'size:2'],
+            'latitude' => ['nullable', 'required_with:longitude', 'numeric', 'between:-90,90'],
+            'longitude' => ['nullable', 'required_with:latitude', 'numeric', 'between:-180,180'],
+            'opening_hours' => ['nullable', 'string', 'max:2000'],
+            'logo' => ['nullable', 'image', 'max:5120'],
             'theme' => ['required', Rule::in([
                 AppSetting::THEME_LIGHT,
                 AppSetting::THEME_DARK,
@@ -36,6 +53,47 @@ class SettingsController extends Controller
             'module_cash_register' => ['nullable', 'boolean'],
             'module_credit_receivables' => ['nullable', 'boolean'],
         ]);
+
+        if ($currentLocation) {
+            $locationData = [
+                'name' => $data['company_name'],
+                'phone' => $data['company_whatsapp'] ?? null,
+                'legal_name' => $data['legal_name'] ?? null,
+                'document' => $data['document'] ?? null,
+                'address' => $data['address'] ?? $currentLocation->address,
+                'district' => $data['district'] ?? null,
+                'city' => $data['city'] ?? $currentLocation->city,
+                'state' => isset($data['state']) ? mb_strtoupper($data['state']) : null,
+                'opening_hours' => $data['opening_hours'] ?? null,
+            ];
+
+            if ($request->has('latitude') || $request->has('longitude')) {
+                $locationData['latitude'] = $data['latitude'] ?? null;
+                $locationData['longitude'] = $data['longitude'] ?? null;
+            }
+
+            if ($request->hasFile('logo')) {
+                if ($currentLocation->logo_path) {
+                    Storage::disk('public')->delete($currentLocation->logo_path);
+                }
+
+                $locationData['logo_path'] = $request->file('logo')->store('wash-location-logos', 'public');
+            }
+
+            $before = $currentLocation->only(array_keys($locationData));
+            $currentLocation->update($locationData);
+            $after = $currentLocation->fresh()->only(array_keys($locationData));
+            $changedFields = array_keys(array_diff_assoc($after, $before));
+
+            if ($changedFields !== []) {
+                AuditLogger::record(
+                    AuditLog::ACTION_LOCATION_PROFILE_UPDATED,
+                    $request->user()->name.' atualizou o perfil da unidade '.$currentLocation->name.'.',
+                    $currentLocation->fresh(),
+                    ['changed_fields' => $changedFields],
+                );
+            }
+        }
 
         AppSetting::setMany([
             'company_name' => $data['company_name'],

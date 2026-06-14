@@ -32,6 +32,8 @@ class WashKanbanController extends Controller
             ->oldest('entered_at')
             ->get();
 
+        $currentLocation = TenantContext::currentLocation();
+
         return [
             'columns' => collect(self::columns())->map(function (array $column) use ($washOrders) {
                 return [
@@ -46,11 +48,11 @@ class WashKanbanController extends Controller
             'feedUrl' => route('kanban.feed'),
             'createUrl' => route('wash-orders.create'),
             'dashboardUrl' => route('dashboard'),
-            'logoUrl' => asset('images/autoflow-logo.png'),
-            'currentLocation' => TenantContext::currentLocation() ? [
-                'id' => TenantContext::currentLocation()->id,
-                'name' => TenantContext::currentLocation()->name,
-                'account_status' => TenantContext::currentLocation()->accountStatusLabel(),
+            'logoUrl' => $currentLocation?->logoUrl() ?? asset('images/autoflow-logo.png'),
+            'currentLocation' => $currentLocation ? [
+                'id' => $currentLocation->id,
+                'name' => $currentLocation->name,
+                'account_status' => $currentLocation->accountStatusLabel(),
             ] : null,
         ];
     }

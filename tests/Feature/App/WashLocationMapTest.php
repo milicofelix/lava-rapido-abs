@@ -17,6 +17,7 @@ class WashLocationMapTest extends TestCase
     {
         WashLocation::query()->create([
             'name' => 'Lava Rapido Central',
+            'logo_path' => 'wash-location-logos/public-central.png',
             'address' => 'Av. das Nacoes, 1580',
             'district' => 'Centro',
             'status' => WashLocation::STATUS_OPEN,
@@ -159,6 +160,7 @@ class WashLocationMapTest extends TestCase
     {
         $location = WashLocation::query()->create([
             'name' => 'Lava Rapido Central',
+            'logo_path' => 'wash-location-logos/public-central.png',
             'address' => 'Av. das Nacoes, 1580',
             'district' => 'Centro',
             'city' => 'Sao Paulo',
@@ -182,11 +184,40 @@ class WashLocationMapTest extends TestCase
             ->assertOk()
             ->assertSee('Detalhes da unidade')
             ->assertSee('Lava Rapido Central')
+            ->assertSee('storage/wash-location-logos/public-central.png', false)
             ->assertSee('Av. das Nacoes, 1580')
             ->assertSee('Serviços disponíveis')
             ->assertSee('Lavagem completa')
             ->assertSee('Chamar no WhatsApp')
             ->assertSee('Como chegar')
             ->assertSee('https://wa.me/5511988881101', false);
+    }
+
+    public function test_public_location_without_coordinates_uses_address_search_instead_of_fake_marker(): void
+    {
+        $location = WashLocation::query()->create([
+            'name' => 'Lava Sem Coordenadas',
+            'address' => 'Rua Sem Fake, 123',
+            'district' => 'Centro',
+            'city' => 'Campinas',
+            'state' => 'SP',
+            'status' => WashLocation::STATUS_OPEN,
+            'latitude' => null,
+            'longitude' => null,
+            'phone' => '(19) 98888-1101',
+        ]);
+
+        $this->get(route('public.locations.index'))
+            ->assertOk()
+            ->assertSee('Lava Sem Coordenadas')
+            ->assertSee('Mapa pendente')
+            ->assertSee('"latitude":null', false)
+            ->assertSee('"longitude":null', false)
+            ->assertDontSee('destination=-23.55052,-46.63331', false);
+
+        $this->get(route('public.locations.show', $location))
+            ->assertOk()
+            ->assertSee('https://www.google.com/maps/search/?api=1&amp;query=Rua%20Sem%20Fake%2C%20123%20-%20Centro%20-%20Campinas%2FSP', false)
+            ->assertDontSee('destination=-23.55052,-46.63331', false);
     }
 }

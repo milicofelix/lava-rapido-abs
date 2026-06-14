@@ -72,6 +72,8 @@ class WashLocationRequestController extends Controller
         }
 
         $validated = $request->validate([
+            'latitude' => ['required', 'numeric', 'between:-90,90'],
+            'longitude' => ['required', 'numeric', 'between:-180,180'],
             'decision_notes' => ['nullable', 'string', 'max:1000'],
         ]);
 
@@ -82,7 +84,8 @@ class WashLocationRequestController extends Controller
                 'name' => $locationRequest->business_name,
                 'address' => $locationRequest->address,
                 'district' => $locationRequest->district,
-                'city' => trim($locationRequest->city.'/'.$locationRequest->state, '/'),
+                'city' => $locationRequest->city,
+                'state' => $locationRequest->state,
                 'status' => WashLocation::STATUS_OPEN,
                 'account_status' => WashLocation::ACCOUNT_STATUS_TRIAL,
                 'subscription_status' => WashLocation::ACCOUNT_STATUS_TRIAL,
@@ -94,6 +97,8 @@ class WashLocationRequestController extends Controller
                 'approved_location_request_id' => $locationRequest->id,
                 'active_orders_count' => 0,
                 'phone' => $locationRequest->phone,
+                'latitude' => $validated['latitude'],
+                'longitude' => $validated['longitude'],
             ]);
 
             DefaultServices::seedForLocation($location);

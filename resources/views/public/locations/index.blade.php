@@ -768,7 +768,11 @@
 
                                 <div class="mt-4 flex flex-wrap gap-2">
                                     <button type="button" data-favorite-toggle data-location-id="{{ $location->id }}" class="autoflow-favorite-button" aria-pressed="false">☆ Favoritar</button>
-                                    <a href="#" data-focus-location="{{ $location->id }}" class="rounded-xl border border-slate-200 px-3 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50">Ver no mapa</a>
+                                    @if ($location->hasCoordinates())
+                                        <a href="#" data-focus-location="{{ $location->id }}" class="rounded-xl border border-slate-200 px-3 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50">Ver no mapa</a>
+                                    @else
+                                        <span class="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-bold text-amber-800">Mapa pendente</span>
+                                    @endif
                                     <a href="{{ route('public.locations.show', ['location' => $location->slug]) }}" class="rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-xs font-bold text-blue-700 hover:bg-blue-100">Ver detalhes</a>
                                     @if ($whatsapp)
                                         <a href="{{ $whatsapp }}" target="_blank" rel="noopener" class="rounded-xl bg-green-600 px-3 py-2 text-xs font-bold text-white">Chamar no WhatsApp</a>
@@ -870,11 +874,19 @@
                 return `https://wa.me/${normalized}?text=${encodeURIComponent(message)}`;
             };
 
+            const hasValidCoordinates = (location) => {
+                if (location.latitude === null || location.longitude === null || location.latitude === '' || location.longitude === '') {
+                    return false;
+                }
+
+                return Number.isFinite(Number(location.latitude)) && Number.isFinite(Number(location.longitude));
+            };
+
             const buildDirectionsUrl = (location) => {
                 const latitude = Number(location.latitude);
                 const longitude = Number(location.longitude);
 
-                if (Number.isFinite(latitude) && Number.isFinite(longitude)) {
+                if (hasValidCoordinates(location)) {
                     return `https://www.google.com/maps/dir/?api=1&destination=${latitude},${longitude}`;
                 }
 
@@ -1043,7 +1055,7 @@
             };
 
             locations.forEach((location) => {
-                if (! location.latitude || ! location.longitude) {
+                if (! hasValidCoordinates(location)) {
                     return;
                 }
 
@@ -1112,7 +1124,7 @@
                         const destinationLatitude = Number(location.latitude);
                         const destinationLongitude = Number(location.longitude);
 
-                        if (! Number.isFinite(destinationLatitude) || ! Number.isFinite(destinationLongitude)) {
+                        if (! hasValidCoordinates(location)) {
                             return { location, distance: Number.POSITIVE_INFINITY };
                         }
 

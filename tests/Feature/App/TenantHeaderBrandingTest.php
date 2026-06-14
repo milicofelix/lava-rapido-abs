@@ -15,6 +15,7 @@ class TenantHeaderBrandingTest extends TestCase
     {
         $location = WashLocation::factory()->create([
             'name' => 'Lava Rápido Header Owner',
+            'logo_path' => 'wash-location-logos/header-owner.png',
             'account_status' => WashLocation::ACCOUNT_STATUS_TRIAL,
             'trial_ends_at' => now()->addDays(12),
         ]);
@@ -29,6 +30,7 @@ class TenantHeaderBrandingTest extends TestCase
             ->assertOk()
             ->assertSee('Unidade atual')
             ->assertSee('Lava Rápido Header Owner')
+            ->assertSee('storage/wash-location-logos/header-owner.png', false)
             ->assertSee('Trial:')
             ->assertDontSee('Lava Rapido Central');
     }

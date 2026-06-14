@@ -18,9 +18,9 @@
     <div class="min-h-screen bg-[radial-gradient(circle_at_top_left,#0ea5e9_0,transparent_32%),linear-gradient(135deg,#020617,#0f172a_55%,#082f49)] px-4 py-5 sm:px-6 lg:px-8">
         <header class="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-4 rounded-3xl border border-white/10 bg-white/95 px-5 py-4 shadow-2xl shadow-black/25 backdrop-blur">
             <a href="{{ route('public.locations.index') }}" class="flex items-center gap-3">
-                <img src="{{ asset('images/autoflow-logo.png') }}" alt="AutoFlow" class="h-12 w-auto">
+                <img src="{{ $location->logoUrl() }}" alt="{{ $location->name }}" class="h-12 max-w-36 object-contain">
                 <div class="hidden sm:block">
-                    <p class="text-sm font-bold text-slate-950">AutoFlow</p>
+                    <p class="text-sm font-bold text-slate-950">{{ $location->name }}</p>
                     <p class="text-xs text-slate-500">Detalhes da unidade</p>
                 </div>
             </a>

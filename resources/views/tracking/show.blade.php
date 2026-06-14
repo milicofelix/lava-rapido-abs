@@ -11,7 +11,7 @@
     <main class="mx-auto min-h-screen max-w-5xl px-4 py-6 sm:px-6 lg:px-8" data-realtime-tracking data-wash-order-id="{{ $washOrder->id }}" data-wash-order-code="{{ $washOrder->code }}">
         <header class="flex flex-wrap items-start justify-between gap-4 border-b border-zinc-200 bg-white px-4 py-5 sm:rounded-lg sm:border">
             <div>
-                <img src="{{ asset('images/autoflow-logo.png') }}" alt="AutoFlow" class="w-40">
+                <img src="{{ $washOrder->washLocation?->logoUrl() ?? asset('images/autoflow-logo.png') }}" alt="{{ $washOrder->washLocation?->name ?? 'AutoFlow' }}" class="max-h-24 w-40 object-contain">
                 <h1 class="mt-4 text-3xl font-bold sm:text-4xl">{{ $washOrder->vehicle->model }} {{ $washOrder->vehicle->color }} - {{ $washOrder->vehicle->plate }}</h1>
                 <p class="mt-2 text-sm text-zinc-500">Codigo {{ $washOrder->code }}</p>
                 @if (request()->boolean('realtime'))

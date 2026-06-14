@@ -19,6 +19,7 @@ class PublicWashTrackingTest extends TestCase
             'code' => 'ABS-TRACK-1',
             'status' => WashOrder::STATUS_WASHING,
         ]);
+        $washOrder->washLocation->update(['logo_path' => 'wash-location-logos/tracking-unit.png']);
         $service = Service::factory()->create([
             'name' => 'Lavagem completa',
             'base_price' => 80,
@@ -43,6 +44,7 @@ class PublicWashTrackingTest extends TestCase
                 ->where('washOrder.vehicle.plate', $washOrder->vehicle->plate)
                 ->where('washOrder.status_label', 'Lavando')
                 ->where('washOrder.services.0.name', 'Lavagem completa')
+                ->where('logoUrl', $washOrder->washLocation->fresh()->logoUrl())
             );
     }
 

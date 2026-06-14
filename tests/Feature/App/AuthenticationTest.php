@@ -26,4 +26,11 @@ class AuthenticationTest extends TestCase
             ->assertSee('data-sidebar-toggle', false)
             ->assertSee('autoflow.sidebar.collapsed', false);
     }
+
+    public function test_login_keeps_institutional_autoflow_logo(): void
+    {
+        $this->get(route('login'))
+            ->assertOk()
+            ->assertSee('images/autoflow-logo.png', false);
+    }
 }
