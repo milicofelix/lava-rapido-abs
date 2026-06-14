@@ -109,6 +109,7 @@ class WashLocationRequestController extends Controller
             $location = WashLocation::query()->create([
                 'name' => $locationRequest->business_name,
                 'address' => $locationRequest->address,
+                'address_number' => $locationRequest->address_number,
                 'district' => $locationRequest->district,
                 'city' => $locationRequest->city,
                 'state' => $locationRequest->state,
@@ -227,7 +228,7 @@ class WashLocationRequestController extends Controller
     private function addressForGeocoding(WashLocationRequest $locationRequest): string
     {
         return collect([
-            $locationRequest->address,
+            trim(collect([$locationRequest->address, $locationRequest->address_number])->filter()->implode(', ')),
             $locationRequest->district,
             $locationRequest->city,
             $locationRequest->state,

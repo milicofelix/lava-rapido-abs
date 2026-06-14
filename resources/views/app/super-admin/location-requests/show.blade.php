@@ -162,7 +162,7 @@
                 <div class="rounded-2xl border border-slate-200 p-5">
                     <h3 class="font-black text-slate-950">Unidade</h3>
                     <dl class="mt-4 space-y-3 text-sm">
-                        <div><dt class="text-slate-500">Endereço</dt><dd class="font-bold text-slate-950">{{ $locationRequest->address }}</dd></div>
+                        <div><dt class="text-slate-500">Endereço</dt><dd class="font-bold text-slate-950">{{ trim(collect([$locationRequest->address, $locationRequest->address_number])->filter()->implode(', ')) }}</dd></div>
                         <div><dt class="text-slate-500">Bairro</dt><dd class="font-bold text-slate-950">{{ $locationRequest->district ?: 'Não informado' }}</dd></div>
                         <div><dt class="text-slate-500">Cidade/UF</dt><dd class="font-bold text-slate-950">{{ $locationRequest->city }}/{{ $locationRequest->state }}</dd></div>
                         <div><dt class="text-slate-500">CEP</dt><dd class="font-bold text-slate-950">{{ $locationRequest->zip_code ?: 'Não informado' }}</dd></div>

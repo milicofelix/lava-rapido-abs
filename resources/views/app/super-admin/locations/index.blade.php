@@ -100,7 +100,7 @@
                                 <div>
                                     <dt class="text-xs font-bold uppercase text-slate-400">Cidade</dt>
                                     <dd class="mt-1 font-semibold text-slate-800">{{ $location->city }}</dd>
-                                    <dd class="text-xs text-slate-500">{{ $location->address }}</dd>
+                                    <dd class="text-xs text-slate-500">{{ $location->fullAddress() }}</dd>
                                 </div>
                                 <div>
                                     <dt class="text-xs font-bold uppercase text-slate-400">Trial até</dt>

@@ -18,7 +18,8 @@ class WashLocationFactory extends Factory
         return [
             'name' => $name,
             'slug' => Str::slug($name).'-'.fake()->unique()->numberBetween(1000, 9999),
-            'address' => fake()->streetAddress(),
+            'address' => fake()->streetName(),
+            'address_number' => (string) fake()->buildingNumber(),
             'district' => fake()->citySuffix(),
             'city' => fake()->city(),
             'status' => WashLocation::STATUS_OPEN,

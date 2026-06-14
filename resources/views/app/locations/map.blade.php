@@ -43,7 +43,7 @@
                         </span>
                         <span class="pointer-events-none absolute left-1/2 top-full mt-2 hidden w-48 -translate-x-1/2 rounded-lg bg-slate-950 px-3 py-2 text-xs font-semibold text-white shadow-lg group-hover:block">
                             {{ $location->name }}<br>
-                            <span class="font-normal text-slate-300">{{ $location->address }}</span>
+                            <span class="font-normal text-slate-300">{{ $location->fullAddress() }}</span>
                         </span>
                     </a>
                 @endforeach
@@ -88,7 +88,7 @@
                             <div class="flex items-start justify-between gap-3">
                                 <div>
                                     <h3 class="font-bold">{{ $location->name }}</h3>
-                                    <p class="mt-1 text-sm text-slate-500">{{ $location->address }} - {{ $location->district }}</p>
+                                    <p class="mt-1 text-sm text-slate-500">{{ $location->fullAddress() }}</p>
                                     <p class="mt-1 text-xs text-slate-400">{{ $location->phone }}</p>
                                 </div>
                                 <span class="shrink-0 rounded-full px-2 py-1 text-xs font-bold {{ $badgeClass }}">{{ $location->statusLabel() }}</span>

@@ -23,7 +23,8 @@ class PublicWashLocationRequestTest extends TestCase
             ->assertSee('data-mask="phone"', false)
             ->assertSee('data-mask="cep"', false)
             ->assertSee('data-viacep-trigger', false)
-            ->assertSee('data-address-field="address"', false);
+            ->assertSee('data-address-field="address"', false)
+            ->assertSee('name="address_number"', false);
     }
 
     public function test_visitor_can_submit_location_request_as_pending_review(): void
@@ -36,7 +37,8 @@ class PublicWashLocationRequestTest extends TestCase
             'phone' => '(11) 98888-2200',
             'business_name' => 'Lava Rapido Central',
             'zip_code' => '08000-000',
-            'address' => 'Av. das Nacoes, 1580',
+            'address' => 'Av. das Nacoes',
+            'address_number' => '1580',
             'district' => 'Centro',
             'city' => 'Sao Paulo',
             'state' => 'sp',
@@ -74,7 +76,8 @@ class PublicWashLocationRequestTest extends TestCase
             'password_confirmation' => 'senha-segura-123',
             'phone' => '(11) 98888-2200',
             'business_name' => 'Lava Rapido Central',
-            'address' => 'Av. das Nacoes, 1580',
+            'address' => 'Av. das Nacoes',
+            'address_number' => '1580',
             'city' => 'Sao Paulo',
             'state' => 'SP',
         ])->assertSessionHasErrors('accept_terms');
@@ -87,7 +90,8 @@ class PublicWashLocationRequestTest extends TestCase
             'email' => 'dono@lavacentral.com.br',
             'phone' => '(11) 98888-2200',
             'business_name' => 'Lava Rapido Central',
-            'address' => 'Av. das Nacoes, 1580',
+            'address' => 'Av. das Nacoes',
+            'address_number' => '1580',
             'city' => 'Sao Paulo',
             'state' => 'SP',
             'status' => WashLocationRequest::STATUS_PENDING_REVIEW,
@@ -101,7 +105,8 @@ class PublicWashLocationRequestTest extends TestCase
                 'password_confirmation' => 'senha-segura-123',
                 'phone' => '11988882200',
                 'business_name' => 'Outro Lava Rapido',
-                'address' => 'Rua B, 20',
+                'address' => 'Rua B',
+                'address_number' => '20',
                 'city' => 'Sao Paulo',
                 'state' => 'SP',
                 'accept_terms' => '1',
@@ -114,7 +119,8 @@ class PublicWashLocationRequestTest extends TestCase
     {
         WashLocation::query()->create([
             'name' => 'Lava Rapido Central',
-            'address' => 'Av. das Nacoes, 1580',
+            'address' => 'Av. das Nacoes',
+            'address_number' => '1580',
             'district' => 'Centro',
             'city' => 'Sao Paulo',
             'status' => WashLocation::STATUS_OPEN,

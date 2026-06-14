@@ -24,6 +24,7 @@ class PublicWashLocationRequestController extends Controller
             'business_name' => ['required', 'string', 'max:150'],
             'zip_code' => ['nullable', 'string', 'max:20'],
             'address' => ['required', 'string', 'max:180'],
+            'address_number' => ['required', 'string', 'max:30'],
             'district' => ['nullable', 'string', 'max:120'],
             'city' => ['required', 'string', 'max:120'],
             'state' => ['required', 'string', 'size:2'],

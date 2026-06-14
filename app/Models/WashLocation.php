@@ -33,6 +33,7 @@ class WashLocation extends Model
         'legal_name',
         'document',
         'address',
+        'address_number',
         'district',
         'city',
         'state',
@@ -160,7 +161,9 @@ class WashLocation extends Model
     {
         $cityState = trim(($this->city ?? '').'/'.($this->state ?? ''), '/');
 
-        return collect([$this->address, $this->district, $cityState])
+        $street = trim(collect([$this->address, $this->address_number])->filter()->implode(', '));
+
+        return collect([$street, $this->district, $cityState])
             ->filter()
             ->implode(' - ');
     }

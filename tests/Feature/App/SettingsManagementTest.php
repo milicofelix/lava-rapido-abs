@@ -41,7 +41,8 @@ class SettingsManagementTest extends TestCase
                 'company_whatsapp' => '(11) 98888-7777',
                 'legal_name' => 'Auto Spa Teste Ltda',
                 'document' => '12.345.678/0001-90',
-                'address' => 'Rua Premium, 123',
+                'address' => 'Rua Premium',
+                'address_number' => '123',
                 'district' => 'Centro',
                 'city' => 'Sao Paulo',
                 'state' => 'SP',
@@ -65,7 +66,8 @@ class SettingsManagementTest extends TestCase
         $this->assertSame('Auto Spa Teste', $location->name);
         $this->assertSame('Auto Spa Teste Ltda', $location->legal_name);
         $this->assertSame('12.345.678/0001-90', $location->document);
-        $this->assertSame('Rua Premium, 123', $location->address);
+        $this->assertSame('Rua Premium', $location->address);
+        $this->assertSame('123', $location->address_number);
         $this->assertSame('Centro', $location->district);
         $this->assertSame('Sao Paulo', $location->city);
         $this->assertSame('SP', $location->state);

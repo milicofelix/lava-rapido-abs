@@ -97,7 +97,7 @@
                         @error('business_name')<span class="mt-1 block text-xs font-semibold text-red-600">{{ $message }}</span>@enderror
                     </label>
 
-                    <div class="grid gap-4 sm:grid-cols-[0.8fr_1.2fr]">
+                    <div class="grid gap-4 sm:grid-cols-[0.8fr_1.2fr_0.6fr]">
                         <label class="block">
                             <span class="text-sm font-bold text-slate-700">CEP</span>
                             <input name="zip_code" value="{{ old('zip_code') }}" data-mask="cep" data-viacep-trigger class="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100">
@@ -105,9 +105,15 @@
                         </label>
 
                         <label class="block">
-                            <span class="text-sm font-bold text-slate-700">Endereço *</span>
-                            <input name="address" value="{{ old('address') }}" required data-address-field="address" class="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100">
+                            <span class="text-sm font-bold text-slate-700">Logradouro *</span>
+                            <input name="address" value="{{ old('address') }}" required data-address-field="address" placeholder="Rua, avenida ou estrada" class="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100">
                             @error('address')<span class="mt-1 block text-xs font-semibold text-red-600">{{ $message }}</span>@enderror
+                        </label>
+
+                        <label class="block">
+                            <span class="text-sm font-bold text-slate-700">Número *</span>
+                            <input name="address_number" value="{{ old('address_number') }}" required placeholder="123" class="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100">
+                            @error('address_number')<span class="mt-1 block text-xs font-semibold text-red-600">{{ $message }}</span>@enderror
                         </label>
                     </div>
 

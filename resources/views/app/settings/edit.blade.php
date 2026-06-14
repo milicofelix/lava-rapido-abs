@@ -53,10 +53,16 @@
                         @error('document') <span class="text-sm text-red-600">{{ $message }}</span> @enderror
                     </label>
 
-                    <label class="block md:col-span-2">
-                        <span class="text-sm font-semibold text-slate-700">Endereco</span>
-                        <input name="address" value="{{ old('address', $currentLocation?->address) }}" placeholder="Rua, numero e complemento" class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100">
+                    <label class="block">
+                        <span class="text-sm font-semibold text-slate-700">Logradouro</span>
+                        <input name="address" value="{{ old('address', $currentLocation?->address) }}" placeholder="Rua, avenida ou estrada" class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100">
                         @error('address') <span class="text-sm text-red-600">{{ $message }}</span> @enderror
+                    </label>
+
+                    <label class="block">
+                        <span class="text-sm font-semibold text-slate-700">Número</span>
+                        <input name="address_number" value="{{ old('address_number', $currentLocation?->address_number) }}" placeholder="123" class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100">
+                        @error('address_number') <span class="text-sm text-red-600">{{ $message }}</span> @enderror
                     </label>
 
                     <label class="block">
@@ -187,6 +193,7 @@
                 <dl class="mt-3 space-y-2 text-slate-600">
                     <div class="flex justify-between gap-4"><dt>Nome</dt><dd class="max-w-44 truncate font-semibold text-slate-900">{{ $currentLocation?->name ?? $settings['company_name'] }}</dd></div>
                     <div class="flex justify-between gap-4"><dt>CNPJ</dt><dd class="font-semibold text-slate-900">{{ $currentLocation?->document ?: '-' }}</dd></div>
+                    <div class="flex justify-between gap-4"><dt>Endereço</dt><dd class="max-w-44 truncate font-semibold text-slate-900">{{ $currentLocation?->fullAddress() ?: '-' }}</dd></div>
                     <div class="flex justify-between gap-4"><dt>Cidade/UF</dt><dd class="font-semibold text-slate-900">{{ trim(($currentLocation?->city ?? '').'/'.($currentLocation?->state ?? ''), '/') ?: '-' }}</dd></div>
                     <div class="flex justify-between gap-4"><dt>Mapa</dt><dd class="font-semibold {{ $currentLocation?->hasCoordinates() ? 'text-green-700' : 'text-amber-700' }}">{{ $currentLocation?->hasCoordinates() ? 'Com coordenadas' : 'Pendente' }}</dd></div>
                 </dl>

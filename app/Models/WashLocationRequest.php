@@ -24,6 +24,7 @@ class WashLocationRequest extends Model
         'business_name',
         'zip_code',
         'address',
+        'address_number',
         'district',
         'city',
         'state',
