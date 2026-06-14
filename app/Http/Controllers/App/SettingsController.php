@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\AuditLog;
 use App\Models\AppSetting;
 use App\Support\AuditLogger;
+use App\Support\MapsCoordinates;
 use App\Support\TenantContext;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -31,6 +32,7 @@ class SettingsController extends Controller
     public function update(Request $request): RedirectResponse
     {
         $currentLocation = TenantContext::currentLocation();
+        $this->mergeCoordinatesFromMapsUrl($request);
 
         $data = $request->validate([
             'company_name' => ['required', 'string', 'max:120'],
@@ -41,6 +43,7 @@ class SettingsController extends Controller
             'district' => ['nullable', 'string', 'max:120'],
             'city' => ['nullable', 'string', 'max:120'],
             'state' => ['nullable', 'string', 'size:2'],
+            'google_maps_url' => ['nullable', 'string', 'max:3000'],
             'latitude' => ['nullable', 'required_with:longitude', 'numeric', 'between:-90,90'],
             'longitude' => ['nullable', 'required_with:latitude', 'numeric', 'between:-180,180'],
             'opening_hours' => ['nullable', 'string', 'max:2000'],
@@ -104,5 +107,23 @@ class SettingsController extends Controller
         ]);
 
         return back()->with('status', 'Configuracoes salvas com sucesso.');
+    }
+
+    private function mergeCoordinatesFromMapsUrl(Request $request): void
+    {
+        if (filled($request->input('latitude')) && filled($request->input('longitude'))) {
+            return;
+        }
+
+        $coordinates = MapsCoordinates::extractFromUrl($request->input('google_maps_url'));
+
+        if ($coordinates === null) {
+            return;
+        }
+
+        $request->merge([
+            'latitude' => $coordinates['latitude'],
+            'longitude' => $coordinates['longitude'],
+        ]);
     }
 }

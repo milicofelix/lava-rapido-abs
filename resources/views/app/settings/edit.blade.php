@@ -37,7 +37,7 @@
 
                     <label class="block">
                         <span class="text-sm font-semibold text-slate-700">WhatsApp da unidade</span>
-                        <input name="company_whatsapp" value="{{ old('company_whatsapp', $currentLocation?->phone ?? $settings['company_whatsapp']) }}" placeholder="(11) 99999-9999" class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100">
+                        <input name="company_whatsapp" value="{{ old('company_whatsapp', $currentLocation?->phone ?? $settings['company_whatsapp']) }}" placeholder="(11) 99999-9999" data-mask="phone" class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100">
                         @error('company_whatsapp') <span class="text-sm text-red-600">{{ $message }}</span> @enderror
                     </label>
 
@@ -49,7 +49,7 @@
 
                     <label class="block">
                         <span class="text-sm font-semibold text-slate-700">CNPJ</span>
-                        <input name="document" value="{{ old('document', $currentLocation?->document) }}" placeholder="00.000.000/0001-00" class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100">
+                        <input name="document" value="{{ old('document', $currentLocation?->document) }}" placeholder="00.000.000/0001-00" data-mask="document" class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100">
                         @error('document') <span class="text-sm text-red-600">{{ $message }}</span> @enderror
                     </label>
 

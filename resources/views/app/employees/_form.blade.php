@@ -15,7 +15,7 @@
 
     <label class="block">
         <span class="text-sm font-medium">Telefone</span>
-        <input name="phone" value="{{ old('phone', $employee->phone) }}" class="mt-1 w-full rounded-md border border-zinc-300 px-3 py-2" placeholder="(11) 99999-9999">
+        <input name="phone" value="{{ old('phone', $employee->phone) }}" data-mask="phone" class="mt-1 w-full rounded-md border border-zinc-300 px-3 py-2" placeholder="(11) 99999-9999">
         @error('phone') <span class="text-sm text-red-600">{{ $message }}</span> @enderror
     </label>
 

@@ -19,6 +19,7 @@ class PublicWashLocationRequestController extends Controller
         $validated = $request->validate([
             'responsible_name' => ['required', 'string', 'max:120'],
             'email' => ['required', 'email', 'max:150'],
+            'password' => ['required', 'confirmed', 'min:8', 'max:120'],
             'phone' => ['required', 'string', 'max:30'],
             'business_name' => ['required', 'string', 'max:150'],
             'zip_code' => ['nullable', 'string', 'max:20'],
@@ -34,8 +35,9 @@ class PublicWashLocationRequestController extends Controller
         ]);
 
         $validated['email'] = mb_strtolower($validated['email']);
+        $validated['owner_password'] = $validated['password'];
         $validated['state'] = mb_strtoupper($validated['state']);
-        unset($validated['accept_terms']);
+        unset($validated['accept_terms'], $validated['password'], $validated['password_confirmation']);
 
         if (WashLocationRequest::hasPendingContact($validated['email'], $validated['phone'])) {
             return back()

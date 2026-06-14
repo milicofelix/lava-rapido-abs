@@ -6,8 +6,11 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Models\WashLocation;
 use App\Models\WashLocationRequest;
+use App\Support\AddressGeocoder;
 use App\Support\DefaultServices;
+use App\Support\MapsCoordinates;
 use Illuminate\Contracts\View\View;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -65,15 +68,38 @@ class WashLocationRequestController extends Controller
         ]);
     }
 
-    public function approve(Request $request, WashLocationRequest $locationRequest): RedirectResponse
+    public function geocode(WashLocationRequest $locationRequest, AddressGeocoder $geocoder): JsonResponse
+    {
+        $coordinates = $geocoder->geocode($this->addressForGeocoding($locationRequest));
+
+        if ($coordinates === null) {
+            return response()->json([
+                'fallback_required' => true,
+                'message' => 'Não encontrei coordenadas automaticamente. Abra no Maps e cole a URL completa no campo de apoio.',
+                'maps_url' => $this->mapsSearchUrl($locationRequest),
+            ]);
+        }
+
+        return response()->json([
+            'fallback_required' => false,
+            ...$coordinates,
+        ]);
+    }
+
+    public function approve(Request $request, WashLocationRequest $locationRequest, AddressGeocoder $geocoder): RedirectResponse
     {
         if (! $locationRequest->isPending()) {
             return back()->with('error', 'Essa solicitação já foi analisada.');
         }
 
+        $this->mergeCoordinatesFromMapsUrl($request);
+        $this->mergeCoordinatesFromAddress($request, $locationRequest, $geocoder);
+
         $validated = $request->validate([
+            'google_maps_url' => ['nullable', 'string', 'max:3000'],
             'latitude' => ['required', 'numeric', 'between:-90,90'],
             'longitude' => ['required', 'numeric', 'between:-180,180'],
+            'owner_password' => ['nullable', 'confirmed', 'min:8', 'max:120'],
             'decision_notes' => ['nullable', 'string', 'max:1000'],
         ]);
 
@@ -103,7 +129,7 @@ class WashLocationRequestController extends Controller
 
             DefaultServices::seedForLocation($location);
 
-            $this->createOrAttachOwnerUser($locationRequest, $location);
+            $this->createOrAttachOwnerUser($locationRequest, $location, $validated['owner_password'] ?? null);
 
             $locationRequest->forceFill([
                 'status' => WashLocationRequest::STATUS_APPROVED,
@@ -141,7 +167,7 @@ class WashLocationRequestController extends Controller
             ->with('success', 'Solicitação rejeitada com segurança. Nenhuma unidade foi criada no mapa.');
     }
 
-    private function createOrAttachOwnerUser(WashLocationRequest $locationRequest, WashLocation $location): User
+    private function createOrAttachOwnerUser(WashLocationRequest $locationRequest, WashLocation $location, ?string $plainPassword = null): User
     {
         $email = trim(strtolower($locationRequest->email));
 
@@ -149,7 +175,9 @@ class WashLocationRequestController extends Controller
 
         if (! $user->exists) {
             $user->name = $locationRequest->responsible_name;
-            $user->password = Hash::make(Str::password(32));
+            $user->password = $plainPassword !== null
+                ? Hash::make($plainPassword)
+                : ($locationRequest->owner_password ?: Hash::make(Str::password(32)));
         }
 
         $user->role = User::ROLE_OWNER;
@@ -158,5 +186,58 @@ class WashLocationRequestController extends Controller
         $user->save();
 
         return $user;
+    }
+
+    private function mergeCoordinatesFromMapsUrl(Request $request): void
+    {
+        if (filled($request->input('latitude')) && filled($request->input('longitude'))) {
+            return;
+        }
+
+        $coordinates = MapsCoordinates::extractFromUrl($request->input('google_maps_url'));
+
+        if ($coordinates === null) {
+            return;
+        }
+
+        $request->merge([
+            'latitude' => $coordinates['latitude'],
+            'longitude' => $coordinates['longitude'],
+        ]);
+    }
+
+    private function mergeCoordinatesFromAddress(Request $request, WashLocationRequest $locationRequest, AddressGeocoder $geocoder): void
+    {
+        if (filled($request->input('latitude')) && filled($request->input('longitude'))) {
+            return;
+        }
+
+        $coordinates = $geocoder->geocode($this->addressForGeocoding($locationRequest));
+
+        if ($coordinates === null) {
+            return;
+        }
+
+        $request->merge([
+            'latitude' => $coordinates['latitude'],
+            'longitude' => $coordinates['longitude'],
+        ]);
+    }
+
+    private function addressForGeocoding(WashLocationRequest $locationRequest): string
+    {
+        return collect([
+            $locationRequest->address,
+            $locationRequest->district,
+            $locationRequest->city,
+            $locationRequest->state,
+            $locationRequest->zip_code,
+            'Brasil',
+        ])->filter()->implode(', ');
+    }
+
+    private function mapsSearchUrl(WashLocationRequest $locationRequest): string
+    {
+        return 'https://www.google.com/maps/search/?api=1&query='.rawurlencode($this->addressForGeocoding($locationRequest));
     }
 }

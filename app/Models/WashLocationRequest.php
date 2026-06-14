@@ -19,6 +19,7 @@ class WashLocationRequest extends Model
     protected $fillable = [
         'responsible_name',
         'email',
+        'owner_password',
         'phone',
         'business_name',
         'zip_code',
@@ -40,6 +41,7 @@ class WashLocationRequest extends Model
         return [
             'employees_count' => 'integer',
             'decided_at' => 'datetime',
+            'owner_password' => 'hashed',
         ];
     }
 

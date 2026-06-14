@@ -23,7 +23,8 @@ class SettingsManagementTest extends TestCase
             ->assertSee('Configuracoes')
             ->assertSee('Habilitar Caixa')
             ->assertSee('Habilitar Fiado')
-            ->assertSee('Tema do painel');
+            ->assertSee('Tema do painel')
+            ->assertDontSee('URL do Google Maps');
     }
 
     public function test_admin_can_update_modules_and_theme(): void
@@ -78,6 +79,37 @@ class SettingsManagementTest extends TestCase
             'action' => AuditLog::ACTION_LOCATION_PROFILE_UPDATED,
             'subject_label' => 'Auto Spa Teste',
         ]);
+    }
+
+    public function test_admin_can_update_coordinates_from_google_maps_url(): void
+    {
+        $location = WashLocation::factory()->create([
+            'latitude' => null,
+            'longitude' => null,
+        ]);
+        $admin = User::factory()->create([
+            'role' => User::ROLE_ADMIN,
+            'wash_location_id' => $location->id,
+        ]);
+        $mapsUrl = 'https://www.google.com/maps/place/Av.+Nordestina,+4660+-+Vila+Nova+Curuca,+S%C3%A3o+Paulo+-+SP,+08032-000/@-23.5191405,-46.4207678,17z/data=!3m1!4b1!4m6!3m5!1s0x94ce640cd8043355:0x58a019a956587895!8m2!3d-23.5191405!4d-46.4207678!16s%2Fg%2F11c4dryd_5?entry=ttu';
+
+        $this->actingAs($admin)
+            ->put(route('settings.update'), [
+                'company_name' => $location->name,
+                'company_whatsapp' => $location->phone,
+                'address' => $location->address,
+                'district' => $location->district,
+                'city' => $location->city,
+                'state' => $location->state ?? 'SP',
+                'google_maps_url' => $mapsUrl,
+                'theme' => AppSetting::THEME_LIGHT,
+            ])
+            ->assertRedirect();
+
+        $location->refresh();
+
+        $this->assertSame('-23.5191405', (string) $location->latitude);
+        $this->assertSame('-46.4207678', (string) $location->longitude);
     }
 
     public function test_cash_and_credit_links_are_hidden_when_modules_are_disabled(): void

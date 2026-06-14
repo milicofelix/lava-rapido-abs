@@ -50,6 +50,7 @@ Route::middleware('auth')->group(function () {
     Route::middleware('role:'.User::ROLE_SUPER_ADMIN)->prefix('admin-produto')->name('super-admin.')->group(function () {
         Route::get('solicitacoes-lava-rapidos', [SuperAdminWashLocationRequestController::class, 'index'])->name('location-requests.index');
         Route::get('solicitacoes-lava-rapidos/{locationRequest}', [SuperAdminWashLocationRequestController::class, 'show'])->name('location-requests.show');
+        Route::post('solicitacoes-lava-rapidos/{locationRequest}/geocodificar', [SuperAdminWashLocationRequestController::class, 'geocode'])->name('location-requests.geocode');
         Route::patch('solicitacoes-lava-rapidos/{locationRequest}/aprovar', [SuperAdminWashLocationRequestController::class, 'approve'])->name('location-requests.approve');
         Route::patch('solicitacoes-lava-rapidos/{locationRequest}/rejeitar', [SuperAdminWashLocationRequestController::class, 'reject'])->name('location-requests.reject');
 

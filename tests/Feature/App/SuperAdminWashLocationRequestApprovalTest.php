@@ -6,6 +6,8 @@ use App\Models\User;
 use App\Models\WashLocation;
 use App\Models\WashLocationRequest;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
 
 class SuperAdminWashLocationRequestApprovalTest extends TestCase
@@ -78,6 +80,65 @@ class SuperAdminWashLocationRequestApprovalTest extends TestCase
         }
     }
 
+    public function test_approval_uses_requested_owner_password_for_first_access(): void
+    {
+        $superAdmin = User::factory()->create([
+            'role' => User::ROLE_SUPER_ADMIN,
+            'wash_location_id' => null,
+        ]);
+
+        $request = WashLocationRequest::factory()->create([
+            'responsible_name' => 'Dono com Senha',
+            'email' => 'dono-com-senha@lavacentral.com.br',
+            'owner_password' => 'senha-segura-123',
+            'status' => WashLocationRequest::STATUS_PENDING_REVIEW,
+        ]);
+
+        $this->actingAs($superAdmin)
+            ->patch(route('super-admin.location-requests.approve', $request), [
+                'latitude' => -23.54891,
+                'longitude' => -46.63412,
+            ])
+            ->assertRedirect(route('super-admin.location-requests.show', $request));
+
+        $owner = User::query()
+            ->where('email', 'dono-com-senha@lavacentral.com.br')
+            ->firstOrFail();
+
+        $this->assertSame(User::ROLE_OWNER, $owner->role);
+        $this->assertTrue(Hash::check('senha-segura-123', $owner->password));
+    }
+
+    public function test_super_admin_can_define_owner_password_when_request_has_no_password(): void
+    {
+        $superAdmin = User::factory()->create([
+            'role' => User::ROLE_SUPER_ADMIN,
+            'wash_location_id' => null,
+        ]);
+
+        $request = WashLocationRequest::factory()->create([
+            'responsible_name' => 'Dono Antigo',
+            'email' => 'dono-antigo@lavacentral.com.br',
+            'owner_password' => null,
+            'status' => WashLocationRequest::STATUS_PENDING_REVIEW,
+        ]);
+
+        $this->actingAs($superAdmin)
+            ->patch(route('super-admin.location-requests.approve', $request), [
+                'latitude' => -23.54891,
+                'longitude' => -46.63412,
+                'owner_password' => 'senha-antiga-123',
+                'owner_password_confirmation' => 'senha-antiga-123',
+            ])
+            ->assertRedirect(route('super-admin.location-requests.show', $request));
+
+        $owner = User::query()
+            ->where('email', 'dono-antigo@lavacentral.com.br')
+            ->firstOrFail();
+
+        $this->assertTrue(Hash::check('senha-antiga-123', $owner->password));
+    }
+
     public function test_approved_trial_location_appears_on_public_map(): void
     {
         $superAdmin = User::factory()->create(['role' => User::ROLE_SUPER_ADMIN]);
@@ -100,8 +161,127 @@ class SuperAdminWashLocationRequestApprovalTest extends TestCase
             ->assertSee('-46.63412');
     }
 
+    public function test_super_admin_can_approve_request_with_google_maps_url(): void
+    {
+        $superAdmin = User::factory()->create(['role' => User::ROLE_SUPER_ADMIN]);
+        $request = WashLocationRequest::factory()->create([
+            'business_name' => 'Lava Rapido do Adilson',
+            'address' => 'Av. Nordestina, 4660',
+            'district' => 'Vila Nova Curuca',
+            'city' => 'Sao Paulo',
+            'state' => 'SP',
+            'status' => WashLocationRequest::STATUS_PENDING_REVIEW,
+        ]);
+        $mapsUrl = 'https://www.google.com/maps/place/Av.+Nordestina,+4660+-+Vila+Nova+Curuca,+S%C3%A3o+Paulo+-+SP,+08032-000/@-23.5191405,-46.4207678,17z/data=!3m1!4b1!4m6!3m5!1s0x94ce640cd8043355:0x58a019a956587895!8m2!3d-23.5191405!4d-46.4207678!16s%2Fg%2F11c4dryd_5?entry=ttu';
+
+        $this->actingAs($superAdmin)
+            ->patch(route('super-admin.location-requests.approve', $request), [
+                'google_maps_url' => $mapsUrl,
+            ])
+            ->assertRedirect(route('super-admin.location-requests.show', $request));
+
+        $location = WashLocation::query()
+            ->where('approved_location_request_id', $request->id)
+            ->firstOrFail();
+
+        $this->assertSame('-23.5191405', (string) $location->latitude);
+        $this->assertSame('-46.4207678', (string) $location->longitude);
+    }
+
+    public function test_super_admin_can_load_coordinates_by_ajax(): void
+    {
+        Http::fake([
+            'nominatim.openstreetmap.org/*' => Http::response([
+                [
+                    'lat' => '-23.5191405',
+                    'lon' => '-46.4207678',
+                ],
+            ]),
+        ]);
+
+        $superAdmin = User::factory()->create(['role' => User::ROLE_SUPER_ADMIN]);
+        $request = WashLocationRequest::factory()->create([
+            'address' => 'Av. Nordestina, 4660',
+            'district' => 'Vila Nova Curuca',
+            'city' => 'Sao Paulo',
+            'state' => 'SP',
+            'zip_code' => '08032-000',
+            'status' => WashLocationRequest::STATUS_PENDING_REVIEW,
+        ]);
+
+        $this->actingAs($superAdmin)
+            ->postJson(route('super-admin.location-requests.geocode', $request))
+            ->assertOk()
+            ->assertJson([
+                'fallback_required' => false,
+                'latitude' => -23.5191405,
+                'longitude' => -46.4207678,
+            ]);
+    }
+
+    public function test_geocode_endpoint_returns_fallback_instructions_when_address_is_not_found(): void
+    {
+        Http::fake([
+            'nominatim.openstreetmap.org/*' => Http::response([]),
+        ]);
+
+        $superAdmin = User::factory()->create(['role' => User::ROLE_SUPER_ADMIN]);
+        $request = WashLocationRequest::factory()->create([
+            'address' => 'Rua Sem Resultado, 999',
+            'city' => 'Sao Paulo',
+            'state' => 'SP',
+            'status' => WashLocationRequest::STATUS_PENDING_REVIEW,
+        ]);
+
+        $this->actingAs($superAdmin)
+            ->postJson(route('super-admin.location-requests.geocode', $request))
+            ->assertOk()
+            ->assertJson([
+                'fallback_required' => true,
+            ])
+            ->assertJsonStructure(['message', 'maps_url']);
+    }
+
+    public function test_super_admin_can_approve_request_with_address_geocoding(): void
+    {
+        Http::fake([
+            'nominatim.openstreetmap.org/*' => Http::response([
+                [
+                    'lat' => '-23.5191405',
+                    'lon' => '-46.4207678',
+                ],
+            ]),
+        ]);
+
+        $superAdmin = User::factory()->create(['role' => User::ROLE_SUPER_ADMIN]);
+        $request = WashLocationRequest::factory()->create([
+            'business_name' => 'Lava Rapido Geocodificado',
+            'address' => 'Av. Nordestina, 4660',
+            'district' => 'Vila Nova Curuca',
+            'city' => 'Sao Paulo',
+            'state' => 'SP',
+            'zip_code' => '08032-000',
+            'status' => WashLocationRequest::STATUS_PENDING_REVIEW,
+        ]);
+
+        $this->actingAs($superAdmin)
+            ->patch(route('super-admin.location-requests.approve', $request))
+            ->assertRedirect(route('super-admin.location-requests.show', $request));
+
+        $location = WashLocation::query()
+            ->where('approved_location_request_id', $request->id)
+            ->firstOrFail();
+
+        $this->assertSame('-23.5191405', (string) $location->latitude);
+        $this->assertSame('-46.4207678', (string) $location->longitude);
+    }
+
     public function test_approval_requires_real_map_coordinates(): void
     {
+        Http::fake([
+            'nominatim.openstreetmap.org/*' => Http::response([]),
+        ]);
+
         $superAdmin = User::factory()->create(['role' => User::ROLE_SUPER_ADMIN]);
         $request = WashLocationRequest::factory()->create([
             'status' => WashLocationRequest::STATUS_PENDING_REVIEW,

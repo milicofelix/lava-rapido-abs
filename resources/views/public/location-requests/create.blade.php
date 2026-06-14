@@ -67,7 +67,7 @@
 
                         <label class="block">
                             <span class="text-sm font-bold text-slate-700">WhatsApp *</span>
-                            <input name="phone" value="{{ old('phone') }}" required placeholder="(11) 99999-9999" class="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100">
+                            <input name="phone" value="{{ old('phone') }}" required placeholder="(11) 99999-9999" data-mask="phone" class="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100">
                             @error('phone')<span class="mt-1 block text-xs font-semibold text-red-600">{{ $message }}</span>@enderror
                         </label>
                     </div>
@@ -78,6 +78,19 @@
                         @error('email')<span class="mt-1 block text-xs font-semibold text-red-600">{{ $message }}</span>@enderror
                     </label>
 
+                    <div class="grid gap-4 sm:grid-cols-2">
+                        <label class="block">
+                            <span class="text-sm font-bold text-slate-700">Senha de primeiro acesso *</span>
+                            <input type="password" name="password" required minlength="8" autocomplete="new-password" class="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100">
+                            @error('password')<span class="mt-1 block text-xs font-semibold text-red-600">{{ $message }}</span>@enderror
+                        </label>
+
+                        <label class="block">
+                            <span class="text-sm font-bold text-slate-700">Confirmar senha *</span>
+                            <input type="password" name="password_confirmation" required minlength="8" autocomplete="new-password" class="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100">
+                        </label>
+                    </div>
+
                     <label class="block">
                         <span class="text-sm font-bold text-slate-700">Nome do lava-rápido *</span>
                         <input name="business_name" value="{{ old('business_name') }}" required class="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100">
@@ -87,13 +100,13 @@
                     <div class="grid gap-4 sm:grid-cols-[0.8fr_1.2fr]">
                         <label class="block">
                             <span class="text-sm font-bold text-slate-700">CEP</span>
-                            <input name="zip_code" value="{{ old('zip_code') }}" class="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100">
+                            <input name="zip_code" value="{{ old('zip_code') }}" data-mask="cep" data-viacep-trigger class="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100">
                             @error('zip_code')<span class="mt-1 block text-xs font-semibold text-red-600">{{ $message }}</span>@enderror
                         </label>
 
                         <label class="block">
                             <span class="text-sm font-bold text-slate-700">Endereço *</span>
-                            <input name="address" value="{{ old('address') }}" required class="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100">
+                            <input name="address" value="{{ old('address') }}" required data-address-field="address" class="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100">
                             @error('address')<span class="mt-1 block text-xs font-semibold text-red-600">{{ $message }}</span>@enderror
                         </label>
                     </div>
@@ -101,19 +114,19 @@
                     <div class="grid gap-4 sm:grid-cols-[1fr_1fr_90px]">
                         <label class="block">
                             <span class="text-sm font-bold text-slate-700">Bairro</span>
-                            <input name="district" value="{{ old('district') }}" class="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100">
+                            <input name="district" value="{{ old('district') }}" data-address-field="district" class="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100">
                             @error('district')<span class="mt-1 block text-xs font-semibold text-red-600">{{ $message }}</span>@enderror
                         </label>
 
                         <label class="block">
                             <span class="text-sm font-bold text-slate-700">Cidade *</span>
-                            <input name="city" value="{{ old('city') }}" required class="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100">
+                            <input name="city" value="{{ old('city') }}" required data-address-field="city" class="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100">
                             @error('city')<span class="mt-1 block text-xs font-semibold text-red-600">{{ $message }}</span>@enderror
                         </label>
 
                         <label class="block">
                             <span class="text-sm font-bold text-slate-700">UF *</span>
-                            <input name="state" value="{{ old('state') }}" required maxlength="2" class="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm uppercase focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100">
+                            <input name="state" value="{{ old('state') }}" required maxlength="2" data-address-field="state" class="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm uppercase focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100">
                             @error('state')<span class="mt-1 block text-xs font-semibold text-red-600">{{ $message }}</span>@enderror
                         </label>
                     </div>

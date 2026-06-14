@@ -73,7 +73,9 @@ class SuperAdminWashLocationRequestManagementTest extends TestCase
             ->assertSee('Detalhes da solicitação')
             ->assertSee('Lava Rapido Central')
             ->assertSee('Adriano Freitas')
-            ->assertSee('Quero testar o AutoFlow.');
+            ->assertSee('Quero testar o AutoFlow.')
+            ->assertSee('Carregar latitude/longitude')
+            ->assertSee('URL do Google Maps');
     }
 
 

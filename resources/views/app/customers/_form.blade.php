@@ -8,7 +8,7 @@
     </label>
     <label class="block">
         <span class="text-sm font-medium">Telefone / WhatsApp</span>
-        <input name="phone" value="{{ old('phone', $customer->phone) }}" required class="mt-1 w-full rounded-md border border-zinc-300 px-3 py-2">
+        <input name="phone" value="{{ old('phone', $customer->phone) }}" required data-mask="phone" class="mt-1 w-full rounded-md border border-zinc-300 px-3 py-2">
         @error('phone') <span class="text-sm text-red-600">{{ $message }}</span> @enderror
     </label>
     <label class="block">
@@ -18,7 +18,7 @@
     </label>
     <label class="block">
         <span class="text-sm font-medium">CPF</span>
-        <input name="cpf" value="{{ old('cpf', $customer->cpf) }}" class="mt-1 w-full rounded-md border border-zinc-300 px-3 py-2">
+        <input name="cpf" value="{{ old('cpf', $customer->cpf) }}" data-mask="cpf" class="mt-1 w-full rounded-md border border-zinc-300 px-3 py-2">
         @error('cpf') <span class="text-sm text-red-600">{{ $message }}</span> @enderror
     </label>
 </div>

@@ -50,10 +50,22 @@
                                 <div class="flex flex-wrap items-start justify-between gap-2">
                                     <div>
                                         <p class="text-sm font-black text-slate-950">Localização no mapa</p>
-                                        <p class="mt-1 text-xs leading-5 text-slate-600">Informe latitude e longitude reais antes de aprovar. Isso evita marcador em local incorreto.</p>
+                                        <p class="mt-1 text-xs leading-5 text-slate-600">Carregue as coordenadas pelo endereço antes de aprovar. Isso evita marcador em local incorreto.</p>
                                     </div>
-                                    <a href="{{ $mapsSearchUrl }}" target="_blank" rel="noopener" class="rounded-lg border border-emerald-200 px-2.5 py-1.5 text-xs font-black text-emerald-700 hover:bg-emerald-100">Abrir no Maps</a>
+                                    <div class="flex flex-wrap gap-2">
+                                        <button type="button" data-geocode-url="{{ route('super-admin.location-requests.geocode', $locationRequest) }}" class="rounded-lg border border-emerald-200 bg-white px-2.5 py-1.5 text-xs font-black text-emerald-700 hover:bg-emerald-100">Carregar latitude/longitude</button>
+                                        <a href="{{ $mapsSearchUrl }}" target="_blank" rel="noopener" class="rounded-lg border border-emerald-200 px-2.5 py-1.5 text-xs font-black text-emerald-700 hover:bg-emerald-100">Abrir no Maps</a>
+                                    </div>
                                 </div>
+                                <p class="mt-3 rounded-lg border border-emerald-100 bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-800" data-coordinate-feedback>As coordenadas ainda não foram carregadas.</p>
+                                <label class="mt-3 hidden" data-maps-url-fallback>
+                                    <span class="text-xs font-bold text-slate-600">URL do Google Maps</span>
+                                    <div class="mt-1 grid gap-2 sm:grid-cols-[1fr_auto]">
+                                        <input name="google_maps_url" value="{{ old('google_maps_url') }}" placeholder="Cole aqui a URL completa do Google Maps" data-maps-url class="w-full rounded-lg border border-emerald-200 px-3 py-2 text-sm">
+                                        <button type="button" data-extract-maps-url class="rounded-lg bg-emerald-600 px-3 py-2 text-xs font-black text-white hover:bg-emerald-700">Extrair da URL</button>
+                                    </div>
+                                    <span class="mt-1 block text-xs text-slate-600">Use este campo apenas se a busca automática não encontrar o endereço.</span>
+                                </label>
                                 <div class="mt-3 grid gap-2 sm:grid-cols-2">
                                     <label class="block">
                                         <span class="text-xs font-bold text-slate-600">Latitude</span>
@@ -67,6 +79,22 @@
                                     </label>
                                 </div>
                             </div>
+                            @if (! $locationRequest->owner_password)
+                                <div class="mt-3 rounded-xl border border-emerald-200 bg-white/80 p-3">
+                                    <p class="text-sm font-black text-slate-950">Senha inicial do dono</p>
+                                    <p class="mt-1 text-xs leading-5 text-slate-600">Esta solicitação ainda não possui senha de primeiro acesso. Defina uma antes de aprovar.</p>
+                                    <div class="mt-3 grid gap-2 sm:grid-cols-2">
+                                        <label class="block">
+                                            <span class="text-xs font-bold text-slate-600">Senha</span>
+                                            <input type="password" name="owner_password" minlength="8" autocomplete="new-password" class="mt-1 w-full rounded-lg border border-emerald-200 px-3 py-2 text-sm">
+                                        </label>
+                                        <label class="block">
+                                            <span class="text-xs font-bold text-slate-600">Confirmar senha</span>
+                                            <input type="password" name="owner_password_confirmation" minlength="8" autocomplete="new-password" class="mt-1 w-full rounded-lg border border-emerald-200 px-3 py-2 text-sm">
+                                        </label>
+                                    </div>
+                                </div>
+                            @endif
                             <textarea name="decision_notes" rows="3" class="mt-3 w-full rounded-xl border border-emerald-200 px-3 py-2 text-sm" placeholder="Observação opcional"></textarea>
                             <button class="mt-3 w-full rounded-xl bg-emerald-600 px-4 py-2 text-sm font-black text-white">Aprovar e iniciar trial</button>
                         </form>
@@ -97,6 +125,9 @@
                 <p class="mt-4 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-bold text-rose-700">{{ $message }}</p>
             @enderror
             @error('longitude')
+                <p class="mt-4 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-bold text-rose-700">{{ $message }}</p>
+            @enderror
+            @error('owner_password')
                 <p class="mt-4 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-bold text-rose-700">{{ $message }}</p>
             @enderror
 
@@ -156,6 +187,31 @@
 
     <script>
         document.querySelectorAll('[data-location-approval-form]').forEach((form) => {
+            const extractCoordinatesFromMapsUrl = (url) => {
+                const decodedUrl = decodeURIComponent(String(url || ''));
+                const patterns = [
+                    /@(-?\d+(?:\.\d+)?),\s*(-?\d+(?:\.\d+)?)/,
+                    /!3d(-?\d+(?:\.\d+)?)!4d(-?\d+(?:\.\d+)?)/,
+                    /[?&](?:ll|q)=(-?\d+(?:\.\d+)?),\s*(-?\d+(?:\.\d+)?)/
+                ];
+
+                for (const pattern of patterns) {
+                    const match = decodedUrl.match(pattern);
+
+                    if (! match) {
+                        continue;
+                    }
+
+                    const latitude = Number(match[1]);
+                    const longitude = Number(match[2]);
+
+                    if (Number.isFinite(latitude) && Number.isFinite(longitude) && latitude >= -90 && latitude <= 90 && longitude >= -180 && longitude <= 180) {
+                        return { latitude, longitude };
+                    }
+                }
+
+                return null;
+            };
             const syncCoordinates = () => {
                 form.querySelectorAll('[data-coordinate-display]').forEach((displayInput) => {
                     const field = displayInput.dataset.coordinateDisplay;
@@ -166,10 +222,101 @@
                     }
                 });
             };
+            const setFeedback = (message, isError = false) => {
+                const feedback = form.querySelector('[data-coordinate-feedback]');
+
+                if (! feedback) {
+                    return;
+                }
+
+                feedback.textContent = message;
+                feedback.classList.toggle('border-rose-200', isError);
+                feedback.classList.toggle('bg-rose-50', isError);
+                feedback.classList.toggle('text-rose-700', isError);
+                feedback.classList.toggle('border-emerald-100', ! isError);
+                feedback.classList.toggle('bg-emerald-50', ! isError);
+                feedback.classList.toggle('text-emerald-800', ! isError);
+            };
+            const showMapsUrlFallback = () => {
+                form.querySelector('[data-maps-url-fallback]')?.classList.remove('hidden');
+            };
+            const applyCoordinates = (coordinates) => {
+                form.querySelector('[data-coordinate-display="latitude"]').value = coordinates.latitude;
+                form.querySelector('[data-coordinate-display="longitude"]').value = coordinates.longitude;
+                syncCoordinates();
+                setFeedback(`Coordenadas carregadas: ${coordinates.latitude}, ${coordinates.longitude}.`);
+            };
+            const applyMapsUrlCoordinates = () => {
+                const mapsUrlInput = form.querySelector('[data-maps-url]');
+                const coordinates = extractCoordinatesFromMapsUrl(mapsUrlInput?.value);
+
+                if (coordinates) {
+                    applyCoordinates(coordinates);
+                    return true;
+                }
+
+                if (mapsUrlInput?.value) {
+                    setFeedback('Não encontrei coordenadas nessa URL. Copie a URL completa da barra do navegador no Google Maps.', true);
+                }
+
+                return false;
+            };
+            const loadCoordinates = async (button) => {
+                const originalText = button.textContent;
+                button.disabled = true;
+                button.textContent = 'Carregando...';
+                setFeedback('Buscando coordenadas pelo endereço...');
+
+                try {
+                    const response = await fetch(button.dataset.geocodeUrl, {
+                        method: 'POST',
+                        headers: {
+                            'Accept': 'application/json',
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                        },
+                        body: '{}',
+                    });
+
+                    const payload = await response.json();
+
+                    if (! response.ok) {
+                        throw new Error(payload.message || 'Não foi possível carregar coordenadas.');
+                    }
+
+                    if (payload.fallback_required) {
+                        setFeedback(payload.message || 'Não encontrei coordenadas automaticamente. Use o campo de apoio.', true);
+                        showMapsUrlFallback();
+
+                        if (payload.maps_url) {
+                            window.open(payload.maps_url, '_blank', 'noopener');
+                        }
+
+                        return;
+                    }
+
+                    applyCoordinates(payload);
+                } catch (error) {
+                    setFeedback(error.message || 'Não foi possível carregar coordenadas.', true);
+                    showMapsUrlFallback();
+                } finally {
+                    button.disabled = false;
+                    button.textContent = originalText;
+                }
+            };
 
             form.addEventListener('input', syncCoordinates);
             form.addEventListener('change', syncCoordinates);
-            form.addEventListener('submit', syncCoordinates);
+            form.querySelector('[data-geocode-url]')?.addEventListener('click', (event) => {
+                loadCoordinates(event.currentTarget);
+            });
+            form.querySelector('[data-extract-maps-url]')?.addEventListener('click', applyMapsUrlCoordinates);
+            form.querySelector('[data-maps-url]')?.addEventListener('input', applyMapsUrlCoordinates);
+            form.querySelector('[data-maps-url]')?.addEventListener('paste', () => window.setTimeout(applyMapsUrlCoordinates));
+            form.addEventListener('submit', () => {
+                applyMapsUrlCoordinates();
+                syncCoordinates();
+            });
         });
     </script>
 </x-app.layout>
