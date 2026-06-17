@@ -1,4 +1,4 @@
-import { Head } from '@inertiajs/react';
+import { Head, router } from '@inertiajs/react';
 import { useEffect, useMemo, useState } from 'react';
 
 const nextStatusFor = {
@@ -46,7 +46,7 @@ function StatusPill({ label, columnKey }) {
     );
 }
 
-function OrderCard({ order, statuses, onMove, canUpdateStatus, columnKey }) {
+function OrderCard({ order, statuses, onMove, canUpdateStatus, columnKey, showOutsideDayBadge }) {
     const nextStatus = nextStatusFor[order.status];
     const visibleServices = order.services.slice(0, 2);
     const teamNames = order.team_members?.map((member) => member.name) ?? [];
@@ -75,7 +75,14 @@ function OrderCard({ order, statuses, onMove, canUpdateStatus, columnKey }) {
                     <a href={order.show_url} className="text-sm font-black tracking-wide text-slate-950 group-hover:text-blue-700">{order.vehicle.plate}</a>
                     <p className="mt-1 truncate text-xs font-medium text-slate-500">{order.customer.name}</p>
                 </div>
-                <StatusPill label={order.status_label} columnKey={columnKey} />
+                <div className="flex shrink-0 flex-col items-end gap-1">
+                    <StatusPill label={order.status_label} columnKey={columnKey} />
+                    {showOutsideDayBadge && order.is_outside_today && (
+                        <span className="rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-black uppercase text-amber-700">
+                            Fora do dia · {order.entered_at_date_label}
+                        </span>
+                    )}
+                </div>
             </div>
 
             <div className="mt-3 flex items-center justify-between gap-3 text-xs">
@@ -125,7 +132,7 @@ function OrderCard({ order, statuses, onMove, canUpdateStatus, columnKey }) {
     );
 }
 
-function Column({ column, statuses, onMove, canUpdateStatus }) {
+function Column({ column, statuses, onMove, canUpdateStatus, showOutsideDayBadge }) {
     const [isDraggingOver, setIsDraggingOver] = useState(false);
     const style = columnStyles[column.key] ?? columnStyles.awaiting;
 
@@ -170,7 +177,15 @@ function Column({ column, statuses, onMove, canUpdateStatus }) {
 
             <div className="space-y-2.5 p-2.5">
                 {column.orders.length ? column.orders.map((order) => (
-                    <OrderCard key={order.id} order={order} statuses={statuses} onMove={onMove} canUpdateStatus={canUpdateStatus} columnKey={column.key} />
+                    <OrderCard
+                        key={order.id}
+                        order={order}
+                        statuses={statuses}
+                        onMove={onMove}
+                        canUpdateStatus={canUpdateStatus}
+                        columnKey={column.key}
+                        showOutsideDayBadge={showOutsideDayBadge}
+                    />
                 )) : (
                     <div className="rounded-lg border border-dashed border-slate-200 bg-white/60 px-3 py-10 text-center text-sm text-slate-500">
                         Sem lavagens nesta etapa.
@@ -181,11 +196,39 @@ function Column({ column, statuses, onMove, canUpdateStatus }) {
     );
 }
 
-export default function Kanban({ columns: initialColumns, statuses, feedUrl, createUrl, dashboardUrl, logoUrl, auth, currentLocation }) {
+export default function Kanban({
+    columns: initialColumns,
+    statuses,
+    filters,
+    periodOptions,
+    feedUrl,
+    filterUrl,
+    createUrl,
+    dashboardUrl,
+    logoUrl,
+    auth,
+    currentLocation,
+}) {
     const [columns, setColumns] = useState(initialColumns);
+    const [selectedDate, setSelectedDate] = useState(filters?.date ?? '');
     const [realtimeUpdated, setRealtimeUpdated] = useState(false);
     const canCreateWashOrder = ['owner', 'admin', 'attendant'].includes(auth?.user?.role);
     const canUpdateStatus = ['owner', 'admin', 'operator'].includes(auth?.user?.role);
+    const activePeriod = filters?.period ?? 'today';
+    const showOutsideDayBadge = Boolean(filters?.show_outside_day_badge);
+
+    const applyFilters = (nextFilters = {}) => {
+        const period = nextFilters.period ?? activePeriod;
+        const date = nextFilters.date ?? selectedDate;
+
+        router.get(filterUrl, {
+            period: period === 'today' ? undefined : period,
+            date: period === 'date' ? date : undefined,
+        }, {
+            preserveScroll: true,
+            replace: true,
+        });
+    };
 
     const refreshFeed = async () => {
         const { data } = await window.axios.get(feedUrl);
@@ -203,6 +246,11 @@ export default function Kanban({ columns: initialColumns, statuses, feedUrl, cre
 
         await refreshFeed();
     };
+
+    useEffect(() => {
+        setColumns(initialColumns);
+        setSelectedDate(filters?.date ?? '');
+    }, [initialColumns, filters?.date]);
 
     useEffect(() => {
         if (!window.Echo) {
@@ -281,9 +329,57 @@ export default function Kanban({ columns: initialColumns, statuses, feedUrl, cre
                             </div>
                         </div>
 
+                        <div className="mb-4 flex flex-wrap items-end justify-between gap-3 rounded-xl border border-slate-200 bg-slate-50 p-3">
+                            <div>
+                                <p className="text-xs font-black uppercase tracking-[0.16em] text-slate-500">Periodo operacional</p>
+                                <p className="mt-1 text-sm font-bold text-slate-900">{filters?.label ?? 'Hoje'}</p>
+                            </div>
+                            <div className="flex flex-wrap items-end gap-2">
+                                <label className="text-xs font-bold text-slate-600">
+                                    <span className="mb-1 block">Filtrar por</span>
+                                    <select
+                                        value={activePeriod}
+                                        onChange={(event) => applyFilters({ period: event.target.value })}
+                                        className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-slate-700 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100"
+                                    >
+                                        {Object.entries(periodOptions ?? {}).map(([value, label]) => (
+                                            <option key={value} value={value}>{label}</option>
+                                        ))}
+                                    </select>
+                                </label>
+                                {activePeriod === 'date' && (
+                                    <label className="text-xs font-bold text-slate-600">
+                                        <span className="mb-1 block">Data</span>
+                                        <input
+                                            type="date"
+                                            value={selectedDate}
+                                            onChange={(event) => setSelectedDate(event.target.value)}
+                                            className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-slate-700 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100"
+                                        />
+                                    </label>
+                                )}
+                                {activePeriod === 'date' && (
+                                    <button
+                                        type="button"
+                                        onClick={() => applyFilters({ period: 'date', date: selectedDate })}
+                                        className="rounded-lg bg-slate-950 px-4 py-2 text-sm font-bold text-white shadow-sm hover:bg-blue-700"
+                                    >
+                                        Aplicar
+                                    </button>
+                                )}
+                            </div>
+                        </div>
+
                         <div className="grid gap-3 overflow-x-auto pb-4 xl:grid-cols-5">
                             {columns.map((column) => (
-                                <Column key={column.key} column={column} statuses={statuses} onMove={moveOrder} canUpdateStatus={canUpdateStatus} />
+                                <Column
+                                    key={column.key}
+                                    column={column}
+                                    statuses={statuses}
+                                    onMove={moveOrder}
+                                    canUpdateStatus={canUpdateStatus}
+                                    showOutsideDayBadge={showOutsideDayBadge}
+                                />
                             ))}
                         </div>
                     </section>

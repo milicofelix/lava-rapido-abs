@@ -40,9 +40,9 @@ class DatabaseSeeder extends Seeder
         //     ],
         // );
         
-        $this->call(SuperAdminSeeder::class);
+        //$this->call(SuperAdminSeeder::class);
 
-        //$this->call(PlanSeeder::class);
+        $this->call(PlanSeeder::class);
 
         //$this->call(WashLocationSeeder::class);
         //$this->call(DefaultServicesSeeder::class);

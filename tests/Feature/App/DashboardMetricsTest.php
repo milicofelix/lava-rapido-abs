@@ -19,7 +19,8 @@ class DashboardMetricsTest extends TestCase
     {
         $user = User::factory()->create();
         $customer = Customer::factory()->create(['name' => 'Cliente Recorrente']);
-        $vehicle = Vehicle::factory()->for($customer)->create();
+        $vehicle = Vehicle::factory()->for($customer)->create(['plate' => 'HOJ1A23']);
+        $oldVehicle = Vehicle::factory()->for($customer)->create(['plate' => 'OLD1A23']);
         $service = Service::factory()->create(['name' => 'Lavagem premium']);
         $washOrder = WashOrder::factory()->create([
             'customer_id' => $customer->id,
@@ -39,11 +40,11 @@ class DashboardMetricsTest extends TestCase
 
         $secondWashOrder = WashOrder::factory()->create([
             'customer_id' => $customer->id,
-            'vehicle_id' => $vehicle->id,
+            'vehicle_id' => $oldVehicle->id,
             'entered_at' => now()->subDays(2),
             'completed_at' => now()->subDays(2)->addMinutes(70),
             'total_amount' => 80,
-            'status' => WashOrder::STATUS_DELIVERED,
+            'status' => WashOrder::STATUS_AWAITING,
             'payment_status' => WashOrder::PAYMENT_PENDING,
         ]);
 
@@ -71,6 +72,8 @@ class DashboardMetricsTest extends TestCase
             ->assertSee('Faturamento hoje')
             ->assertSee('R$ 120,00')
             ->assertSee('Fluxo de Lavagens')
+            ->assertSee('HOJ1A23')
+            ->assertDontSee('OLD1A23')
             ->assertSee('Resumo Financeiro')
             ->assertSee('Servicos mais realizados')
             ->assertSee('Lavagem premium')

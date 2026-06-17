@@ -223,9 +223,12 @@ class DashboardController extends Controller
      */
     private function kanbanColumns(): array
     {
+        $today = today();
+
         $washOrders = TenantContext::scopeWashOrders(WashOrder::query())
             ->with(['customer', 'vehicle', 'services'])
             ->whereIn('status', collect(WashKanbanController::columns())->pluck('statuses')->flatten()->all())
+            ->whereBetween('entered_at', [$today->copy()->startOfDay(), $today->copy()->endOfDay()])
             ->oldest('entered_at')
             ->limit(40)
             ->get();
