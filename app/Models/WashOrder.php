@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\WashOrders\WashOrderStatusFlow;
 use Database\Factories\WashOrderFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -77,43 +78,22 @@ class WashOrder extends Model
 
     public static function statuses(): array
     {
-        return [
-            self::STATUS_AWAITING => 'Aguardando',
-            self::STATUS_PREPARING => 'Em preparacao',
-            self::STATUS_WASHING => 'Lavando',
-            self::STATUS_VACUUMING => 'Aspirando',
-            self::STATUS_WAXING => 'Aplicando cera',
-            self::STATUS_FINISHING => 'Finalizando',
-            self::STATUS_READY => 'Pronto para retirada',
-            self::STATUS_DELIVERED => 'Entregue',
-            self::STATUS_CANCELED => 'Cancelado',
-        ];
+        return WashOrderStatusFlow::labels();
     }
 
     public static function activeStatuses(): array
     {
-        return array_diff(array_keys(self::statuses()), [
-            self::STATUS_DELIVERED,
-            self::STATUS_CANCELED,
-        ]);
+        return WashOrderStatusFlow::activeStatuses();
     }
 
     public static function publicProgressStatuses(): array
     {
-        return [
-            self::STATUS_AWAITING,
-            self::STATUS_PREPARING,
-            self::STATUS_WASHING,
-            self::STATUS_VACUUMING,
-            self::STATUS_WAXING,
-            self::STATUS_FINISHING,
-            self::STATUS_READY,
-        ];
+        return WashOrderStatusFlow::publicProgressStatuses();
     }
 
     public function statusLabel(): string
     {
-        return self::statuses()[$this->status] ?? $this->status;
+        return WashOrderStatusFlow::labelFor($this->status);
     }
 
     public static function paymentStatuses(): array

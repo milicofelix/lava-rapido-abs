@@ -7,13 +7,14 @@ use App\Models\AuditLog;
 use App\Models\User;
 use App\Models\WashOrder;
 use App\Support\AuditLogger;
+use App\Support\WashOrders\WashOrderStatusFlow;
 use InvalidArgumentException;
 
 class ChangeWashOrderStatusService
 {
     public function handle(WashOrder $washOrder, string $status, ?User $user = null, ?string $notes = null): WashOrder
     {
-        if (! array_key_exists($status, WashOrder::statuses())) {
+        if (! WashOrderStatusFlow::isKnownStatus($status)) {
             throw new InvalidArgumentException('Status de lavagem invalido.');
         }
 
@@ -25,7 +26,7 @@ class ChangeWashOrderStatusService
 
         $washOrder->forceFill([
             'status' => $status,
-            'completed_at' => in_array($status, [WashOrder::STATUS_READY, WashOrder::STATUS_DELIVERED, WashOrder::STATUS_CANCELED], true)
+            'completed_at' => WashOrderStatusFlow::isCompletionStatus($status)
                 ? ($washOrder->completed_at ?? now())
                 : $washOrder->completed_at,
         ])->save();
@@ -41,7 +42,7 @@ class ChangeWashOrderStatusService
 
         AuditLogger::record(
             AuditLog::ACTION_WASH_ORDER_STATUS_CHANGED,
-            ($user?->name ?? 'Sistema').' alterou a lavagem '.$washOrder->code.' de '.(WashOrder::statuses()[$fromStatus] ?? $fromStatus).' para '.$washOrder->statusLabel().'.',
+            ($user?->name ?? 'Sistema').' alterou a lavagem '.$washOrder->code.' de '.WashOrderStatusFlow::labelFor($fromStatus).' para '.$washOrder->statusLabel().'.',
             $washOrder,
             [
                 'from_status' => $fromStatus,
