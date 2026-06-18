@@ -4,6 +4,8 @@ namespace Tests\Feature\App;
 
 use App\Models\AppSetting;
 use App\Models\CashRegister;
+use App\Models\Plan;
+use App\Models\Subscription;
 use App\Models\User;
 use App\Models\WashOrder;
 use App\Models\WashLocation;
@@ -127,5 +129,107 @@ class AppNotificationCenterTest extends TestCase
             ->assertOk()
             ->assertSee('Assinatura expirada')
             ->assertSee('Ver assinatura');
+    }
+
+    public function test_owner_sees_subscription_expiring_notification(): void
+    {
+        $location = WashLocation::factory()->create([
+            'account_status' => WashLocation::ACCOUNT_STATUS_ACTIVE,
+            'subscription_status' => WashLocation::ACCOUNT_STATUS_ACTIVE,
+            'subscription_ends_at' => now()->addDays(4),
+        ]);
+        $owner = User::factory()->create([
+            'role' => User::ROLE_OWNER,
+            'wash_location_id' => $location->id,
+        ]);
+
+        $this->actingAs($owner)
+            ->get(route('dashboard'))
+            ->assertOk()
+            ->assertSee('Assinatura vence em 4 dias')
+            ->assertSee('Renovar');
+    }
+
+    public function test_owner_sees_pending_payment_notification(): void
+    {
+        $location = WashLocation::factory()->create([
+            'account_status' => WashLocation::ACCOUNT_STATUS_TRIAL,
+            'subscription_status' => WashLocation::ACCOUNT_STATUS_TRIAL,
+            'trial_ends_at' => now()->addDays(10),
+        ]);
+        $owner = User::factory()->create([
+            'role' => User::ROLE_OWNER,
+            'wash_location_id' => $location->id,
+        ]);
+        $plan = Plan::factory()->create(['name' => 'Starter']);
+        Subscription::factory()->create([
+            'wash_location_id' => $location->id,
+            'plan_id' => $plan->id,
+            'status' => Subscription::STATUS_PENDING,
+            'checkout_url' => 'https://www.mercadopago.com.br/checkout/test',
+        ]);
+
+        $this->actingAs($owner)
+            ->get(route('dashboard'))
+            ->assertOk()
+            ->assertSee('Pagamento pendente')
+            ->assertSee('Finalize o pagamento do plano Starter')
+            ->assertSee('Continuar pagamento');
+    }
+
+    public function test_owner_sees_recent_approved_payment_notification(): void
+    {
+        $location = WashLocation::factory()->create([
+            'account_status' => WashLocation::ACCOUNT_STATUS_ACTIVE,
+            'subscription_status' => WashLocation::ACCOUNT_STATUS_ACTIVE,
+            'subscription_ends_at' => now()->addMonth(),
+        ]);
+        $owner = User::factory()->create([
+            'role' => User::ROLE_OWNER,
+            'wash_location_id' => $location->id,
+        ]);
+        $plan = Plan::factory()->create(['name' => 'Professional']);
+        Subscription::factory()->create([
+            'wash_location_id' => $location->id,
+            'plan_id' => $plan->id,
+            'status' => Subscription::STATUS_ACTIVE,
+            'started_at' => now(),
+            'ends_at' => now()->addMonth(),
+            'paid_at' => now(),
+        ]);
+
+        $this->actingAs($owner)
+            ->get(route('dashboard'))
+            ->assertOk()
+            ->assertSee('Pagamento aprovado')
+            ->assertSee('Assinatura Professional ativa ate')
+            ->assertSee('Ver assinatura');
+    }
+
+    public function test_owner_sees_recent_rejected_payment_notification(): void
+    {
+        $location = WashLocation::factory()->create([
+            'account_status' => WashLocation::ACCOUNT_STATUS_TRIAL,
+            'subscription_status' => WashLocation::ACCOUNT_STATUS_TRIAL,
+            'trial_ends_at' => now()->addDays(10),
+        ]);
+        $owner = User::factory()->create([
+            'role' => User::ROLE_OWNER,
+            'wash_location_id' => $location->id,
+        ]);
+        $plan = Plan::factory()->create(['name' => 'Enterprise']);
+        Subscription::factory()->create([
+            'wash_location_id' => $location->id,
+            'plan_id' => $plan->id,
+            'status' => Subscription::STATUS_CANCELED,
+            'provider_payment_id' => '123456',
+            'updated_at' => now(),
+        ]);
+
+        $this->actingAs($owner)
+            ->get(route('dashboard'))
+            ->assertOk()
+            ->assertSee('Pagamento nao aprovado')
+            ->assertSee('Tentar novamente');
     }
 }

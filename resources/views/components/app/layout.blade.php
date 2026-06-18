@@ -169,6 +169,7 @@
                                         @php($notificationTone = match ($notification['tone']) {
                                             'danger' => 'border-red-200 bg-red-50 text-red-900',
                                             'warning' => 'border-amber-200 bg-amber-50 text-amber-900',
+                                            'success' => 'border-emerald-200 bg-emerald-50 text-emerald-900',
                                             default => 'border-blue-200 bg-blue-50 text-blue-900',
                                         })
                                         <div class="rounded-xl border p-3 {{ $notificationTone }}">

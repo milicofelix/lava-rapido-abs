@@ -4,6 +4,7 @@ namespace App\Support;
 
 use App\Models\AppSetting;
 use App\Models\CashRegister;
+use App\Models\Subscription;
 use App\Models\User;
 use App\Models\WashOrder;
 use App\Models\WashLocation;
@@ -98,18 +99,77 @@ class AppNotificationCenter
             ]];
         }
 
+        $notifications = [];
+        $currentSubscription = $location->currentSubscription()->with('plan')->first();
+
+        if ($currentSubscription?->status === Subscription::STATUS_PENDING) {
+            $notifications[] = [
+                'title' => 'Pagamento pendente',
+                'body' => 'Finalize o pagamento do plano '.($currentSubscription->plan?->name ?? 'selecionado').' para ativar a assinatura.',
+                'tone' => 'warning',
+                'url' => $currentSubscription->checkout_url ?: route('subscriptions.show'),
+                'action' => $currentSubscription->checkout_url ? 'Continuar pagamento' : 'Ver assinatura',
+            ];
+        }
+
+        if (
+            $currentSubscription?->status === Subscription::STATUS_CANCELED
+            && $currentSubscription->provider_payment_id
+            && $currentSubscription->updated_at->greaterThanOrEqualTo(now()->subDay())
+        ) {
+            $notifications[] = [
+                'title' => 'Pagamento nao aprovado',
+                'body' => 'O Mercado Pago recusou ou cancelou a ultima tentativa. Escolha um plano para tentar novamente.',
+                'tone' => 'danger',
+                'url' => route('subscriptions.show'),
+                'action' => 'Tentar novamente',
+            ];
+        }
+
+        if (
+            $currentSubscription?->status === Subscription::STATUS_ACTIVE
+            && $currentSubscription->paid_at
+            && $currentSubscription->paid_at->greaterThanOrEqualTo(now()->subDay())
+        ) {
+            $notifications[] = [
+                'title' => 'Pagamento aprovado',
+                'body' => 'Assinatura '.($currentSubscription->plan?->name ?? '').' ativa ate '.($currentSubscription->ends_at?->format('d/m/Y') ?? 'a proxima cobranca').'.',
+                'tone' => 'success',
+                'url' => route('subscriptions.show'),
+                'action' => 'Ver assinatura',
+            ];
+        }
+
         $trialDaysRemaining = $location->trialDaysRemaining();
 
         if ($location->subscriptionStatus() === WashLocation::ACCOUNT_STATUS_TRIAL && $trialDaysRemaining !== null && $trialDaysRemaining <= 5) {
-            return [[
+            $notifications[] = [
                 'title' => 'Trial expira em '.$trialDaysRemaining.' dia'.($trialDaysRemaining === 1 ? '' : 's'),
                 'body' => 'Ative uma assinatura para evitar bloqueio da unidade.',
                 'tone' => 'warning',
                 'url' => route('subscriptions.show'),
                 'action' => 'Escolher plano',
-            ]];
+            ];
         }
 
-        return [];
+        $subscriptionDaysRemaining = $location->subscription_ends_at
+            ? max(0, (int) now()->startOfDay()->diffInDays($location->subscription_ends_at->copy()->startOfDay(), false))
+            : null;
+
+        if (
+            $location->subscriptionStatus() === WashLocation::ACCOUNT_STATUS_ACTIVE
+            && $subscriptionDaysRemaining !== null
+            && $subscriptionDaysRemaining <= 5
+        ) {
+            $notifications[] = [
+                'title' => 'Assinatura vence em '.$subscriptionDaysRemaining.' dia'.($subscriptionDaysRemaining === 1 ? '' : 's'),
+                'body' => 'Renove a assinatura para manter a operacao liberada.',
+                'tone' => 'warning',
+                'url' => route('subscriptions.show'),
+                'action' => 'Renovar',
+            ];
+        }
+
+        return $notifications;
     }
 }
