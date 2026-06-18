@@ -86,6 +86,19 @@ class DashboardMetricsTest extends TestCase
             'amount' => 120,
             'paid_at' => now(),
         ]);
+        Payment::factory()->for($secondWashOrder)->for($user)->create([
+            'method' => Payment::METHOD_CASH,
+            'amount' => 60,
+            'paid_at' => now()->subMonth(),
+        ]);
+        WashOrder::factory()->create([
+            'customer_id' => $customer->id,
+            'vehicle_id' => $oldVehicle->id,
+            'entered_at' => now()->subMonth(),
+            'total_amount' => 60,
+            'status' => WashOrder::STATUS_DELIVERED,
+            'payment_status' => WashOrder::PAYMENT_PAID,
+        ]);
 
         $this->actingAs($user)->get(route('dashboard'))
             ->assertOk()
@@ -94,6 +107,8 @@ class DashboardMetricsTest extends TestCase
             ->assertSee('Receita do mes')
             ->assertSee('Ticket medio')
             ->assertSee('Clientes recorrentes')
+            ->assertSee('+300% vs mes anterior')
+            ->assertSee('+100% vs mes anterior')
             ->assertSee('Top servicos do mes')
             ->assertSee('Cliente Recorrente')
             ->assertSee('Faturamento hoje')

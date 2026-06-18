@@ -27,18 +27,25 @@
 
             <div class="mt-5 grid gap-4 lg:grid-cols-4">
                 @foreach ([
-                    ['label' => 'Lavagens do mes', 'value' => number_format($monthlyWashOrders, 0, ',', '.'), 'hint' => 'Volume acumulado', 'color' => 'bg-blue-50 text-blue-700', 'icon' => 'M'],
-                    ['label' => 'Receita do mes', 'value' => 'R$ '.number_format((float) $monthlyRevenue, 2, ',', '.'), 'hint' => 'Pagamentos recebidos', 'color' => 'bg-emerald-50 text-emerald-700', 'icon' => '$'],
-                    ['label' => 'Ticket medio', 'value' => 'R$ '.number_format((float) $monthlyTicketAverage, 2, ',', '.'), 'hint' => 'Media por pagamento', 'color' => 'bg-violet-50 text-violet-700', 'icon' => 'T'],
-                    ['label' => 'Clientes recorrentes', 'value' => count($monthlyRecurringCustomers), 'hint' => 'Com 2+ lavagens no mes', 'color' => 'bg-amber-50 text-amber-700', 'icon' => 'R'],
+                    ['label' => 'Lavagens do mes', 'value' => number_format($monthlyWashOrders, 0, ',', '.'), 'comparison' => $executiveComparisons['washOrders'], 'color' => 'bg-blue-50 text-blue-700', 'icon' => 'M'],
+                    ['label' => 'Receita do mes', 'value' => 'R$ '.number_format((float) $monthlyRevenue, 2, ',', '.'), 'comparison' => $executiveComparisons['revenue'], 'color' => 'bg-emerald-50 text-emerald-700', 'icon' => '$'],
+                    ['label' => 'Ticket medio', 'value' => 'R$ '.number_format((float) $monthlyTicketAverage, 2, ',', '.'), 'comparison' => $executiveComparisons['ticketAverage'], 'color' => 'bg-violet-50 text-violet-700', 'icon' => 'T'],
+                    ['label' => 'Clientes recorrentes', 'value' => count($monthlyRecurringCustomers), 'comparison' => $executiveComparisons['recurringCustomers'], 'color' => 'bg-amber-50 text-amber-700', 'icon' => 'R'],
                 ] as $metric)
+                    @php
+                        $comparisonClass = match ($metric['comparison']['tone']) {
+                            'positive' => 'text-emerald-600',
+                            'negative' => 'text-red-600',
+                            default => 'text-slate-500',
+                        };
+                    @endphp
                     <div class="rounded-xl border border-slate-200 bg-slate-50/60 p-4">
                         <div class="flex items-center gap-3">
                             <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl {{ $metric['color'] }} text-sm font-black">{{ $metric['icon'] }}</span>
                             <div class="min-w-0">
                                 <p class="truncate text-sm font-bold text-slate-700">{{ $metric['label'] }}</p>
                                 <p class="mt-1 text-2xl font-black text-slate-950">{{ $metric['value'] }}</p>
-                                <p class="mt-1 text-xs font-semibold text-slate-500">{{ $metric['hint'] }}</p>
+                                <p class="mt-1 text-xs font-semibold {{ $comparisonClass }}">{{ $metric['comparison']['label'] }}</p>
                             </div>
                         </div>
                     </div>
