@@ -14,10 +14,12 @@ use App\Models\WashOrder;
 use App\Services\WashOrders\ChangeWashOrderStatusService;
 use App\Services\WashOrders\CreateWashOrderService;
 use App\Support\TenantContext;
+use App\Support\WashOrders\WashOrderStatusFlow;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
+use InvalidArgumentException;
 use Illuminate\View\View;
 
 class WashOrderController extends Controller
@@ -107,6 +109,10 @@ class WashOrderController extends Controller
         return view('app.wash-orders.show', [
             'washOrder' => $washOrder->load(['customer', 'vehicle', 'assignedUser', 'teamMembers', 'services', 'statusHistories.user', 'payments.user', 'customerNotifications.user']),
             'statuses' => WashOrder::statuses(),
+            'statusOptions' => [
+                $washOrder->status => $washOrder->statusLabel(),
+                ...WashOrderStatusFlow::allowedStatusLabelsFrom($washOrder->status),
+            ],
             'paymentMethods' => $paymentMethods,
             'notificationTemplates' => CustomerNotification::templates(),
         ]);
@@ -121,7 +127,20 @@ class WashOrderController extends Controller
             'notes' => ['nullable', 'string', 'max:1000'],
         ]);
 
-        $washOrder = $changer->handle($washOrder, $data['status'], $request->user(), $data['notes'] ?? null);
+        try {
+            $washOrder = $changer->handle($washOrder, $data['status'], $request->user(), $data['notes'] ?? null);
+        } catch (InvalidArgumentException $exception) {
+            if ($request->wantsJson()) {
+                return response()->json([
+                    'message' => $exception->getMessage(),
+                    'errors' => ['status' => [$exception->getMessage()]],
+                ], 422);
+            }
+
+            return back()
+                ->withErrors(['status' => $exception->getMessage()])
+                ->withInput();
+        }
 
         if ($request->wantsJson()) {
             return response()->json([

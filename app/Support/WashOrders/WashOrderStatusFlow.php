@@ -71,6 +71,55 @@ class WashOrderStatusFlow
         ];
     }
 
+    /**
+     * @return array<string, array<int, string>>
+     */
+    public static function allowedTransitions(): array
+    {
+        return [
+            WashOrder::STATUS_AWAITING => [
+                WashOrder::STATUS_PREPARING,
+                WashOrder::STATUS_WASHING,
+                WashOrder::STATUS_CANCELED,
+            ],
+            WashOrder::STATUS_PREPARING => [
+                WashOrder::STATUS_WASHING,
+                WashOrder::STATUS_VACUUMING,
+                WashOrder::STATUS_WAXING,
+                WashOrder::STATUS_FINISHING,
+                WashOrder::STATUS_CANCELED,
+            ],
+            WashOrder::STATUS_WASHING => [
+                WashOrder::STATUS_VACUUMING,
+                WashOrder::STATUS_WAXING,
+                WashOrder::STATUS_FINISHING,
+                WashOrder::STATUS_READY,
+                WashOrder::STATUS_CANCELED,
+            ],
+            WashOrder::STATUS_VACUUMING => [
+                WashOrder::STATUS_WAXING,
+                WashOrder::STATUS_FINISHING,
+                WashOrder::STATUS_READY,
+                WashOrder::STATUS_CANCELED,
+            ],
+            WashOrder::STATUS_WAXING => [
+                WashOrder::STATUS_FINISHING,
+                WashOrder::STATUS_READY,
+                WashOrder::STATUS_CANCELED,
+            ],
+            WashOrder::STATUS_FINISHING => [
+                WashOrder::STATUS_READY,
+                WashOrder::STATUS_CANCELED,
+            ],
+            WashOrder::STATUS_READY => [
+                WashOrder::STATUS_DELIVERED,
+                WashOrder::STATUS_CANCELED,
+            ],
+            WashOrder::STATUS_DELIVERED => [],
+            WashOrder::STATUS_CANCELED => [],
+        ];
+    }
+
     public static function isKnownStatus(string $status): bool
     {
         return array_key_exists($status, self::labels());
@@ -79,6 +128,27 @@ class WashOrderStatusFlow
     public static function isCompletionStatus(string $status): bool
     {
         return in_array($status, self::completionStatuses(), true);
+    }
+
+    public static function canTransition(string $fromStatus, string $toStatus): bool
+    {
+        if ($fromStatus === $toStatus) {
+            return true;
+        }
+
+        return in_array($toStatus, self::allowedTransitions()[$fromStatus] ?? [], true);
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    public static function allowedStatusLabelsFrom(string $fromStatus): array
+    {
+        $labels = self::labels();
+
+        return collect(self::allowedTransitions()[$fromStatus] ?? [])
+            ->mapWithKeys(fn (string $status) => [$status => $labels[$status] ?? $status])
+            ->all();
     }
 
     public static function labelFor(string $status): string

@@ -24,6 +24,10 @@ class ChangeWashOrderStatusService
             return $washOrder;
         }
 
+        if (! WashOrderStatusFlow::canTransition($fromStatus, $status)) {
+            throw new InvalidArgumentException('Transicao de status nao permitida.');
+        }
+
         $washOrder->forceFill([
             'status' => $status,
             'completed_at' => WashOrderStatusFlow::isCompletionStatus($status)

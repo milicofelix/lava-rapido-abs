@@ -110,6 +110,24 @@ class WashOrderManagementTest extends TestCase
         ]);
     }
 
+    public function test_invalid_wash_order_status_transition_returns_validation_error(): void
+    {
+        $user = User::factory()->create(['role' => User::ROLE_OPERATOR]);
+        $washOrder = WashOrder::factory()->create(['status' => WashOrder::STATUS_AWAITING]);
+
+        $this->actingAs($user)->patch(route('wash-orders.update-status', $washOrder), [
+            'status' => WashOrder::STATUS_DELIVERED,
+            'notes' => 'Pulando fluxo.',
+        ])->assertSessionHasErrors('status');
+
+        $this->assertSame(WashOrder::STATUS_AWAITING, $washOrder->refresh()->status);
+        $this->assertDatabaseMissing('status_histories', [
+            'wash_order_id' => $washOrder->id,
+            'from_status' => WashOrder::STATUS_AWAITING,
+            'to_status' => WashOrder::STATUS_DELIVERED,
+        ]);
+    }
+
     public function test_vehicle_must_belong_to_selected_customer(): void
     {
         $user = User::factory()->create();

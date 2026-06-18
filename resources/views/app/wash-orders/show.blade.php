@@ -211,7 +211,7 @@
                 <label class="block">
                     <span class="text-sm font-medium">Novo status</span>
                     <select name="status" class="mt-1 w-full rounded-md border border-zinc-300 px-3 py-2">
-                        @foreach ($statuses as $value => $label)
+                        @foreach ($statusOptions as $value => $label)
                             <option value="{{ $value }}" @selected($washOrder->status === $value)>{{ $label }}</option>
                         @endforeach
                     </select>

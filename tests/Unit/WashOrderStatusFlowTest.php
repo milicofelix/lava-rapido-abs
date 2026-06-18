@@ -51,6 +51,17 @@ class WashOrderStatusFlowTest extends TestCase
         $this->assertFalse(WashOrderStatusFlow::isCompletionStatus(WashOrder::STATUS_WASHING));
     }
 
+    public function test_it_controls_allowed_status_transitions(): void
+    {
+        $this->assertTrue(WashOrderStatusFlow::canTransition(WashOrder::STATUS_AWAITING, WashOrder::STATUS_WASHING));
+        $this->assertTrue(WashOrderStatusFlow::canTransition(WashOrder::STATUS_WASHING, WashOrder::STATUS_FINISHING));
+        $this->assertTrue(WashOrderStatusFlow::canTransition(WashOrder::STATUS_FINISHING, WashOrder::STATUS_READY));
+        $this->assertTrue(WashOrderStatusFlow::canTransition(WashOrder::STATUS_READY, WashOrder::STATUS_DELIVERED));
+
+        $this->assertFalse(WashOrderStatusFlow::canTransition(WashOrder::STATUS_AWAITING, WashOrder::STATUS_DELIVERED));
+        $this->assertFalse(WashOrderStatusFlow::canTransition(WashOrder::STATUS_DELIVERED, WashOrder::STATUS_WASHING));
+    }
+
     public function test_model_status_methods_still_delegate_to_current_flow(): void
     {
         $this->assertSame(WashOrderStatusFlow::labels(), WashOrder::statuses());
