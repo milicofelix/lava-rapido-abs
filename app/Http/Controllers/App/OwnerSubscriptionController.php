@@ -15,7 +15,7 @@ use Illuminate\View\View;
 
 class OwnerSubscriptionController extends Controller
 {
-    public function show(MercadoPagoCheckoutService $mercadoPago): View
+    public function show(Request $request, MercadoPagoCheckoutService $mercadoPago): View
     {
         $location = TenantContext::currentLocation()?->load(['currentSubscription.plan', 'activeSubscription.plan']);
         abort_unless($location, 404);
@@ -26,6 +26,7 @@ class OwnerSubscriptionController extends Controller
             'activeSubscription' => $location->activeSubscription,
             'plans' => Plan::query()->active()->orderBy('price')->orderBy('name')->get(),
             'mercadoPagoConfigured' => $mercadoPago->isConfigured(),
+            'paymentReturn' => $this->paymentReturnMessage($request),
         ]);
     }
 
@@ -70,5 +71,46 @@ class OwnerSubscriptionController extends Controller
         }
 
         return back()->with('status', 'Plano escolhido. A assinatura ficará ativa após confirmação manual do Super Admin.');
+    }
+
+    public function cancelPending(): RedirectResponse
+    {
+        $location = TenantContext::currentLocation();
+        abort_unless($location, 404);
+
+        $updated = $location->subscriptions()
+            ->where('status', Subscription::STATUS_PENDING)
+            ->update(['status' => Subscription::STATUS_CANCELED]);
+
+        if ($updated === 0) {
+            return back()->with('status', 'Nenhuma assinatura pendente para cancelar.');
+        }
+
+        return back()->with('status', 'Escolha de plano cancelada. Voce pode selecionar outro plano quando quiser.');
+    }
+
+    private function paymentReturnMessage(Request $request): ?array
+    {
+        $status = $request->string('collection_status')->toString()
+            ?: $request->string('status')->toString();
+
+        return match ($status) {
+            'approved' => [
+                'type' => 'success',
+                'title' => 'Pagamento aprovado',
+                'message' => 'Recebemos o retorno do Mercado Pago. A assinatura sera ativada assim que o webhook confirmar o pagamento.',
+            ],
+            'pending', 'in_process' => [
+                'type' => 'warning',
+                'title' => 'Pagamento em analise',
+                'message' => 'O Mercado Pago ainda esta processando o pagamento. A assinatura sera atualizada automaticamente quando houver confirmacao.',
+            ],
+            'rejected', 'cancelled', 'failure' => [
+                'type' => 'danger',
+                'title' => 'Pagamento nao aprovado',
+                'message' => 'O pagamento nao foi aprovado. Voce pode tentar novamente ou escolher outro plano.',
+            ],
+            default => null,
+        };
     }
 }

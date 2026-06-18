@@ -1,5 +1,19 @@
 <x-app.layout heading="Assinatura" title="Assinatura · AutoFlow">
     <div class="space-y-5">
+        @if ($paymentReturn)
+            @php
+                $returnClasses = [
+                    'success' => 'border-emerald-200 bg-emerald-50 text-emerald-950',
+                    'warning' => 'border-amber-200 bg-amber-50 text-amber-950',
+                    'danger' => 'border-rose-200 bg-rose-50 text-rose-950',
+                ][$paymentReturn['type']] ?? 'border-slate-200 bg-slate-50 text-slate-950';
+            @endphp
+            <section class="rounded-2xl border p-5 text-sm {{ $returnClasses }}">
+                <p class="font-black">{{ $paymentReturn['title'] }}</p>
+                <p class="mt-1">{{ $paymentReturn['message'] }}</p>
+            </section>
+        @endif
+
         <section class="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
             <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
                 <p class="text-sm text-slate-500">Plano atual</p>
@@ -30,7 +44,20 @@
                 <p class="mt-1">Mercado Pago ainda nao configurado. Depois de escolher um plano, o Super Admin confirma a assinatura no Admin Produto.</p>
             @endif
             @if ($currentSubscription?->status === \App\Models\Subscription::STATUS_PENDING && $currentSubscription->checkout_url)
-                <a href="{{ $currentSubscription->checkout_url }}" class="mt-4 inline-flex rounded-xl bg-blue-700 px-4 py-2.5 text-sm font-bold text-white hover:bg-blue-800">Continuar pagamento pendente</a>
+                <div class="mt-4 flex flex-wrap gap-3">
+                    <a href="{{ $currentSubscription->checkout_url }}" class="inline-flex rounded-xl bg-blue-700 px-4 py-2.5 text-sm font-bold text-white hover:bg-blue-800">Continuar pagamento pendente</a>
+                    <form method="POST" action="{{ route('subscriptions.cancel-pending') }}">
+                        @csrf
+                        @method('PATCH')
+                        <button class="rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-bold text-slate-700 hover:bg-slate-50">Cancelar pendencia</button>
+                    </form>
+                </div>
+            @elseif ($currentSubscription?->status === \App\Models\Subscription::STATUS_PENDING)
+                <form method="POST" action="{{ route('subscriptions.cancel-pending') }}" class="mt-4">
+                    @csrf
+                    @method('PATCH')
+                    <button class="rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-bold text-slate-700 hover:bg-slate-50">Cancelar escolha de plano</button>
+                </form>
             @endif
         </section>
 

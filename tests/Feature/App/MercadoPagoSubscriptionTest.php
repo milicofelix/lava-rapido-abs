@@ -90,6 +90,56 @@ class MercadoPagoSubscriptionTest extends TestCase
         ]);
     }
 
+    public function test_owner_visualiza_retorno_aprovado_do_mercado_pago(): void
+    {
+        config(['services.mercado_pago.access_token' => 'test-token']);
+
+        $location = WashLocation::factory()->create([
+            'account_status' => WashLocation::ACCOUNT_STATUS_TRIAL,
+            'subscription_status' => WashLocation::ACCOUNT_STATUS_TRIAL,
+            'trial_ends_at' => now()->addDays(3),
+        ]);
+        $owner = User::factory()->create([
+            'role' => User::ROLE_OWNER,
+            'wash_location_id' => $location->id,
+        ]);
+        Plan::factory()->create(['name' => 'Professional']);
+
+        $this->actingAs($owner)
+            ->get(route('subscriptions.show', ['collection_status' => 'approved']))
+            ->assertOk()
+            ->assertSee('Pagamento aprovado')
+            ->assertSee('webhook confirmar o pagamento');
+    }
+
+    public function test_owner_cancela_assinatura_pendente(): void
+    {
+        $location = WashLocation::factory()->create([
+            'account_status' => WashLocation::ACCOUNT_STATUS_TRIAL,
+            'subscription_status' => WashLocation::ACCOUNT_STATUS_TRIAL,
+            'trial_ends_at' => now()->addDays(3),
+        ]);
+        $owner = User::factory()->create([
+            'role' => User::ROLE_OWNER,
+            'wash_location_id' => $location->id,
+        ]);
+        $plan = Plan::factory()->create(['name' => 'Starter']);
+        $subscription = Subscription::factory()->create([
+            'wash_location_id' => $location->id,
+            'plan_id' => $plan->id,
+            'status' => Subscription::STATUS_PENDING,
+            'checkout_url' => 'https://www.mercadopago.com.br/checkout/v1/redirect?pref_id=pref_123',
+        ]);
+
+        $this->actingAs($owner)
+            ->from(route('subscriptions.show'))
+            ->patch(route('subscriptions.cancel-pending'))
+            ->assertRedirect(route('subscriptions.show'))
+            ->assertSessionHas('status', 'Escolha de plano cancelada. Voce pode selecionar outro plano quando quiser.');
+
+        $this->assertSame(Subscription::STATUS_CANCELED, $subscription->refresh()->status);
+    }
+
     public function test_webhook_aprovado_ativa_assinatura_e_libera_unidade(): void
     {
         config(['services.mercado_pago.access_token' => 'test-token']);
