@@ -23,6 +23,7 @@ use App\Http\Controllers\App\WashNotificationController;
 use App\Http\Controllers\App\WashOrderController;
 use App\Http\Controllers\App\WashOrderReceiptController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
+use App\Http\Controllers\MercadoPagoWebhookController;
 use App\Http\Controllers\PublicWashLocationMapController;
 use App\Http\Controllers\PublicWashLocationRequestController;
 use App\Http\Controllers\PublicWashTrackingController;
@@ -39,6 +40,7 @@ Route::get('/lava-rapidos/{location:slug}', [PublicWashLocationMapController::cl
 Route::redirect('/unidades', '/lava-rapidos');
 Route::get('/lavagens/acompanhamento/{code}', PublicWashTrackingController::class)->name('tracking.show');
 Route::get('/lavagens/acompanhamento/{code}/feed', [PublicWashTrackingController::class, 'feed'])->name('tracking.feed');
+Route::post('/webhooks/mercado-pago', MercadoPagoWebhookController::class)->name('webhooks.mercado-pago');
 
 Route::middleware('guest')->group(function () {
     Route::get('/login', [AuthenticatedSessionController::class, 'create'])->name('login');

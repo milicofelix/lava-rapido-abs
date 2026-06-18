@@ -24,7 +24,14 @@
 
         <section class="rounded-2xl border border-blue-200 bg-blue-50 p-5 text-sm text-blue-950">
             <p class="font-bold">Escolha de plano</p>
-            <p class="mt-1">Nesta etapa o pagamento ainda é manual. Depois de escolher um plano, o Super Admin confirma a assinatura no Admin Produto.</p>
+            @if ($mercadoPagoConfigured)
+                <p class="mt-1">Escolha um plano para abrir o checkout do Mercado Pago. A assinatura sera ativada automaticamente apos a confirmacao do pagamento.</p>
+            @else
+                <p class="mt-1">Mercado Pago ainda nao configurado. Depois de escolher um plano, o Super Admin confirma a assinatura no Admin Produto.</p>
+            @endif
+            @if ($currentSubscription?->status === \App\Models\Subscription::STATUS_PENDING && $currentSubscription->checkout_url)
+                <a href="{{ $currentSubscription->checkout_url }}" class="mt-4 inline-flex rounded-xl bg-blue-700 px-4 py-2.5 text-sm font-bold text-white hover:bg-blue-800">Continuar pagamento pendente</a>
+            @endif
         </section>
 
         <section class="grid gap-4 lg:grid-cols-3">
@@ -41,7 +48,7 @@
                     <form method="POST" action="{{ route('subscriptions.choose') }}" class="mt-5">
                         @csrf
                         <input type="hidden" name="plan_id" value="{{ $plan->id }}">
-                        <button class="w-full rounded-xl bg-blue-700 px-4 py-2.5 text-sm font-bold text-white hover:bg-blue-800">Escolher plano</button>
+                        <button class="w-full rounded-xl bg-blue-700 px-4 py-2.5 text-sm font-bold text-white hover:bg-blue-800">{{ $mercadoPagoConfigured ? 'Pagar com Mercado Pago' : 'Escolher plano' }}</button>
                     </form>
                 </article>
             @empty

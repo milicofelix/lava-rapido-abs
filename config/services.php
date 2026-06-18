@@ -28,6 +28,13 @@ return [
         'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
     ],
 
+    'mercado_pago' => [
+        'access_token' => env('MERCADO_PAGO_ACCESS_TOKEN'),
+        'public_key' => env('MERCADO_PAGO_PUBLIC_KEY'),
+        'webhook_secret' => env('MERCADO_PAGO_WEBHOOK_SECRET'),
+        'base_url' => env('MERCADO_PAGO_BASE_URL', 'https://api.mercadopago.com'),
+    ],
+
     'slack' => [
         'notifications' => [
             'bot_user_oauth_token' => env('SLACK_BOT_USER_OAUTH_TOKEN'),

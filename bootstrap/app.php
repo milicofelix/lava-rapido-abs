@@ -20,6 +20,10 @@ return Application::configure(basePath: dirname(__DIR__))
             HandleInertiaRequests::class,
         ]);
 
+        $middleware->validateCsrfTokens(except: [
+            'webhooks/mercado-pago',
+        ]);
+
         $middleware->alias([
             'role' => EnsureUserHasRole::class,
             'permission' => EnsureUserCanAccess::class,
