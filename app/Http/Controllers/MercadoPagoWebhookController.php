@@ -48,9 +48,19 @@ class MercadoPagoWebhookController extends Controller
         $status = data_get($payment, 'status');
 
         if ($status === 'approved') {
-            $activator->activate($subscription, now()->addMonth(), [
+            $providerPaymentId = (string) data_get($payment, 'id', $paymentId);
+
+            if ($subscription->status === Subscription::STATUS_ACTIVE
+                && $subscription->provider_payment_id === $providerPaymentId
+                && $subscription->paid_at !== null) {
+                $subscription->forceFill(['provider_payload' => $payment])->save();
+
+                return response()->json(['status' => 'already_processed']);
+            }
+
+            $activator->activate($subscription, null, [
                 'payment_provider' => 'mercado_pago',
-                'provider_payment_id' => (string) data_get($payment, 'id', $paymentId),
+                'provider_payment_id' => $providerPaymentId,
                 'paid_at' => data_get($payment, 'date_approved')
                     ? Carbon::parse(data_get($payment, 'date_approved'))
                     : now(),

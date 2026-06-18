@@ -248,6 +248,111 @@ class MercadoPagoSubscriptionTest extends TestCase
         $this->assertNotNull($location->subscription_ends_at);
     }
 
+    public function test_webhook_aprovado_renova_a_partir_do_vencimento_atual_quando_assinatura_ainda_esta_ativa(): void
+    {
+        config(['services.mercado_pago.access_token' => 'test-token']);
+
+        $currentEndsAt = now()->addDays(10)->startOfDay();
+        $location = WashLocation::factory()->create([
+            'account_status' => WashLocation::ACCOUNT_STATUS_ACTIVE,
+            'subscription_status' => WashLocation::ACCOUNT_STATUS_ACTIVE,
+            'subscription_ends_at' => $currentEndsAt,
+            'blocked_at' => null,
+            'public_visible' => true,
+        ]);
+        $plan = Plan::factory()->create(['name' => 'Professional']);
+        Subscription::factory()->create([
+            'wash_location_id' => $location->id,
+            'plan_id' => $plan->id,
+            'status' => Subscription::STATUS_ACTIVE,
+            'started_at' => now()->subMonth(),
+            'ends_at' => $currentEndsAt,
+        ]);
+        $renewal = Subscription::factory()->create([
+            'wash_location_id' => $location->id,
+            'plan_id' => $plan->id,
+            'status' => Subscription::STATUS_PENDING,
+            'payment_provider' => 'mercado_pago',
+            'external_reference' => 'subscription-renewal-ref',
+        ]);
+
+        Http::fake([
+            'https://api.mercadopago.com/v1/payments/555' => Http::response([
+                'id' => 555,
+                'status' => 'approved',
+                'external_reference' => 'subscription-renewal-ref',
+                'date_approved' => now()->toIso8601String(),
+            ]),
+        ]);
+
+        $this->postJson(route('webhooks.mercado-pago'), [
+            'type' => 'payment',
+            'data' => ['id' => '555'],
+        ])->assertOk()
+            ->assertJson(['status' => 'activated']);
+
+        $renewal->refresh();
+        $location->refresh();
+
+        $this->assertSame(Subscription::STATUS_ACTIVE, $renewal->status);
+        $this->assertSame($currentEndsAt->copy()->addMonth()->toDateString(), $renewal->ends_at->toDateString());
+        $this->assertSame($currentEndsAt->copy()->addMonth()->toDateString(), $location->subscription_ends_at->toDateString());
+    }
+
+    public function test_webhook_aprovado_duplicado_nao_renova_duas_vezes(): void
+    {
+        config(['services.mercado_pago.access_token' => 'test-token']);
+
+        $currentEndsAt = now()->addDays(10)->startOfDay();
+        $location = WashLocation::factory()->create([
+            'account_status' => WashLocation::ACCOUNT_STATUS_ACTIVE,
+            'subscription_status' => WashLocation::ACCOUNT_STATUS_ACTIVE,
+            'subscription_ends_at' => $currentEndsAt,
+            'blocked_at' => null,
+            'public_visible' => true,
+        ]);
+        $plan = Plan::factory()->create(['name' => 'Professional']);
+        $renewal = Subscription::factory()->create([
+            'wash_location_id' => $location->id,
+            'plan_id' => $plan->id,
+            'status' => Subscription::STATUS_PENDING,
+            'payment_provider' => 'mercado_pago',
+            'external_reference' => 'subscription-duplicate-ref',
+        ]);
+
+        Http::fake([
+            'https://api.mercadopago.com/v1/payments/777' => Http::response([
+                'id' => 777,
+                'status' => 'approved',
+                'external_reference' => 'subscription-duplicate-ref',
+                'date_approved' => now()->toIso8601String(),
+            ]),
+        ]);
+
+        $payload = [
+            'type' => 'payment',
+            'data' => ['id' => '777'],
+        ];
+
+        $this->postJson(route('webhooks.mercado-pago'), $payload)
+            ->assertOk()
+            ->assertJson(['status' => 'activated']);
+
+        $expectedEndDate = $currentEndsAt->copy()->addMonth()->toDateString();
+
+        $this->postJson(route('webhooks.mercado-pago'), $payload)
+            ->assertOk()
+            ->assertJson(['status' => 'already_processed']);
+
+        $renewal->refresh();
+        $location->refresh();
+
+        $this->assertSame(Subscription::STATUS_ACTIVE, $renewal->status);
+        $this->assertSame('777', $renewal->provider_payment_id);
+        $this->assertSame($expectedEndDate, $renewal->ends_at->toDateString());
+        $this->assertSame($expectedEndDate, $location->subscription_ends_at->toDateString());
+    }
+
     public function test_webhook_de_pagamento_rejeitado_cancela_assinatura_pendente(): void
     {
         config(['services.mercado_pago.access_token' => 'test-token']);

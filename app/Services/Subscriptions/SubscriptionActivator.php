@@ -13,7 +13,7 @@ class SubscriptionActivator
         $subscription->loadMissing('washLocation');
 
         $location = $subscription->washLocation;
-        $subscriptionEndsAt = $endsAt ?: now()->addMonth();
+        $subscriptionEndsAt = $endsAt ?: $this->defaultEndDate($location);
 
         $location->subscriptions()
             ->whereKeyNot($subscription->id)
@@ -35,5 +35,14 @@ class SubscriptionActivator
         ])->save();
 
         return $subscription;
+    }
+
+    private function defaultEndDate(WashLocation $location): CarbonInterface
+    {
+        $baseDate = $location->subscription_ends_at && $location->subscription_ends_at->isFuture()
+            ? $location->subscription_ends_at->copy()
+            : now();
+
+        return $baseDate->addMonth();
     }
 }
