@@ -92,5 +92,66 @@
                 <p class="rounded-2xl border border-dashed border-slate-200 bg-white px-5 py-10 text-center text-sm text-slate-500 lg:col-span-3">Nenhum plano ativo disponivel no momento.</p>
             @endforelse
         </section>
+
+        <section class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+            <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 px-5 py-4">
+                <div>
+                    <h2 class="text-lg font-black text-slate-950">Historico de assinatura</h2>
+                    <p class="mt-1 text-sm text-slate-500">Ultimas escolhas de plano, pagamentos e renovacoes da unidade.</p>
+                </div>
+            </div>
+
+            @if ($subscriptionHistory->isNotEmpty())
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-slate-200 text-sm">
+                        <thead class="bg-slate-50 text-left text-xs font-black uppercase text-slate-500">
+                            <tr>
+                                <th class="px-5 py-3">Plano</th>
+                                <th class="px-5 py-3">Status</th>
+                                <th class="px-5 py-3">Periodo</th>
+                                <th class="px-5 py-3">Pagamento</th>
+                                <th class="px-5 py-3">Referencia</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100">
+                            @foreach ($subscriptionHistory as $subscription)
+                                @php
+                                    $statusClasses = match ($subscription->status) {
+                                        \App\Models\Subscription::STATUS_ACTIVE => 'bg-emerald-100 text-emerald-800',
+                                        \App\Models\Subscription::STATUS_PENDING => 'bg-amber-100 text-amber-800',
+                                        \App\Models\Subscription::STATUS_EXPIRED => 'bg-slate-200 text-slate-700',
+                                        \App\Models\Subscription::STATUS_CANCELED => 'bg-rose-100 text-rose-800',
+                                        default => 'bg-slate-100 text-slate-700',
+                                    };
+                                @endphp
+                                <tr class="align-top">
+                                    <td class="px-5 py-4">
+                                        <p class="font-black text-slate-950">{{ $subscription->plan?->name ?? 'Plano removido' }}</p>
+                                        <p class="mt-1 text-xs text-slate-500">Criada em {{ $subscription->created_at->format('d/m/Y H:i') }}</p>
+                                    </td>
+                                    <td class="px-5 py-4">
+                                        <span class="rounded-full px-3 py-1 text-xs font-black {{ $statusClasses }}">{{ $subscription->statusLabel() }}</span>
+                                    </td>
+                                    <td class="px-5 py-4 text-slate-700">
+                                        <p>Inicio: {{ $subscription->started_at?->format('d/m/Y') ?? '-' }}</p>
+                                        <p class="mt-1">Fim: {{ $subscription->ends_at?->format('d/m/Y') ?? '-' }}</p>
+                                    </td>
+                                    <td class="px-5 py-4 text-slate-700">
+                                        <p>{{ $subscription->payment_provider === 'mercado_pago' ? 'Mercado Pago' : 'Manual' }}</p>
+                                        <p class="mt-1 text-xs text-slate-500">Pago em {{ $subscription->paid_at?->format('d/m/Y H:i') ?? '-' }}</p>
+                                    </td>
+                                    <td class="px-5 py-4 text-xs text-slate-500">
+                                        <p>Pagamento: {{ $subscription->provider_payment_id ?? '-' }}</p>
+                                        <p class="mt-1">Preferencia: {{ $subscription->provider_preference_id ?? '-' }}</p>
+                                    </td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            @else
+                <p class="px-5 py-8 text-center text-sm text-slate-500">Nenhum historico de assinatura registrado ainda.</p>
+            @endif
+        </section>
     </div>
 </x-app.layout>

@@ -43,6 +43,42 @@ class SubscriptionManagementTest extends TestCase
             ->assertSee('Próxima cobrança');
     }
 
+    public function test_owner_visualiza_historico_de_assinaturas(): void
+    {
+        $location = WashLocation::factory()->create([
+            'account_status' => WashLocation::ACCOUNT_STATUS_ACTIVE,
+            'subscription_status' => WashLocation::ACCOUNT_STATUS_ACTIVE,
+            'subscription_ends_at' => now()->addMonth(),
+        ]);
+        $owner = User::factory()->create([
+            'role' => User::ROLE_OWNER,
+            'wash_location_id' => $location->id,
+        ]);
+        $plan = Plan::factory()->create(['name' => 'Starter']);
+
+        Subscription::factory()->create([
+            'wash_location_id' => $location->id,
+            'plan_id' => $plan->id,
+            'status' => Subscription::STATUS_ACTIVE,
+            'started_at' => now()->subDay(),
+            'ends_at' => now()->addMonth(),
+            'payment_provider' => 'mercado_pago',
+            'provider_preference_id' => 'pref_123',
+            'provider_payment_id' => 'pay_456',
+            'paid_at' => now(),
+        ]);
+
+        $this->actingAs($owner)
+            ->get(route('subscriptions.show'))
+            ->assertOk()
+            ->assertSee('Historico de assinatura')
+            ->assertSee('Ultimas escolhas de plano, pagamentos e renovacoes da unidade.')
+            ->assertSee('Starter')
+            ->assertSee('Mercado Pago')
+            ->assertSee('pay_456')
+            ->assertSee('pref_123');
+    }
+
     public function test_owner_nao_acessa_plano_inativo(): void
     {
         $location = WashLocation::factory()->create([

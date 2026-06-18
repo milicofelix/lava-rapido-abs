@@ -25,6 +25,11 @@ class OwnerSubscriptionController extends Controller
             'location' => $location,
             'currentSubscription' => $location->currentSubscription,
             'activeSubscription' => $location->activeSubscription,
+            'subscriptionHistory' => $location->subscriptions()
+                ->with('plan')
+                ->latest()
+                ->limit(8)
+                ->get(),
             'plans' => Plan::query()->active()->orderBy('price')->orderBy('name')->get(),
             'mercadoPagoConfigured' => $mercadoPago->isConfigured(),
             'mercadoPagoEnvironment' => $mercadoPago->environmentLabel(),
