@@ -66,6 +66,45 @@ class TenantOperationalIsolationTest extends TestCase
             ->assertNotFound();
     }
 
+    public function test_owner_cannot_create_wash_order_with_service_from_another_unit(): void
+    {
+        [$owner, $ownLocation, $otherLocation] = $this->ownerWithTwoLocations();
+
+        $customer = Customer::factory()->create(['wash_location_id' => $ownLocation->id]);
+        $vehicle = Vehicle::factory()->create(['wash_location_id' => $ownLocation->id, 'customer_id' => $customer->id]);
+        $otherService = Service::factory()->create(['wash_location_id' => $otherLocation->id, 'active' => true]);
+
+        $this->actingAs($owner)->post(route('wash-orders.store'), [
+            'customer_id' => $customer->id,
+            'vehicle_id' => $vehicle->id,
+            'service_ids' => [$otherService->id],
+        ])->assertSessionHasErrors('service_ids.0');
+
+        $this->assertDatabaseCount('wash_orders', 0);
+    }
+
+    public function test_owner_cannot_create_wash_order_with_team_member_from_another_unit(): void
+    {
+        [$owner, $ownLocation, $otherLocation] = $this->ownerWithTwoLocations();
+
+        $customer = Customer::factory()->create(['wash_location_id' => $ownLocation->id]);
+        $vehicle = Vehicle::factory()->create(['wash_location_id' => $ownLocation->id, 'customer_id' => $customer->id]);
+        $service = Service::factory()->create(['wash_location_id' => $ownLocation->id, 'active' => true]);
+        $otherEmployee = User::factory()->create([
+            'role' => User::ROLE_OPERATOR,
+            'wash_location_id' => $otherLocation->id,
+        ]);
+
+        $this->actingAs($owner)->post(route('wash-orders.store'), [
+            'customer_id' => $customer->id,
+            'vehicle_id' => $vehicle->id,
+            'service_ids' => [$service->id],
+            'assigned_user_ids' => [$otherEmployee->id],
+        ])->assertSessionHasErrors('assigned_user_ids.0');
+
+        $this->assertDatabaseCount('wash_orders', 0);
+    }
+
     public function test_owner_finance_and_credit_are_scoped_by_own_unit(): void
     {
         [$owner, $ownLocation, $otherLocation] = $this->ownerWithTwoLocations();

@@ -1,4 +1,6 @@
 <x-app.layout heading="Lavagem {{ $washOrder->code }}" title="Lavagem {{ $washOrder->code }} · AutoFlow">
+    @php($canSeeWashFinancial = auth()->user()->canAccess(\App\Support\Access\AccessControl::REGISTER_PAYMENT) || auth()->user()->canAccess(\App\Support\Access\AccessControl::VIEW_FINANCE))
+    @php($canSendWashNotifications = auth()->user()->canAccess(\App\Support\Access\AccessControl::SEND_WASH_NOTIFICATIONS))
     <div class="grid gap-5 xl:grid-cols-[1fr_360px]">
         <div class="space-y-5">
             <section class="rounded-lg border border-zinc-200 bg-white p-5">
@@ -30,14 +32,16 @@
                             {{ $washOrder->teamMembers->isNotEmpty() ? $washOrder->teamMembers->pluck('name')->join(', ') : 'Sem equipe definida' }}
                         </dd>
                     </div>
-                    <div>
-                        <dt class="text-sm text-zinc-500">Total</dt>
-                        <dd class="font-medium">R$ {{ number_format((float) $washOrder->total_amount, 2, ',', '.') }}</dd>
-                    </div>
-                    <div>
-                        <dt class="text-sm text-zinc-500">Financeiro</dt>
-                        <dd class="font-medium">{{ $washOrder->paymentStatusLabel() }}</dd>
-                    </div>
+                    @if ($canSeeWashFinancial)
+                        <div>
+                            <dt class="text-sm text-zinc-500">Total</dt>
+                            <dd class="font-medium">R$ {{ number_format((float) $washOrder->total_amount, 2, ',', '.') }}</dd>
+                        </div>
+                        <div>
+                            <dt class="text-sm text-zinc-500">Financeiro</dt>
+                            <dd class="font-medium">{{ $washOrder->paymentStatusLabel() }}</dd>
+                        </div>
+                    @endif
                     <div>
                         <dt class="text-sm text-zinc-500">Conclusao</dt>
                         <dd class="font-medium">{{ $washOrder->completed_at?->format('d/m/Y H:i') ?? '-' }}</dd>
@@ -60,37 +64,41 @@
                                 <p class="font-medium">{{ $service->pivot->service_name }}</p>
                                 <p class="text-sm text-zinc-500">{{ $service->pivot->estimated_minutes }} min</p>
                             </div>
-                            <p class="font-semibold">R$ {{ number_format((float) $service->pivot->price, 2, ',', '.') }}</p>
+                            @if ($canSeeWashFinancial)
+                                <p class="font-semibold">R$ {{ number_format((float) $service->pivot->price, 2, ',', '.') }}</p>
+                            @endif
                         </div>
                     @endforeach
                 </div>
             </section>
 
-            <section class="rounded-lg border border-zinc-200 bg-white">
-                <div class="border-b border-zinc-200 px-5 py-4">
-                    <h2 class="font-semibold">Pagamentos</h2>
-                </div>
-                <div class="divide-y divide-zinc-100">
-                    @forelse ($washOrder->payments->sortByDesc('paid_at') as $payment)
-                        <div class="px-5 py-4">
-                            <div class="flex flex-wrap items-start justify-between gap-3">
-                                <div>
-                                    <p class="font-medium">{{ $payment->methodLabel() }}</p>
-                                    <p class="text-sm text-zinc-500">
-                                        {{ $payment->paid_at?->format('d/m/Y H:i') ?? '-' }} · {{ $payment->user?->name ?? 'Sistema' }}
-                                    </p>
+            @if ($canSeeWashFinancial)
+                <section class="rounded-lg border border-zinc-200 bg-white">
+                    <div class="border-b border-zinc-200 px-5 py-4">
+                        <h2 class="font-semibold">Pagamentos</h2>
+                    </div>
+                    <div class="divide-y divide-zinc-100">
+                        @forelse ($washOrder->payments->sortByDesc('paid_at') as $payment)
+                            <div class="px-5 py-4">
+                                <div class="flex flex-wrap items-start justify-between gap-3">
+                                    <div>
+                                        <p class="font-medium">{{ $payment->methodLabel() }}</p>
+                                        <p class="text-sm text-zinc-500">
+                                            {{ $payment->paid_at?->format('d/m/Y H:i') ?? '-' }} · {{ $payment->user?->name ?? 'Sistema' }}
+                                        </p>
+                                    </div>
+                                    <p class="font-semibold">R$ {{ number_format((float) $payment->amount, 2, ',', '.') }}</p>
                                 </div>
-                                <p class="font-semibold">R$ {{ number_format((float) $payment->amount, 2, ',', '.') }}</p>
+                                @if ($payment->notes)
+                                    <p class="mt-2 text-sm text-zinc-700">{{ $payment->notes }}</p>
+                                @endif
                             </div>
-                            @if ($payment->notes)
-                                <p class="mt-2 text-sm text-zinc-700">{{ $payment->notes }}</p>
-                            @endif
-                        </div>
-                    @empty
-                        <p class="px-5 py-4 text-sm text-zinc-500">Nenhum pagamento registrado.</p>
-                    @endforelse
-                </div>
-            </section>
+                        @empty
+                            <p class="px-5 py-4 text-sm text-zinc-500">Nenhum pagamento registrado.</p>
+                        @endforelse
+                    </div>
+                </section>
+            @endif
 
             <section class="rounded-lg border border-zinc-200 bg-white">
                 <div class="border-b border-zinc-200 px-5 py-4">
@@ -114,34 +122,37 @@
         </div>
 
         <aside class="h-fit rounded-lg border border-zinc-200 bg-white p-5">
-            <section class="mb-5 rounded-md border border-emerald-200 bg-emerald-50 p-4">
-                <h2 class="font-semibold text-emerald-950">Registrar pagamento</h2>
-                <form method="POST" action="{{ route('payments.store', $washOrder) }}" class="mt-4 space-y-3">
-                    @csrf
-                    <label class="block">
-                        <span class="text-sm font-medium">Metodo</span>
-                        <select name="method" class="mt-1 w-full rounded-md border border-emerald-200 bg-white px-3 py-2">
-                            @foreach ($paymentMethods as $value => $label)
-                                <option value="{{ $value }}" @selected(old('method', 'pix') === $value)>{{ $label }}</option>
-                            @endforeach
-                        </select>
-                        @error('method') <span class="text-sm text-red-600">{{ $message }}</span> @enderror
-                    </label>
-                    <label class="block">
-                        <span class="text-sm font-medium">Valor</span>
-                        <input name="amount" type="number" min="0" step="0.01" value="{{ old('amount', $washOrder->total_amount) }}" class="mt-1 w-full rounded-md border border-emerald-200 bg-white px-3 py-2">
-                        @error('amount') <span class="text-sm text-red-600">{{ $message }}</span> @enderror
-                    </label>
-                    <label class="block">
-                        <span class="text-sm font-medium">Observacao</span>
-                        <textarea name="notes" rows="3" class="mt-1 w-full rounded-md border border-emerald-200 bg-white px-3 py-2">{{ old('notes') }}</textarea>
-                        @error('notes') <span class="text-sm text-red-600">{{ $message }}</span> @enderror
-                    </label>
-                    <button class="w-full rounded-md bg-emerald-700 px-4 py-2.5 text-sm font-semibold text-white">Registrar pagamento</button>
-                </form>
-            </section>
+            @if ($canSeeWashFinancial)
+                <section class="mb-5 rounded-md border border-emerald-200 bg-emerald-50 p-4">
+                    <h2 class="font-semibold text-emerald-950">Registrar pagamento</h2>
+                    <form method="POST" action="{{ route('payments.store', $washOrder) }}" class="mt-4 space-y-3">
+                        @csrf
+                        <label class="block">
+                            <span class="text-sm font-medium">Metodo</span>
+                            <select name="method" class="mt-1 w-full rounded-md border border-emerald-200 bg-white px-3 py-2">
+                                @foreach ($paymentMethods as $value => $label)
+                                    <option value="{{ $value }}" @selected(old('method', 'pix') === $value)>{{ $label }}</option>
+                                @endforeach
+                            </select>
+                            @error('method') <span class="text-sm text-red-600">{{ $message }}</span> @enderror
+                        </label>
+                        <label class="block">
+                            <span class="text-sm font-medium">Valor</span>
+                            <input name="amount" type="number" min="0" step="0.01" value="{{ old('amount', $washOrder->total_amount) }}" class="mt-1 w-full rounded-md border border-emerald-200 bg-white px-3 py-2">
+                            @error('amount') <span class="text-sm text-red-600">{{ $message }}</span> @enderror
+                        </label>
+                        <label class="block">
+                            <span class="text-sm font-medium">Observacao</span>
+                            <textarea name="notes" rows="3" class="mt-1 w-full rounded-md border border-emerald-200 bg-white px-3 py-2">{{ old('notes') }}</textarea>
+                            @error('notes') <span class="text-sm text-red-600">{{ $message }}</span> @enderror
+                        </label>
+                        <button class="w-full rounded-md bg-emerald-700 px-4 py-2.5 text-sm font-semibold text-white">Registrar pagamento</button>
+                    </form>
+                </section>
+            @endif
 
-            <section class="mb-5 rounded-md border border-cyan-200 bg-cyan-50 p-4">
+            @if ($canSendWashNotifications)
+                <section class="mb-5 rounded-md border border-cyan-200 bg-cyan-50 p-4">
                 <h2 class="font-semibold text-cyan-950">Link do cliente</h2>
                 <p class="mt-1 text-xs text-cyan-800">Compartilhe este link para o cliente acompanhar a lavagem em tempo real.</p>
                 <a href="{{ $washOrder->trackingUrl() }}" target="_blank" class="mt-3 block break-all text-sm font-medium text-cyan-800">{{ $washOrder->trackingUrl() }}</a>
@@ -196,35 +207,44 @@
                         </div>
                     </div>
                 @endif
-            </section>
+                </section>
+            @endif
 
-            <section class="mb-5 rounded-md border border-amber-200 bg-amber-50 p-4">
-                <h2 class="font-semibold text-amber-950">Recibo</h2>
-                <p class="mt-1 text-xs text-amber-800">Gere um comprovante simples da lavagem para imprimir ou salvar como PDF pelo navegador.</p>
-                <a href="{{ route('wash-orders.receipt', $washOrder) }}" target="_blank" rel="noopener" class="mt-3 inline-flex w-full justify-center rounded-md bg-amber-700 px-4 py-2.5 text-sm font-semibold text-white">Imprimir recibo</a>
-            </section>
+            @if ($canSeeWashFinancial)
+                <section class="mb-5 rounded-md border border-amber-200 bg-amber-50 p-4">
+                    <h2 class="font-semibold text-amber-950">Recibo</h2>
+                    <p class="mt-1 text-xs text-amber-800">Gere um comprovante simples da lavagem para imprimir ou salvar como PDF pelo navegador.</p>
+                    <a href="{{ route('wash-orders.receipt', $washOrder) }}" target="_blank" rel="noopener" class="mt-3 inline-flex w-full justify-center rounded-md bg-amber-700 px-4 py-2.5 text-sm font-semibold text-white">Imprimir recibo</a>
+                </section>
+            @endif
 
-            <h2 class="font-semibold">Atualizar status</h2>
-            <form method="POST" action="{{ route('wash-orders.update-status', $washOrder) }}" class="mt-4 space-y-4">
-                @csrf
-                @method('PATCH')
-                <label class="block">
-                    <span class="text-sm font-medium">Novo status</span>
-                    <select name="status" class="mt-1 w-full rounded-md border border-zinc-300 px-3 py-2">
-                        @foreach ($statusOptions as $value => $label)
-                            <option value="{{ $value }}" @selected($washOrder->status === $value)>{{ $label }}</option>
-                        @endforeach
-                    </select>
-                    @error('status') <span class="text-sm text-red-600">{{ $message }}</span> @enderror
-                </label>
-                <label class="block">
-                    <span class="text-sm font-medium">Observacao</span>
-                    <textarea name="notes" rows="3" class="mt-1 w-full rounded-md border border-zinc-300 px-3 py-2"></textarea>
-                    @error('notes') <span class="text-sm text-red-600">{{ $message }}</span> @enderror
-                </label>
-                <button class="w-full rounded-md bg-cyan-700 px-4 py-2.5 text-sm font-semibold text-white">Salvar status</button>
-            </form>
-            <a href="{{ route('wash-orders.index') }}" class="mt-3 block rounded-md border border-zinc-300 px-4 py-2.5 text-center text-sm font-semibold">Voltar</a>
+            @if ($canUpdateStatus)
+                <h2 class="font-semibold">Atualizar status</h2>
+                <form method="POST" action="{{ route('wash-orders.update-status', $washOrder) }}" class="mt-4 space-y-4">
+                    @csrf
+                    @method('PATCH')
+                    <label class="block">
+                        <span class="text-sm font-medium">Novo status</span>
+                        <select name="status" class="mt-1 w-full rounded-md border border-zinc-300 px-3 py-2">
+                            @foreach ($statusOptions as $value => $label)
+                                <option value="{{ $value }}" @selected($washOrder->status === $value)>{{ $label }}</option>
+                            @endforeach
+                        </select>
+                        @error('status') <span class="text-sm text-red-600">{{ $message }}</span> @enderror
+                    </label>
+                    <label class="block">
+                        <span class="text-sm font-medium">Observacao</span>
+                        <textarea name="notes" rows="3" class="mt-1 w-full rounded-md border border-zinc-300 px-3 py-2"></textarea>
+                        @error('notes') <span class="text-sm text-red-600">{{ $message }}</span> @enderror
+                    </label>
+                    <button class="w-full rounded-md bg-cyan-700 px-4 py-2.5 text-sm font-semibold text-white">Salvar status</button>
+                </form>
+            @else
+                <div class="rounded-md border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
+                    Status restrito a responsaveis da equipe desta lavagem.
+                </div>
+            @endif
+            <a href="{{ auth()->user()->canAccess(\App\Support\Access\AccessControl::CREATE_WASH_ORDER) ? route('wash-orders.index') : route('kanban') }}" class="mt-3 block rounded-md border border-zinc-300 px-4 py-2.5 text-center text-sm font-semibold">Voltar</a>
         </aside>
     </div>
 </x-app.layout>

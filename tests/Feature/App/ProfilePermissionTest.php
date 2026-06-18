@@ -3,6 +3,7 @@
 namespace Tests\Feature\App;
 
 use App\Models\Customer;
+use App\Models\CustomerNotification;
 use App\Models\Service;
 use App\Models\User;
 use App\Models\Vehicle;
@@ -17,10 +18,65 @@ class ProfilePermissionTest extends TestCase
     public function test_operator_cannot_access_admin_only_screens(): void
     {
         $operator = User::factory()->create(['role' => User::ROLE_OPERATOR]);
+        $washOrder = WashOrder::factory()->create();
+        $notification = CustomerNotification::query()->create([
+            'wash_order_id' => $washOrder->id,
+            'customer_id' => $washOrder->customer_id,
+            'user_id' => $operator->id,
+            'channel' => CustomerNotification::CHANNEL_WHATSAPP_MANUAL,
+            'template_key' => CustomerNotification::TEMPLATE_STATUS_UPDATE,
+            'target' => '(11) 99999-0000',
+            'message' => 'Teste',
+            'status' => CustomerNotification::STATUS_PREPARED,
+            'prepared_at' => now(),
+        ]);
 
+        $this->actingAs($operator)->get(route('dashboard'))->assertForbidden();
+        $this->actingAs($operator)->get(route('wash-orders.index'))->assertForbidden();
+        $this->actingAs($operator)->get(route('wash-orders.create'))->assertForbidden();
+        $this->actingAs($operator)->get(route('history.index'))->assertForbidden();
         $this->actingAs($operator)->get(route('finance.index'))->assertForbidden();
         $this->actingAs($operator)->get(route('employees.index'))->assertForbidden();
         $this->actingAs($operator)->get(route('services.index'))->assertForbidden();
+        $this->actingAs($operator)->post(route('payments.store', $washOrder), [
+            'method' => 'pix',
+            'amount' => 10,
+        ])->assertForbidden();
+        $this->actingAs($operator)->get(route('wash-orders.receipt', $washOrder))->assertForbidden();
+        $this->actingAs($operator)->post(route('wash-orders.notifications.whatsapp-manual.store', $washOrder), [
+            'template_key' => CustomerNotification::TEMPLATE_STATUS_UPDATE,
+        ])->assertForbidden();
+        $this->actingAs($operator)->patch(route('wash-orders.notifications.mark-as-sent', [$washOrder, $notification]))
+            ->assertForbidden();
+    }
+
+    public function test_operator_access_is_limited_to_kanban_detail_and_status_update(): void
+    {
+        $operator = User::factory()->create(['role' => User::ROLE_OPERATOR]);
+        $washOrder = WashOrder::factory()->create(['status' => WashOrder::STATUS_AWAITING]);
+        $washOrder->teamMembers()->attach($operator);
+
+        $this->actingAs($operator)->get(route('kanban'))->assertOk();
+
+        $this->actingAs($operator)->get(route('wash-orders.show', $washOrder))
+            ->assertOk()
+            ->assertSee('Atualizar status')
+            ->assertDontSee('href="'.route('dashboard').'"', false)
+            ->assertDontSee('href="'.route('wash-orders.index').'"', false)
+            ->assertDontSee('href="'.route('history.index').'"', false)
+            ->assertDontSee('href="'.route('customers.index').'"', false)
+            ->assertDontSee('href="'.route('vehicles.index').'"', false)
+            ->assertDontSee('href="'.route('finance.index').'"', false)
+            ->assertDontSee('Registrar pagamento')
+            ->assertDontSee('Pagamentos')
+            ->assertDontSee('Recibo')
+            ->assertDontSee('Compartilhar via WhatsApp');
+
+        $this->actingAs($operator)->patch(route('wash-orders.update-status', $washOrder), [
+            'status' => WashOrder::STATUS_WASHING,
+        ])->assertRedirect();
+
+        $this->assertSame(WashOrder::STATUS_WASHING, $washOrder->refresh()->status);
     }
 
     public function test_attendant_can_create_wash_order_but_cannot_update_status(): void
@@ -46,6 +102,7 @@ class ProfilePermissionTest extends TestCase
     {
         $operator = User::factory()->create(['role' => User::ROLE_OPERATOR]);
         $washOrder = WashOrder::factory()->create();
+        $washOrder->teamMembers()->attach($operator);
 
         $this->actingAs($operator)->patch(route('wash-orders.update-status', $washOrder), [
             'status' => WashOrder::STATUS_WASHING,

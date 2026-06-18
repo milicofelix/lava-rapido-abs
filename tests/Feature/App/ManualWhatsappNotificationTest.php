@@ -48,7 +48,7 @@ class ManualWhatsappNotificationTest extends TestCase
         $this->assertStringStartsWith('https://wa.me/5511988887777?text=', $notification->action_url);
     }
 
-    public function test_operator_can_mark_manual_notification_as_sent(): void
+    public function test_operator_cannot_mark_manual_notification_as_sent(): void
     {
         $user = User::factory()->create(['role' => User::ROLE_OPERATOR]);
         $washOrder = WashOrder::factory()->create();
@@ -67,14 +67,14 @@ class ManualWhatsappNotificationTest extends TestCase
 
         $this->actingAs($user)
             ->patch(route('wash-orders.notifications.mark-as-sent', [$washOrder, $notification]))
-            ->assertRedirect(route('wash-orders.show', $washOrder));
+            ->assertForbidden();
 
         $this->assertDatabaseHas('customer_notifications', [
             'id' => $notification->id,
-            'status' => CustomerNotification::STATUS_SENT_MANUALLY,
+            'status' => CustomerNotification::STATUS_PREPARED,
         ]);
 
-        $this->assertNotNull($notification->refresh()->manually_sent_at);
+        $this->assertNull($notification->refresh()->manually_sent_at);
     }
 
     public function test_wash_order_detail_shows_manual_notification_area(): void

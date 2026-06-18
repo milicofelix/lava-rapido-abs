@@ -29,6 +29,7 @@ class WashKanbanTest extends TestCase
                 ->where('columns.1.title', 'Em lavagem')
                 ->where('columns.1.orders.0.vehicle.plate', $washOrder->vehicle->plate)
                 ->where('columns.1.orders.0.customer.name', $washOrder->customer->name)
+                ->where('columns.1.orders.0.can_update_status', false)
             );
     }
 
@@ -119,6 +120,7 @@ class WashKanbanTest extends TestCase
     {
         $user = User::factory()->create(['role' => User::ROLE_OPERATOR]);
         $washOrder = WashOrder::factory()->create(['status' => WashOrder::STATUS_AWAITING]);
+        $washOrder->teamMembers()->attach($user);
 
         $this->actingAs($user)->patch(route('wash-orders.update-status', $washOrder), [
             'status' => WashOrder::STATUS_WASHING,
@@ -132,5 +134,25 @@ class WashKanbanTest extends TestCase
             'to_status' => WashOrder::STATUS_WASHING,
             'notes' => 'Status atualizado pelo Kanban.',
         ]);
+    }
+
+    public function test_operator_cannot_move_card_when_not_on_team(): void
+    {
+        $user = User::factory()->create(['role' => User::ROLE_OPERATOR]);
+        $washOrder = WashOrder::factory()->create(['status' => WashOrder::STATUS_AWAITING]);
+
+        $this->actingAs($user)->patch(route('wash-orders.update-status', $washOrder), [
+            'status' => WashOrder::STATUS_WASHING,
+            'notes' => 'Status atualizado pelo Kanban.',
+        ])->assertSessionHasErrors('status');
+
+        $this->assertSame(WashOrder::STATUS_AWAITING, $washOrder->refresh()->status);
+
+        $this->actingAs($user)->get(route('kanban'))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('columns.0.orders.0.id', $washOrder->id)
+                ->where('columns.0.orders.0.can_update_status', false)
+            );
     }
 }

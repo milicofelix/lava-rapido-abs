@@ -26,6 +26,7 @@ use App\Http\Controllers\PublicWashLocationMapController;
 use App\Http\Controllers\PublicWashLocationRequestController;
 use App\Http\Controllers\PublicWashTrackingController;
 use App\Models\User;
+use App\Support\Access\AccessControl;
 use Illuminate\Support\Facades\Route;
 
 Route::redirect('/', '/lava-rapidos');
@@ -72,49 +73,91 @@ Route::middleware('auth')->group(function () {
     });
 
     Route::middleware('active.subscription')->group(function () {
-        Route::get('/dashboard', DashboardController::class)->name('dashboard');
-        Route::get('kanban', WashKanbanController::class)->name('kanban');
-        Route::get('kanban/feed', [WashKanbanController::class, 'feed'])->name('kanban.feed');
-        Route::get('historico', [WashHistoryController::class, 'index'])->name('history.index');
-        Route::get('historico/exportar', [WashHistoryController::class, 'export'])->name('history.export');
+        Route::get('/dashboard', DashboardController::class)
+            ->middleware('permission:'.AccessControl::VIEW_DASHBOARD)
+            ->name('dashboard');
+        Route::get('kanban', WashKanbanController::class)
+            ->middleware('permission:'.AccessControl::VIEW_KANBAN)
+            ->name('kanban');
+        Route::get('kanban/feed', [WashKanbanController::class, 'feed'])
+            ->middleware('permission:'.AccessControl::VIEW_KANBAN)
+            ->name('kanban.feed');
+        Route::get('historico', [WashHistoryController::class, 'index'])
+            ->middleware('permission:'.AccessControl::VIEW_OPERATIONAL_HISTORY)
+            ->name('history.index');
+        Route::get('historico/exportar', [WashHistoryController::class, 'export'])
+            ->middleware('permission:'.AccessControl::VIEW_OPERATIONAL_HISTORY)
+            ->name('history.export');
 
-        Route::middleware('role:'.User::ROLE_OWNER.','.User::ROLE_ADMIN.','.User::ROLE_ATTENDANT)->group(function () {
+        Route::middleware('permission:'.AccessControl::CREATE_WASH_ORDER)->group(function () {
             Route::get('lavagens/create', [WashOrderController::class, 'create'])->name('wash-orders.create');
             Route::post('lavagens', [WashOrderController::class, 'store'])->name('wash-orders.store');
-            Route::post('lavagens/{wash_order}/pagamentos', [PaymentController::class, 'store'])->name('payments.store');
+        });
 
+        Route::middleware('permission:'.AccessControl::REGISTER_PAYMENT)->group(function () {
+            Route::post('lavagens/{wash_order}/pagamentos', [PaymentController::class, 'store'])->name('payments.store');
+        });
+
+        Route::middleware('permission:'.AccessControl::MANAGE_CUSTOMERS)->group(function () {
             Route::resource('clientes', CustomerController::class)->parameters(['clientes' => 'customer'])->names('customers')->except(['show', 'destroy']);
+        });
+
+        Route::middleware('permission:'.AccessControl::MANAGE_VEHICLES)->group(function () {
             Route::resource('veiculos', VehicleController::class)->parameters(['veiculos' => 'vehicle'])->names('vehicles')->except(['show', 'destroy']);
         });
 
-        Route::get('lavagens', [WashOrderController::class, 'index'])->name('wash-orders.index');
-        Route::get('lavagens/{wash_order}', [WashOrderController::class, 'show'])->name('wash-orders.show');
-        Route::get('lavagens/{wash_order}/recibo', WashOrderReceiptController::class)->name('wash-orders.receipt');
+        Route::get('lavagens', [WashOrderController::class, 'index'])
+            ->middleware('permission:'.AccessControl::CREATE_WASH_ORDER)
+            ->name('wash-orders.index');
+        Route::get('lavagens/{wash_order}', [WashOrderController::class, 'show'])
+            ->middleware('permission:'.AccessControl::VIEW_WASH_ORDERS)
+            ->name('wash-orders.show');
+        Route::get('lavagens/{wash_order}/recibo', WashOrderReceiptController::class)
+            ->middleware('permission:'.AccessControl::REGISTER_PAYMENT)
+            ->name('wash-orders.receipt');
 
         Route::patch('lavagens/{wash_order}/status', [WashOrderController::class, 'updateStatus'])
-            ->middleware('role:'.User::ROLE_OWNER.','.User::ROLE_ADMIN.','.User::ROLE_OPERATOR)
+            ->middleware('permission:'.AccessControl::UPDATE_WASH_ORDER_STATUS)
             ->name('wash-orders.update-status');
 
-        Route::middleware('role:'.User::ROLE_OWNER.','.User::ROLE_ADMIN.','.User::ROLE_ATTENDANT.','.User::ROLE_OPERATOR)->group(function () {
+        Route::middleware('permission:'.AccessControl::SEND_WASH_NOTIFICATIONS)->group(function () {
             Route::post('lavagens/{wash_order}/notificacoes/whatsapp-manual', [WashNotificationController::class, 'store'])
                 ->name('wash-orders.notifications.whatsapp-manual.store');
             Route::patch('lavagens/{wash_order}/notificacoes/{notification}/enviada-manualmente', [WashNotificationController::class, 'markAsSent'])
                 ->name('wash-orders.notifications.mark-as-sent');
         });
 
-        Route::middleware('role:'.User::ROLE_OWNER.','.User::ROLE_ADMIN)->group(function () {
+        Route::middleware('permission:'.AccessControl::VIEW_AUDIT_LOGS)->group(function () {
             Route::get('auditoria', [AuditLogController::class, 'index'])->name('audit-logs.index');
+        });
+
+        Route::middleware('permission:'.AccessControl::VIEW_FINANCE)->group(function () {
             Route::get('financeiro', [FinanceController::class, 'index'])->name('finance.index');
             Route::get('financeiro/exportar', [FinanceController::class, 'export'])->name('finance.export');
+        });
+
+        Route::middleware('permission:'.AccessControl::MANAGE_CASH_REGISTER)->group(function () {
             Route::get('financeiro/caixa', [CashRegisterController::class, 'index'])->name('finance.cash-registers.index');
             Route::post('financeiro/caixa', [CashRegisterController::class, 'store'])->name('finance.cash-registers.store');
             Route::post('financeiro/caixa/{cashRegister}/movimentacoes', [CashRegisterController::class, 'movement'])->name('finance.cash-registers.movements.store');
             Route::patch('financeiro/caixa/{cashRegister}/fechar', [CashRegisterController::class, 'close'])->name('finance.cash-registers.close');
+        });
+
+        Route::middleware('permission:'.AccessControl::MANAGE_CREDIT_RECEIVABLES)->group(function () {
             Route::get('financeiro/fiado', [CreditReceivableController::class, 'index'])->name('finance.credit-receivables.index');
             Route::patch('financeiro/fiado/{washOrder}/receber', [CreditReceivableController::class, 'receive'])->name('finance.credit-receivables.receive');
+        });
+
+        Route::middleware('permission:'.AccessControl::MANAGE_SETTINGS)->group(function () {
             Route::get('configuracoes', [SettingsController::class, 'edit'])->name('settings.edit');
             Route::put('configuracoes', [SettingsController::class, 'update'])->name('settings.update');
+        });
+
+        Route::middleware('permission:'.AccessControl::MANAGE_SERVICES)->group(function () {
             Route::resource('servicos', ServiceController::class)->parameters(['servicos' => 'service'])->names('services')->except(['show', 'destroy']);
+        });
+
+        Route::middleware('permission:'.AccessControl::MANAGE_EMPLOYEES)->group(function () {
             Route::resource('equipe', EmployeeController::class)->parameters(['equipe' => 'employee'])->names('employees')->except(['show']);
         });
     });

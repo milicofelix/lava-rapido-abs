@@ -14,6 +14,7 @@ use App\Models\WashOrder;
 use App\Services\WashOrders\ChangeWashOrderStatusService;
 use App\Services\WashOrders\CreateWashOrderService;
 use App\Support\TenantContext;
+use App\Support\Access\AccessControl;
 use App\Support\WashOrders\WashOrderStatusFlow;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -106,13 +107,19 @@ class WashOrderController extends Controller
             unset($paymentMethods[Payment::METHOD_CREDIT_PENDING]);
         }
 
+        $washOrder = $washOrder->load(['customer', 'vehicle', 'assignedUser', 'teamMembers', 'services', 'statusHistories.user', 'payments.user', 'customerNotifications.user']);
+        $user = request()->user();
+        $canUpdateStatus = AccessControl::allows($user, AccessControl::UPDATE_WASH_ORDER_STATUS)
+            && (! $user?->isOperator() || $washOrder->teamMembers->contains('id', $user->id));
+
         return view('app.wash-orders.show', [
-            'washOrder' => $washOrder->load(['customer', 'vehicle', 'assignedUser', 'teamMembers', 'services', 'statusHistories.user', 'payments.user', 'customerNotifications.user']),
+            'washOrder' => $washOrder,
             'statuses' => WashOrder::statuses(),
             'statusOptions' => [
                 $washOrder->status => $washOrder->statusLabel(),
                 ...WashOrderStatusFlow::allowedStatusLabelsFrom($washOrder->status),
             ],
+            'canUpdateStatus' => $canUpdateStatus,
             'paymentMethods' => $paymentMethods,
             'notificationTemplates' => CustomerNotification::templates(),
         ]);
@@ -155,16 +162,30 @@ class WashOrderController extends Controller
 
     private function validated(Request $request): array
     {
+        $locationId = TenantContext::currentLocationId();
+
         return $request->validate([
-            'customer_id' => ['required', 'exists:customers,id'],
-            'vehicle_id' => ['required', 'exists:vehicles,id'],
+            'customer_id' => [
+                'required',
+                Rule::exists('customers', 'id')->where('wash_location_id', $locationId),
+            ],
+            'vehicle_id' => [
+                'required',
+                Rule::exists('vehicles', 'id')->where('wash_location_id', $locationId),
+            ],
             'assigned_user_ids' => ['nullable', 'array'],
-            'assigned_user_ids.*' => ['integer', 'distinct', 'exists:users,id'],
+            'assigned_user_ids.*' => [
+                'integer',
+                'distinct',
+                Rule::exists('users', 'id')->where('wash_location_id', $locationId),
+            ],
             'service_ids' => ['required', 'array', 'min:1'],
             'service_ids.*' => [
                 'integer',
                 'distinct',
-                Rule::exists('services', 'id')->where('active', true),
+                Rule::exists('services', 'id')
+                    ->where('wash_location_id', $locationId)
+                    ->where('active', true),
             ],
             'notes' => ['nullable', 'string', 'max:2000'],
         ]);

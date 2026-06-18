@@ -3,6 +3,7 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use App\Support\Access\AccessControl;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -126,6 +127,11 @@ class User extends Authenticatable
         return $this->hasRole(self::ROLE_ADMIN);
     }
 
+    public function isOperator(): bool
+    {
+        return $this->hasRole(self::ROLE_OPERATOR);
+    }
+
     public function isTeamManager(): bool
     {
         return $this->hasAnyRole([self::ROLE_OWNER, self::ROLE_ADMIN]);
@@ -139,6 +145,11 @@ class User extends Authenticatable
             self::ROLE_ATTENDANT,
             self::ROLE_OPERATOR,
         ]);
+    }
+
+    public function canAccess(string $permission): bool
+    {
+        return AccessControl::allows($this, $permission);
     }
 
     public function belongsToWashLocation(WashLocation|int|null $location): bool

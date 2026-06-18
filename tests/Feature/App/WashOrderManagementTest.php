@@ -92,6 +92,7 @@ class WashOrderManagementTest extends TestCase
     {
         $user = User::factory()->create(['role' => 'operator']);
         $washOrder = WashOrder::factory()->create();
+        $washOrder->teamMembers()->attach($user);
 
         $this->actingAs($user)->patch(route('wash-orders.update-status', $washOrder), [
             'status' => WashOrder::STATUS_WASHING,
@@ -110,10 +111,62 @@ class WashOrderManagementTest extends TestCase
         ]);
     }
 
+    public function test_operator_cannot_change_status_when_not_on_wash_order_team(): void
+    {
+        $operator = User::factory()->create(['role' => User::ROLE_OPERATOR]);
+        $washOrder = WashOrder::factory()->create(['status' => WashOrder::STATUS_AWAITING]);
+
+        $this->actingAs($operator)->get(route('wash-orders.show', $washOrder))
+            ->assertOk()
+            ->assertDontSee('Atualizar status')
+            ->assertSee('Status restrito a responsaveis da equipe desta lavagem.');
+
+        $this->actingAs($operator)->patch(route('wash-orders.update-status', $washOrder), [
+            'status' => WashOrder::STATUS_WASHING,
+        ])->assertSessionHasErrors('status');
+
+        $this->assertSame(WashOrder::STATUS_AWAITING, $washOrder->refresh()->status);
+        $this->assertDatabaseMissing('user_wash_order', [
+            'wash_order_id' => $washOrder->id,
+            'user_id' => $operator->id,
+        ]);
+    }
+
+    public function test_wash_order_cannot_be_delivered_without_identified_payment(): void
+    {
+        $admin = User::factory()->create(['role' => User::ROLE_ADMIN]);
+        $washOrder = WashOrder::factory()->create([
+            'status' => WashOrder::STATUS_READY,
+            'payment_status' => WashOrder::PAYMENT_PENDING,
+        ]);
+
+        $this->actingAs($admin)->patch(route('wash-orders.update-status', $washOrder), [
+            'status' => WashOrder::STATUS_DELIVERED,
+        ])->assertSessionHasErrors('status');
+
+        $this->assertSame(WashOrder::STATUS_READY, $washOrder->refresh()->status);
+    }
+
+    public function test_wash_order_can_be_delivered_with_identified_payment(): void
+    {
+        $admin = User::factory()->create(['role' => User::ROLE_ADMIN]);
+        $washOrder = WashOrder::factory()->create([
+            'status' => WashOrder::STATUS_READY,
+            'payment_status' => WashOrder::PAYMENT_PAID,
+        ]);
+
+        $this->actingAs($admin)->patch(route('wash-orders.update-status', $washOrder), [
+            'status' => WashOrder::STATUS_DELIVERED,
+        ])->assertRedirect();
+
+        $this->assertSame(WashOrder::STATUS_DELIVERED, $washOrder->refresh()->status);
+    }
+
     public function test_invalid_wash_order_status_transition_returns_validation_error(): void
     {
         $user = User::factory()->create(['role' => User::ROLE_OPERATOR]);
         $washOrder = WashOrder::factory()->create(['status' => WashOrder::STATUS_AWAITING]);
+        $washOrder->teamMembers()->attach($user);
 
         $this->actingAs($user)->patch(route('wash-orders.update-status', $washOrder), [
             'status' => WashOrder::STATUS_DELIVERED,

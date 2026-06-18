@@ -111,6 +111,15 @@ class WashOrder extends Model
         return self::paymentStatuses()[$this->payment_status] ?? $this->payment_status;
     }
 
+    public function hasIdentifiedPayment(): bool
+    {
+        return in_array($this->payment_status, [
+            self::PAYMENT_PAID,
+            self::PAYMENT_COURTESY,
+            self::PAYMENT_CREDIT_PENDING,
+        ], true);
+    }
+
     public function trackingUrl(): string
     {
         return route('tracking.show', $this->code);

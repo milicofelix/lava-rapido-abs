@@ -48,6 +48,7 @@ function StatusPill({ label, columnKey }) {
 
 function OrderCard({ order, statuses, onMove, canUpdateStatus, columnKey, showOutsideDayBadge }) {
     const nextStatus = nextStatusFor[order.status];
+    const canMoveOrder = canUpdateStatus && order.can_update_status;
     const visibleServices = order.services.slice(0, 2);
     const teamNames = order.team_members?.map((member) => member.name) ?? [];
     const teamLabel = teamNames.length > 0
@@ -67,7 +68,7 @@ function OrderCard({ order, statuses, onMove, canUpdateStatus, columnKey, showOu
     return (
         <article
             className="group rounded-lg border border-slate-200 bg-white p-3 text-slate-950 shadow-sm transition hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-md"
-            draggable={canUpdateStatus}
+            draggable={canMoveOrder}
             onDragStart={handleDragStart}
         >
             <div className="flex items-start justify-between gap-3">
@@ -116,7 +117,7 @@ function OrderCard({ order, statuses, onMove, canUpdateStatus, columnKey, showOu
 
             <div className="mt-3 grid grid-cols-2 gap-1.5">
                 <a href={order.show_url} className="rounded-lg border border-slate-200 px-2 py-1.5 text-center text-xs font-bold text-slate-700 hover:bg-slate-50">Detalhes</a>
-                {nextStatus && canUpdateStatus ? (
+                {nextStatus && canMoveOrder ? (
                     <button
                         type="button"
                         onClick={() => onMove(order.update_url, nextStatus)}
@@ -125,7 +126,9 @@ function OrderCard({ order, statuses, onMove, canUpdateStatus, columnKey, showOu
                         {statuses[nextStatus]}
                     </button>
                 ) : (
-                    <span className="rounded-lg bg-slate-100 px-2 py-1.5 text-center text-xs font-bold text-slate-500">Concluido</span>
+                    <span className="rounded-lg bg-slate-100 px-2 py-1.5 text-center text-xs font-bold text-slate-500">
+                        {nextStatus ? 'Restrito' : 'Concluido'}
+                    </span>
                 )}
             </div>
         </article>
@@ -212,6 +215,7 @@ export default function Kanban({
     const [columns, setColumns] = useState(initialColumns);
     const [selectedDate, setSelectedDate] = useState(filters?.date ?? '');
     const [realtimeUpdated, setRealtimeUpdated] = useState(false);
+    const [statusError, setStatusError] = useState(null);
     const canCreateWashOrder = ['owner', 'admin', 'attendant'].includes(auth?.user?.role);
     const canUpdateStatus = ['owner', 'admin', 'operator'].includes(auth?.user?.role);
     const activePeriod = filters?.period ?? 'today';
@@ -237,14 +241,19 @@ export default function Kanban({
     };
 
     const moveOrder = async (updateUrl, status) => {
-        await window.axios.patch(updateUrl, {
-            status,
-            notes: 'Status atualizado pelo Kanban.',
-        }, {
-            headers: { Accept: 'application/json' },
-        });
+        try {
+            setStatusError(null);
+            await window.axios.patch(updateUrl, {
+                status,
+                notes: 'Status atualizado pelo Kanban.',
+            }, {
+                headers: { Accept: 'application/json' },
+            });
 
-        await refreshFeed();
+            await refreshFeed();
+        } catch (error) {
+            setStatusError(error.response?.data?.message ?? 'Nao foi possivel atualizar o status.');
+        }
     };
 
     useEffect(() => {
@@ -371,6 +380,11 @@ export default function Kanban({
                         </div>
 
                         <div className="grid gap-3 overflow-x-auto pb-4 xl:grid-cols-5">
+                            {statusError && (
+                                <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm font-bold text-red-800 xl:col-span-5">
+                                    {statusError}
+                                </div>
+                            )}
                             {columns.map((column) => (
                                 <Column
                                     key={column.key}

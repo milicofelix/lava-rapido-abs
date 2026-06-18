@@ -28,6 +28,14 @@ class ChangeWashOrderStatusService
             throw new InvalidArgumentException('Transicao de status nao permitida.');
         }
 
+        if ($status === WashOrder::STATUS_DELIVERED && ! $washOrder->hasIdentifiedPayment()) {
+            throw new InvalidArgumentException('Registre o pagamento antes de marcar a lavagem como entregue.');
+        }
+
+        if ($user?->isOperator() && ! $washOrder->teamMembers()->whereKey($user->id)->exists()) {
+            throw new InvalidArgumentException('Operador nao faz parte da equipe desta lavagem.');
+        }
+
         $washOrder->forceFill([
             'status' => $status,
             'completed_at' => WashOrderStatusFlow::isCompletionStatus($status)

@@ -33,4 +33,17 @@ class AuthenticationTest extends TestCase
             ->assertOk()
             ->assertSee('images/autoflow-logo.png', false);
     }
+
+    public function test_operator_login_redirects_to_kanban(): void
+    {
+        User::factory()->create([
+            'email' => 'operador@lavaabs.test',
+            'role' => User::ROLE_OPERATOR,
+        ]);
+
+        $this->post('/login', [
+            'email' => 'operador@lavaabs.test',
+            'password' => 'password',
+        ])->assertRedirect(route('kanban'));
+    }
 }

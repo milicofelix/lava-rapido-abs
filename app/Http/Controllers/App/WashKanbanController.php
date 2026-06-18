@@ -3,8 +3,10 @@
 namespace App\Http\Controllers\App;
 
 use App\Http\Controllers\Controller;
+use App\Models\User;
 use App\Models\WashOrder;
 use App\Support\TenantContext;
+use App\Support\Access\AccessControl;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -109,7 +111,21 @@ class WashKanbanController extends Controller
             'services' => $washOrder->services->map(fn ($service) => [
                 'name' => $service->pivot->service_name,
             ])->all(),
+            'can_update_status' => $this->userCanUpdateOrderStatus($washOrder, TenantContext::user()),
         ];
+    }
+
+    private function userCanUpdateOrderStatus(WashOrder $washOrder, ?User $user): bool
+    {
+        if (! AccessControl::allows($user, AccessControl::UPDATE_WASH_ORDER_STATUS)) {
+            return false;
+        }
+
+        if (! $user?->isOperator()) {
+            return true;
+        }
+
+        return $washOrder->teamMembers->contains('id', $user->id);
     }
 
     public static function columns(): array

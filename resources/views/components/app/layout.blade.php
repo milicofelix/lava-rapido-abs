@@ -25,7 +25,8 @@
 @php($unitDisplayName = $currentLocation?->name ?? ($isSuperAdmin ? 'AutoFlow Admin' : ($appSettings['company_name'] ?? 'AutoFlow')))
 @php($unitStatusLabel = $currentLocation?->accountStatusLabel())
 @php($trialDaysRemaining = $currentLocation?->trialDaysRemaining())
-@php($homeRoute = $isSuperAdmin ? route('super-admin.location-requests.index') : route('dashboard'))
+@php($canAccess = fn (string $permission) => auth()->user()->canAccess($permission))
+@php($homeRoute = $isSuperAdmin ? route('super-admin.location-requests.index') : ($canAccess(\App\Support\Access\AccessControl::VIEW_DASHBOARD) ? route('dashboard') : route('kanban')))
 @php($brandLogoUrl = $currentLocation?->logoUrl() ?? asset('images/autoflow-logo.png'))
 @php($brandLogoAlt = $currentLocation?->name ?? 'AutoFlow')
 <body class="{{ $appTheme === 'dark' ? 'bg-slate-950' : 'bg-[#061832]' }} text-slate-950 antialiased" data-theme="{{ $appTheme }}" data-theme-effective="{{ $appTheme === 'system' ? 'light' : $appTheme }}">
@@ -51,20 +52,20 @@
                     </a>
                 @else
                     @foreach ([
-                        ['route' => 'dashboard', 'label' => 'Painel Principal', 'icon' => 'P', 'roles' => null],
-                        ['route' => 'wash-orders.index', 'label' => 'Lavagens', 'icon' => 'L', 'roles' => null],
-                        ['route' => 'kanban', 'label' => 'Kanban de Lavagens', 'icon' => 'K', 'roles' => null],
-                        ['route' => 'history.index', 'label' => 'Historico', 'icon' => 'H', 'roles' => null],
-                        ['route' => 'customers.index', 'label' => 'Clientes', 'icon' => 'C', 'roles' => ['owner', 'admin', 'attendant']],
-                        ['route' => 'vehicles.index', 'label' => 'Veiculos', 'icon' => 'V', 'roles' => ['owner', 'admin', 'attendant']],
-                        ['route' => 'services.index', 'label' => 'Servicos', 'icon' => 'S', 'roles' => ['owner', 'admin']],
-                        ['route' => 'employees.index', 'label' => 'Equipe', 'icon' => 'E', 'roles' => ['owner', 'admin']],
-                        ['route' => 'audit-logs.index', 'label' => 'Auditoria', 'icon' => 'A', 'roles' => ['owner', 'admin']],
-                        ['route' => 'finance.index', 'label' => 'Financeiro', 'icon' => '$', 'roles' => ['owner', 'admin']],
-                        ['route' => 'finance.cash-registers.index', 'label' => 'Caixa', 'icon' => 'CX', 'roles' => ['owner', 'admin'], 'module' => 'module_cash_register'],
-                        ['route' => 'finance.credit-receivables.index', 'label' => 'Fiado', 'icon' => 'F$', 'roles' => ['owner', 'admin'], 'module' => 'module_credit_receivables'],
+                        ['route' => 'dashboard', 'label' => 'Painel Principal', 'icon' => 'P', 'permission' => \App\Support\Access\AccessControl::VIEW_DASHBOARD],
+                        ['route' => 'wash-orders.index', 'label' => 'Lavagens', 'icon' => 'L', 'permission' => \App\Support\Access\AccessControl::CREATE_WASH_ORDER],
+                        ['route' => 'kanban', 'label' => 'Kanban de Lavagens', 'icon' => 'K', 'permission' => \App\Support\Access\AccessControl::VIEW_KANBAN],
+                        ['route' => 'history.index', 'label' => 'Historico', 'icon' => 'H', 'permission' => \App\Support\Access\AccessControl::VIEW_OPERATIONAL_HISTORY],
+                        ['route' => 'customers.index', 'label' => 'Clientes', 'icon' => 'C', 'permission' => \App\Support\Access\AccessControl::MANAGE_CUSTOMERS],
+                        ['route' => 'vehicles.index', 'label' => 'Veiculos', 'icon' => 'V', 'permission' => \App\Support\Access\AccessControl::MANAGE_VEHICLES],
+                        ['route' => 'services.index', 'label' => 'Servicos', 'icon' => 'S', 'permission' => \App\Support\Access\AccessControl::MANAGE_SERVICES],
+                        ['route' => 'employees.index', 'label' => 'Equipe', 'icon' => 'E', 'permission' => \App\Support\Access\AccessControl::MANAGE_EMPLOYEES],
+                        ['route' => 'audit-logs.index', 'label' => 'Auditoria', 'icon' => 'A', 'permission' => \App\Support\Access\AccessControl::VIEW_AUDIT_LOGS],
+                        ['route' => 'finance.index', 'label' => 'Financeiro', 'icon' => '$', 'permission' => \App\Support\Access\AccessControl::VIEW_FINANCE],
+                        ['route' => 'finance.cash-registers.index', 'label' => 'Caixa', 'icon' => 'CX', 'permission' => \App\Support\Access\AccessControl::MANAGE_CASH_REGISTER, 'module' => 'module_cash_register'],
+                        ['route' => 'finance.credit-receivables.index', 'label' => 'Fiado', 'icon' => 'F$', 'permission' => \App\Support\Access\AccessControl::MANAGE_CREDIT_RECEIVABLES, 'module' => 'module_credit_receivables'],
                     ] as $item)
-                        @continue($item['roles'] && ! auth()->user()->hasAnyRole($item['roles']))
+                        @continue(! $canAccess($item['permission']))
                         @continue(($item['module'] ?? null) && empty($appSettings[$item['module']]))
                         <a href="{{ route($item['route']) }}" class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition {{ request()->routeIs($item['route']) || request()->routeIs(str_replace('.index', '.*', $item['route'])) ? 'bg-blue-600 text-white shadow-lg shadow-blue-950/30' : 'text-slate-200 hover:bg-white/10 hover:text-white' }}">
                             <span class="flex h-6 w-6 shrink-0 items-center justify-center rounded-md border border-white/15 bg-white/10 text-[11px] font-bold">{{ $item['icon'] }}</span>
@@ -73,11 +74,11 @@
                     @endforeach
 
                     @foreach ([
-                        ['label' => 'Relatorios', 'icon' => 'R', 'href' => auth()->user()->isTeamManager() ? route('finance.index') : route('dashboard'), 'roles' => ['owner', 'admin']],
-                        ['label' => 'Assinatura', 'icon' => 'A', 'href' => route('subscriptions.show'), 'roles' => ['owner']],
-                        ['label' => 'Configuracoes', 'icon' => 'G', 'href' => route('settings.edit'), 'roles' => ['owner', 'admin']],
+                        ['label' => 'Relatorios', 'icon' => 'R', 'href' => route('finance.index'), 'permission' => \App\Support\Access\AccessControl::VIEW_FINANCE],
+                        ['label' => 'Assinatura', 'icon' => 'A', 'href' => route('subscriptions.show'), 'permission' => \App\Support\Access\AccessControl::MANAGE_SUBSCRIPTION],
+                        ['label' => 'Configuracoes', 'icon' => 'G', 'href' => route('settings.edit'), 'permission' => \App\Support\Access\AccessControl::MANAGE_SETTINGS],
                     ] as $item)
-                        @continue(($item['roles'] ?? null) && ! auth()->user()->hasAnyRole($item['roles']))
+                        @continue(! $canAccess($item['permission']))
                         <a href="{{ $item['href'] }}" class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-slate-200 transition hover:bg-white/10 hover:text-white">
                             <span class="flex h-6 w-6 shrink-0 items-center justify-center rounded-md border border-white/15 bg-white/10 text-[11px] font-bold">{{ $item['icon'] }}</span>
                             {{ $item['label'] }}
@@ -170,27 +171,47 @@
                         <a href="{{ route('super-admin.locations.index') }}" class="shrink-0 rounded-lg border border-slate-200 px-3 py-1.5 text-sm font-medium">Unidades</a>
                         <a href="{{ route('super-admin.plans.index') }}" class="shrink-0 rounded-lg border border-slate-200 px-3 py-1.5 text-sm font-medium">Planos</a>
                     @else
-                        <a href="{{ route('dashboard') }}" class="shrink-0 rounded-lg border border-slate-200 px-3 py-1.5 text-sm font-medium">Painel</a>
-                        <a href="{{ route('wash-orders.index') }}" class="shrink-0 rounded-lg border border-slate-200 px-3 py-1.5 text-sm font-medium">Lavagens</a>
-                        <a href="{{ route('kanban') }}" class="shrink-0 rounded-lg border border-slate-200 px-3 py-1.5 text-sm font-medium">Kanban</a>
-                        <a href="{{ route('history.index') }}" class="shrink-0 rounded-lg border border-slate-200 px-3 py-1.5 text-sm font-medium">Historico</a>
-                        @if (auth()->user()->hasAnyRole([\App\Models\User::ROLE_OWNER, \App\Models\User::ROLE_ADMIN, \App\Models\User::ROLE_ATTENDANT]))
+                        @if ($canAccess(\App\Support\Access\AccessControl::VIEW_DASHBOARD))
+                            <a href="{{ route('dashboard') }}" class="shrink-0 rounded-lg border border-slate-200 px-3 py-1.5 text-sm font-medium">Painel</a>
+                        @endif
+                        @if ($canAccess(\App\Support\Access\AccessControl::CREATE_WASH_ORDER))
+                            <a href="{{ route('wash-orders.index') }}" class="shrink-0 rounded-lg border border-slate-200 px-3 py-1.5 text-sm font-medium">Lavagens</a>
+                        @endif
+                        @if ($canAccess(\App\Support\Access\AccessControl::VIEW_KANBAN))
+                            <a href="{{ route('kanban') }}" class="shrink-0 rounded-lg border border-slate-200 px-3 py-1.5 text-sm font-medium">Kanban</a>
+                        @endif
+                        @if ($canAccess(\App\Support\Access\AccessControl::VIEW_OPERATIONAL_HISTORY))
+                            <a href="{{ route('history.index') }}" class="shrink-0 rounded-lg border border-slate-200 px-3 py-1.5 text-sm font-medium">Historico</a>
+                        @endif
+                        @if ($canAccess(\App\Support\Access\AccessControl::MANAGE_CUSTOMERS))
                             <a href="{{ route('customers.index') }}" class="shrink-0 rounded-lg border border-slate-200 px-3 py-1.5 text-sm font-medium">Clientes</a>
+                        @endif
+                        @if ($canAccess(\App\Support\Access\AccessControl::MANAGE_VEHICLES))
                             <a href="{{ route('vehicles.index') }}" class="shrink-0 rounded-lg border border-slate-200 px-3 py-1.5 text-sm font-medium">Veiculos</a>
                         @endif
-                        @if (auth()->user()->isTeamManager())
+                        @if ($canAccess(\App\Support\Access\AccessControl::VIEW_FINANCE))
                             <a href="{{ route('finance.index') }}" class="shrink-0 rounded-lg border border-slate-200 px-3 py-1.5 text-sm font-medium">Financeiro</a>
+                        @endif
+                        @if ($canAccess(\App\Support\Access\AccessControl::MANAGE_CASH_REGISTER))
                             @if (! empty($appSettings['module_cash_register']))
                                 <a href="{{ route('finance.cash-registers.index') }}" class="shrink-0 rounded-lg border border-slate-200 px-3 py-1.5 text-sm font-medium">Caixa</a>
                             @endif
+                        @endif
+                        @if ($canAccess(\App\Support\Access\AccessControl::MANAGE_CREDIT_RECEIVABLES))
                             @if (! empty($appSettings['module_credit_receivables']))
                                 <a href="{{ route('finance.credit-receivables.index') }}" class="shrink-0 rounded-lg border border-slate-200 px-3 py-1.5 text-sm font-medium">Fiado</a>
                             @endif
+                        @endif
+                        @if ($canAccess(\App\Support\Access\AccessControl::MANAGE_EMPLOYEES))
                             <a href="{{ route('employees.index') }}" class="shrink-0 rounded-lg border border-slate-200 px-3 py-1.5 text-sm font-medium">Equipe</a>
+                        @endif
+                        @if ($canAccess(\App\Support\Access\AccessControl::VIEW_AUDIT_LOGS))
                             <a href="{{ route('audit-logs.index') }}" class="shrink-0 rounded-lg border border-slate-200 px-3 py-1.5 text-sm font-medium">Auditoria</a>
-                            @if (auth()->user()->isOwner())
-                                <a href="{{ route('subscriptions.show') }}" class="shrink-0 rounded-lg border border-slate-200 px-3 py-1.5 text-sm font-medium">Assinatura</a>
-                            @endif
+                        @endif
+                        @if ($canAccess(\App\Support\Access\AccessControl::MANAGE_SUBSCRIPTION))
+                            <a href="{{ route('subscriptions.show') }}" class="shrink-0 rounded-lg border border-slate-200 px-3 py-1.5 text-sm font-medium">Assinatura</a>
+                        @endif
+                        @if ($canAccess(\App\Support\Access\AccessControl::MANAGE_SETTINGS))
                             <a href="{{ route('settings.edit') }}" class="shrink-0 rounded-lg border border-slate-200 px-3 py-1.5 text-sm font-medium">Configuracoes</a>
                         @endif
                     @endif

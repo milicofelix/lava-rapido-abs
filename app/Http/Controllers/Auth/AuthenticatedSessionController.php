@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use App\Models\User;
+use App\Support\Access\AccessControl;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 
@@ -31,9 +32,13 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
-        $fallbackRoute = $request->user()?->hasRole(User::ROLE_SUPER_ADMIN)
-            ? route('super-admin.location-requests.index')
-            : route('dashboard');
+        $user = $request->user();
+        $fallbackRoute = match (true) {
+            $user?->hasRole(User::ROLE_SUPER_ADMIN) => route('super-admin.location-requests.index'),
+            AccessControl::allows($user, AccessControl::VIEW_DASHBOARD) => route('dashboard'),
+            AccessControl::allows($user, AccessControl::VIEW_KANBAN) => route('kanban'),
+            default => route('login'),
+        };
 
         return redirect()->intended($fallbackRoute);
     }
