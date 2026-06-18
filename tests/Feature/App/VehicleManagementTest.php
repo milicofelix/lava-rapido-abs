@@ -31,4 +31,44 @@ class VehicleManagementTest extends TestCase
             'model' => 'Corolla',
         ]);
     }
+
+    public function test_vehicle_form_uses_brand_and_dependent_model_selects(): void
+    {
+        $user = User::factory()->create();
+        Customer::factory()->create();
+
+        $this->actingAs($user)
+            ->get(route('vehicles.create'))
+            ->assertOk()
+            ->assertSee('data-vehicle-brand', false)
+            ->assertSee('data-vehicle-model', false)
+            ->assertSee('data-vehicle-models', false)
+            ->assertSee('Toyota')
+            ->assertSee('Corolla')
+            ->assertSee('HB20')
+            ->assertSee('Preenchido automaticamente conforme o modelo.');
+    }
+
+    public function test_vehicle_model_must_belong_to_selected_brand(): void
+    {
+        $user = User::factory()->create();
+        $customer = Customer::factory()->create();
+
+        $this->actingAs($user)
+            ->from(route('vehicles.create'))
+            ->post(route('vehicles.store'), [
+                'customer_id' => $customer->id,
+                'plate' => 'abc1d23',
+                'model' => 'HB20',
+                'brand' => 'Fiat',
+                'color' => 'Prata',
+                'type' => 'carro',
+            ])
+            ->assertRedirect(route('vehicles.create'))
+            ->assertSessionHasErrors('model');
+
+        $this->assertDatabaseMissing('vehicles', [
+            'plate' => 'ABC1D23',
+        ]);
+    }
 }

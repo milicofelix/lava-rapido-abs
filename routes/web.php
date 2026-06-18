@@ -9,6 +9,7 @@ use App\Http\Controllers\App\EmployeeController;
 use App\Http\Controllers\App\FinanceController;
 use App\Http\Controllers\App\OwnerSubscriptionController;
 use App\Http\Controllers\App\PaymentController;
+use App\Http\Controllers\App\ScheduleController;
 use App\Http\Controllers\App\ServiceController;
 use App\Http\Controllers\App\SettingsController;
 use App\Http\Controllers\App\SubscriptionBlockedController;
@@ -88,6 +89,9 @@ Route::middleware('auth')->group(function () {
         Route::get('historico/exportar', [WashHistoryController::class, 'export'])
             ->middleware('permission:'.AccessControl::VIEW_OPERATIONAL_HISTORY)
             ->name('history.export');
+        Route::get('agenda', ScheduleController::class)
+            ->middleware('permission:'.AccessControl::VIEW_SCHEDULE)
+            ->name('schedule.index');
 
         Route::middleware('permission:'.AccessControl::CREATE_WASH_ORDER)->group(function () {
             Route::get('lavagens/create', [WashOrderController::class, 'create'])->name('wash-orders.create');

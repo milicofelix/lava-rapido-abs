@@ -1,0 +1,131 @@
+<?php
+
+namespace Tests\Feature\App;
+
+use App\Models\AppSetting;
+use App\Models\CashRegister;
+use App\Models\User;
+use App\Models\WashOrder;
+use App\Models\WashLocation;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\TestCase;
+
+class AppNotificationCenterTest extends TestCase
+{
+    use RefreshDatabase;
+
+    public function test_owner_sees_trial_expiration_notification(): void
+    {
+        $location = WashLocation::factory()->create([
+            'account_status' => WashLocation::ACCOUNT_STATUS_TRIAL,
+            'subscription_status' => WashLocation::ACCOUNT_STATUS_TRIAL,
+            'trial_ends_at' => now()->addDays(3),
+            'subscription_ends_at' => null,
+        ]);
+        $owner = User::factory()->create([
+            'role' => User::ROLE_OWNER,
+            'wash_location_id' => $location->id,
+        ]);
+
+        $this->actingAs($owner)
+            ->get(route('dashboard'))
+            ->assertOk()
+            ->assertSee('Notificacoes')
+            ->assertSee('Trial expira em 3 dias')
+            ->assertSee('Escolher plano');
+    }
+
+    public function test_admin_sees_open_cash_register_notification_when_module_is_enabled(): void
+    {
+        $location = WashLocation::factory()->create([
+            'account_status' => WashLocation::ACCOUNT_STATUS_ACTIVE,
+            'subscription_status' => WashLocation::ACCOUNT_STATUS_ACTIVE,
+            'subscription_ends_at' => now()->addMonth(),
+        ]);
+        $admin = User::factory()->create([
+            'role' => User::ROLE_ADMIN,
+            'wash_location_id' => $location->id,
+        ]);
+        AppSetting::setValue('module_cash_register', true);
+        CashRegister::factory()->create([
+            'wash_location_id' => $location->id,
+            'opened_by_user_id' => $admin->id,
+            'opened_at' => now()->setTime(8, 30),
+        ]);
+
+        $this->actingAs($admin)
+            ->get(route('dashboard'))
+            ->assertOk()
+            ->assertSee('Caixa aberto')
+            ->assertSee('Ver caixa');
+    }
+
+    public function test_owner_sees_in_progress_wash_notification_for_today(): void
+    {
+        $location = WashLocation::factory()->create([
+            'account_status' => WashLocation::ACCOUNT_STATUS_ACTIVE,
+            'subscription_status' => WashLocation::ACCOUNT_STATUS_ACTIVE,
+            'subscription_ends_at' => now()->addMonth(),
+        ]);
+        $owner = User::factory()->create([
+            'role' => User::ROLE_OWNER,
+            'wash_location_id' => $location->id,
+        ]);
+        WashOrder::factory()->create([
+            'wash_location_id' => $location->id,
+            'entered_at' => now(),
+            'status' => WashOrder::STATUS_WASHING,
+        ]);
+        WashOrder::factory()->create([
+            'wash_location_id' => $location->id,
+            'entered_at' => now()->subDay(),
+            'status' => WashOrder::STATUS_WASHING,
+        ]);
+
+        $this->actingAs($owner)
+            ->get(route('dashboard'))
+            ->assertOk()
+            ->assertSee('1 lavagem em andamento')
+            ->assertSee('Abrir Kanban');
+    }
+
+    public function test_attendant_does_not_see_subscription_notification(): void
+    {
+        $location = WashLocation::factory()->create([
+            'account_status' => WashLocation::ACCOUNT_STATUS_TRIAL,
+            'subscription_status' => WashLocation::ACCOUNT_STATUS_TRIAL,
+            'trial_ends_at' => now()->addDays(2),
+            'subscription_ends_at' => null,
+        ]);
+        $attendant = User::factory()->create([
+            'role' => User::ROLE_ATTENDANT,
+            'wash_location_id' => $location->id,
+        ]);
+
+        $this->actingAs($attendant)
+            ->get(route('dashboard'))
+            ->assertOk()
+            ->assertDontSee('Trial expira em 2 dias')
+            ->assertDontSee('Trial em andamento');
+    }
+
+    public function test_owner_sees_expired_subscription_notification_on_subscription_page(): void
+    {
+        $location = WashLocation::factory()->create([
+            'account_status' => WashLocation::ACCOUNT_STATUS_EXPIRED,
+            'subscription_status' => WashLocation::ACCOUNT_STATUS_EXPIRED,
+            'trial_ends_at' => now()->subDay(),
+            'subscription_ends_at' => null,
+        ]);
+        $owner = User::factory()->create([
+            'role' => User::ROLE_OWNER,
+            'wash_location_id' => $location->id,
+        ]);
+
+        $this->actingAs($owner)
+            ->get(route('subscriptions.show'))
+            ->assertOk()
+            ->assertSee('Assinatura expirada')
+            ->assertSee('Ver assinatura');
+    }
+}

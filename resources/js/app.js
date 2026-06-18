@@ -142,7 +142,17 @@ if (inertiaRoot && inertiaPage) {
     const pages = import.meta.glob('./Pages/**/*.jsx');
 
     createInertiaApp({
-        resolve: async (name) => (await pages[`./Pages/${name}.jsx`]()).default,
+        resolve: async (name) => {
+            const page = pages[`./Pages/${name}.jsx`];
+
+            if (!page) {
+                throw new Error(`Pagina Inertia nao encontrada: ${name}`);
+            }
+
+            const module = typeof page === 'function' ? await page() : page;
+
+            return module.default;
+        },
         setup({ el, App, props }) {
             createRoot(el).render(createElement(App, props));
         },

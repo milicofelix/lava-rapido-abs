@@ -77,6 +77,53 @@ class ManualWhatsappNotificationTest extends TestCase
         $this->assertNull($notification->refresh()->manually_sent_at);
     }
 
+    public function test_attendant_can_prepare_wash_started_template(): void
+    {
+        $user = User::factory()->create(['role' => User::ROLE_ATTENDANT]);
+        $washOrder = WashOrder::factory()->create([
+            'status' => WashOrder::STATUS_WASHING,
+        ]);
+        $washOrder->customer->update([
+            'name' => 'Maria Cliente',
+            'phone' => '(11) 97777-6666',
+        ]);
+
+        $this->actingAs($user)
+            ->post(route('wash-orders.notifications.whatsapp-manual.store', $washOrder), [
+                'template_key' => CustomerNotification::TEMPLATE_WASH_STARTED,
+            ])
+            ->assertRedirect(route('wash-orders.show', $washOrder));
+
+        $notification = CustomerNotification::first();
+
+        $this->assertSame(CustomerNotification::TEMPLATE_WASH_STARTED, $notification->template_key);
+        $this->assertStringContainsString('iniciamos a lavagem', $notification->message);
+        $this->assertStringContainsString($washOrder->trackingUrl(), $notification->message);
+    }
+
+    public function test_attendant_can_prepare_promotion_template_with_notes(): void
+    {
+        $user = User::factory()->create(['role' => User::ROLE_ATTENDANT]);
+        $washOrder = WashOrder::factory()->create();
+        $washOrder->customer->update([
+            'name' => 'Carlos Cliente',
+            'phone' => '(11) 96666-5555',
+        ]);
+
+        $this->actingAs($user)
+            ->post(route('wash-orders.notifications.whatsapp-manual.store', $washOrder), [
+                'template_key' => CustomerNotification::TEMPLATE_PROMOTION,
+                'notes' => '10% de desconto na proxima lavagem completa.',
+            ])
+            ->assertRedirect(route('wash-orders.show', $washOrder));
+
+        $notification = CustomerNotification::first();
+
+        $this->assertSame(CustomerNotification::TEMPLATE_PROMOTION, $notification->template_key);
+        $this->assertStringContainsString('condicao especial', $notification->message);
+        $this->assertStringContainsString('10% de desconto na proxima lavagem completa.', $notification->message);
+    }
+
     public function test_wash_order_detail_shows_manual_notification_area(): void
     {
         $user = User::factory()->create(['role' => User::ROLE_ADMIN]);
@@ -87,6 +134,9 @@ class ManualWhatsappNotificationTest extends TestCase
             ->assertOk()
             ->assertSee('Notificacao manual')
             ->assertSee('Prepare a mensagem e envie manualmente pelo WhatsApp')
+            ->assertSee('Lavagem iniciada')
+            ->assertSee('Lavagem concluida')
+            ->assertSee('Promocao')
             ->assertSee('Preparar mensagem');
     }
 }

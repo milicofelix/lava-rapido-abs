@@ -43,16 +43,25 @@ class DashboardController extends Controller
         $monthlyWashOrders = TenantContext::scopeWashOrders(WashOrder::query())
             ->whereBetween('entered_at', [$monthStart->copy()->startOfDay(), $monthEnd->copy()->endOfDay()])
             ->count();
+        $inProgressStatuses = [
+            WashOrder::STATUS_PREPARING,
+            WashOrder::STATUS_WASHING,
+            WashOrder::STATUS_VACUUMING,
+            WashOrder::STATUS_WAXING,
+            WashOrder::STATUS_FINISHING,
+        ];
 
         return view('app.dashboard', [
+            'greeting' => $this->greetingFor(now()),
             'currentLocation' => $currentLocation,
             'customerCount' => TenantContext::scopeCustomers(Customer::query())->count(),
             'vehicleCount' => TenantContext::scopeVehicles(Vehicle::query())->count(),
             'serviceCount' => TenantContext::scopeServices(Service::query())->count(),
             'activeServiceCount' => TenantContext::scopeServices(Service::query())->where('active', true)->count(),
             'washOrdersToday' => TenantContext::scopeWashOrders(WashOrder::query())->whereDate('entered_at', $today)->count(),
-            'activeWashOrders' => TenantContext::scopeWashOrders(WashOrder::query())->whereIn('status', WashOrder::activeStatuses())->count(),
-            'readyWashOrders' => TenantContext::scopeWashOrders(WashOrder::query())->where('status', WashOrder::STATUS_READY)->count(),
+            'activeWashOrders' => TenantContext::scopeWashOrders(WashOrder::query())->whereDate('entered_at', $today)->whereIn('status', $inProgressStatuses)->count(),
+            'readyWashOrders' => TenantContext::scopeWashOrders(WashOrder::query())->whereDate('entered_at', $today)->where('status', WashOrder::STATUS_READY)->count(),
+            'deliveredWashOrdersToday' => TenantContext::scopeWashOrders(WashOrder::query())->whereDate('entered_at', $today)->where('status', WashOrder::STATUS_DELIVERED)->count(),
             'todayRevenue' => $todayRevenue,
             'ticketAverage' => $todayPaymentCount > 0 ? $todayRevenue / $todayPaymentCount : 0,
             'monthLabel' => $today->translatedFormat('F Y'),
@@ -234,7 +243,6 @@ class DashboardController extends Controller
             ->get();
 
         return collect(WashKanbanController::columns())
-            ->take(4)
             ->map(function (array $column) use ($washOrders) {
                 $orders = $washOrders->whereIn('status', $column['statuses'])->values();
 
@@ -308,5 +316,16 @@ class DashboardController extends Controller
     {
         return collect(range(0, (int) $start->diffInDays($end)))
             ->map(fn (int $offset) => $start->copy()->addDays($offset));
+    }
+
+    private function greetingFor(Carbon $date): string
+    {
+        $hour = (int) $date->format('H');
+
+        return match (true) {
+            $hour >= 5 && $hour < 12 => 'Bom dia',
+            $hour >= 12 && $hour < 18 => 'Boa tarde',
+            default => 'Boa noite',
+        };
     }
 }

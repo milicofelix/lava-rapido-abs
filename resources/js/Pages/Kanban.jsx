@@ -288,9 +288,15 @@ export default function Kanban({
                 <header className="sticky top-0 z-20 border-b border-slate-200 bg-white/95 px-4 py-4 backdrop-blur sm:px-6 lg:px-8">
                     <div className="flex flex-wrap items-center justify-between gap-4">
                         <div className="flex items-center gap-4">
-                            <a href={dashboardUrl} className="hidden rounded-xl border border-slate-200 bg-white px-3 py-2 shadow-sm sm:block">
-                                <img src={logoUrl} alt="AutoFlow" className="w-28" />
-                            </a>
+                            {dashboardUrl ? (
+                                <a href={dashboardUrl} className="hidden rounded-xl border border-slate-200 bg-white px-3 py-2 shadow-sm sm:block">
+                                    <img src={logoUrl} alt="AutoFlow" className="w-28" />
+                                </a>
+                            ) : (
+                                <div className="hidden rounded-xl border border-slate-200 bg-white px-3 py-2 shadow-sm sm:block">
+                                    <img src={logoUrl} alt="AutoFlow" className="w-28" />
+                                </div>
+                            )}
                             <div>
                                 <div className="flex items-center gap-3">
                                     <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-50 text-sm font-black text-blue-700">K</span>
@@ -303,7 +309,9 @@ export default function Kanban({
                             </div>
                         </div>
                         <div className="flex flex-wrap gap-2">
-                            <a href={dashboardUrl} className="rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-700 shadow-sm hover:bg-slate-50">Dashboard</a>
+                            {dashboardUrl && (
+                                <a href={dashboardUrl} className="rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-700 shadow-sm hover:bg-slate-50">Dashboard</a>
+                            )}
                             {canCreateWashOrder && (
                                 <a href={createUrl} className="rounded-lg bg-blue-700 px-4 py-2 text-sm font-bold text-white shadow-sm hover:bg-blue-800">Nova lavagem</a>
                             )}

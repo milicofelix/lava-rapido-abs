@@ -66,7 +66,7 @@ class WashKanbanController extends Controller
             'feedUrl' => route('kanban.feed', $queryFilters),
             'filterUrl' => route('kanban'),
             'createUrl' => route('wash-orders.create'),
-            'dashboardUrl' => route('dashboard'),
+            'dashboardUrl' => AccessControl::allows(TenantContext::user(), AccessControl::VIEW_DASHBOARD) ? route('dashboard') : null,
             'logoUrl' => $currentLocation?->logoUrl() ?? asset('images/autoflow-logo.png'),
             'currentLocation' => $currentLocation ? [
                 'id' => $currentLocation->id,

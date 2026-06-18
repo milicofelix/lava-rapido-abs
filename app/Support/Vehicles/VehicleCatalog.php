@@ -1,48 +1,14 @@
 <?php
 
-namespace Database\Factories;
+namespace App\Support\Vehicles;
 
-use App\Models\Customer;
-use App\Models\Vehicle;
-use App\Models\WashLocation;
-use App\Support\Vehicles\VehicleCatalog;
-use Illuminate\Database\Eloquent\Factories\Factory;
-
-/** @extends Factory<Vehicle> */
-class VehicleFactory extends Factory
+class VehicleCatalog
 {
-    public function configure(): static
-    {
-        return $this->afterMaking(function (Vehicle $vehicle): void {
-            if ($vehicle->customer_id !== null && $vehicle->customer !== null) {
-                $vehicle->wash_location_id = $vehicle->customer->wash_location_id;
-            }
-        });
-    }
-
-    public function definition(): array
-    {
-        $vehicle = fake()->randomElement(VehicleCatalog::all());
-
-        return [
-            'wash_location_id' => WashLocation::query()->value('id') ?? WashLocation::factory(),
-            'customer_id' => Customer::factory(),
-            'plate' => strtoupper(fake()->unique()->bothify('???#?##')),
-            'model' => $vehicle['model'],
-            'brand' => $vehicle['brand'],
-            'color' => fake()->randomElement(['Branco', 'Preto', 'Prata', 'Cinza', 'Vermelho', 'Azul', 'Marrom', 'Verde']),
-            'type' => $vehicle['type'],
-            'notes' => fake()->optional()->sentence(),
-        ];
-    }
-
     /**
      * @return array<int, array{brand: string, model: string, type: string}>
      */
-    public static function catalog(): array
+    public static function all(): array
     {
-        return VehicleCatalog::all();
-
         return [
             ['brand' => 'Fiat', 'model' => 'Mobi', 'type' => 'carro'],
             ['brand' => 'Fiat', 'model' => 'Argo', 'type' => 'carro'],
@@ -130,5 +96,45 @@ class VehicleFactory extends Factory
             ['brand' => 'BMW', 'model' => 'G 310 GS', 'type' => 'moto'],
             ['brand' => 'Royal Enfield', 'model' => 'Meteor 350', 'type' => 'moto'],
         ];
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    public static function brands(): array
+    {
+        return collect(self::all())
+            ->pluck('brand')
+            ->unique()
+            ->sort()
+            ->values()
+            ->all();
+    }
+
+    /**
+     * @return array<string, array<int, array{model: string, type: string}>>
+     */
+    public static function modelsByBrand(): array
+    {
+        return collect(self::all())
+            ->groupBy('brand')
+            ->map(fn ($models) => $models
+                ->sortBy('model')
+                ->map(fn (array $vehicle) => [
+                    'model' => $vehicle['model'],
+                    'type' => $vehicle['type'],
+                ])
+                ->values()
+                ->all())
+            ->sortKeys()
+            ->all();
+    }
+
+    public static function typeFor(string $brand, string $model): ?string
+    {
+        $vehicle = collect(self::all())
+            ->first(fn (array $vehicle) => $vehicle['brand'] === $brand && $vehicle['model'] === $model);
+
+        return $vehicle['type'] ?? null;
     }
 }

@@ -57,6 +57,9 @@ class ProfilePermissionTest extends TestCase
         $washOrder->teamMembers()->attach($operator);
 
         $this->actingAs($operator)->get(route('kanban'))->assertOk();
+        $this->actingAs($operator)->get(route('kanban'))
+            ->assertOk()
+            ->assertDontSee('href="'.route('dashboard').'"', false);
 
         $this->actingAs($operator)->get(route('wash-orders.show', $washOrder))
             ->assertOk()

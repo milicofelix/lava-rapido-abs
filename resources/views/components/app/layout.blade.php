@@ -26,6 +26,7 @@
 @php($unitStatusLabel = $currentLocation?->accountStatusLabel())
 @php($trialDaysRemaining = $currentLocation?->trialDaysRemaining())
 @php($canAccess = fn (string $permission) => auth()->user()->canAccess($permission))
+@php($appNotifications = \App\Support\AppNotificationCenter::for(auth()->user()))
 @php($homeRoute = $isSuperAdmin ? route('super-admin.location-requests.index') : ($canAccess(\App\Support\Access\AccessControl::VIEW_DASHBOARD) ? route('dashboard') : route('kanban')))
 @php($brandLogoUrl = $currentLocation?->logoUrl() ?? asset('images/autoflow-logo.png'))
 @php($brandLogoAlt = $currentLocation?->name ?? 'AutoFlow')
@@ -55,6 +56,7 @@
                         ['route' => 'dashboard', 'label' => 'Painel Principal', 'icon' => 'P', 'permission' => \App\Support\Access\AccessControl::VIEW_DASHBOARD],
                         ['route' => 'wash-orders.index', 'label' => 'Lavagens', 'icon' => 'L', 'permission' => \App\Support\Access\AccessControl::CREATE_WASH_ORDER],
                         ['route' => 'kanban', 'label' => 'Kanban de Lavagens', 'icon' => 'K', 'permission' => \App\Support\Access\AccessControl::VIEW_KANBAN],
+                        ['route' => 'schedule.index', 'label' => 'Agenda', 'icon' => 'AG', 'permission' => \App\Support\Access\AccessControl::VIEW_SCHEDULE],
                         ['route' => 'history.index', 'label' => 'Historico', 'icon' => 'H', 'permission' => \App\Support\Access\AccessControl::VIEW_OPERATIONAL_HISTORY],
                         ['route' => 'customers.index', 'label' => 'Clientes', 'icon' => 'C', 'permission' => \App\Support\Access\AccessControl::MANAGE_CUSTOMERS],
                         ['route' => 'vehicles.index', 'label' => 'Veiculos', 'icon' => 'V', 'permission' => \App\Support\Access\AccessControl::MANAGE_VEHICLES],
@@ -103,7 +105,7 @@
             <header class="sticky top-0 z-20 border-b {{ $appTheme === 'dark' ? 'border-slate-800 bg-slate-950/95' : 'border-slate-200 bg-white/95' }} px-4 py-3 backdrop-blur sm:px-6 lg:px-7">
                 <div class="flex flex-wrap items-center justify-between gap-3">
                     <div class="flex min-w-0 items-center gap-3">
-                        <button type="button" data-sidebar-toggle aria-label="Ocultar menu" title="Ocultar menu" aria-expanded="true" class="hidden h-10 w-10 items-center justify-center rounded-lg border border-slate-200 text-slate-700 shadow-sm transition hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-100 lg:inline-flex">
+                        <button type="button" data-sidebar-toggle aria-label="Ocultar menu" title="Ocultar menu" aria-expanded="true" class="hidden h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700 shadow-sm transition hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-100 lg:inline-flex">
                             <svg data-sidebar-icon-open xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                                 <rect x="3" y="4" width="18" height="16" rx="2"></rect>
                                 <path d="M9 4v16"></path>
@@ -115,7 +117,7 @@
                                 <path d="M4 18h16"></path>
                             </svg>
                         </button>
-                        <div class="min-w-0">
+                        <div class="min-w-0 py-0.5">
                             <div class="flex flex-wrap items-center gap-2">
                                 <h1 class="truncate text-lg font-bold {{ $appTheme === 'dark' ? 'text-white' : 'text-slate-950' }} sm:text-xl">{{ $heading ?? 'Painel Principal' }}</h1>
                                 @if ($currentLocation)
@@ -129,8 +131,8 @@
                     </div>
 
                     <div class="flex min-w-0 items-center gap-2">
-                        <div class="hidden max-w-[18rem] items-center gap-3 rounded-xl border {{ $appTheme === 'dark' ? 'border-slate-700 bg-slate-900' : 'border-slate-200 bg-white' }} px-3 py-2 shadow-sm md:flex">
-                            <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg {{ $currentLocation ? 'bg-blue-50 text-blue-700' : 'bg-slate-100 text-slate-700' }} text-xs font-black">{{ $currentLocation ? strtoupper(substr($currentLocation->name, 0, 1)) : 'A' }}</span>
+                        <div class="hidden h-12 max-w-[18rem] items-center gap-3 rounded-xl border {{ $appTheme === 'dark' ? 'border-slate-700 bg-slate-900' : 'border-slate-200 bg-white' }} px-3 shadow-sm md:flex">
+                            <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg {{ $currentLocation ? 'bg-blue-50 text-blue-700' : 'bg-slate-100 text-slate-700' }} text-xs font-black">{{ $currentLocation ? strtoupper(substr($currentLocation->name, 0, 1)) : 'A' }}</span>
                             <div class="min-w-0">
                                 <p class="text-xs text-slate-500">{{ $isSuperAdmin ? 'Administração do produto' : 'Unidade atual' }}</p>
                                 <p class="truncate text-sm font-semibold {{ $appTheme === 'dark' ? 'text-white' : 'text-slate-950' }}">{{ $unitDisplayName }}</p>
@@ -145,17 +147,54 @@
                                 @endif
                             </div>
                         </div>
-                        <div class="flex items-center gap-2 rounded-xl border {{ $appTheme === 'dark' ? 'border-slate-700 bg-slate-900' : 'border-slate-200 bg-white' }} px-2.5 py-2 shadow-sm">
-                            <span class="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-cyan-400 text-xs font-bold text-white">{{ strtoupper(substr(auth()->user()->name, 0, 1)) }}</span>
-                            <div class="hidden sm:block">
+                        <details class="relative">
+                            <summary class="inline-flex h-12 w-12 cursor-pointer list-none items-center justify-center rounded-xl border {{ $appTheme === 'dark' ? 'border-slate-700 bg-slate-900 text-slate-100' : 'border-slate-200 bg-white text-slate-700' }} shadow-sm transition hover:bg-slate-50" aria-label="Notificacoes" title="Notificacoes">
+                                <span class="relative">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                        <path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 7h18s-3 0-3-7"></path>
+                                        <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+                                    </svg>
+                                    @if (count($appNotifications) > 0)
+                                        <span class="absolute -right-2 -top-2 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-600 px-1 text-[10px] font-black leading-none text-white">{{ count($appNotifications) }}</span>
+                                    @endif
+                                </span>
+                            </summary>
+                            <div class="absolute right-0 z-30 mt-2 w-80 max-w-[calc(100vw-2rem)] rounded-2xl border border-slate-200 bg-white p-3 text-sm text-slate-700 shadow-2xl shadow-slate-950/15">
+                                <div class="flex items-center justify-between gap-3 border-b border-slate-100 pb-2">
+                                    <p class="font-black text-slate-950">Notificacoes</p>
+                                    <span class="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-bold text-slate-600">{{ count($appNotifications) }}</span>
+                                </div>
+                                <div class="mt-3 space-y-2">
+                                    @forelse ($appNotifications as $notification)
+                                        @php($notificationTone = match ($notification['tone']) {
+                                            'danger' => 'border-red-200 bg-red-50 text-red-900',
+                                            'warning' => 'border-amber-200 bg-amber-50 text-amber-900',
+                                            default => 'border-blue-200 bg-blue-50 text-blue-900',
+                                        })
+                                        <div class="rounded-xl border p-3 {{ $notificationTone }}">
+                                            <p class="font-black">{{ $notification['title'] }}</p>
+                                            <p class="mt-1 text-xs leading-5">{{ $notification['body'] }}</p>
+                                            @if ($notification['url'])
+                                                <a href="{{ $notification['url'] }}" class="mt-2 inline-flex text-xs font-black underline">{{ $notification['action'] ?? 'Abrir' }}</a>
+                                            @endif
+                                        </div>
+                                    @empty
+                                        <p class="rounded-xl border border-slate-200 bg-slate-50 px-3 py-4 text-center text-sm text-slate-500">Nenhuma notificacao importante.</p>
+                                    @endforelse
+                                </div>
+                            </div>
+                        </details>
+                        <div class="flex h-12 items-center gap-2 rounded-xl border {{ $appTheme === 'dark' ? 'border-slate-700 bg-slate-900' : 'border-slate-200 bg-white' }} px-3 shadow-sm">
+                            <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-cyan-400 text-xs font-bold text-white">{{ strtoupper(substr(auth()->user()->name, 0, 1)) }}</span>
+                            <div class="hidden min-w-0 sm:block">
                                 <p class="max-w-32 truncate text-sm font-semibold">{{ auth()->user()->name }}</p>
                                 <p class="text-xs text-slate-500">{{ auth()->user()->roleLabel() }}</p>
                             </div>
                         </div>
                         <form method="POST" action="{{ route('logout') }}">
                             @csrf
-                            <button class="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-slate-950 text-white transition hover:bg-slate-800" aria-label="Sair" title="Sair">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <button class="inline-flex h-12 w-12 items-center justify-center rounded-xl bg-slate-950 text-white shadow-sm transition hover:bg-slate-800" aria-label="Sair" title="Sair">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                                     <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
                                     <path d="M16 17l5-5-5-5"></path>
                                     <path d="M21 12H9"></path>
@@ -179,6 +218,9 @@
                         @endif
                         @if ($canAccess(\App\Support\Access\AccessControl::VIEW_KANBAN))
                             <a href="{{ route('kanban') }}" class="shrink-0 rounded-lg border border-slate-200 px-3 py-1.5 text-sm font-medium">Kanban</a>
+                        @endif
+                        @if ($canAccess(\App\Support\Access\AccessControl::VIEW_SCHEDULE))
+                            <a href="{{ route('schedule.index') }}" class="shrink-0 rounded-lg border border-slate-200 px-3 py-1.5 text-sm font-medium">Agenda</a>
                         @endif
                         @if ($canAccess(\App\Support\Access\AccessControl::VIEW_OPERATIONAL_HISTORY))
                             <a href="{{ route('history.index') }}" class="shrink-0 rounded-lg border border-slate-200 px-3 py-1.5 text-sm font-medium">Historico</a>
@@ -223,7 +265,7 @@
                     <div class="mb-5 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">{{ session('status') }}</div>
                 @endif
 
-                @if ($currentLocation && $currentLocation->subscriptionStatus() === \App\Models\WashLocation::ACCOUNT_STATUS_TRIAL && $trialDaysRemaining !== null && $trialDaysRemaining <= 5)
+                @if ($currentLocation && $canAccess(\App\Support\Access\AccessControl::MANAGE_SUBSCRIPTION) && $currentLocation->subscriptionStatus() === \App\Models\WashLocation::ACCOUNT_STATUS_TRIAL && $trialDaysRemaining !== null && $trialDaysRemaining <= 5)
                     <div class="mb-5 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
                         <strong>Trial em andamento:</strong>
                         restam {{ $trialDaysRemaining }} dia{{ $trialDaysRemaining === 1 ? '' : 's' }} para ativar a assinatura da unidade.

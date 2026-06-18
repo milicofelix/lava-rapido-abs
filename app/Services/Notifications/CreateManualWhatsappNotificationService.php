@@ -41,6 +41,9 @@ class CreateManualWhatsappNotificationService
         $notesLine = $notes ? "\n\nObservacao: {$notes}" : '';
 
         return match ($templateKey) {
+            CustomerNotification::TEMPLATE_WASH_STARTED => "Ola {$customer->name}, iniciamos a lavagem do veiculo {$vehicle} ({$plate}). Voce pode acompanhar tudo por aqui: {$trackingUrl}{$notesLine}",
+            CustomerNotification::TEMPLATE_WASH_COMPLETED => "Ola {$customer->name}, a lavagem do veiculo {$vehicle} ({$plate}) foi concluida. Confira os detalhes pelo link: {$trackingUrl}{$notesLine}",
+            CustomerNotification::TEMPLATE_PROMOTION => "Ola {$customer->name}, temos uma condicao especial para o seu veiculo {$vehicle} ({$plate}). Fale com a nossa equipe pelo WhatsApp para aproveitar.{$notesLine}",
             CustomerNotification::TEMPLATE_STATUS_UPDATE => "Ola {$customer->name}, sua lavagem do veiculo {$vehicle} ({$plate}) esta com status: {$status}. Acompanhe em tempo real: {$trackingUrl}{$notesLine}",
             CustomerNotification::TEMPLATE_READY_FOR_PICKUP => "Ola {$customer->name}, seu veiculo {$vehicle} ({$plate}) esta pronto para retirada. Acompanhe os detalhes pelo link: {$trackingUrl}{$notesLine}",
             default => "Ola {$customer->name}, acompanhe o status da lavagem do seu veiculo {$vehicle} ({$plate}) pelo link: {$trackingUrl}".($estimate ? "\nPrevisao: {$estimate}" : '').$notesLine,
