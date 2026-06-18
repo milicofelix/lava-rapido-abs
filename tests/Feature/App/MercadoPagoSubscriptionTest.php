@@ -51,7 +51,43 @@ class MercadoPagoSubscriptionTest extends TestCase
         Http::assertSent(fn ($request) => $request->hasHeader('Authorization', 'Bearer test-token')
             && $request['external_reference'] === $subscription->external_reference
             && $request['items'][0]['unit_price'] === 89.9
-            && $request['notification_url'] === route('webhooks.mercado-pago'));
+            && $request['notification_url'] === route('webhooks.mercado-pago')
+            && ! array_key_exists('auto_return', $request->data()));
+    }
+
+    public function test_falha_do_checkout_volta_para_assinatura_sem_erro_500(): void
+    {
+        config(['services.mercado_pago.access_token' => 'test-token']);
+
+        Http::fake([
+            'https://api.mercadopago.com/checkout/preferences' => Http::response([
+                'message' => 'auto_return invalid. back_url.success must be defined',
+                'error' => 'invalid_auto_return',
+            ], 400),
+        ]);
+
+        $location = WashLocation::factory()->create([
+            'account_status' => WashLocation::ACCOUNT_STATUS_TRIAL,
+            'subscription_status' => WashLocation::ACCOUNT_STATUS_TRIAL,
+            'trial_ends_at' => now()->addDays(3),
+        ]);
+        $owner = User::factory()->create([
+            'role' => User::ROLE_OWNER,
+            'wash_location_id' => $location->id,
+        ]);
+        $plan = Plan::factory()->create();
+
+        $this->actingAs($owner)
+            ->from(route('subscriptions.show'))
+            ->post(route('subscriptions.choose'), ['plan_id' => $plan->id])
+            ->assertRedirect(route('subscriptions.show'))
+            ->assertSessionHas('status', 'Nao foi possivel abrir o checkout do Mercado Pago agora. Verifique as credenciais e tente novamente.');
+
+        $this->assertDatabaseHas('subscriptions', [
+            'wash_location_id' => $location->id,
+            'plan_id' => $plan->id,
+            'status' => Subscription::STATUS_CANCELED,
+        ]);
     }
 
     public function test_webhook_aprovado_ativa_assinatura_e_libera_unidade(): void

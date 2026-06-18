@@ -9,6 +9,7 @@ use App\Services\Subscriptions\MercadoPagoCheckoutService;
 use App\Support\TenantContext;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Client\RequestException;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
@@ -49,7 +50,16 @@ class OwnerSubscriptionController extends Controller
         ]);
 
         if ($mercadoPago->isConfigured()) {
-            $preference = $mercadoPago->createPreference($subscription);
+            try {
+                $preference = $mercadoPago->createPreference($subscription);
+            } catch (RequestException $exception) {
+                $subscription->forceFill(['status' => Subscription::STATUS_CANCELED])->save();
+
+                report($exception);
+
+                return back()->with('status', 'Nao foi possivel abrir o checkout do Mercado Pago agora. Verifique as credenciais e tente novamente.');
+            }
+
             $checkoutUrl = $preference['init_point'] ?? $preference['sandbox_init_point'] ?? null;
 
             if ($checkoutUrl) {

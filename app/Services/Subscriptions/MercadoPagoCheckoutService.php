@@ -32,27 +32,33 @@ class MercadoPagoCheckoutService
             ])->save();
         }
 
+        $subscriptionUrl = route('subscriptions.show');
+        $payload = [
+            'items' => [[
+                'id' => (string) $subscription->plan_id,
+                'title' => 'AutoFlow - '.$subscription->plan->name,
+                'quantity' => 1,
+                'currency_id' => 'BRL',
+                'unit_price' => (float) $subscription->plan->price,
+            ]],
+            'payer' => [
+                'name' => $subscription->washLocation->name,
+            ],
+            'external_reference' => $externalReference,
+            'notification_url' => route('webhooks.mercado-pago'),
+            'back_urls' => [
+                'success' => $subscriptionUrl,
+                'failure' => $subscriptionUrl,
+                'pending' => $subscriptionUrl,
+            ],
+        ];
+
+        if (Str::startsWith($subscriptionUrl, 'https://')) {
+            $payload['auto_return'] = 'approved';
+        }
+
         $response = $this->client()
-            ->post('/checkout/preferences', [
-                'items' => [[
-                    'id' => (string) $subscription->plan_id,
-                    'title' => 'AutoFlow - '.$subscription->plan->name,
-                    'quantity' => 1,
-                    'currency_id' => 'BRL',
-                    'unit_price' => (float) $subscription->plan->price,
-                ]],
-                'payer' => [
-                    'name' => $subscription->washLocation->name,
-                ],
-                'external_reference' => $externalReference,
-                'notification_url' => route('webhooks.mercado-pago'),
-                'back_urls' => [
-                    'success' => route('subscriptions.show'),
-                    'failure' => route('subscriptions.show'),
-                    'pending' => route('subscriptions.show'),
-                ],
-                'auto_return' => 'approved',
-            ])
+            ->post('/checkout/preferences', $payload)
             ->throw()
             ->json();
 
