@@ -86,7 +86,31 @@ class SubscriptionManagementTest extends TestCase
             ->get(route('subscriptions.show'))
             ->assertOk()
             ->assertSee('Escolha de plano')
-            ->assertSee('Starter');
+            ->assertSee('Starter')
+            ->assertSee('Disponivel')
+            ->assertDontSee('>Ativo<', false);
+    }
+
+    public function test_owner_ve_aviso_de_trial_expirado_na_tela_de_assinatura(): void
+    {
+        $location = WashLocation::factory()->create([
+            'account_status' => WashLocation::ACCOUNT_STATUS_TRIAL,
+            'subscription_status' => WashLocation::ACCOUNT_STATUS_TRIAL,
+            'trial_ends_at' => now()->subDay(),
+            'blocked_at' => now(),
+        ]);
+        $owner = User::factory()->create([
+            'role' => User::ROLE_OWNER,
+            'wash_location_id' => $location->id,
+        ]);
+        Plan::factory()->create(['name' => 'Starter']);
+
+        $this->actingAs($owner)
+            ->get(route('subscriptions.show'))
+            ->assertOk()
+            ->assertSee('Trial expirado')
+            ->assertSee('escolha um plano para reativar a unidade')
+            ->assertDontSee('Trial em andamento');
     }
 
     public function test_super_admin_ativa_assinatura(): void

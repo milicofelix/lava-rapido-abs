@@ -11,6 +11,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Client\RequestException;
 use Illuminate\Validation\Rule;
+use RuntimeException;
 use Illuminate\View\View;
 
 class OwnerSubscriptionController extends Controller
@@ -26,6 +27,8 @@ class OwnerSubscriptionController extends Controller
             'activeSubscription' => $location->activeSubscription,
             'plans' => Plan::query()->active()->orderBy('price')->orderBy('name')->get(),
             'mercadoPagoConfigured' => $mercadoPago->isConfigured(),
+            'mercadoPagoEnvironment' => $mercadoPago->environmentLabel(),
+            'mercadoPagoLiveCheckoutAllowed' => $mercadoPago->isLiveCheckoutAllowed(),
             'paymentReturn' => $this->paymentReturnMessage($request),
         ]);
     }
@@ -59,6 +62,10 @@ class OwnerSubscriptionController extends Controller
                 report($exception);
 
                 return back()->with('status', 'Nao foi possivel abrir o checkout do Mercado Pago agora. Verifique as credenciais e tente novamente.');
+            } catch (RuntimeException $exception) {
+                $subscription->forceFill(['status' => Subscription::STATUS_CANCELED])->save();
+
+                return back()->with('status', $exception->getMessage());
             }
 
             $checkoutUrl = $preference['init_point'] ?? $preference['sandbox_init_point'] ?? null;

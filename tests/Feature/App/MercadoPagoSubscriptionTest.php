@@ -90,6 +90,66 @@ class MercadoPagoSubscriptionTest extends TestCase
         ]);
     }
 
+    public function test_checkout_real_fica_bloqueado_sem_flag_explicita(): void
+    {
+        config([
+            'services.mercado_pago.access_token' => 'APP_USR-production-token',
+            'services.mercado_pago.live_enabled' => false,
+        ]);
+
+        Http::fake();
+
+        $location = WashLocation::factory()->create([
+            'account_status' => WashLocation::ACCOUNT_STATUS_TRIAL,
+            'subscription_status' => WashLocation::ACCOUNT_STATUS_TRIAL,
+            'trial_ends_at' => now()->addDays(3),
+        ]);
+        $owner = User::factory()->create([
+            'role' => User::ROLE_OWNER,
+            'wash_location_id' => $location->id,
+        ]);
+        $plan = Plan::factory()->create(['name' => 'Enterprise']);
+
+        $this->actingAs($owner)
+            ->from(route('subscriptions.show'))
+            ->post(route('subscriptions.choose'), ['plan_id' => $plan->id])
+            ->assertRedirect(route('subscriptions.show'))
+            ->assertSessionHas('status', 'Checkout real bloqueado. Defina MERCADO_PAGO_LIVE_ENABLED=true para liberar cobrancas em producao.');
+
+        Http::assertNothingSent();
+
+        $this->assertDatabaseHas('subscriptions', [
+            'wash_location_id' => $location->id,
+            'plan_id' => $plan->id,
+            'status' => Subscription::STATUS_CANCELED,
+        ]);
+    }
+
+    public function test_tela_informa_quando_token_de_producao_esta_bloqueado(): void
+    {
+        config([
+            'services.mercado_pago.access_token' => 'APP_USR-production-token',
+            'services.mercado_pago.live_enabled' => false,
+        ]);
+
+        $location = WashLocation::factory()->create([
+            'account_status' => WashLocation::ACCOUNT_STATUS_TRIAL,
+            'subscription_status' => WashLocation::ACCOUNT_STATUS_TRIAL,
+            'trial_ends_at' => now()->addDays(3),
+        ]);
+        $owner = User::factory()->create([
+            'role' => User::ROLE_OWNER,
+            'wash_location_id' => $location->id,
+        ]);
+        Plan::factory()->create(['name' => 'Enterprise']);
+
+        $this->actingAs($owner)
+            ->get(route('subscriptions.show'))
+            ->assertOk()
+            ->assertSee('Token de producao detectado, mas cobranca real bloqueada')
+            ->assertSee('Checkout bloqueado ate habilitar MERCADO_PAGO_LIVE_ENABLED=true.');
+    }
+
     public function test_owner_visualiza_retorno_aprovado_do_mercado_pago(): void
     {
         config(['services.mercado_pago.access_token' => 'test-token']);

@@ -33,6 +33,7 @@ return [
         'public_key' => env('MERCADO_PAGO_PUBLIC_KEY'),
         'webhook_secret' => env('MERCADO_PAGO_WEBHOOK_SECRET'),
         'base_url' => env('MERCADO_PAGO_BASE_URL', 'https://api.mercadopago.com'),
+        'live_enabled' => env('MERCADO_PAGO_LIVE_ENABLED', false),
     ],
 
     'slack' => [

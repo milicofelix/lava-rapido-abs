@@ -15,10 +15,28 @@ class MercadoPagoCheckoutService
         return filled(config('services.mercado_pago.access_token'));
     }
 
+    public function environmentLabel(): string
+    {
+        if (! $this->isConfigured()) {
+            return 'manual';
+        }
+
+        return $this->isLiveToken() ? 'producao' : 'teste';
+    }
+
+    public function isLiveCheckoutAllowed(): bool
+    {
+        return ! $this->isLiveToken() || (bool) config('services.mercado_pago.live_enabled');
+    }
+
     public function createPreference(Subscription $subscription): array
     {
         if (! $this->isConfigured()) {
             throw new RuntimeException('Mercado Pago nao configurado.');
+        }
+
+        if (! $this->isLiveCheckoutAllowed()) {
+            throw new RuntimeException('Checkout real bloqueado. Defina MERCADO_PAGO_LIVE_ENABLED=true para liberar cobrancas em producao.');
         }
 
         $subscription->loadMissing(['plan', 'washLocation']);
@@ -91,5 +109,10 @@ class MercadoPagoCheckoutService
             ->acceptJson()
             ->asJson()
             ->withToken((string) config('services.mercado_pago.access_token'));
+    }
+
+    private function isLiveToken(): bool
+    {
+        return Str::startsWith((string) config('services.mercado_pago.access_token'), 'APP_USR-');
     }
 }

@@ -267,8 +267,13 @@
 
                 @if ($currentLocation && $canAccess(\App\Support\Access\AccessControl::MANAGE_SUBSCRIPTION) && $currentLocation->subscriptionStatus() === \App\Models\WashLocation::ACCOUNT_STATUS_TRIAL && $trialDaysRemaining !== null && $trialDaysRemaining <= 5)
                     <div class="mb-5 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-                        <strong>Trial em andamento:</strong>
-                        restam {{ $trialDaysRemaining }} dia{{ $trialDaysRemaining === 1 ? '' : 's' }} para ativar a assinatura da unidade.
+                        @if ($trialDaysRemaining === 0)
+                            <strong>Trial expirado:</strong>
+                            escolha um plano para reativar a unidade.
+                        @else
+                            <strong>Trial em andamento:</strong>
+                            restam {{ $trialDaysRemaining }} dia{{ $trialDaysRemaining === 1 ? '' : 's' }} para ativar a assinatura da unidade.
+                        @endif
                     </div>
                 @endif
 
