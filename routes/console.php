@@ -2,6 +2,7 @@
 
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
+use App\Services\Subscriptions\MercadoPagoDiagnosticsService;
 use App\Services\Subscriptions\SubscriptionExpirationService;
 
 Artisan::command('inspire', function () {
@@ -19,3 +20,30 @@ Artisan::command('subscriptions:expire', function (SubscriptionExpirationService
         $summary['subscription_locations'],
     ));
 })->purpose('Expira trials e assinaturas vencidas');
+
+Artisan::command('mercado-pago:diagnose {--api : Testa autenticacao chamando a API do Mercado Pago}', function (MercadoPagoDiagnosticsService $diagnostics) {
+    $checks = $diagnostics->report((bool) $this->option('api'));
+    $hasFailures = false;
+
+    foreach ($checks as $check) {
+        if ($check['ok']) {
+            $this->info('[OK] '.$check['message']);
+            continue;
+        }
+
+        $hasFailures = true;
+        $this->warn('[ATENCAO] '.$check['message']);
+    }
+
+    if ($hasFailures) {
+        $this->newLine();
+        $this->warn('Ajuste os itens acima antes do teste sandbox real.');
+
+        return self::FAILURE;
+    }
+
+    $this->newLine();
+    $this->info('Mercado Pago pronto para teste sandbox.');
+
+    return self::SUCCESS;
+})->purpose('Diagnostica configuracao do Mercado Pago');

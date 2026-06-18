@@ -40,7 +40,10 @@ class SubscriptionManagementTest extends TestCase
             ->assertSee('Assinatura')
             ->assertSee('Professional')
             ->assertSee('R$ 89,90')
-            ->assertSee('Próxima cobrança');
+            ->assertSee('Próxima cobrança')
+            ->assertSee('Plano atual')
+            ->assertSee('Assinatura ativa')
+            ->assertSee('Este e o plano ativo da unidade.');
     }
 
     public function test_owner_visualiza_historico_de_assinaturas(): void

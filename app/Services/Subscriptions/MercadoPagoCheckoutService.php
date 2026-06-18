@@ -21,12 +21,24 @@ class MercadoPagoCheckoutService
             return 'manual';
         }
 
-        return $this->isLiveToken() ? 'producao' : 'teste';
+        return $this->isProductionEnvironment() ? 'producao' : 'teste';
     }
 
     public function isLiveCheckoutAllowed(): bool
     {
-        return ! $this->isLiveToken() || (bool) config('services.mercado_pago.live_enabled');
+        return ! $this->isProductionEnvironment() || (bool) config('services.mercado_pago.live_enabled');
+    }
+
+    public function checkoutUrls(): array
+    {
+        $defaultSubscriptionUrl = route('subscriptions.show');
+
+        return [
+            'notification' => config('services.mercado_pago.notification_url') ?: route('webhooks.mercado-pago'),
+            'success' => config('services.mercado_pago.success_url') ?: $defaultSubscriptionUrl,
+            'failure' => config('services.mercado_pago.failure_url') ?: $defaultSubscriptionUrl,
+            'pending' => config('services.mercado_pago.pending_url') ?: $defaultSubscriptionUrl,
+        ];
     }
 
     public function createPreference(Subscription $subscription): array
@@ -50,7 +62,7 @@ class MercadoPagoCheckoutService
             ])->save();
         }
 
-        $subscriptionUrl = route('subscriptions.show');
+        $urls = $this->checkoutUrls();
         $payload = [
             'items' => [[
                 'id' => (string) $subscription->plan_id,
@@ -63,16 +75,20 @@ class MercadoPagoCheckoutService
                 'name' => $subscription->washLocation->name,
             ],
             'external_reference' => $externalReference,
-            'notification_url' => route('webhooks.mercado-pago'),
+            'notification_url' => $urls['notification'],
             'back_urls' => [
-                'success' => $subscriptionUrl,
-                'failure' => $subscriptionUrl,
-                'pending' => $subscriptionUrl,
+                'success' => $urls['success'],
+                'failure' => $urls['failure'],
+                'pending' => $urls['pending'],
             ],
         ];
 
-        if (Str::startsWith($subscriptionUrl, 'https://')) {
+        if (Str::startsWith($urls['success'], 'https://')) {
             $payload['auto_return'] = 'approved';
+        }
+
+        if ($this->environmentLabel() === 'teste' && filled(config('services.mercado_pago.sandbox_payer_email'))) {
+            $payload['payer']['email'] = config('services.mercado_pago.sandbox_payer_email');
         }
 
         $response = $this->client()
@@ -111,8 +127,8 @@ class MercadoPagoCheckoutService
             ->withToken((string) config('services.mercado_pago.access_token'));
     }
 
-    private function isLiveToken(): bool
+    private function isProductionEnvironment(): bool
     {
-        return Str::startsWith((string) config('services.mercado_pago.access_token'), 'APP_USR-');
+        return config('services.mercado_pago.environment') === 'production';
     }
 }

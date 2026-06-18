@@ -70,21 +70,30 @@
 
         <section class="grid gap-4 lg:grid-cols-3">
             @forelse ($plans as $plan)
-                <article class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                @php
+                    $isCurrentPlan = $activeSubscription?->plan_id === $plan->id;
+                @endphp
+                <article class="rounded-2xl border {{ $isCurrentPlan ? 'border-emerald-300 bg-emerald-50/40 ring-2 ring-emerald-100' : 'border-slate-200 bg-white' }} p-5 shadow-sm">
                     <div class="flex items-start justify-between gap-3">
                         <div>
                             <h2 class="text-xl font-black text-slate-950">{{ $plan->name }}</h2>
                             <p class="mt-1 text-sm text-slate-500">Trial de {{ $plan->trial_days }} dia{{ $plan->trial_days === 1 ? '' : 's' }}</p>
                         </div>
-                        <span class="rounded-full bg-blue-100 px-3 py-1 text-xs font-black text-blue-700">Disponivel</span>
+                        @if ($isCurrentPlan)
+                            <span class="rounded-full bg-emerald-100 px-3 py-1 text-xs font-black text-emerald-800">Plano atual</span>
+                        @else
+                            <span class="rounded-full bg-blue-100 px-3 py-1 text-xs font-black text-blue-700">Disponivel</span>
+                        @endif
                     </div>
-                    <p class="mt-5 text-3xl font-black text-blue-700">{{ $plan->formattedPrice() }}</p>
+                    <p class="mt-5 text-3xl font-black {{ $isCurrentPlan ? 'text-emerald-700' : 'text-blue-700' }}">{{ $plan->formattedPrice() }}</p>
                     <form method="POST" action="{{ route('subscriptions.choose') }}" class="mt-5">
                         @csrf
                         <input type="hidden" name="plan_id" value="{{ $plan->id }}">
-                        <button @disabled($mercadoPagoConfigured && ! $mercadoPagoLiveCheckoutAllowed) class="w-full rounded-xl bg-blue-700 px-4 py-2.5 text-sm font-bold text-white hover:bg-blue-800 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-500">{{ $mercadoPagoConfigured ? 'Pagar com Mercado Pago' : 'Escolher plano' }}</button>
+                        <button @if ($isCurrentPlan || ($mercadoPagoConfigured && ! $mercadoPagoLiveCheckoutAllowed)) disabled @endif class="w-full rounded-xl bg-blue-700 px-4 py-2.5 text-sm font-bold text-white hover:bg-blue-800 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-500">{{ $isCurrentPlan ? 'Assinatura ativa' : ($mercadoPagoConfigured ? 'Pagar com Mercado Pago' : 'Escolher plano') }}</button>
                         @if ($mercadoPagoConfigured && ! $mercadoPagoLiveCheckoutAllowed)
                             <p class="mt-2 text-xs font-bold text-amber-700">Checkout bloqueado ate habilitar MERCADO_PAGO_LIVE_ENABLED=true.</p>
+                        @elseif ($isCurrentPlan)
+                            <p class="mt-2 text-xs font-bold text-emerald-700">Este e o plano ativo da unidade.</p>
                         @endif
                     </form>
                 </article>

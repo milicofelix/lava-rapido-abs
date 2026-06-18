@@ -32,8 +32,14 @@ return [
         'access_token' => env('MERCADO_PAGO_ACCESS_TOKEN'),
         'public_key' => env('MERCADO_PAGO_PUBLIC_KEY'),
         'webhook_secret' => env('MERCADO_PAGO_WEBHOOK_SECRET'),
+        'environment' => env('MERCADO_PAGO_ENVIRONMENT', 'sandbox'),
         'base_url' => env('MERCADO_PAGO_BASE_URL', 'https://api.mercadopago.com'),
         'live_enabled' => env('MERCADO_PAGO_LIVE_ENABLED', false),
+        'notification_url' => env('MERCADO_PAGO_NOTIFICATION_URL'),
+        'success_url' => env('MERCADO_PAGO_SUCCESS_URL'),
+        'failure_url' => env('MERCADO_PAGO_FAILURE_URL'),
+        'pending_url' => env('MERCADO_PAGO_PENDING_URL'),
+        'sandbox_payer_email' => env('MERCADO_PAGO_SANDBOX_PAYER_EMAIL'),
     ],
 
     'slack' => [

@@ -16,7 +16,13 @@ class MercadoPagoSubscriptionTest extends TestCase
 
     public function test_owner_escolhe_plano_e_e_redirecionado_para_checkout_do_mercado_pago(): void
     {
-        config(['services.mercado_pago.access_token' => 'test-token']);
+        config([
+            'services.mercado_pago.access_token' => 'test-token',
+            'services.mercado_pago.notification_url' => null,
+            'services.mercado_pago.success_url' => null,
+            'services.mercado_pago.failure_url' => null,
+            'services.mercado_pago.pending_url' => null,
+        ]);
 
         Http::fake([
             'https://api.mercadopago.com/checkout/preferences' => Http::response([
@@ -53,6 +59,78 @@ class MercadoPagoSubscriptionTest extends TestCase
             && $request['items'][0]['unit_price'] === 89.9
             && $request['notification_url'] === route('webhooks.mercado-pago')
             && ! array_key_exists('auto_return', $request->data()));
+    }
+
+    public function test_checkout_usa_urls_publicas_configuradas_para_sandbox_real(): void
+    {
+        config([
+            'services.mercado_pago.access_token' => 'TEST-token',
+            'services.mercado_pago.notification_url' => 'https://sandbox.test/webhooks/mercado-pago',
+            'services.mercado_pago.success_url' => 'https://sandbox.test/configuracoes/assinatura?status=approved',
+            'services.mercado_pago.failure_url' => 'https://sandbox.test/configuracoes/assinatura?status=failure',
+            'services.mercado_pago.pending_url' => 'https://sandbox.test/configuracoes/assinatura?status=pending',
+        ]);
+
+        Http::fake([
+            'https://api.mercadopago.com/checkout/preferences' => Http::response([
+                'id' => 'pref_sandbox',
+                'init_point' => 'https://www.mercadopago.com.br/checkout/v1/redirect?pref_id=pref_sandbox',
+            ], 201),
+        ]);
+
+        $location = WashLocation::factory()->create([
+            'account_status' => WashLocation::ACCOUNT_STATUS_TRIAL,
+            'subscription_status' => WashLocation::ACCOUNT_STATUS_TRIAL,
+            'trial_ends_at' => now()->addDays(3),
+        ]);
+        $owner = User::factory()->create([
+            'role' => User::ROLE_OWNER,
+            'wash_location_id' => $location->id,
+        ]);
+        $plan = Plan::factory()->create(['price' => 49.90]);
+
+        $this->actingAs($owner)
+            ->post(route('subscriptions.choose'), ['plan_id' => $plan->id])
+            ->assertRedirect('https://www.mercadopago.com.br/checkout/v1/redirect?pref_id=pref_sandbox');
+
+        Http::assertSent(fn ($request) => $request['notification_url'] === 'https://sandbox.test/webhooks/mercado-pago'
+            && $request['back_urls']['success'] === 'https://sandbox.test/configuracoes/assinatura?status=approved'
+            && $request['back_urls']['failure'] === 'https://sandbox.test/configuracoes/assinatura?status=failure'
+            && $request['back_urls']['pending'] === 'https://sandbox.test/configuracoes/assinatura?status=pending'
+            && $request['auto_return'] === 'approved');
+    }
+
+    public function test_checkout_sandbox_envia_email_do_comprador_de_teste_quando_configurado(): void
+    {
+        config([
+            'services.mercado_pago.access_token' => 'APP_USR-test-credential',
+            'services.mercado_pago.environment' => 'sandbox',
+            'services.mercado_pago.sandbox_payer_email' => 'comprador-teste@example.com',
+        ]);
+
+        Http::fake([
+            'https://api.mercadopago.com/checkout/preferences' => Http::response([
+                'id' => 'pref_buyer',
+                'init_point' => 'https://www.mercadopago.com.br/checkout/v1/redirect?pref_id=pref_buyer',
+            ], 201),
+        ]);
+
+        $location = WashLocation::factory()->create([
+            'account_status' => WashLocation::ACCOUNT_STATUS_TRIAL,
+            'subscription_status' => WashLocation::ACCOUNT_STATUS_TRIAL,
+            'trial_ends_at' => now()->addDays(3),
+        ]);
+        $owner = User::factory()->create([
+            'role' => User::ROLE_OWNER,
+            'wash_location_id' => $location->id,
+        ]);
+        $plan = Plan::factory()->create(['price' => 49.90]);
+
+        $this->actingAs($owner)
+            ->post(route('subscriptions.choose'), ['plan_id' => $plan->id])
+            ->assertRedirect('https://www.mercadopago.com.br/checkout/v1/redirect?pref_id=pref_buyer');
+
+        Http::assertSent(fn ($request) => $request['payer']['email'] === 'comprador-teste@example.com');
     }
 
     public function test_falha_do_checkout_volta_para_assinatura_sem_erro_500(): void
@@ -94,6 +172,7 @@ class MercadoPagoSubscriptionTest extends TestCase
     {
         config([
             'services.mercado_pago.access_token' => 'APP_USR-production-token',
+            'services.mercado_pago.environment' => 'production',
             'services.mercado_pago.live_enabled' => false,
         ]);
 
@@ -129,6 +208,7 @@ class MercadoPagoSubscriptionTest extends TestCase
     {
         config([
             'services.mercado_pago.access_token' => 'APP_USR-production-token',
+            'services.mercado_pago.environment' => 'production',
             'services.mercado_pago.live_enabled' => false,
         ]);
 
@@ -148,6 +228,39 @@ class MercadoPagoSubscriptionTest extends TestCase
             ->assertOk()
             ->assertSee('Token de producao detectado, mas cobranca real bloqueada')
             ->assertSee('Checkout bloqueado ate habilitar MERCADO_PAGO_LIVE_ENABLED=true.');
+    }
+
+    public function test_credencial_app_usr_em_ambiente_sandbox_pode_abrir_checkout(): void
+    {
+        config([
+            'services.mercado_pago.access_token' => 'APP_USR-test-credential-from-mercado-pago-panel',
+            'services.mercado_pago.environment' => 'sandbox',
+            'services.mercado_pago.live_enabled' => false,
+        ]);
+
+        Http::fake([
+            'https://api.mercadopago.com/checkout/preferences' => Http::response([
+                'id' => 'pref_app_usr_test',
+                'init_point' => 'https://www.mercadopago.com.br/checkout/v1/redirect?pref_id=pref_app_usr_test',
+            ], 201),
+        ]);
+
+        $location = WashLocation::factory()->create([
+            'account_status' => WashLocation::ACCOUNT_STATUS_TRIAL,
+            'subscription_status' => WashLocation::ACCOUNT_STATUS_TRIAL,
+            'trial_ends_at' => now()->addDays(3),
+        ]);
+        $owner = User::factory()->create([
+            'role' => User::ROLE_OWNER,
+            'wash_location_id' => $location->id,
+        ]);
+        $plan = Plan::factory()->create(['name' => 'Starter']);
+
+        $this->actingAs($owner)
+            ->post(route('subscriptions.choose'), ['plan_id' => $plan->id])
+            ->assertRedirect('https://www.mercadopago.com.br/checkout/v1/redirect?pref_id=pref_app_usr_test');
+
+        Http::assertSent(fn ($request) => $request->hasHeader('Authorization', 'Bearer APP_USR-test-credential-from-mercado-pago-panel'));
     }
 
     public function test_owner_visualiza_retorno_aprovado_do_mercado_pago(): void
