@@ -44,6 +44,15 @@
                         @error('assigned_user_ids') <span class="text-sm text-red-600">{{ $message }}</span> @enderror
                         @error('assigned_user_ids.*') <span class="text-sm text-red-600">{{ $message }}</span> @enderror
                     </div>
+
+                    @if ($scheduleEnabled)
+                        <label class="block md:col-span-2">
+                            <span class="text-sm font-medium">Agendar para</span>
+                            <input name="scheduled_at" type="datetime-local" value="{{ old('scheduled_at') }}" class="mt-1 w-full rounded-md border border-zinc-300 px-3 py-2">
+                            <p class="mt-1 text-xs text-zinc-500">Deixe em branco para abrir a lavagem agora. Informe uma data futura para aparecer na Agenda desse dia.</p>
+                            @error('scheduled_at') <span class="text-sm text-red-600">{{ $message }}</span> @enderror
+                        </label>
+                    @endif
                 </div>
 
                 <label class="mt-4 block">

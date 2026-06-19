@@ -17,6 +17,7 @@ class AppSetting extends Model
         'theme' => self::THEME_LIGHT,
         'module_cash_register' => true,
         'module_credit_receivables' => true,
+        'module_schedule' => true,
     ];
 
     protected $fillable = [

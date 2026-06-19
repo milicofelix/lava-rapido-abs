@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\App;
 
+use App\Models\AppSetting;
 use App\Models\Customer;
 use App\Models\Service;
 use App\Models\User;
@@ -40,6 +41,8 @@ class WashOrderManagementTest extends TestCase
             ->assertSee('data-vehicle-select', false)
             ->assertSee('assigned_user_ids[]', false)
             ->assertSee('Equipe da lavagem')
+            ->assertSee('name="scheduled_at"', false)
+            ->assertSee('Agendar para')
             ->assertSee('Selecione um cliente primeiro')
             ->assertSee((string) $customer->id)
             ->assertSee((string) $vehicle->id)
@@ -88,6 +91,83 @@ class WashOrderManagementTest extends TestCase
             'from_status' => null,
             'to_status' => WashOrder::STATUS_AWAITING,
         ]);
+    }
+
+    public function test_attendant_can_schedule_wash_order_for_future_date(): void
+    {
+        $user = User::factory()->create();
+        $customer = Customer::factory()->create(['wash_location_id' => $user->wash_location_id]);
+        $vehicle = Vehicle::factory()->for($customer)->create([
+            'wash_location_id' => $user->wash_location_id,
+            'plate' => 'SCH1D23',
+        ]);
+        $service = Service::factory()->create([
+            'wash_location_id' => $user->wash_location_id,
+            'active' => true,
+            'name' => 'Ducha agendada',
+            'estimated_minutes' => 45,
+        ]);
+
+        $scheduledAt = now()->addDay()->setTime(14, 30);
+
+        $this->actingAs($user)->post(route('wash-orders.store'), [
+            'customer_id' => $customer->id,
+            'vehicle_id' => $vehicle->id,
+            'service_ids' => [$service->id],
+            'scheduled_at' => $scheduledAt->format('Y-m-d\TH:i'),
+        ])->assertRedirect();
+
+        $washOrder = WashOrder::query()->firstOrFail();
+
+        $this->assertSame($scheduledAt->format('Y-m-d H:i'), $washOrder->entered_at->format('Y-m-d H:i'));
+        $this->assertSame($scheduledAt->copy()->addMinutes(45)->format('Y-m-d H:i'), $washOrder->estimated_completion_at->format('Y-m-d H:i'));
+
+        $this->actingAs($user)
+            ->get(route('schedule.index'))
+            ->assertOk()
+            ->assertDontSee('SCH1D23');
+
+        $this->actingAs($user)
+            ->get(route('schedule.index', ['date' => $scheduledAt->toDateString()]))
+            ->assertOk()
+            ->assertSee('SCH1D23')
+            ->assertSee('Ducha agendada');
+    }
+
+    public function test_schedule_field_is_hidden_and_ignored_when_module_is_disabled(): void
+    {
+        AppSetting::setValue('module_schedule', false);
+
+        $user = User::factory()->create();
+        $customer = Customer::factory()->create(['wash_location_id' => $user->wash_location_id]);
+        $vehicle = Vehicle::factory()->for($customer)->create([
+            'wash_location_id' => $user->wash_location_id,
+            'plate' => 'NOW1D23',
+        ]);
+        $service = Service::factory()->create([
+            'wash_location_id' => $user->wash_location_id,
+            'active' => true,
+            'name' => 'Ducha agora',
+        ]);
+
+        $this->actingAs($user)
+            ->get(route('wash-orders.create'))
+            ->assertOk()
+            ->assertDontSee('name="scheduled_at"', false)
+            ->assertDontSee('Agendar para');
+
+        $future = now()->addDays(5)->setTime(14, 30);
+
+        $this->actingAs($user)->post(route('wash-orders.store'), [
+            'customer_id' => $customer->id,
+            'vehicle_id' => $vehicle->id,
+            'service_ids' => [$service->id],
+            'scheduled_at' => $future->format('Y-m-d\TH:i'),
+        ])->assertRedirect();
+
+        $washOrder = WashOrder::query()->firstOrFail();
+
+        $this->assertTrue($washOrder->entered_at->isToday());
     }
 
     public function test_operator_can_change_wash_order_status(): void

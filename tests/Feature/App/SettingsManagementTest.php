@@ -8,6 +8,7 @@ use App\Models\User;
 use App\Models\WashLocation;
 use App\Support\Access\AccessControl;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Cache;
 use Tests\TestCase;
 
 class SettingsManagementTest extends TestCase
@@ -26,6 +27,23 @@ class SettingsManagementTest extends TestCase
             ->assertSee('Habilitar Fiado')
             ->assertSee('Tema do painel')
             ->assertDontSee('URL do Google Maps');
+    }
+
+    public function test_settings_page_tolerates_cached_settings_without_new_modules(): void
+    {
+        $admin = User::factory()->create(['role' => User::ROLE_ADMIN]);
+        Cache::forever('app_settings.all', [
+            'company_name' => 'Lava Antigo',
+            'company_whatsapp' => '',
+            'theme' => AppSetting::THEME_LIGHT,
+            'module_cash_register' => true,
+            'module_credit_receivables' => true,
+        ]);
+
+        $this->actingAs($admin)
+            ->get(route('settings.edit'))
+            ->assertOk()
+            ->assertSee('Habilitar Agenda');
     }
 
     public function test_admin_can_update_modules_and_theme(): void
@@ -51,6 +69,7 @@ class SettingsManagementTest extends TestCase
                 'longitude' => -46.63412,
                 'opening_hours' => 'Seg a sex: 08:00 as 18:00',
                 'theme' => AppSetting::THEME_DARK,
+                'module_schedule' => '1',
                 'module_cash_register' => '1',
                 'module_credit_receivables' => '1',
             ])
@@ -59,6 +78,7 @@ class SettingsManagementTest extends TestCase
         $this->assertSame('Auto Spa Teste', AppSetting::getValue('company_name'));
         $this->assertSame('(11) 98888-7777', AppSetting::getValue('company_whatsapp'));
         $this->assertSame(AppSetting::THEME_DARK, AppSetting::theme());
+        $this->assertTrue(AppSetting::isModuleEnabled('module_schedule'));
         $this->assertTrue(AppSetting::isModuleEnabled('module_cash_register'));
         $this->assertTrue(AppSetting::isModuleEnabled('module_credit_receivables'));
 
@@ -106,6 +126,7 @@ class SettingsManagementTest extends TestCase
                 'state' => $location->state ?? 'SP',
                 'google_maps_url' => $mapsUrl,
                 'theme' => AppSetting::THEME_LIGHT,
+                'module_schedule' => '1',
             ])
             ->assertRedirect();
 
@@ -132,6 +153,7 @@ class SettingsManagementTest extends TestCase
                 'city' => $location->city,
                 'state' => $location->state ?? 'SP',
                 'theme' => AppSetting::THEME_LIGHT,
+                'module_schedule' => '1',
                 'role_permissions' => [
                     User::ROLE_OPERATOR => [
                         AccessControl::VIEW_WASH_ORDERS => '1',
@@ -168,6 +190,18 @@ class SettingsManagementTest extends TestCase
             ->assertDontSee('Caixa')
             ->assertDontSee('Fiado')
             ->assertSee('Financeiro');
+    }
+
+    public function test_schedule_link_is_hidden_when_module_is_disabled(): void
+    {
+        $admin = User::factory()->create(['role' => User::ROLE_ADMIN]);
+
+        AppSetting::setValue('module_schedule', false);
+
+        $this->actingAs($admin)
+            ->get(route('dashboard'))
+            ->assertOk()
+            ->assertDontSee('href="'.route('schedule.index').'"', false);
     }
 
     public function test_cash_and_credit_links_are_visible_when_modules_are_enabled(): void

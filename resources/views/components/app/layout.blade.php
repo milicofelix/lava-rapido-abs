@@ -56,7 +56,7 @@
                         ['route' => 'dashboard', 'label' => 'Painel Principal', 'icon' => 'P', 'permission' => \App\Support\Access\AccessControl::VIEW_DASHBOARD],
                         ['route' => 'wash-orders.index', 'label' => 'Lavagens', 'icon' => 'L', 'permission' => \App\Support\Access\AccessControl::CREATE_WASH_ORDER],
                         ['route' => 'kanban', 'label' => 'Kanban de Lavagens', 'icon' => 'K', 'permission' => \App\Support\Access\AccessControl::VIEW_KANBAN],
-                        ['route' => 'schedule.index', 'label' => 'Agenda', 'icon' => 'AG', 'permission' => \App\Support\Access\AccessControl::VIEW_SCHEDULE],
+                        ['route' => 'schedule.index', 'label' => 'Agenda', 'icon' => 'AG', 'permission' => \App\Support\Access\AccessControl::VIEW_SCHEDULE, 'module' => 'module_schedule'],
                         ['route' => 'history.index', 'label' => 'Historico', 'icon' => 'H', 'permission' => \App\Support\Access\AccessControl::VIEW_OPERATIONAL_HISTORY],
                         ['route' => 'customers.index', 'label' => 'Clientes', 'icon' => 'C', 'permission' => \App\Support\Access\AccessControl::MANAGE_CUSTOMERS],
                         ['route' => 'vehicles.index', 'label' => 'Veiculos', 'icon' => 'V', 'permission' => \App\Support\Access\AccessControl::MANAGE_VEHICLES],
@@ -220,7 +220,7 @@
                         @if ($canAccess(\App\Support\Access\AccessControl::VIEW_KANBAN))
                             <a href="{{ route('kanban') }}" class="shrink-0 rounded-lg border border-slate-200 px-3 py-1.5 text-sm font-medium">Kanban</a>
                         @endif
-                        @if ($canAccess(\App\Support\Access\AccessControl::VIEW_SCHEDULE))
+                        @if ($canAccess(\App\Support\Access\AccessControl::VIEW_SCHEDULE) && ! empty($appSettings['module_schedule']))
                             <a href="{{ route('schedule.index') }}" class="shrink-0 rounded-lg border border-slate-200 px-3 py-1.5 text-sm font-medium">Agenda</a>
                         @endif
                         @if ($canAccess(\App\Support\Access\AccessControl::VIEW_OPERATIONAL_HISTORY))

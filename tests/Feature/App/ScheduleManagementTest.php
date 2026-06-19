@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\App;
 
+use App\Models\AppSetting;
 use App\Models\Service;
 use App\Models\User;
 use App\Models\WashOrder;
@@ -66,6 +67,16 @@ class ScheduleManagementTest extends TestCase
         $operator = User::factory()->create(['role' => User::ROLE_OPERATOR]);
 
         $this->actingAs($operator)
+            ->get(route('schedule.index'))
+            ->assertForbidden();
+    }
+
+    public function test_schedule_route_is_blocked_when_module_is_disabled(): void
+    {
+        $admin = User::factory()->create(['role' => User::ROLE_ADMIN]);
+        AppSetting::setValue('module_schedule', false);
+
+        $this->actingAs($admin)
             ->get(route('schedule.index'))
             ->assertForbidden();
     }

@@ -67,6 +67,7 @@ class SettingsController extends Controller
             ])],
             'module_cash_register' => ['nullable', 'boolean'],
             'module_credit_receivables' => ['nullable', 'boolean'],
+            'module_schedule' => ['nullable', 'boolean'],
             'role_permissions' => ['nullable', 'array'],
         ]);
 
@@ -118,6 +119,7 @@ class SettingsController extends Controller
             'theme' => $data['theme'],
             'module_cash_register' => $request->boolean('module_cash_register'),
             'module_credit_receivables' => $request->boolean('module_credit_receivables'),
+            'module_schedule' => $request->boolean('module_schedule'),
         ]);
 
         if ($currentLocation) {

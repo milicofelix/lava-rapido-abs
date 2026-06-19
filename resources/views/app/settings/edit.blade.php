@@ -151,11 +151,19 @@
             <section class="border-t border-slate-200 pt-5">
                 <p class="text-xs font-bold uppercase tracking-[0.2em] text-blue-700">Modulos opcionais</p>
                 <h2 class="mt-1 text-xl font-bold text-slate-950">Controle o que aparece no sistema</h2>
-                <p class="mt-1 text-sm text-slate-500">Ideal para lava-rapidos menores que nao precisam operar caixa completo ou fiado.</p>
+                <p class="mt-1 text-sm text-slate-500">Ideal para lava-rapidos menores que nao precisam operar agenda, caixa completo ou fiado.</p>
 
-                <div class="mt-4 grid gap-3 md:grid-cols-2">
+                <div class="mt-4 grid gap-3 md:grid-cols-3">
                     <label class="flex cursor-pointer items-start gap-3 rounded-2xl border border-slate-200 p-4 hover:bg-slate-50">
-                        <input type="checkbox" name="module_cash_register" value="1" @checked(old('module_cash_register', $settings['module_cash_register'])) class="mt-1 h-4 w-4 rounded border-slate-300 text-blue-700">
+                        <input type="checkbox" name="module_schedule" value="1" @checked(old('module_schedule', $settings['module_schedule'] ?? \App\Models\AppSetting::DEFAULTS['module_schedule'])) class="mt-1 h-4 w-4 rounded border-slate-300 text-blue-700">
+                        <span>
+                            <span class="block font-bold text-slate-900">Habilitar Agenda</span>
+                            <span class="mt-1 block text-sm text-slate-500">Mostra agenda diaria e permite agendar lavagens para data/hora futura.</span>
+                        </span>
+                    </label>
+
+                    <label class="flex cursor-pointer items-start gap-3 rounded-2xl border border-slate-200 p-4 hover:bg-slate-50">
+                        <input type="checkbox" name="module_cash_register" value="1" @checked(old('module_cash_register', $settings['module_cash_register'] ?? \App\Models\AppSetting::DEFAULTS['module_cash_register'])) class="mt-1 h-4 w-4 rounded border-slate-300 text-blue-700">
                         <span>
                             <span class="block font-bold text-slate-900">Habilitar Caixa</span>
                             <span class="mt-1 block text-sm text-slate-500">Mostra abertura, sangria, suprimento e fechamento de caixa.</span>
@@ -163,7 +171,7 @@
                     </label>
 
                     <label class="flex cursor-pointer items-start gap-3 rounded-2xl border border-slate-200 p-4 hover:bg-slate-50">
-                        <input type="checkbox" name="module_credit_receivables" value="1" @checked(old('module_credit_receivables', $settings['module_credit_receivables'])) class="mt-1 h-4 w-4 rounded border-slate-300 text-blue-700">
+                        <input type="checkbox" name="module_credit_receivables" value="1" @checked(old('module_credit_receivables', $settings['module_credit_receivables'] ?? \App\Models\AppSetting::DEFAULTS['module_credit_receivables'])) class="mt-1 h-4 w-4 rounded border-slate-300 text-blue-700">
                         <span>
                             <span class="block font-bold text-slate-900">Habilitar Fiado</span>
                             <span class="mt-1 block text-sm text-slate-500">Mostra contas a receber e baixa de pagamentos pendentes.</span>
@@ -241,8 +249,12 @@
             <div class="rounded-2xl border border-slate-200 bg-white p-5 text-sm shadow-sm">
                 <p class="font-bold text-slate-950">Modulos e aparencia</p>
                 <dl class="mt-3 space-y-2 text-slate-600">
-                    <div class="flex justify-between gap-4"><dt>Caixa</dt><dd class="font-semibold {{ $settings['module_cash_register'] ? 'text-green-700' : 'text-slate-500' }}">{{ $settings['module_cash_register'] ? 'Habilitado' : 'Desabilitado' }}</dd></div>
-                    <div class="flex justify-between gap-4"><dt>Fiado</dt><dd class="font-semibold {{ $settings['module_credit_receivables'] ? 'text-green-700' : 'text-slate-500' }}">{{ $settings['module_credit_receivables'] ? 'Habilitado' : 'Desabilitado' }}</dd></div>
+                    @php($cashRegisterEnabled = $settings['module_cash_register'] ?? \App\Models\AppSetting::DEFAULTS['module_cash_register'])
+                    @php($creditReceivablesEnabled = $settings['module_credit_receivables'] ?? \App\Models\AppSetting::DEFAULTS['module_credit_receivables'])
+                    @php($scheduleEnabled = $settings['module_schedule'] ?? \App\Models\AppSetting::DEFAULTS['module_schedule'])
+                    <div class="flex justify-between gap-4"><dt>Caixa</dt><dd class="font-semibold {{ $cashRegisterEnabled ? 'text-green-700' : 'text-slate-500' }}">{{ $cashRegisterEnabled ? 'Habilitado' : 'Desabilitado' }}</dd></div>
+                    <div class="flex justify-between gap-4"><dt>Fiado</dt><dd class="font-semibold {{ $creditReceivablesEnabled ? 'text-green-700' : 'text-slate-500' }}">{{ $creditReceivablesEnabled ? 'Habilitado' : 'Desabilitado' }}</dd></div>
+                    <div class="flex justify-between gap-4"><dt>Agenda</dt><dd class="font-semibold {{ $scheduleEnabled ? 'text-green-700' : 'text-slate-500' }}">{{ $scheduleEnabled ? 'Habilitada' : 'Desabilitada' }}</dd></div>
                     <div class="flex justify-between gap-4"><dt>Tema</dt><dd class="font-semibold text-slate-900">{{ $themes[$settings['theme']] ?? 'Padrao claro' }}</dd></div>
                 </dl>
             </div>

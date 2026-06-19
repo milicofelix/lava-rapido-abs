@@ -16,6 +16,7 @@ use App\Services\WashOrders\CreateWashOrderService;
 use App\Support\TenantContext;
 use App\Support\Access\AccessControl;
 use App\Support\WashOrders\WashOrderStatusFlow;
+use Illuminate\Support\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -69,6 +70,7 @@ class WashOrderController extends Controller
             ]),
             'services' => TenantContext::scopeServices(Service::query())->where('active', true)->orderBy('category')->orderBy('name')->get(),
             'users' => TenantContext::scopeUsers(User::query())->orderBy('name')->get(),
+            'scheduleEnabled' => AppSetting::isModuleEnabled('module_schedule'),
         ]);
     }
 
@@ -84,11 +86,16 @@ class WashOrderController extends Controller
                 ->withInput();
         }
 
+        $scheduledAt = filled($data['scheduled_at'] ?? null)
+            && AppSetting::isModuleEnabled('module_schedule')
+            ? Carbon::parse($data['scheduled_at'])
+            : now();
+
         $washOrder = $creator->handle([
             'wash_location_id' => TenantContext::currentLocationId(),
             'customer_id' => $data['customer_id'],
             'vehicle_id' => $data['vehicle_id'],
-            'entered_at' => now(),
+            'entered_at' => $scheduledAt,
             'notes' => $data['notes'] ?? null,
         ], $data['service_ids'], array_values(array_unique($data['assigned_user_ids'] ?? [])));
 
@@ -188,6 +195,7 @@ class WashOrderController extends Controller
                     ->where('active', true),
             ],
             'notes' => ['nullable', 'string', 'max:2000'],
+            'scheduled_at' => ['nullable', 'date'],
         ]);
     }
 }
