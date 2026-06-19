@@ -121,15 +121,29 @@ class SettingsController extends Controller
         ]);
 
         if ($currentLocation) {
-            $this->updateRolePermissions($request, (int) $currentLocation->id);
+            $permissionChanges = $this->updateRolePermissions($request, (int) $currentLocation->id);
+
+            if ($permissionChanges !== []) {
+                AuditLogger::record(
+                    AuditLog::ACTION_ROLE_PERMISSIONS_UPDATED,
+                    $request->user()->name.' atualizou permissões da equipe da unidade '.$currentLocation->name.'.',
+                    $currentLocation,
+                    ['changes' => $permissionChanges],
+                );
+            }
         }
 
         return back()->with('status', 'Configuracoes salvas com sucesso.');
     }
 
-    private function updateRolePermissions(Request $request, int $locationId): void
+    /**
+     * @return array<int, array{role: string, permission: string, from: bool, to: bool}>
+     */
+    private function updateRolePermissions(Request $request, int $locationId): array
     {
         $submitted = $request->input('role_permissions', []);
+        $before = RolePermissionSetting::valuesForLocation($locationId, AccessControl::configurableRolePermissions());
+        $changes = [];
 
         foreach (AccessControl::configurableRolePermissions() as $role => $permissions) {
             $roleInput = is_array($submitted[$role] ?? null) ? $submitted[$role] : [];
@@ -137,10 +151,21 @@ class SettingsController extends Controller
 
             foreach ($permissions as $permission) {
                 $values[$permission] = array_key_exists($permission, $roleInput);
+
+                if (($before[$role][$permission] ?? false) !== $values[$permission]) {
+                    $changes[] = [
+                        'role' => $role,
+                        'permission' => $permission,
+                        'from' => (bool) ($before[$role][$permission] ?? false),
+                        'to' => $values[$permission],
+                    ];
+                }
             }
 
             RolePermissionSetting::setForLocation($locationId, $role, $values);
         }
+
+        return $changes;
     }
 
     private function mergeCoordinatesFromMapsUrl(Request $request): void

@@ -24,6 +24,12 @@ class AuditLog extends Model
 
     public const ACTION_LOCATION_PROFILE_UPDATED = 'location.profile_updated';
 
+    public const ACTION_LOCATION_REQUEST_APPROVED = 'location_request.approved';
+
+    public const ACTION_LOCATION_REQUEST_REJECTED = 'location_request.rejected';
+
+    public const ACTION_ROLE_PERMISSIONS_UPDATED = 'role_permissions.updated';
+
     protected $fillable = [
         'wash_location_id',
         'user_id',
@@ -53,6 +59,9 @@ class AuditLog extends Model
             self::ACTION_WASH_ORDER_STATUS_CHANGED => 'Status alterado',
             self::ACTION_PAYMENT_REGISTERED => 'Pagamento registrado',
             self::ACTION_LOCATION_PROFILE_UPDATED => 'Perfil da unidade atualizado',
+            self::ACTION_LOCATION_REQUEST_APPROVED => 'Solicitação aprovada',
+            self::ACTION_LOCATION_REQUEST_REJECTED => 'Solicitação rejeitada',
+            self::ACTION_ROLE_PERMISSIONS_UPDATED => 'Permissões atualizadas',
         ];
     }
 

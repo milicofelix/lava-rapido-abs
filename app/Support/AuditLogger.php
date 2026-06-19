@@ -6,6 +6,7 @@ use App\Models\AuditLog;
 use App\Models\Customer;
 use App\Models\User;
 use App\Models\WashOrder;
+use App\Models\WashLocationRequest;
 use Illuminate\Database\Eloquent\Model;
 
 class AuditLogger
@@ -46,6 +47,7 @@ class AuditLogger
             $subject instanceof WashOrder => $subject->code,
             $subject instanceof Customer => $subject->name,
             $subject instanceof User => $subject->name,
+            $subject instanceof WashLocationRequest => $subject->business_name,
             $subject !== null && isset($subject->name) => (string) $subject->name,
             $subject !== null && isset($subject->plate) => (string) $subject->plate,
             default => null,

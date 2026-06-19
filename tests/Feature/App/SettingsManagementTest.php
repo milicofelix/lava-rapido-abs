@@ -6,6 +6,7 @@ use App\Models\AppSetting;
 use App\Models\AuditLog;
 use App\Models\User;
 use App\Models\WashLocation;
+use App\Support\Access\AccessControl;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -112,6 +113,46 @@ class SettingsManagementTest extends TestCase
 
         $this->assertSame('-23.5191405', (string) $location->latitude);
         $this->assertSame('-46.4207678', (string) $location->longitude);
+    }
+
+    public function test_admin_can_update_operator_permissions_and_audit_change(): void
+    {
+        $location = WashLocation::factory()->create();
+        $admin = User::factory()->create([
+            'role' => User::ROLE_ADMIN,
+            'wash_location_id' => $location->id,
+        ]);
+
+        $this->actingAs($admin)
+            ->put(route('settings.update'), [
+                'company_name' => $location->name,
+                'company_whatsapp' => $location->phone,
+                'address' => $location->address,
+                'district' => $location->district,
+                'city' => $location->city,
+                'state' => $location->state ?? 'SP',
+                'theme' => AppSetting::THEME_LIGHT,
+                'role_permissions' => [
+                    User::ROLE_OPERATOR => [
+                        AccessControl::VIEW_WASH_ORDERS => '1',
+                    ],
+                ],
+            ])
+            ->assertRedirect();
+
+        $this->assertDatabaseHas('role_permission_settings', [
+            'wash_location_id' => $location->id,
+            'role' => User::ROLE_OPERATOR,
+            'permission' => AccessControl::VIEW_WASH_ORDERS,
+            'allowed' => true,
+        ]);
+
+        $this->assertDatabaseHas('audit_logs', [
+            'wash_location_id' => $location->id,
+            'user_id' => $admin->id,
+            'action' => AuditLog::ACTION_ROLE_PERMISSIONS_UPDATED,
+            'subject_label' => $location->name,
+        ]);
     }
 
     public function test_cash_and_credit_links_are_hidden_when_modules_are_disabled(): void

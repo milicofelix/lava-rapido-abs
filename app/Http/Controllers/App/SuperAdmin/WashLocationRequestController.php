@@ -3,9 +3,11 @@
 namespace App\Http\Controllers\App\SuperAdmin;
 
 use App\Http\Controllers\Controller;
+use App\Models\AuditLog;
 use App\Models\User;
 use App\Models\WashLocation;
 use App\Models\WashLocationRequest;
+use App\Support\AuditLogger;
 use App\Support\AddressGeocoder;
 use App\Support\DefaultServices;
 use App\Support\MapsCoordinates;
@@ -139,6 +141,18 @@ class WashLocationRequestController extends Controller
                 'decided_by_user_id' => $request->user()->id,
                 'wash_location_id' => $location->id,
             ])->save();
+
+            AuditLogger::record(
+                AuditLog::ACTION_LOCATION_REQUEST_APPROVED,
+                $request->user()->name.' aprovou a solicitação do lava-rápido '.$locationRequest->business_name.'.',
+                $locationRequest->fresh(),
+                [
+                    'wash_location_id' => $location->id,
+                    'trial_ends_at' => $location->trial_ends_at?->toDateString(),
+                    'default_services_created' => count(DefaultServices::catalog()),
+                ],
+                $request->user(),
+            );
         });
 
         return redirect()
@@ -162,6 +176,14 @@ class WashLocationRequestController extends Controller
             'decided_at' => now(),
             'decided_by_user_id' => $request->user()->id,
         ])->save();
+
+        AuditLogger::record(
+            AuditLog::ACTION_LOCATION_REQUEST_REJECTED,
+            $request->user()->name.' rejeitou a solicitação do lava-rápido '.$locationRequest->business_name.'.',
+            $locationRequest->fresh(),
+            ['decision_notes' => $validated['decision_notes']],
+            $request->user(),
+        );
 
         return redirect()
             ->route('super-admin.location-requests.show', $locationRequest)
