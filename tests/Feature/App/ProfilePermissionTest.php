@@ -4,10 +4,12 @@ namespace Tests\Feature\App;
 
 use App\Models\Customer;
 use App\Models\CustomerNotification;
+use App\Models\RolePermissionSetting;
 use App\Models\Service;
 use App\Models\User;
 use App\Models\Vehicle;
 use App\Models\WashOrder;
+use App\Support\Access\AccessControl;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -50,7 +52,7 @@ class ProfilePermissionTest extends TestCase
             ->assertForbidden();
     }
 
-    public function test_operator_access_is_limited_to_kanban_detail_and_status_update(): void
+    public function test_operator_access_is_limited_to_kanban_and_status_update_by_default(): void
     {
         $operator = User::factory()->create(['role' => User::ROLE_OPERATOR]);
         $washOrder = WashOrder::factory()->create(['status' => WashOrder::STATUS_AWAITING]);
@@ -61,19 +63,7 @@ class ProfilePermissionTest extends TestCase
             ->assertOk()
             ->assertDontSee('href="'.route('dashboard').'"', false);
 
-        $this->actingAs($operator)->get(route('wash-orders.show', $washOrder))
-            ->assertOk()
-            ->assertSee('Atualizar status')
-            ->assertDontSee('href="'.route('dashboard').'"', false)
-            ->assertDontSee('href="'.route('wash-orders.index').'"', false)
-            ->assertDontSee('href="'.route('history.index').'"', false)
-            ->assertDontSee('href="'.route('customers.index').'"', false)
-            ->assertDontSee('href="'.route('vehicles.index').'"', false)
-            ->assertDontSee('href="'.route('finance.index').'"', false)
-            ->assertDontSee('Registrar pagamento')
-            ->assertDontSee('Pagamentos')
-            ->assertDontSee('Recibo')
-            ->assertDontSee('Compartilhar via WhatsApp');
+        $this->actingAs($operator)->get(route('wash-orders.show', $washOrder))->assertForbidden();
 
         $this->actingAs($operator)->patch(route('wash-orders.update-status', $washOrder), [
             'status' => WashOrder::STATUS_WASHING,
@@ -112,5 +102,26 @@ class ProfilePermissionTest extends TestCase
         ])->assertRedirect();
 
         $this->actingAs($operator)->get(route('wash-orders.create'))->assertForbidden();
+    }
+
+    public function test_owner_can_enable_operator_wash_order_detail_access(): void
+    {
+        $operator = User::factory()->create(['role' => User::ROLE_OPERATOR]);
+        $washOrder = WashOrder::factory()->create([
+            'wash_location_id' => $operator->wash_location_id,
+            'status' => WashOrder::STATUS_AWAITING,
+        ]);
+        $washOrder->teamMembers()->attach($operator);
+
+        RolePermissionSetting::setForLocation((int) $operator->wash_location_id, User::ROLE_OPERATOR, [
+            AccessControl::VIEW_WASH_ORDERS => true,
+        ]);
+
+        $this->actingAs($operator)->get(route('wash-orders.show', $washOrder))
+            ->assertOk()
+            ->assertSee('Atualizar status')
+            ->assertDontSee('href="'.route('finance.index').'"', false)
+            ->assertDontSee('Registrar pagamento')
+            ->assertDontSee('Compartilhar via WhatsApp');
     }
 }

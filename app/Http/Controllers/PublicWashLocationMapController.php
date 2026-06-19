@@ -67,6 +67,7 @@ class PublicWashLocationMapController extends Controller
         abort_unless($location->isPubliclyVisible(), 404);
 
         $services = Service::query()
+            ->where('wash_location_id', $location->id)
             ->where('active', true)
             ->orderBy('category')
             ->orderBy('name')

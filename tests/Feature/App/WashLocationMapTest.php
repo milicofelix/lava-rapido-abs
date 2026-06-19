@@ -178,6 +178,18 @@ class WashLocationMapTest extends TestCase
             'estimated_minutes' => 50,
             'active' => true,
             'category' => 'Lavagem',
+            'wash_location_id' => $location->id,
+        ]);
+
+        $otherLocation = WashLocation::factory()->create(['name' => 'Outro Lava Rapido']);
+        Service::query()->create([
+            'name' => 'Polimento de outra unidade',
+            'description' => 'Servico que nao deve aparecer no detalhe publico desta unidade.',
+            'base_price' => 220,
+            'estimated_minutes' => 120,
+            'active' => true,
+            'category' => 'Estetica',
+            'wash_location_id' => $otherLocation->id,
         ]);
 
         $this->get(route('public.locations.show', $location))
@@ -188,6 +200,7 @@ class WashLocationMapTest extends TestCase
             ->assertSee('Av. das Nacoes, 1580')
             ->assertSee('Serviços disponíveis')
             ->assertSee('Lavagem completa')
+            ->assertDontSee('Polimento de outra unidade')
             ->assertSee('Chamar no WhatsApp')
             ->assertSee('Como chegar')
             ->assertSee('https://wa.me/5511988881101', false);

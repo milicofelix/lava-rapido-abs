@@ -73,7 +73,11 @@ function OrderCard({ order, statuses, onMove, canUpdateStatus, columnKey, showOu
         >
             <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
-                    <a href={order.show_url} className="text-sm font-black tracking-wide text-slate-950 group-hover:text-blue-700">{order.vehicle.plate}</a>
+                    {order.show_url ? (
+                        <a href={order.show_url} className="text-sm font-black tracking-wide text-slate-950 group-hover:text-blue-700">{order.vehicle.plate}</a>
+                    ) : (
+                        <span className="text-sm font-black tracking-wide text-slate-950">{order.vehicle.plate}</span>
+                    )}
                     <p className="mt-1 truncate text-xs font-medium text-slate-500">{order.customer.name}</p>
                 </div>
                 <div className="flex shrink-0 flex-col items-end gap-1">
@@ -116,7 +120,9 @@ function OrderCard({ order, statuses, onMove, canUpdateStatus, columnKey, showOu
             </div>
 
             <div className="mt-3 grid grid-cols-2 gap-1.5">
-                <a href={order.show_url} className="rounded-lg border border-slate-200 px-2 py-1.5 text-center text-xs font-bold text-slate-700 hover:bg-slate-50">Detalhes</a>
+                {order.show_url ? (
+                    <a href={order.show_url} className="rounded-lg border border-slate-200 px-2 py-1.5 text-center text-xs font-bold text-slate-700 hover:bg-slate-50">Detalhes</a>
+                ) : null}
                 {nextStatus && canMoveOrder ? (
                     <button
                         type="button"
@@ -207,6 +213,8 @@ export default function Kanban({
     feedUrl,
     filterUrl,
     createUrl,
+    logoutUrl,
+    csrfToken,
     dashboardUrl,
     logoUrl,
     auth,
@@ -216,7 +224,6 @@ export default function Kanban({
     const [selectedDate, setSelectedDate] = useState(filters?.date ?? '');
     const [realtimeUpdated, setRealtimeUpdated] = useState(false);
     const [statusError, setStatusError] = useState(null);
-    const canCreateWashOrder = ['owner', 'admin', 'attendant'].includes(auth?.user?.role);
     const canUpdateStatus = ['owner', 'admin', 'operator'].includes(auth?.user?.role);
     const activePeriod = filters?.period ?? 'today';
     const showOutsideDayBadge = Boolean(filters?.show_outside_day_badge);
@@ -312,8 +319,20 @@ export default function Kanban({
                             {dashboardUrl && (
                                 <a href={dashboardUrl} className="rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-700 shadow-sm hover:bg-slate-50">Dashboard</a>
                             )}
-                            {canCreateWashOrder && (
+                            {createUrl && (
                                 <a href={createUrl} className="rounded-lg bg-blue-700 px-4 py-2 text-sm font-bold text-white shadow-sm hover:bg-blue-800">Nova lavagem</a>
+                            )}
+                            {logoutUrl && (
+                                <form method="POST" action={logoutUrl}>
+                                    <input type="hidden" name="_token" value={csrfToken ?? ''} />
+                                    <button type="submit" className="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-slate-950 text-white shadow-sm transition hover:bg-slate-800" aria-label="Sair" title="Sair">
+                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                                            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                                            <path d="M16 17l5-5-5-5" />
+                                            <path d="M21 12H9" />
+                                        </svg>
+                                    </button>
+                                </form>
                             )}
                         </div>
                     </div>

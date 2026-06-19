@@ -9,12 +9,35 @@ use App\Models\Subscription;
 use App\Models\User;
 use App\Models\WashOrder;
 use App\Models\WashLocation;
+use App\Models\WashLocationRequest;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 class AppNotificationCenterTest extends TestCase
 {
     use RefreshDatabase;
+
+    public function test_super_admin_sees_pending_location_request_notification(): void
+    {
+        $superAdmin = User::factory()->create([
+            'role' => User::ROLE_SUPER_ADMIN,
+            'wash_location_id' => null,
+        ]);
+        WashLocationRequest::factory()->count(2)->create([
+            'status' => WashLocationRequest::STATUS_PENDING_REVIEW,
+        ]);
+        WashLocationRequest::factory()->create([
+            'status' => WashLocationRequest::STATUS_APPROVED,
+        ]);
+
+        $this->actingAs($superAdmin)
+            ->get(route('super-admin.location-requests.index'))
+            ->assertOk()
+            ->assertSee('Notificacoes')
+            ->assertSee('2 solicitações de lava-rápido')
+            ->assertSee('Analisar solicitações')
+            ->assertSee('status=pending_review', false);
+    }
 
     public function test_owner_sees_trial_expiration_notification(): void
     {

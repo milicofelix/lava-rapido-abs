@@ -5,6 +5,8 @@ namespace Tests\Feature\App;
 use App\Models\User;
 use App\Models\WashLocation;
 use App\Models\WashOrder;
+use App\Models\RolePermissionSetting;
+use App\Support\Access\AccessControl;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -67,6 +69,9 @@ class TenantHeaderBrandingTest extends TestCase
             'wash_location_id' => $location->id,
         ]);
         $washOrder = WashOrder::factory()->create(['wash_location_id' => $location->id]);
+        RolePermissionSetting::setForLocation($location->id, User::ROLE_OPERATOR, [
+            AccessControl::VIEW_WASH_ORDERS => true,
+        ]);
 
         $this->actingAs($operator)
             ->get(route('wash-orders.show', $washOrder))

@@ -5,7 +5,10 @@ namespace App\Http\Controllers\App;
 use App\Http\Controllers\Controller;
 use App\Models\AuditLog;
 use App\Models\AppSetting;
+use App\Models\RolePermissionSetting;
+use App\Models\User;
 use App\Support\AuditLogger;
+use App\Support\Access\AccessControl;
 use App\Support\MapsCoordinates;
 use App\Support\TenantContext;
 use Illuminate\Http\RedirectResponse;
@@ -21,6 +24,14 @@ class SettingsController extends Controller
         return view('app.settings.edit', [
             'settings' => AppSetting::allSettings(),
             'currentLocation' => TenantContext::currentLocation(),
+            'roleLabels' => User::roleLabels(),
+            'permissionLabels' => AccessControl::permissionLabels(),
+            'permissionDescriptions' => AccessControl::permissionDescriptions(),
+            'rolePermissionGroups' => AccessControl::configurableRolePermissions(),
+            'rolePermissionValues' => RolePermissionSetting::valuesForLocation(
+                TenantContext::currentLocationId(),
+                AccessControl::configurableRolePermissions(),
+            ),
             'themes' => [
                 AppSetting::THEME_LIGHT => 'Padrao claro',
                 AppSetting::THEME_DARK => 'Dark',
@@ -56,6 +67,7 @@ class SettingsController extends Controller
             ])],
             'module_cash_register' => ['nullable', 'boolean'],
             'module_credit_receivables' => ['nullable', 'boolean'],
+            'role_permissions' => ['nullable', 'array'],
         ]);
 
         if ($currentLocation) {
@@ -108,7 +120,27 @@ class SettingsController extends Controller
             'module_credit_receivables' => $request->boolean('module_credit_receivables'),
         ]);
 
+        if ($currentLocation) {
+            $this->updateRolePermissions($request, (int) $currentLocation->id);
+        }
+
         return back()->with('status', 'Configuracoes salvas com sucesso.');
+    }
+
+    private function updateRolePermissions(Request $request, int $locationId): void
+    {
+        $submitted = $request->input('role_permissions', []);
+
+        foreach (AccessControl::configurableRolePermissions() as $role => $permissions) {
+            $roleInput = is_array($submitted[$role] ?? null) ? $submitted[$role] : [];
+            $values = [];
+
+            foreach ($permissions as $permission) {
+                $values[$permission] = array_key_exists($permission, $roleInput);
+            }
+
+            RolePermissionSetting::setForLocation($locationId, $role, $values);
+        }
     }
 
     private function mergeCoordinatesFromMapsUrl(Request $request): void

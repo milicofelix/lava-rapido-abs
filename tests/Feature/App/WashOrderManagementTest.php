@@ -7,6 +7,8 @@ use App\Models\Service;
 use App\Models\User;
 use App\Models\Vehicle;
 use App\Models\WashOrder;
+use App\Models\RolePermissionSetting;
+use App\Support\Access\AccessControl;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -115,6 +117,9 @@ class WashOrderManagementTest extends TestCase
     {
         $operator = User::factory()->create(['role' => User::ROLE_OPERATOR]);
         $washOrder = WashOrder::factory()->create(['status' => WashOrder::STATUS_AWAITING]);
+        RolePermissionSetting::setForLocation((int) $operator->wash_location_id, User::ROLE_OPERATOR, [
+            AccessControl::VIEW_WASH_ORDERS => true,
+        ]);
 
         $this->actingAs($operator)->get(route('wash-orders.show', $washOrder))
             ->assertOk()

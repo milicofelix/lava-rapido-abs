@@ -8,6 +8,7 @@ use App\Models\Subscription;
 use App\Models\User;
 use App\Models\WashOrder;
 use App\Models\WashLocation;
+use App\Models\WashLocationRequest;
 use App\Support\Access\AccessControl;
 
 class AppNotificationCenter
@@ -17,8 +18,12 @@ class AppNotificationCenter
      */
     public static function for(?User $user): array
     {
-        if (! $user || $user->isSuperAdmin()) {
+        if (! $user) {
             return [];
+        }
+
+        if ($user->isSuperAdmin()) {
+            return self::productAdminNotifications();
         }
 
         $notifications = [];
@@ -51,6 +56,30 @@ class AppNotificationCenter
         }
 
         return $notifications;
+    }
+
+    /**
+     * @return array<int, array{title: string, body: string, tone: string, url: string|null, action: string|null}>
+     */
+    private static function productAdminNotifications(): array
+    {
+        $pendingRequests = WashLocationRequest::query()
+            ->where('status', WashLocationRequest::STATUS_PENDING_REVIEW)
+            ->count();
+
+        if ($pendingRequests === 0) {
+            return [];
+        }
+
+        return [[
+            'title' => $pendingRequests.' solicita'.($pendingRequests === 1 ? 'ção' : 'ções').' de lava-rápido',
+            'body' => $pendingRequests === 1
+                ? 'Existe uma nova unidade aguardando análise para iniciar o trial.'
+                : 'Existem novas unidades aguardando análise para iniciar o trial.',
+            'tone' => 'warning',
+            'url' => route('super-admin.location-requests.index', ['status' => WashLocationRequest::STATUS_PENDING_REVIEW]),
+            'action' => 'Analisar solicitações',
+        ]];
     }
 
     /**

@@ -30,6 +30,8 @@ class WashKanbanTest extends TestCase
                 ->where('columns.1.orders.0.vehicle.plate', $washOrder->vehicle->plate)
                 ->where('columns.1.orders.0.customer.name', $washOrder->customer->name)
                 ->where('columns.1.orders.0.can_update_status', false)
+                ->where('logoutUrl', route('logout'))
+                ->has('csrfToken')
             );
     }
 
@@ -153,6 +155,8 @@ class WashKanbanTest extends TestCase
             ->assertInertia(fn (Assert $page) => $page
                 ->where('columns.0.orders.0.id', $washOrder->id)
                 ->where('columns.0.orders.0.can_update_status', false)
+                ->where('createUrl', null)
+                ->where('logoutUrl', route('logout'))
             );
     }
 }

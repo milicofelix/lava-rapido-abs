@@ -172,6 +172,45 @@
                 </div>
             </section>
 
+            <section class="border-t border-slate-200 pt-5">
+                <p class="text-xs font-bold uppercase tracking-[0.2em] text-blue-700">Permissoes da equipe</p>
+                <h2 class="mt-1 text-xl font-bold text-slate-950">Privilégios operacionais</h2>
+                <p class="mt-1 text-sm text-slate-500">Ajuste excecoes por perfil sem liberar areas sensiveis como financeiro, assinatura ou administracao do produto.</p>
+
+                <div class="mt-4 space-y-4">
+                    @foreach ($rolePermissionGroups as $role => $permissions)
+                        <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                            <div class="flex flex-wrap items-center justify-between gap-3">
+                                <div>
+                                    <p class="font-black text-slate-950">{{ $roleLabels[$role] ?? $role }}</p>
+                                    <p class="mt-1 text-sm text-slate-500">Por padrao, este perfil continua restrito ao fluxo operacional.</p>
+                                </div>
+                                <span class="rounded-full bg-white px-3 py-1 text-xs font-black text-slate-600">{{ count($permissions) }} opcoes</span>
+                            </div>
+
+                            <div class="mt-4 grid gap-3 md:grid-cols-3">
+                                @foreach ($permissions as $permission)
+                                    @php
+                                        $submittedPermissions = old('role_permissions', []);
+                                        $hasOldPermissionInput = session()->hasOldInput('role_permissions');
+                                        $isChecked = $hasOldPermissionInput && is_array($submittedPermissions)
+                                            ? array_key_exists($permission, $submittedPermissions[$role] ?? [])
+                                            : ($rolePermissionValues[$role][$permission] ?? false);
+                                    @endphp
+                                    <label class="flex cursor-pointer items-start gap-3 rounded-2xl border border-slate-200 bg-white p-4 hover:border-blue-200 hover:bg-blue-50/40">
+                                        <input type="checkbox" name="role_permissions[{{ $role }}][{{ $permission }}]" value="1" @checked($isChecked) class="mt-1 h-4 w-4 rounded border-slate-300 text-blue-700">
+                                        <span>
+                                            <span class="block font-bold text-slate-900">{{ $permissionLabels[$permission] ?? $permission }}</span>
+                                            <span class="mt-1 block text-sm leading-5 text-slate-500">{{ $permissionDescriptions[$permission] ?? 'Permissao configuravel para este perfil.' }}</span>
+                                        </span>
+                                    </label>
+                                @endforeach
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+            </section>
+
             <div class="flex justify-end border-t border-slate-200 pt-5">
                 <button class="rounded-xl bg-blue-700 px-5 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-blue-800">Salvar configuracoes</button>
             </div>

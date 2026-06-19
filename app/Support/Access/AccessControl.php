@@ -2,6 +2,7 @@
 
 namespace App\Support\Access;
 
+use App\Models\RolePermissionSetting;
 use App\Models\User;
 
 class AccessControl
@@ -92,9 +93,46 @@ class AccessControl
             ],
             User::ROLE_OPERATOR => [
                 self::VIEW_KANBAN,
-                self::VIEW_WASH_ORDERS,
                 self::UPDATE_WASH_ORDER_STATUS,
             ],
+        ];
+    }
+
+    /**
+     * @return array<string, array<int, string>>
+     */
+    public static function configurableRolePermissions(): array
+    {
+        return [
+            User::ROLE_OPERATOR => [
+                self::VIEW_WASH_ORDERS,
+                self::CREATE_WASH_ORDER,
+                self::SEND_WASH_NOTIFICATIONS,
+            ],
+        ];
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    public static function permissionLabels(): array
+    {
+        return [
+            self::VIEW_WASH_ORDERS => 'Visualizar detalhes da lavagem',
+            self::CREATE_WASH_ORDER => 'Abrir e listar lavagens',
+            self::SEND_WASH_NOTIFICATIONS => 'Enviar notificacoes manuais ao cliente',
+        ];
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    public static function permissionDescriptions(): array
+    {
+        return [
+            self::VIEW_WASH_ORDERS => 'Permite entrar na tela da lavagem pelo Kanban ou link interno.',
+            self::CREATE_WASH_ORDER => 'Permite acessar a listagem e cadastrar novas lavagens.',
+            self::SEND_WASH_NOTIFICATIONS => 'Permite usar os modelos de WhatsApp na tela da lavagem.',
         ];
     }
 
@@ -102,6 +140,14 @@ class AccessControl
     {
         if (! $user) {
             return false;
+        }
+
+        if (self::isConfigurableForRole($user->role, $permission) && $user->wash_location_id) {
+            $override = RolePermissionSetting::allowedFor((int) $user->wash_location_id, $user->role, $permission);
+
+            if ($override !== null) {
+                return $override;
+            }
         }
 
         return in_array($permission, self::rolePermissions()[$user->role] ?? [], true);
@@ -117,5 +163,10 @@ class AccessControl
             ->keys()
             ->values()
             ->all();
+    }
+
+    private static function isConfigurableForRole(string $role, string $permission): bool
+    {
+        return in_array($permission, self::configurableRolePermissions()[$role] ?? [], true);
     }
 }
