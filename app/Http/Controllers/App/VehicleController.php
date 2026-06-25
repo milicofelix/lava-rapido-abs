@@ -86,9 +86,31 @@ class VehicleController extends Controller
 
     private function validated(Request $request, ?Vehicle $vehicle = null): array
     {
+        $request->merge([
+            'plate' => mb_strtoupper((string) $request->input('plate')),
+        ]);
+
+        $customer = TenantContext::scopeCustomers(Customer::query())->find($request->input('customer_id'));
+
+        if (! $customer) {
+            throw ValidationException::withMessages([
+                'customer_id' => 'Selecione um cliente valido.',
+            ]);
+        }
+
         $data = $request->validate([
-            'customer_id' => ['required', 'exists:customers,id'],
-            'plate' => ['required', 'string', 'max:12', Rule::unique('vehicles', 'plate')->ignore($vehicle)],
+            'customer_id' => [
+                'required',
+                Rule::exists('customers', 'id')->where('wash_location_id', $customer->wash_location_id),
+            ],
+            'plate' => [
+                'required',
+                'string',
+                'max:12',
+                Rule::unique('vehicles', 'plate')
+                    ->where('wash_location_id', $customer->wash_location_id)
+                    ->ignore($vehicle),
+            ],
             'brand' => ['required', 'string', Rule::in(VehicleCatalog::brands())],
             'model' => ['required', 'string', 'max:100'],
             'color' => ['required', 'string', 'max:60'],
@@ -104,7 +126,6 @@ class VehicleController extends Controller
             ]);
         }
 
-        $data['plate'] = mb_strtoupper($data['plate']);
         $data['type'] = $catalogType;
 
         return $data;
