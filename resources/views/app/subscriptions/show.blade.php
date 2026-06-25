@@ -71,7 +71,7 @@
         <section class="grid gap-4 lg:grid-cols-3">
             @forelse ($plans as $plan)
                 @php
-                    $isCurrentPlan = $activeSubscription?->plan_id === $plan->id;
+                    $isCurrentPlan = $activePlanId !== null && (int) $activePlanId === (int) $plan->id;
                 @endphp
                 <article class="rounded-2xl border {{ $isCurrentPlan ? 'border-emerald-300 bg-emerald-50/40 ring-2 ring-emerald-100' : 'border-slate-200 bg-white' }} p-5 shadow-sm">
                     <div class="flex items-start justify-between gap-3">

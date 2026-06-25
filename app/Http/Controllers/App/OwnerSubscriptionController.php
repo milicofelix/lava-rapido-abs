@@ -21,10 +21,21 @@ class OwnerSubscriptionController extends Controller
         $location = TenantContext::currentLocation()?->load(['currentSubscription.plan', 'activeSubscription.plan']);
         abort_unless($location, 404);
 
+        $activeSubscription = $location->activeSubscription
+            ?: $location->subscriptions()
+                ->with('plan')
+                ->where('status', Subscription::STATUS_ACTIVE)
+                ->latest()
+                ->first();
+        $currentSubscription = $location->currentSubscription;
+        $activePlanId = $activeSubscription?->plan_id
+            ?? ($currentSubscription?->status === Subscription::STATUS_ACTIVE ? $currentSubscription->plan_id : null);
+
         return view('app.subscriptions.show', [
             'location' => $location,
-            'currentSubscription' => $location->currentSubscription,
-            'activeSubscription' => $location->activeSubscription,
+            'currentSubscription' => $currentSubscription,
+            'activeSubscription' => $activeSubscription,
+            'activePlanId' => $activePlanId ? (int) $activePlanId : null,
             'subscriptionHistory' => $location->subscriptions()
                 ->with('plan')
                 ->latest()

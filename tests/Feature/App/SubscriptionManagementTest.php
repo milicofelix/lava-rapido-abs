@@ -46,6 +46,40 @@ class SubscriptionManagementTest extends TestCase
             ->assertSee('Este e o plano ativo da unidade.');
     }
 
+    public function test_owner_ve_plano_atual_no_card_do_plano_contratado(): void
+    {
+        $location = WashLocation::factory()->create([
+            'account_status' => WashLocation::ACCOUNT_STATUS_ACTIVE,
+            'subscription_status' => WashLocation::ACCOUNT_STATUS_ACTIVE,
+            'subscription_ends_at' => now()->addMonth(),
+        ]);
+        $owner = User::factory()->create([
+            'role' => User::ROLE_OWNER,
+            'wash_location_id' => $location->id,
+        ]);
+        $starter = Plan::factory()->create(['name' => 'Starter', 'price' => 49.90]);
+        $professional = Plan::factory()->create(['name' => 'Professional', 'price' => 89.90]);
+
+        Subscription::factory()->create([
+            'wash_location_id' => $location->id,
+            'plan_id' => $professional->id,
+            'status' => Subscription::STATUS_ACTIVE,
+            'started_at' => now()->subDay(),
+            'ends_at' => now()->addMonth(),
+        ]);
+
+        $response = $this->actingAs($owner)
+            ->get(route('subscriptions.show'))
+            ->assertOk()
+            ->assertSee('Assinatura ativa')
+            ->assertSee('Este e o plano ativo da unidade.');
+
+        $content = $response->getContent();
+
+        $this->assertMatchesRegularExpression('/<h2[^>]*>Starter<\/h2>.*Disponivel/s', $content);
+        $this->assertMatchesRegularExpression('/<h2[^>]*>Professional<\/h2>.*Plano atual/s', $content);
+    }
+
     public function test_owner_visualiza_historico_de_assinaturas(): void
     {
         $location = WashLocation::factory()->create([
