@@ -8,6 +8,7 @@ use App\Models\User;
 use App\Models\WashLocation;
 use App\Models\WashOrder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Carbon;
 use Tests\TestCase;
 
 class AuditLogManagementTest extends TestCase
@@ -32,6 +33,48 @@ class AuditLogManagementTest extends TestCase
             ->assertSee('Auditoria')
             ->assertSee('Cliente editado')
             ->assertSee('Maria Cliente');
+    }
+
+    public function test_audit_log_page_defaults_to_current_day(): void
+    {
+        Carbon::setTestNow('2026-06-25 12:00:00');
+
+        try {
+            $admin = User::factory()->create(['role' => User::ROLE_ADMIN]);
+
+            $oldLog = AuditLog::query()->create([
+                'wash_location_id' => $admin->wash_location_id,
+                'user_id' => $admin->id,
+                'action' => AuditLog::ACTION_CUSTOMER_UPDATED,
+                'subject_label' => 'Registro antigo',
+                'description' => 'Registro de ontem.',
+            ]);
+            $oldLog->forceFill([
+                'created_at' => '2026-06-24 10:00:00',
+                'updated_at' => '2026-06-24 10:00:00',
+            ])->save();
+
+            $todayLog = AuditLog::query()->create([
+                'wash_location_id' => $admin->wash_location_id,
+                'user_id' => $admin->id,
+                'action' => AuditLog::ACTION_CUSTOMER_UPDATED,
+                'subject_label' => 'Registro de hoje',
+                'description' => 'Registro do dia atual.',
+            ]);
+            $todayLog->forceFill([
+                'created_at' => '2026-06-25 10:00:00',
+                'updated_at' => '2026-06-25 10:00:00',
+            ])->save();
+
+            $this->actingAs($admin)
+                ->get(route('audit-logs.index'))
+                ->assertOk()
+                ->assertSee('value="2026-06-25"', false)
+                ->assertSee('Registro de hoje')
+                ->assertDontSee('Registro antigo');
+        } finally {
+            Carbon::setTestNow();
+        }
     }
 
     public function test_attendant_cannot_view_audit_log_page(): void
@@ -115,5 +158,61 @@ class AuditLogManagementTest extends TestCase
             ->assertOk()
             ->assertSee('Cliente da Unidade A')
             ->assertDontSee('Cliente da Unidade B');
+    }
+
+    public function test_audit_log_filter_rejects_inverted_period(): void
+    {
+        Carbon::setTestNow('2026-06-25 12:00:00');
+
+        try {
+            $admin = User::factory()->create(['role' => User::ROLE_ADMIN]);
+
+            $this->actingAs($admin)
+                ->from(route('audit-logs.index'))
+                ->get(route('audit-logs.index', [
+                    'start' => '2026-06-25',
+                    'end' => '2026-06-24',
+                ]))
+                ->assertRedirect(route('audit-logs.index'))
+                ->assertSessionHasErrors('end');
+        } finally {
+            Carbon::setTestNow();
+        }
+    }
+
+    public function test_audit_log_filter_rejects_future_start_date(): void
+    {
+        Carbon::setTestNow('2026-06-25 12:00:00');
+
+        try {
+            $admin = User::factory()->create(['role' => User::ROLE_ADMIN]);
+
+            $this->actingAs($admin)
+                ->from(route('audit-logs.index'))
+                ->get(route('audit-logs.index', [
+                    'start' => '2026-06-26',
+                    'end' => '2026-06-26',
+                ]))
+                ->assertRedirect(route('audit-logs.index'))
+                ->assertSessionHasErrors('start');
+        } finally {
+            Carbon::setTestNow();
+        }
+    }
+
+    public function test_audit_log_filter_limits_date_inputs_to_today(): void
+    {
+        Carbon::setTestNow('2026-06-25 12:00:00');
+
+        try {
+            $admin = User::factory()->create(['role' => User::ROLE_ADMIN]);
+
+            $this->actingAs($admin)
+                ->get(route('audit-logs.index'))
+                ->assertOk()
+                ->assertSee('max="2026-06-25"', false);
+        } finally {
+            Carbon::setTestNow();
+        }
     }
 }

@@ -1,5 +1,7 @@
 <x-app.layout heading="Auditoria" title="Auditoria · AutoFlow">
     <div class="space-y-5">
+        @include('app.components.errors')
+
         <section class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
             <div class="mb-5 border-b border-slate-200 pb-4">
                 <p class="text-xs font-black uppercase tracking-[0.18em] text-blue-700">Rastreabilidade</p>
@@ -10,12 +12,14 @@
             <form method="GET" action="{{ route('audit-logs.index') }}" class="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
                 <label class="block">
                     <span class="text-sm font-bold text-slate-700">Inicio</span>
-                    <input name="start" type="date" value="{{ $filters['start'] }}" class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100">
+                    <input data-audit-start name="start" type="date" value="{{ $filters['start'] }}" max="{{ now()->toDateString() }}" class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100">
+                    @error('start') <span class="mt-1 block text-sm text-red-600">{{ $message }}</span> @enderror
                 </label>
 
                 <label class="block">
                     <span class="text-sm font-bold text-slate-700">Fim</span>
-                    <input name="end" type="date" value="{{ $filters['end'] }}" class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100">
+                    <input data-audit-end name="end" type="date" value="{{ $filters['end'] }}" min="{{ $filters['start'] }}" max="{{ now()->toDateString() }}" class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100">
+                    @error('end') <span class="mt-1 block text-sm text-red-600">{{ $message }}</span> @enderror
                 </label>
 
                 <label class="block">
@@ -92,4 +96,23 @@
             </div>
         </section>
     </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const startInput = document.querySelector('[data-audit-start]');
+            const endInput = document.querySelector('[data-audit-end]');
+
+            if (!startInput || !endInput) {
+                return;
+            }
+
+            startInput.addEventListener('change', () => {
+                endInput.min = startInput.value || '';
+
+                if (endInput.value && startInput.value && endInput.value < startInput.value) {
+                    endInput.value = startInput.value;
+                }
+            });
+        });
+    </script>
 </x-app.layout>
