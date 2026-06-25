@@ -26,10 +26,11 @@
             </form>
         </section>
 
-        <section class="grid gap-3 md:grid-cols-3">
+        <section class="grid gap-3 md:grid-cols-4">
             @foreach ([
                 ['label' => 'Lavagens no dia', 'value' => $summary['total'], 'color' => 'bg-blue-50 text-blue-700'],
                 ['label' => 'Em aberto', 'value' => $summary['open'], 'color' => 'bg-amber-50 text-amber-700'],
+                ['label' => 'Atrasadas', 'value' => $summary['delayed'], 'color' => 'bg-red-50 text-red-700'],
                 ['label' => 'Entregues', 'value' => $summary['delivered'], 'color' => 'bg-emerald-50 text-emerald-700'],
             ] as $item)
                 <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
@@ -47,7 +48,12 @@
 
             <div class="mt-5 space-y-3">
                 @forelse ($washOrders as $washOrder)
-                    <a href="{{ route('wash-orders.show', $washOrder) }}" class="grid gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-4 transition hover:border-blue-200 hover:bg-blue-50/40 md:grid-cols-[120px_1fr_auto]">
+                    @php
+                        $isTerminal = in_array($washOrder->status, [\App\Models\WashOrder::STATUS_DELIVERED, \App\Models\WashOrder::STATUS_CANCELED], true);
+                        $isDelayed = ! $isTerminal && $washOrder->estimated_completion_at?->isPast();
+                    @endphp
+
+                    <a href="{{ route('wash-orders.show', $washOrder) }}" class="grid gap-3 rounded-2xl border {{ $isDelayed ? 'border-red-200 bg-red-50/70' : 'border-slate-200 bg-slate-50' }} p-4 transition hover:border-blue-200 hover:bg-blue-50/40 md:grid-cols-[120px_1fr_auto]">
                         <div>
                             <p class="text-xs font-black uppercase tracking-[0.16em] text-slate-500">Horario</p>
                             <p class="mt-1 text-lg font-black text-slate-950">{{ $washOrder->estimated_completion_at?->format('H:i') ?? $washOrder->entered_at->format('H:i') }}</p>
@@ -57,6 +63,11 @@
                             <div class="flex flex-wrap items-center gap-2">
                                 <p class="font-black text-slate-950">{{ $washOrder->vehicle->plate }}</p>
                                 @include('app.wash-orders._status-badge', ['status' => $washOrder->status, 'label' => $washOrder->statusLabel()])
+                                @if ($isDelayed)
+                                    <span class="rounded-full bg-red-100 px-3 py-1 text-xs font-black text-red-700">Atrasada</span>
+                                @elseif ($washOrder->estimated_completion_at && ! $isTerminal)
+                                    <span class="rounded-full bg-blue-50 px-3 py-1 text-xs font-black text-blue-700">Previsao {{ $washOrder->estimated_completion_at->format('H:i') }}</span>
+                                @endif
                             </div>
                             <p class="mt-1 truncate text-sm font-semibold text-slate-700">{{ $washOrder->customer->name }} · {{ $washOrder->vehicle->brand }} {{ $washOrder->vehicle->model }}</p>
                             <p class="mt-2 text-sm text-slate-500">{{ $washOrder->services->pluck('pivot.service_name')->filter()->join(', ') ?: 'Servico nao informado' }}</p>

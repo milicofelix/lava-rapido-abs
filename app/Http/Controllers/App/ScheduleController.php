@@ -28,6 +28,15 @@ class ScheduleController extends Controller
             ->orderByRaw('COALESCE(estimated_completion_at, entered_at) asc')
             ->get();
 
+        $activeStatuses = collect(WashOrder::statuses())
+            ->keys()
+            ->diff([WashOrder::STATUS_DELIVERED, WashOrder::STATUS_CANCELED])
+            ->all();
+
+        $delayed = $washOrders->filter(fn (WashOrder $washOrder) => in_array($washOrder->status, $activeStatuses, true)
+            && $washOrder->estimated_completion_at
+            && $washOrder->estimated_completion_at->isPast());
+
         return view('app.schedule.index', [
             'selectedDate' => $selectedDate,
             'previousDate' => $selectedDate->copy()->subDay()->toDateString(),
@@ -35,7 +44,8 @@ class ScheduleController extends Controller
             'washOrders' => $washOrders,
             'summary' => [
                 'total' => $washOrders->count(),
-                'open' => $washOrders->whereNotIn('status', [WashOrder::STATUS_DELIVERED, WashOrder::STATUS_CANCELED])->count(),
+                'open' => $washOrders->whereIn('status', $activeStatuses)->count(),
+                'delayed' => $delayed->count(),
                 'delivered' => $washOrders->where('status', WashOrder::STATUS_DELIVERED)->count(),
             ],
         ]);

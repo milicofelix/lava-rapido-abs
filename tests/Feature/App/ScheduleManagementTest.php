@@ -7,6 +7,7 @@ use App\Models\Service;
 use App\Models\User;
 use App\Models\WashOrder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Carbon;
 use Tests\TestCase;
 
 class ScheduleManagementTest extends TestCase
@@ -60,6 +61,30 @@ class ScheduleManagementTest extends TestCase
             ->assertOk()
             ->assertSee($tomorrowOrder->vehicle->plate)
             ->assertDontSee($todayOrder->vehicle->plate);
+    }
+
+    public function test_schedule_highlights_delayed_open_orders(): void
+    {
+        Carbon::setTestNow('2026-06-25 14:00:00');
+
+        try {
+            $admin = User::factory()->create(['role' => User::ROLE_ADMIN]);
+            $lateOrder = WashOrder::factory()->create([
+                'wash_location_id' => $admin->wash_location_id,
+                'entered_at' => now()->setTime(10, 0),
+                'estimated_completion_at' => now()->setTime(11, 0),
+                'status' => WashOrder::STATUS_WASHING,
+            ]);
+
+            $this->actingAs($admin)
+                ->get(route('schedule.index'))
+                ->assertOk()
+                ->assertSee('Atrasadas')
+                ->assertSee('Atrasada')
+                ->assertSee($lateOrder->vehicle->plate);
+        } finally {
+            Carbon::setTestNow();
+        }
     }
 
     public function test_operator_cannot_access_schedule(): void
