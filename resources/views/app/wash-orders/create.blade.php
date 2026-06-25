@@ -3,13 +3,19 @@
         @csrf
 
         <div class="space-y-5">
-            <section class="rounded-lg border border-zinc-200 bg-white p-5">
+            <section class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
                 @include('app.components.errors')
 
-                <div class="grid gap-4 md:grid-cols-2">
+                <div class="border-b border-slate-200 pb-4">
+                    <p class="text-xs font-black uppercase tracking-[0.18em] text-blue-700">Abertura da ordem</p>
+                    <h2 class="mt-1 text-xl font-black text-slate-950">Dados da lavagem</h2>
+                    <p class="mt-1 text-sm text-slate-500">Escolha o cliente para carregar somente os veiculos vinculados a ele.</p>
+                </div>
+
+                <div class="mt-5 grid gap-4 md:grid-cols-2">
                     <label class="block">
-                        <span class="text-sm font-medium">Cliente</span>
-                        <select name="customer_id" required data-customer-select class="mt-1 w-full rounded-md border border-zinc-300 px-3 py-2">
+                        <span class="text-sm font-bold text-slate-700">Cliente</span>
+                        <select name="customer_id" required data-customer-select class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100">
                             <option value="">Selecione</option>
                             @foreach ($customers as $customer)
                                 <option value="{{ $customer->id }}" @selected(old('customer_id') == $customer->id)>{{ $customer->name }} · {{ $customer->phone }}</option>
@@ -19,61 +25,66 @@
                     </label>
 
                     <label class="block">
-                        <span class="text-sm font-medium">Veiculo</span>
-                        <select name="vehicle_id" required data-vehicle-select data-old-vehicle="{{ old('vehicle_id') }}" class="mt-1 w-full rounded-md border border-zinc-300 px-3 py-2">
+                        <span class="text-sm font-bold text-slate-700">Veiculo</span>
+                        <select name="vehicle_id" required data-vehicle-select data-old-vehicle="{{ old('vehicle_id') }}" class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100">
                             <option value="">Selecione um cliente primeiro</option>
                         </select>
-                        <p data-vehicle-help class="mt-1 text-xs text-zinc-500">Ao escolher o cliente, os veiculos vinculados aparecem aqui.</p>
+                        <p data-vehicle-help class="mt-1 text-xs text-slate-500">Ao escolher o cliente, os veiculos vinculados aparecem aqui.</p>
                         @error('vehicle_id') <span class="text-sm text-red-600">{{ $message }}</span> @enderror
                     </label>
 
-                    <div class="md:col-span-2">
-                        <span class="text-sm font-medium">Equipe da lavagem</span>
-                        <div class="mt-2 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-                            @foreach ($users as $user)
-                                <label class="flex items-center gap-3 rounded-md border border-zinc-200 px-3 py-2">
-                                    <input name="assigned_user_ids[]" type="checkbox" value="{{ $user->id }}" @checked(in_array($user->id, old('assigned_user_ids', []))) class="rounded border-zinc-300">
-                                    <span>
-                                        <span class="block text-sm font-medium">{{ $user->name }}</span>
-                                        <span class="block text-xs text-zinc-500">{{ $user->roleLabel() }}</span>
-                                    </span>
-                                </label>
-                            @endforeach
-                        </div>
-                        <p class="mt-1 text-xs text-zinc-500">Selecione todos que participam. O primeiro selecionado sera o responsavel principal.</p>
-                        @error('assigned_user_ids') <span class="text-sm text-red-600">{{ $message }}</span> @enderror
-                        @error('assigned_user_ids.*') <span class="text-sm text-red-600">{{ $message }}</span> @enderror
-                    </div>
-
                     @if ($scheduleEnabled)
                         <label class="block md:col-span-2">
-                            <span class="text-sm font-medium">Agendar para</span>
-                            <input name="scheduled_at" type="datetime-local" value="{{ old('scheduled_at') }}" class="mt-1 w-full rounded-md border border-zinc-300 px-3 py-2">
-                            <p class="mt-1 text-xs text-zinc-500">Deixe em branco para abrir a lavagem agora. Informe uma data futura para aparecer na Agenda desse dia.</p>
+                            <span class="text-sm font-bold text-slate-700">Agendar para</span>
+                            <input name="scheduled_at" type="datetime-local" value="{{ old('scheduled_at') }}" class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100">
+                            <p class="mt-1 text-xs text-slate-500">Deixe em branco para abrir a lavagem agora. Informe uma data futura para aparecer na Agenda desse dia.</p>
                             @error('scheduled_at') <span class="text-sm text-red-600">{{ $message }}</span> @enderror
                         </label>
                     @endif
                 </div>
 
                 <label class="mt-4 block">
-                    <span class="text-sm font-medium">Observacoes</span>
-                    <textarea name="notes" rows="4" class="mt-1 w-full rounded-md border border-zinc-300 px-3 py-2">{{ old('notes') }}</textarea>
+                    <span class="text-sm font-bold text-slate-700">Observacoes</span>
+                    <textarea name="notes" rows="4" class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100">{{ old('notes') }}</textarea>
                     @error('notes') <span class="text-sm text-red-600">{{ $message }}</span> @enderror
                 </label>
             </section>
 
-            <section class="rounded-lg border border-zinc-200 bg-white">
-                <div class="border-b border-zinc-200 px-5 py-4">
-                    <h2 class="font-semibold">Servicos</h2>
+            <section class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                <div class="border-b border-slate-200 pb-4">
+                    <p class="text-xs font-black uppercase tracking-[0.18em] text-blue-700">Equipe da lavagem</p>
+                    <h2 class="mt-1 text-xl font-black text-slate-950">Responsaveis pela execucao</h2>
+                    <p class="mt-1 text-sm text-slate-500">Selecione todos que participam. O primeiro selecionado sera o responsavel principal.</p>
+                </div>
+
+                <div class="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                    @foreach ($users as $user)
+                        <label class="flex min-h-20 cursor-pointer items-start gap-3 rounded-2xl border border-slate-200 p-4 hover:bg-slate-50">
+                            <input name="assigned_user_ids[]" type="checkbox" value="{{ $user->id }}" @checked(in_array($user->id, old('assigned_user_ids', []))) class="mt-1 h-4 w-4 rounded border-slate-300 text-blue-700">
+                            <span class="min-w-0">
+                                <span class="block truncate text-sm font-black text-slate-950">{{ $user->name }}</span>
+                                <span class="mt-1 block text-xs font-bold text-slate-500">{{ $user->roleLabel() }}</span>
+                            </span>
+                        </label>
+                    @endforeach
+                </div>
+                @error('assigned_user_ids') <span class="mt-3 block text-sm text-red-600">{{ $message }}</span> @enderror
+                @error('assigned_user_ids.*') <span class="mt-3 block text-sm text-red-600">{{ $message }}</span> @enderror
+            </section>
+
+            <section class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+                <div class="border-b border-slate-200 px-5 py-4">
+                    <p class="text-xs font-black uppercase tracking-[0.18em] text-blue-700">Catalogo</p>
+                    <h2 class="mt-1 text-xl font-black text-slate-950">Servicos</h2>
                 </div>
                 <div class="grid gap-3 p-5 md:grid-cols-2">
                     @foreach ($services as $service)
-                        <label class="flex min-h-28 items-start gap-3 rounded-lg border border-zinc-200 p-4">
-                            <input name="service_ids[]" type="checkbox" value="{{ $service->id }}" data-price="{{ $service->base_price }}" data-minutes="{{ $service->estimated_minutes }}" @checked(in_array($service->id, old('service_ids', []))) class="mt-1 rounded border-zinc-300">
-                            <span>
-                                <span class="block font-medium">{{ $service->name }}</span>
-                                <span class="mt-1 block text-sm text-zinc-500">{{ $service->category }} · {{ $service->estimated_minutes }} min</span>
-                                <span class="mt-2 block text-sm font-semibold">R$ {{ number_format((float) $service->base_price, 2, ',', '.') }}</span>
+                        <label class="flex min-h-28 cursor-pointer items-start gap-3 rounded-2xl border border-slate-200 p-4 hover:bg-slate-50">
+                            <input name="service_ids[]" type="checkbox" value="{{ $service->id }}" data-price="{{ $service->base_price }}" data-minutes="{{ $service->estimated_minutes }}" @checked(in_array($service->id, old('service_ids', []))) class="mt-1 h-4 w-4 rounded border-slate-300 text-blue-700">
+                            <span class="min-w-0">
+                                <span class="block truncate font-black text-slate-950">{{ $service->name }}</span>
+                                <span class="mt-1 block text-sm text-slate-500">{{ $service->category }} · {{ $service->estimated_minutes }} min</span>
+                                <span class="mt-3 inline-flex rounded-full bg-blue-50 px-3 py-1 text-sm font-black text-blue-700">R$ {{ number_format((float) $service->base_price, 2, ',', '.') }}</span>
                             </span>
                         </label>
                     @endforeach
@@ -82,20 +93,21 @@
             </section>
         </div>
 
-        <aside class="h-fit rounded-lg border border-zinc-200 bg-white p-5">
-            <h2 class="font-semibold">Resumo</h2>
-            <dl class="mt-4 space-y-3 text-sm">
-                <div class="flex justify-between gap-4">
-                    <dt class="text-zinc-500">Total</dt>
-                    <dd class="font-semibold" id="wash-total">R$ 0,00</dd>
+        <aside class="h-fit rounded-2xl border border-slate-200 bg-white p-5 shadow-sm xl:sticky xl:top-24">
+            <p class="text-xs font-black uppercase tracking-[0.18em] text-blue-700">Resumo</p>
+            <h2 class="mt-1 text-xl font-black text-slate-950">Ordem de lavagem</h2>
+            <dl class="mt-5 space-y-3 text-sm">
+                <div class="flex justify-between gap-4 rounded-2xl bg-slate-50 px-4 py-3">
+                    <dt class="font-bold text-slate-500">Total</dt>
+                    <dd class="font-black text-slate-950" id="wash-total">R$ 0,00</dd>
                 </div>
-                <div class="flex justify-between gap-4">
-                    <dt class="text-zinc-500">Tempo estimado</dt>
-                    <dd class="font-semibold" id="wash-minutes">0 min</dd>
+                <div class="flex justify-between gap-4 rounded-2xl bg-slate-50 px-4 py-3">
+                    <dt class="font-bold text-slate-500">Tempo estimado</dt>
+                    <dd class="font-black text-slate-950" id="wash-minutes">0 min</dd>
                 </div>
             </dl>
-            <button class="mt-5 w-full rounded-md bg-cyan-700 px-4 py-2.5 text-sm font-semibold text-white">Abrir lavagem</button>
-            <a href="{{ route('wash-orders.index') }}" class="mt-3 block rounded-md border border-zinc-300 px-4 py-2.5 text-center text-sm font-semibold">Cancelar</a>
+            <button class="mt-5 w-full rounded-xl bg-blue-700 px-4 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-blue-800">Abrir lavagem</button>
+            <a href="{{ route('wash-orders.index') }}" class="mt-3 block rounded-xl border border-slate-300 px-4 py-2.5 text-center text-sm font-bold text-slate-700 hover:bg-slate-50">Cancelar</a>
         </aside>
     </form>
 
