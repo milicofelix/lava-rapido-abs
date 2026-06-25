@@ -87,6 +87,7 @@ class AppNotificationCenter
      */
     private static function operationalNotifications(): array
     {
+        $notifications = [];
         $inProgressStatuses = [
             WashOrder::STATUS_PREPARING,
             WashOrder::STATUS_WASHING,
@@ -95,22 +96,39 @@ class AppNotificationCenter
             WashOrder::STATUS_FINISHING,
         ];
 
+        $delayedCount = TenantContext::scopeWashOrders(WashOrder::query())
+            ->whereDate('entered_at', today())
+            ->whereIn('status', $inProgressStatuses)
+            ->whereNotNull('estimated_completion_at')
+            ->where('estimated_completion_at', '<', now())
+            ->count();
+
+        if ($delayedCount > 0) {
+            $notifications[] = [
+                'title' => $delayedCount.' lavagem'.($delayedCount === 1 ? '' : 's').' atrasada'.($delayedCount === 1 ? '' : 's'),
+                'body' => 'Existem lavagens abertas com previsao vencida hoje. Priorize a fila da operacao.',
+                'tone' => 'danger',
+                'url' => AppSetting::isModuleEnabled('module_schedule') ? route('schedule.index') : route('kanban'),
+                'action' => AppSetting::isModuleEnabled('module_schedule') ? 'Abrir Agenda' : 'Abrir Kanban',
+            ];
+        }
+
         $inProgressCount = TenantContext::scopeWashOrders(WashOrder::query())
             ->whereDate('entered_at', today())
             ->whereIn('status', $inProgressStatuses)
             ->count();
 
-        if ($inProgressCount === 0) {
-            return [];
+        if ($inProgressCount > 0) {
+            $notifications[] = [
+                'title' => $inProgressCount.' lavagem'.($inProgressCount === 1 ? '' : 's').' em andamento',
+                'body' => 'Acompanhe o fluxo operacional de hoje pelo Kanban.',
+                'tone' => 'info',
+                'url' => route('kanban'),
+                'action' => 'Abrir Kanban',
+            ];
         }
 
-        return [[
-            'title' => $inProgressCount.' lavagem'.($inProgressCount === 1 ? '' : 's').' em andamento',
-            'body' => 'Acompanhe o fluxo operacional de hoje pelo Kanban.',
-            'tone' => 'info',
-            'url' => route('kanban'),
-            'action' => 'Abrir Kanban',
-        ]];
+        return $notifications;
     }
 
     /**

@@ -11,6 +11,7 @@ use App\Models\WashOrder;
 use App\Models\WashLocation;
 use App\Models\WashLocationRequest;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Carbon;
 use Tests\TestCase;
 
 class AppNotificationCenterTest extends TestCase
@@ -112,6 +113,44 @@ class AppNotificationCenterTest extends TestCase
             ->assertOk()
             ->assertSee('1 lavagem em andamento')
             ->assertSee('Abrir Kanban');
+    }
+
+    public function test_owner_sees_delayed_wash_notification_for_today(): void
+    {
+        Carbon::setTestNow('2026-06-25 14:00:00');
+
+        try {
+            $location = WashLocation::factory()->create([
+                'account_status' => WashLocation::ACCOUNT_STATUS_ACTIVE,
+                'subscription_status' => WashLocation::ACCOUNT_STATUS_ACTIVE,
+                'subscription_ends_at' => now()->addMonth(),
+            ]);
+            $owner = User::factory()->create([
+                'role' => User::ROLE_OWNER,
+                'wash_location_id' => $location->id,
+            ]);
+            WashOrder::factory()->create([
+                'wash_location_id' => $location->id,
+                'entered_at' => now()->setTime(10, 0),
+                'estimated_completion_at' => now()->setTime(11, 0),
+                'status' => WashOrder::STATUS_WASHING,
+            ]);
+            WashOrder::factory()->create([
+                'wash_location_id' => $location->id,
+                'entered_at' => now()->subDay()->setTime(10, 0),
+                'estimated_completion_at' => now()->subDay()->setTime(11, 0),
+                'status' => WashOrder::STATUS_WASHING,
+            ]);
+
+            $this->actingAs($owner)
+                ->get(route('dashboard'))
+                ->assertOk()
+                ->assertSee('1 lavagem atrasada')
+                ->assertSee('Abrir Agenda')
+                ->assertSee('agenda', false);
+        } finally {
+            Carbon::setTestNow();
+        }
     }
 
     public function test_attendant_does_not_see_subscription_notification(): void
