@@ -1,5 +1,5 @@
 <x-app.layout heading="Novo veiculo" title="Novo veiculo · AutoFlow">
-    <form method="POST" action="{{ route('vehicles.store') }}" class="max-w-3xl rounded-lg border border-zinc-200 bg-white p-5">
+    <form method="POST" action="{{ route('vehicles.store') }}" class="max-w-4xl">
         @csrf
         @include('app.vehicles._form')
     </form>
