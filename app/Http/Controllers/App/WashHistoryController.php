@@ -13,6 +13,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
@@ -99,9 +100,11 @@ class WashHistoryController extends Controller
      */
     private function filters(Request $request): array
     {
+        $today = today()->toDateString();
+
         $validated = $request->validate([
-            'start' => ['nullable', 'date'],
-            'end' => ['nullable', 'date', 'after_or_equal:start'],
+            'start' => ['nullable', 'date_format:Y-m-d', 'before_or_equal:'.$today],
+            'end' => ['nullable', 'date_format:Y-m-d', 'before_or_equal:'.$today, 'after_or_equal:start'],
             'customer_id' => ['nullable', 'integer', 'exists:customers,id'],
             'plate' => ['nullable', 'string', 'max:20'],
             'service_id' => ['nullable', 'integer', 'exists:services,id'],
@@ -110,9 +113,18 @@ class WashHistoryController extends Controller
             'payment_method' => ['nullable', Rule::in(array_keys(Payment::methods()))],
         ]);
 
+        $start = Carbon::parse($validated['start'] ?? today()->subDays(30)->toDateString())->toDateString();
+        $end = Carbon::parse($validated['end'] ?? $today)->toDateString();
+
+        if (Carbon::parse($start)->isAfter(Carbon::parse($end))) {
+            throw ValidationException::withMessages([
+                'end' => 'A data final deve ser igual ou posterior a data inicial.',
+            ]);
+        }
+
         return [
-            'start' => Carbon::parse($validated['start'] ?? today()->subDays(30)->toDateString())->toDateString(),
-            'end' => Carbon::parse($validated['end'] ?? today()->toDateString())->toDateString(),
+            'start' => $start,
+            'end' => $end,
             'customer_id' => $validated['customer_id'] ?? null,
             'plate' => $validated['plate'] ?? null,
             'service_id' => $validated['service_id'] ?? null,

@@ -6,6 +6,7 @@ use App\Models\Payment;
 use App\Models\User;
 use App\Models\WashOrder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Carbon;
 use Tests\TestCase;
 
 class FinanceReportTest extends TestCase
@@ -56,5 +57,45 @@ class FinanceReportTest extends TestCase
         $this->assertStringContainsString('Data,Codigo,Cliente,Placa,Metodo,Valor', $content);
         $this->assertStringContainsString($washOrder->code, $content);
         $this->assertStringContainsString('Dinheiro', $content);
+    }
+
+    public function test_financial_report_rejects_inverted_period(): void
+    {
+        Carbon::setTestNow('2026-06-26 12:00:00');
+
+        try {
+            $user = User::factory()->create(['role' => User::ROLE_ADMIN]);
+
+            $this->actingAs($user)
+                ->from(route('finance.index'))
+                ->get(route('finance.index', [
+                    'start' => '2026-06-26',
+                    'end' => '2026-06-25',
+                ]))
+                ->assertRedirect(route('finance.index'))
+                ->assertSessionHasErrors('end');
+        } finally {
+            Carbon::setTestNow();
+        }
+    }
+
+    public function test_financial_report_rejects_future_period(): void
+    {
+        Carbon::setTestNow('2026-06-26 12:00:00');
+
+        try {
+            $user = User::factory()->create(['role' => User::ROLE_ADMIN]);
+
+            $this->actingAs($user)
+                ->from(route('finance.index'))
+                ->get(route('finance.index', [
+                    'start' => '2026-06-27',
+                    'end' => '2026-06-27',
+                ]))
+                ->assertRedirect(route('finance.index'))
+                ->assertSessionHasErrors('start');
+        } finally {
+            Carbon::setTestNow();
+        }
     }
 }

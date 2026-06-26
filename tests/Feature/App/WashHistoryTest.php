@@ -9,6 +9,7 @@ use App\Models\User;
 use App\Models\Vehicle;
 use App\Models\WashOrder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Carbon;
 use Tests\TestCase;
 
 class WashHistoryTest extends TestCase
@@ -117,5 +118,45 @@ class WashHistoryTest extends TestCase
         $this->assertStringContainsString('Cliente Exportacao', $content);
         $this->assertStringContainsString('CSV2B34', $content);
         $this->assertStringContainsString('Dinheiro', $content);
+    }
+
+    public function test_operational_history_rejects_inverted_period(): void
+    {
+        Carbon::setTestNow('2026-06-26 12:00:00');
+
+        try {
+            $attendant = User::factory()->create(['role' => User::ROLE_ATTENDANT]);
+
+            $this->actingAs($attendant)
+                ->from(route('history.index'))
+                ->get(route('history.index', [
+                    'start' => '2026-06-26',
+                    'end' => '2026-06-25',
+                ]))
+                ->assertRedirect(route('history.index'))
+                ->assertSessionHasErrors('end');
+        } finally {
+            Carbon::setTestNow();
+        }
+    }
+
+    public function test_operational_history_rejects_future_period(): void
+    {
+        Carbon::setTestNow('2026-06-26 12:00:00');
+
+        try {
+            $attendant = User::factory()->create(['role' => User::ROLE_ATTENDANT]);
+
+            $this->actingAs($attendant)
+                ->from(route('history.index'))
+                ->get(route('history.index', [
+                    'start' => '2026-06-27',
+                    'end' => '2026-06-27',
+                ]))
+                ->assertRedirect(route('history.index'))
+                ->assertSessionHasErrors('start');
+        } finally {
+            Carbon::setTestNow();
+        }
     }
 }
