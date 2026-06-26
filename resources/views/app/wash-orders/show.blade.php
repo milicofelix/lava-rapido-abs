@@ -232,22 +232,27 @@
                         <p class="text-xs font-black uppercase tracking-[0.18em] text-fuchsia-700">Fidelidade</p>
                         @if (! $washOrder->hasIdentifiedPayment())
                             <h2 class="mt-1 font-black text-fuchsia-950">Aplicar cupom</h2>
-                            <form method="POST" action="{{ route('wash-orders.loyalty-coupons.apply', $washOrder) }}" class="mt-4 space-y-3">
-                                @csrf
-                                <label class="block">
-                                    <span class="text-sm font-bold text-fuchsia-950">Cupom disponível</span>
-                                    <select name="loyalty_coupon_id" class="mt-1 w-full rounded-xl border border-fuchsia-200 bg-white px-3 py-2.5 text-sm shadow-sm">
-                                        @foreach ($washOrder->customer->loyaltyCoupons as $coupon)
-                                            <option value="{{ $coupon->id }}" @selected(old('loyalty_coupon_id') == $coupon->id)>
-                                                {{ $coupon->code }} · {{ $coupon->benefitLabel() }}@if ($coupon->expires_at) · vence {{ $coupon->expires_at->format('d/m/Y') }}@endif
-                                            </option>
-                                        @endforeach
-                                    </select>
-                                    @error('loyalty_coupon_id') <span class="text-sm text-red-600">{{ $message }}</span> @enderror
-                                </label>
-                                <p class="text-xs font-semibold text-fuchsia-800">O cupom sera baixado e o desconto entrara no valor a receber desta lavagem.</p>
-                                <button class="w-full rounded-xl bg-fuchsia-700 px-4 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-fuchsia-800">Aplicar cupom</button>
-                            </form>
+                            @if ($applicableLoyaltyCoupons->isNotEmpty())
+                                <form method="POST" action="{{ route('wash-orders.loyalty-coupons.apply', $washOrder) }}" class="mt-4 space-y-3">
+                                    @csrf
+                                    <label class="block">
+                                        <span class="text-sm font-bold text-fuchsia-950">Cupom aplicável nesta lavagem</span>
+                                        <select name="loyalty_coupon_id" class="mt-1 w-full rounded-xl border border-fuchsia-200 bg-white px-3 py-2.5 text-sm shadow-sm">
+                                            @foreach ($applicableLoyaltyCoupons as $coupon)
+                                                @php($couponEvaluation = $loyaltyCouponEvaluations[$coupon->id])
+                                                <option value="{{ $coupon->id }}" @selected(old('loyalty_coupon_id') == $coupon->id)>
+                                                    {{ $coupon->code }} · {{ $coupon->benefitLabel() }} · desconto R$ {{ number_format($couponEvaluation['discount_amount'], 2, ',', '.') }}
+                                                </option>
+                                            @endforeach
+                                        </select>
+                                        @error('loyalty_coupon_id') <span class="text-sm text-red-600">{{ $message }}</span> @enderror
+                                    </label>
+                                    <p class="text-xs font-semibold text-fuchsia-800">O cupom sera baixado e o desconto entrara no valor a receber desta lavagem.</p>
+                                    <button class="w-full rounded-xl bg-fuchsia-700 px-4 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-fuchsia-800">Aplicar cupom</button>
+                                </form>
+                            @else
+                                <p class="mt-4 rounded-2xl bg-white px-4 py-3 text-sm font-semibold text-fuchsia-800">O cliente tem cupom ativo, mas nenhum é compatível com os serviços desta lavagem.</p>
+                            @endif
                         @else
                             <h2 class="mt-1 font-black text-fuchsia-950">Cupom disponível para próxima lavagem</h2>
                             <p class="mt-3 rounded-2xl bg-white px-4 py-3 text-sm font-semibold text-fuchsia-800">Esta lavagem já possui pagamento identificado como {{ $washOrder->paymentStatusLabel() }}. Para manter o financeiro correto, aplique o cupom antes de registrar pagamento.</p>
@@ -369,9 +374,11 @@
             @if ($washOrder->customer->loyaltyCoupons->isNotEmpty())
                 <section class="rounded-2xl border border-fuchsia-200 bg-fuchsia-50 p-5 shadow-sm">
                     <p class="text-xs font-black uppercase tracking-[0.18em] text-fuchsia-700">Fidelidade</p>
-                    <h2 class="mt-1 font-black text-fuchsia-950">Cupons ativos</h2>
+                    <h2 class="mt-1 font-black text-fuchsia-950">Cupons ativos do cliente</h2>
                     <div class="mt-4 space-y-3">
                         @foreach ($washOrder->customer->loyaltyCoupons->take(3) as $coupon)
+                            @php($couponEvaluation = $loyaltyCouponEvaluations[$coupon->id] ?? ['applicable' => false, 'badge' => 'Indisponível', 'reason' => 'Nao avaliado.', 'discount_amount' => 0])
+                            @php($couponTone = $couponEvaluation['applicable'] ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700')
                             @php($canOpenCoupon = auth()->user()->canAccess(\App\Support\Access\AccessControl::MANAGE_CUSTOMERS))
                             @if ($canOpenCoupon)
                                 <a href="{{ route('loyalty-coupons.show', $coupon) }}" class="block rounded-2xl border border-fuchsia-200 bg-white p-3 transition hover:bg-fuchsia-50">
@@ -384,8 +391,9 @@
                                                     · vence em {{ $coupon->expires_at->format('d/m/Y') }}
                                                 @endif
                                             </p>
+                                            <p class="mt-2 text-xs font-bold text-slate-500">{{ $couponEvaluation['reason'] }}</p>
                                         </div>
-                                        <span class="rounded-full bg-fuchsia-100 px-3 py-1 text-xs font-black text-fuchsia-700">{{ $coupon->statusLabel() }}</span>
+                                        <span class="rounded-full px-3 py-1 text-xs font-black {{ $couponTone }}">{{ $couponEvaluation['badge'] }}</span>
                                     </div>
                                     <p class="mt-3 text-xs font-black text-fuchsia-700">Abrir cupom</p>
                                 </a>
@@ -400,8 +408,9 @@
                                                     · vence em {{ $coupon->expires_at->format('d/m/Y') }}
                                                 @endif
                                             </p>
+                                            <p class="mt-2 text-xs font-bold text-slate-500">{{ $couponEvaluation['reason'] }}</p>
                                         </div>
-                                        <span class="rounded-full bg-fuchsia-100 px-3 py-1 text-xs font-black text-fuchsia-700">{{ $coupon->statusLabel() }}</span>
+                                        <span class="rounded-full px-3 py-1 text-xs font-black {{ $couponTone }}">{{ $couponEvaluation['badge'] }}</span>
                                     </div>
                                 </div>
                             @endif

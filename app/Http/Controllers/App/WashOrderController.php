@@ -11,6 +11,7 @@ use App\Models\Service;
 use App\Models\User;
 use App\Models\Vehicle;
 use App\Models\WashOrder;
+use App\Services\Loyalty\LoyaltyCouponApplicabilityService;
 use App\Services\WashOrders\ChangeWashOrderStatusService;
 use App\Services\WashOrders\CreateWashOrderService;
 use App\Support\TenantContext;
@@ -104,7 +105,7 @@ class WashOrderController extends Controller
             ->with('status', 'Ordem de lavagem criada com sucesso.');
     }
 
-    public function show(WashOrder $washOrder): View
+    public function show(WashOrder $washOrder, LoyaltyCouponApplicabilityService $couponApplicability): View
     {
         TenantContext::abortUnlessModelBelongsToTenant($washOrder);
 
@@ -134,6 +135,11 @@ class WashOrderController extends Controller
         $user = request()->user();
         $canUpdateStatus = AccessControl::allows($user, AccessControl::UPDATE_WASH_ORDER_STATUS)
             && (! $user?->isOperator() || $washOrder->teamMembers->contains('id', $user->id));
+        $loyaltyCouponEvaluations = $washOrder->customer->loyaltyCoupons
+            ->mapWithKeys(fn ($coupon) => [$coupon->id => $couponApplicability->evaluate($washOrder, $coupon)]);
+        $applicableLoyaltyCoupons = $washOrder->customer->loyaltyCoupons
+            ->filter(fn ($coupon) => $loyaltyCouponEvaluations[$coupon->id]['applicable'] ?? false)
+            ->values();
 
         return view('app.wash-orders.show', [
             'washOrder' => $washOrder,
@@ -145,6 +151,8 @@ class WashOrderController extends Controller
             'canUpdateStatus' => $canUpdateStatus,
             'paymentMethods' => $paymentMethods,
             'notificationTemplates' => CustomerNotification::templates(),
+            'loyaltyCouponEvaluations' => $loyaltyCouponEvaluations,
+            'applicableLoyaltyCoupons' => $applicableLoyaltyCoupons,
         ]);
     }
 

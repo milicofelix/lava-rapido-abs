@@ -314,6 +314,14 @@ class LoyaltyProgramTest extends TestCase
 
         $this->assertSame(LoyaltyCoupon::STATUS_ACTIVE, $coupon->refresh()->status);
         $this->assertNull($washOrder->refresh()->loyalty_coupon_id);
+
+        $this->actingAs($admin)
+            ->get(route('wash-orders.show', $washOrder))
+            ->assertOk()
+            ->assertSee('O cliente tem cupom ativo, mas nenhum é compatível com os serviços desta lavagem.')
+            ->assertSee('Sem abatimento')
+            ->assertSee('Cupom nao gera abatimento para esta lavagem.')
+            ->assertDontSee('Cupom aplicável nesta lavagem');
     }
 
     public function test_coupon_without_explicit_reward_service_uses_source_wash_service(): void
