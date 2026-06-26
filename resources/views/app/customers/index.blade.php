@@ -46,7 +46,7 @@
 
             <div class="divide-y divide-slate-100">
                 @forelse ($customers as $customer)
-                    <article class="grid gap-4 px-5 py-4 md:grid-cols-[1fr_220px_120px_auto] md:items-center">
+                    <article class="grid gap-4 px-5 py-4 md:grid-cols-[1fr_220px_190px_120px_auto] md:items-center">
                         <div class="min-w-0">
                             <p class="truncate font-black text-slate-950">{{ $customer->name }}</p>
                             @if ($customer->notes)
@@ -56,6 +56,18 @@
                         <div class="text-sm text-slate-600">
                             <p class="font-bold text-slate-900">{{ $customer->phone }}</p>
                             <p class="truncate">{{ $customer->email ?: 'E-mail nao informado' }}</p>
+                        </div>
+                        <div>
+                            @php($progress = $customer->loyalty_progress)
+                            @if ($progress['enabled'])
+                                <p class="text-xs font-black uppercase tracking-[0.12em] text-slate-500">Fidelidade</p>
+                                <div class="mt-1 h-2 rounded-full bg-slate-100">
+                                    <div class="h-2 rounded-full bg-fuchsia-600" style="width: {{ $progress['percent'] }}%"></div>
+                                </div>
+                                <p class="mt-1 text-xs font-bold text-slate-600">{{ $progress['current'] }}/{{ $progress['threshold'] }} lavadas · {{ $progress['active_coupons'] }} cupom(ns)</p>
+                            @else
+                                <span class="inline-flex rounded-full bg-slate-100 px-3 py-1 text-xs font-black text-slate-500">Fidelidade off</span>
+                            @endif
                         </div>
                         <div>
                             <span class="inline-flex rounded-full bg-blue-50 px-3 py-1 text-xs font-black text-blue-700">{{ $customer->vehicles_count }} veiculo{{ $customer->vehicles_count === 1 ? '' : 's' }}</span>

@@ -5,7 +5,10 @@ namespace App\Http\Controllers\App;
 use App\Http\Controllers\Controller;
 use App\Models\Customer;
 use App\Models\AuditLog;
+use App\Models\LoyaltyCoupon;
+use App\Models\LoyaltyProgram;
 use App\Support\AuditLogger;
+use App\Support\Loyalty\LoyaltyProgress;
 use App\Support\TenantContext;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -30,7 +33,16 @@ class CustomerController extends Controller
             ->paginate(10)
             ->withQueryString();
 
-        return view('app.customers.index', compact('customers', 'search'));
+        $loyaltyProgram = LoyaltyProgram::query()
+            ->where('wash_location_id', TenantContext::currentLocationId())
+            ->where('is_active', true)
+            ->first();
+
+        $customers->getCollection()->each(function (Customer $customer) use ($loyaltyProgram): void {
+            $customer->setAttribute('loyalty_progress', LoyaltyProgress::forCustomer($customer, $loyaltyProgram));
+        });
+
+        return view('app.customers.index', compact('customers', 'search', 'loyaltyProgram'));
     }
 
     public function create(): View
@@ -59,7 +71,20 @@ class CustomerController extends Controller
     {
         TenantContext::abortUnlessModelBelongsToTenant($customer);
 
-        return view('app.customers.edit', compact('customer'));
+        $loyaltyProgram = LoyaltyProgram::query()
+            ->where('wash_location_id', $customer->wash_location_id)
+            ->where('is_active', true)
+            ->first();
+        $loyaltyProgress = LoyaltyProgress::forCustomer($customer, $loyaltyProgram);
+        $loyaltyCoupons = LoyaltyCoupon::query()
+            ->with('rewardService')
+            ->where('wash_location_id', $customer->wash_location_id)
+            ->where('customer_id', $customer->id)
+            ->latest('earned_at')
+            ->limit(10)
+            ->get();
+
+        return view('app.customers.edit', compact('customer', 'loyaltyProgram', 'loyaltyProgress', 'loyaltyCoupons'));
     }
 
     public function update(Request $request, Customer $customer): RedirectResponse
