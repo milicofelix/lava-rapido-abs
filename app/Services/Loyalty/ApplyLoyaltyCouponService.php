@@ -137,7 +137,10 @@ class ApplyLoyaltyCouponService
             return $coupon->rewardService;
         }
 
-        if ($coupon->loyaltyProgram?->reward_type === LoyaltyProgram::REWARD_SAME_SERVICE) {
+        if (in_array($coupon->loyaltyProgram?->reward_type, [
+            LoyaltyProgram::REWARD_SAME_SERVICE,
+            LoyaltyProgram::REWARD_FIXED_SERVICE,
+        ], true)) {
             return $coupon->sourceWashOrder?->services?->first();
         }
 

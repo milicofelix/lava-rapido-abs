@@ -1,6 +1,18 @@
 <x-app.layout heading="Lavagem {{ $washOrder->code }}" title="Lavagem {{ $washOrder->code }} · AutoFlow">
     @php($canSeeWashFinancial = auth()->user()->canAccess(\App\Support\Access\AccessControl::REGISTER_PAYMENT) || auth()->user()->canAccess(\App\Support\Access\AccessControl::VIEW_FINANCE))
     @php($canSendWashNotifications = auth()->user()->canAccess(\App\Support\Access\AccessControl::SEND_WASH_NOTIFICATIONS))
+    @php($paymentTone = match ($washOrder->payment_status) {
+        \App\Models\WashOrder::PAYMENT_PAID => 'border-emerald-200 bg-emerald-50 text-emerald-800',
+        \App\Models\WashOrder::PAYMENT_COURTESY => 'border-fuchsia-200 bg-fuchsia-50 text-fuchsia-800',
+        \App\Models\WashOrder::PAYMENT_CREDIT_PENDING => 'border-amber-200 bg-amber-50 text-amber-800',
+        default => 'border-red-200 bg-red-50 text-red-800',
+    })
+    @php($paymentHeadline = match ($washOrder->payment_status) {
+        \App\Models\WashOrder::PAYMENT_PAID => 'Lavagem paga',
+        \App\Models\WashOrder::PAYMENT_COURTESY => 'Lavagem em cortesia',
+        \App\Models\WashOrder::PAYMENT_CREDIT_PENDING => 'Fiado pendente',
+        default => 'Pagamento pendente',
+    })
 
     <div class="grid gap-5 xl:grid-cols-[1fr_380px]">
         <div class="space-y-5">
@@ -11,8 +23,33 @@
                         <h2 class="mt-1 truncate text-2xl font-black text-slate-950">{{ $washOrder->customer->name }}</h2>
                         <p class="mt-1 text-sm font-bold text-slate-500">{{ $washOrder->customer->phone }}</p>
                     </div>
-                    @include('app.wash-orders._status-badge', ['status' => $washOrder->status, 'label' => $washOrder->statusLabel()])
+                    <div class="flex flex-wrap items-center justify-end gap-2">
+                        @include('app.wash-orders._status-badge', ['status' => $washOrder->status, 'label' => $washOrder->statusLabel()])
+                        @if ($canSeeWashFinancial)
+                            <span class="inline-flex items-center rounded-full border px-3 py-1 text-xs font-black uppercase tracking-[0.12em] {{ $paymentTone }}">{{ $washOrder->paymentStatusLabel() }}</span>
+                        @endif
+                    </div>
                 </div>
+
+                @if ($canSeeWashFinancial)
+                    <div class="mt-5 rounded-2xl border px-4 py-3 {{ $paymentTone }}">
+                        <div class="flex flex-wrap items-center justify-between gap-3">
+                            <div>
+                                <p class="text-xs font-black uppercase tracking-[0.16em]">Status financeiro</p>
+                                <p class="mt-1 text-xl font-black">{{ $paymentHeadline }}</p>
+                            </div>
+                            <div class="text-left sm:text-right">
+                                <p class="text-xs font-black uppercase tracking-[0.16em]">Valor a receber</p>
+                                <p class="mt-1 text-xl font-black">R$ {{ number_format($washOrder->payableAmount(), 2, ',', '.') }}</p>
+                            </div>
+                        </div>
+                        @if ($washOrder->hasIdentifiedPayment())
+                            <p class="mt-2 text-sm font-semibold">Esta lavagem já possui pagamento identificado. Cupons devem ser aplicados antes do registro do pagamento.</p>
+                        @else
+                            <p class="mt-2 text-sm font-semibold">Ainda é possível aplicar cupom ou registrar recebimento para esta lavagem.</p>
+                        @endif
+                    </div>
+                @endif
 
                 <dl class="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
                     <div class="rounded-2xl bg-slate-50 p-4">
@@ -39,7 +76,7 @@
                         </div>
                         <div class="rounded-2xl bg-slate-50 p-4">
                             <dt class="text-xs font-black uppercase tracking-[0.16em] text-slate-500">Financeiro</dt>
-                            <dd class="mt-1 font-black text-slate-950">{{ $washOrder->paymentStatusLabel() }}</dd>
+                            <dd class="mt-1 inline-flex rounded-full border px-3 py-1 text-xs font-black uppercase tracking-[0.12em] {{ $paymentTone }}">{{ $washOrder->paymentStatusLabel() }}</dd>
                         </div>
                     @endif
                     <div class="rounded-2xl bg-slate-50 p-4">
@@ -190,26 +227,31 @@
             @endif
 
             @if ($canSeeWashFinancial)
-                @if (! $washOrder->loyaltyCoupon && ! $washOrder->hasIdentifiedPayment() && $washOrder->customer->loyaltyCoupons->isNotEmpty())
+                @if (! $washOrder->loyaltyCoupon && $washOrder->customer->loyaltyCoupons->isNotEmpty())
                     <section class="rounded-2xl border border-fuchsia-200 bg-fuchsia-50 p-5 shadow-sm">
                         <p class="text-xs font-black uppercase tracking-[0.18em] text-fuchsia-700">Fidelidade</p>
-                        <h2 class="mt-1 font-black text-fuchsia-950">Aplicar cupom</h2>
-                        <form method="POST" action="{{ route('wash-orders.loyalty-coupons.apply', $washOrder) }}" class="mt-4 space-y-3">
-                            @csrf
-                            <label class="block">
-                                <span class="text-sm font-bold text-fuchsia-950">Cupom disponível</span>
-                                <select name="loyalty_coupon_id" class="mt-1 w-full rounded-xl border border-fuchsia-200 bg-white px-3 py-2.5 text-sm shadow-sm">
-                                    @foreach ($washOrder->customer->loyaltyCoupons as $coupon)
-                                        <option value="{{ $coupon->id }}" @selected(old('loyalty_coupon_id') == $coupon->id)>
-                                            {{ $coupon->code }} · {{ $coupon->benefitLabel() }}@if ($coupon->expires_at) · vence {{ $coupon->expires_at->format('d/m/Y') }}@endif
-                                        </option>
-                                    @endforeach
-                                </select>
-                                @error('loyalty_coupon_id') <span class="text-sm text-red-600">{{ $message }}</span> @enderror
-                            </label>
-                            <p class="text-xs font-semibold text-fuchsia-800">O cupom sera baixado e o desconto entrara no valor a receber desta lavagem.</p>
-                            <button class="w-full rounded-xl bg-fuchsia-700 px-4 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-fuchsia-800">Aplicar cupom</button>
-                        </form>
+                        @if (! $washOrder->hasIdentifiedPayment())
+                            <h2 class="mt-1 font-black text-fuchsia-950">Aplicar cupom</h2>
+                            <form method="POST" action="{{ route('wash-orders.loyalty-coupons.apply', $washOrder) }}" class="mt-4 space-y-3">
+                                @csrf
+                                <label class="block">
+                                    <span class="text-sm font-bold text-fuchsia-950">Cupom disponível</span>
+                                    <select name="loyalty_coupon_id" class="mt-1 w-full rounded-xl border border-fuchsia-200 bg-white px-3 py-2.5 text-sm shadow-sm">
+                                        @foreach ($washOrder->customer->loyaltyCoupons as $coupon)
+                                            <option value="{{ $coupon->id }}" @selected(old('loyalty_coupon_id') == $coupon->id)>
+                                                {{ $coupon->code }} · {{ $coupon->benefitLabel() }}@if ($coupon->expires_at) · vence {{ $coupon->expires_at->format('d/m/Y') }}@endif
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                    @error('loyalty_coupon_id') <span class="text-sm text-red-600">{{ $message }}</span> @enderror
+                                </label>
+                                <p class="text-xs font-semibold text-fuchsia-800">O cupom sera baixado e o desconto entrara no valor a receber desta lavagem.</p>
+                                <button class="w-full rounded-xl bg-fuchsia-700 px-4 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-fuchsia-800">Aplicar cupom</button>
+                            </form>
+                        @else
+                            <h2 class="mt-1 font-black text-fuchsia-950">Cupom disponível para próxima lavagem</h2>
+                            <p class="mt-3 rounded-2xl bg-white px-4 py-3 text-sm font-semibold text-fuchsia-800">Esta lavagem já possui pagamento identificado como {{ $washOrder->paymentStatusLabel() }}. Para manter o financeiro correto, aplique o cupom antes de registrar pagamento.</p>
+                        @endif
                     </section>
                 @elseif ($washOrder->loyaltyCoupon)
                     <section class="rounded-2xl border border-fuchsia-200 bg-fuchsia-50 p-5 shadow-sm">
@@ -229,30 +271,38 @@
 
                 <section class="rounded-2xl border border-emerald-200 bg-emerald-50 p-5 shadow-sm">
                     <p class="text-xs font-black uppercase tracking-[0.18em] text-emerald-700">Recebimento</p>
-                    <h2 class="mt-1 font-black text-emerald-950">Registrar pagamento</h2>
-                    <form method="POST" action="{{ route('payments.store', $washOrder) }}" class="mt-4 space-y-3">
-                        @csrf
-                        <label class="block">
-                            <span class="text-sm font-bold text-emerald-950">Metodo</span>
-                            <select name="method" class="mt-1 w-full rounded-xl border border-emerald-200 bg-white px-3 py-2.5 text-sm shadow-sm">
-                                @foreach ($paymentMethods as $value => $label)
-                                    <option value="{{ $value }}" @selected(old('method', 'pix') === $value)>{{ $label }}</option>
-                                @endforeach
-                            </select>
-                            @error('method') <span class="text-sm text-red-600">{{ $message }}</span> @enderror
-                        </label>
-                        <label class="block">
-                            <span class="text-sm font-bold text-emerald-950">Valor</span>
-                            <input name="amount" type="number" min="0" step="0.01" value="{{ old('amount', number_format($washOrder->payableAmount(), 2, '.', '')) }}" class="mt-1 w-full rounded-xl border border-emerald-200 bg-white px-3 py-2.5 text-sm shadow-sm">
-                            @error('amount') <span class="text-sm text-red-600">{{ $message }}</span> @enderror
-                        </label>
-                        <label class="block">
-                            <span class="text-sm font-bold text-emerald-950">Observacao</span>
-                            <textarea name="notes" rows="3" class="mt-1 w-full rounded-xl border border-emerald-200 bg-white px-3 py-2.5 text-sm shadow-sm">{{ old('notes') }}</textarea>
-                            @error('notes') <span class="text-sm text-red-600">{{ $message }}</span> @enderror
-                        </label>
-                        <button class="w-full rounded-xl bg-emerald-700 px-4 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-emerald-800">Registrar pagamento</button>
-                    </form>
+                    @if ($washOrder->hasIdentifiedPayment())
+                        <h2 class="mt-1 font-black text-emerald-950">Pagamento já registrado</h2>
+                        <div class="mt-4 rounded-2xl bg-white px-4 py-3">
+                            <p class="text-sm font-black text-slate-950">{{ $paymentHeadline }}</p>
+                            <p class="mt-1 text-sm font-semibold text-slate-500">Status atual: {{ $washOrder->paymentStatusLabel() }}</p>
+                        </div>
+                    @else
+                        <h2 class="mt-1 font-black text-emerald-950">Registrar pagamento</h2>
+                        <form method="POST" action="{{ route('payments.store', $washOrder) }}" class="mt-4 space-y-3">
+                            @csrf
+                            <label class="block">
+                                <span class="text-sm font-bold text-emerald-950">Metodo</span>
+                                <select name="method" class="mt-1 w-full rounded-xl border border-emerald-200 bg-white px-3 py-2.5 text-sm shadow-sm">
+                                    @foreach ($paymentMethods as $value => $label)
+                                        <option value="{{ $value }}" @selected(old('method', 'pix') === $value)>{{ $label }}</option>
+                                    @endforeach
+                                </select>
+                                @error('method') <span class="text-sm text-red-600">{{ $message }}</span> @enderror
+                            </label>
+                            <label class="block">
+                                <span class="text-sm font-bold text-emerald-950">Valor</span>
+                                <input name="amount" type="number" min="0" step="0.01" value="{{ old('amount', number_format($washOrder->payableAmount(), 2, '.', '')) }}" class="mt-1 w-full rounded-xl border border-emerald-200 bg-white px-3 py-2.5 text-sm shadow-sm">
+                                @error('amount') <span class="text-sm text-red-600">{{ $message }}</span> @enderror
+                            </label>
+                            <label class="block">
+                                <span class="text-sm font-bold text-emerald-950">Observacao</span>
+                                <textarea name="notes" rows="3" class="mt-1 w-full rounded-xl border border-emerald-200 bg-white px-3 py-2.5 text-sm shadow-sm">{{ old('notes') }}</textarea>
+                                @error('notes') <span class="text-sm text-red-600">{{ $message }}</span> @enderror
+                            </label>
+                            <button class="w-full rounded-xl bg-emerald-700 px-4 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-emerald-800">Registrar pagamento</button>
+                        </form>
+                    @endif
                 </section>
             @endif
 

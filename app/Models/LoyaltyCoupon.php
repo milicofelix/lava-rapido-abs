@@ -70,6 +70,7 @@ class LoyaltyCoupon extends Model
             LoyaltyProgram::REWARD_DISCOUNT_AMOUNT => 'Desconto de R$ '.number_format((float) $this->loyaltyProgram->discount_value, 2, ',', '.'),
             LoyaltyProgram::REWARD_DISCOUNT_PERCENT => 'Desconto de '.number_format((float) $this->loyaltyProgram->discount_value, 0, ',', '.').'%',
             LoyaltyProgram::REWARD_SAME_SERVICE => $this->sourceWashOrder?->services?->first()?->name ?? 'Mesmo servico da contagem',
+            LoyaltyProgram::REWARD_FIXED_SERVICE => $this->sourceWashOrder?->services?->first()?->name ?? 'Servico da lavagem premiada',
             default => 'Beneficio configurado',
         };
     }
