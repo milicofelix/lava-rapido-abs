@@ -93,7 +93,6 @@ class SettingsController extends Controller
             'loyalty_reward_type' => ['nullable', Rule::in(array_keys(LoyaltyProgram::rewardTypes()))],
             'loyalty_reward_service_id' => [
                 'nullable',
-                Rule::requiredIf(fn () => $request->boolean('loyalty_is_active') && $request->input('loyalty_reward_type') === LoyaltyProgram::REWARD_FIXED_SERVICE),
                 'integer',
                 Rule::exists('services', 'id')->where('wash_location_id', TenantContext::currentLocationId()),
             ],
@@ -106,6 +105,15 @@ class SettingsController extends Controller
             ],
             'loyalty_coupon_valid_days' => ['nullable', 'integer', 'min:1', 'max:365'],
             'role_permissions' => ['nullable', 'array'],
+        ], [], [
+            'loyalty_threshold' => 'meta de lavagens',
+            'loyalty_count_scope' => 'forma de contagem',
+            'loyalty_qualifying_service_id' => 'serviço contado',
+            'loyalty_qualifying_category' => 'categoria contada',
+            'loyalty_reward_type' => 'prêmio',
+            'loyalty_reward_service_id' => 'serviço do cupom',
+            'loyalty_discount_value' => 'valor do desconto',
+            'loyalty_coupon_valid_days' => 'validade do cupom',
         ]);
 
         if ($currentLocation) {

@@ -183,6 +183,41 @@ class SettingsManagementTest extends TestCase
         ]);
     }
 
+    public function test_admin_can_enable_loyalty_program_without_selecting_reward_service(): void
+    {
+        $location = WashLocation::factory()->create();
+        $admin = User::factory()->create([
+            'role' => User::ROLE_ADMIN,
+            'wash_location_id' => $location->id,
+        ]);
+
+        $this->actingAs($admin)
+            ->put(route('settings.update'), [
+                'company_name' => $location->name,
+                'company_whatsapp' => $location->phone,
+                'address' => $location->address,
+                'district' => $location->district,
+                'city' => $location->city,
+                'state' => $location->state ?? 'SP',
+                'theme' => AppSetting::THEME_LIGHT,
+                'module_schedule' => '1',
+                'loyalty_is_active' => '1',
+                'loyalty_threshold' => 10,
+                'loyalty_coupon_valid_days' => 30,
+                'loyalty_count_scope' => LoyaltyProgram::COUNT_ANY,
+                'loyalty_reward_type' => LoyaltyProgram::REWARD_FIXED_SERVICE,
+            ])
+            ->assertRedirect()
+            ->assertSessionHasNoErrors();
+
+        $this->assertDatabaseHas('loyalty_programs', [
+            'wash_location_id' => $location->id,
+            'is_active' => true,
+            'reward_type' => LoyaltyProgram::REWARD_FIXED_SERVICE,
+            'reward_service_id' => null,
+        ]);
+    }
+
     public function test_admin_can_update_operator_permissions_and_audit_change(): void
     {
         $location = WashLocation::factory()->create();

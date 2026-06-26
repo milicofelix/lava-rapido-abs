@@ -187,7 +187,7 @@
 
                 <div class="mt-4 grid gap-4 md:grid-cols-2">
                     <label class="flex cursor-pointer items-start gap-3 rounded-2xl border border-slate-200 p-4 hover:bg-slate-50 md:col-span-2">
-                        <input type="checkbox" name="loyalty_is_active" value="1" @checked(old('loyalty_is_active', $loyaltyProgram->is_active)) class="mt-1 h-4 w-4 rounded border-slate-300 text-blue-700">
+                        <input data-loyalty-active type="checkbox" name="loyalty_is_active" value="1" @checked(old('loyalty_is_active', $loyaltyProgram->is_active)) class="mt-1 h-4 w-4 rounded border-slate-300 text-blue-700">
                         <span>
                             <span class="block font-bold text-slate-900">Habilitar Programa de Fidelidade</span>
                             <span class="mt-1 block text-sm text-slate-500">Ao completar a meta, o sistema gera um cupom personalizado para o cliente.</span>
@@ -209,7 +209,7 @@
 
                     <label class="block">
                         <span class="text-sm font-semibold text-slate-700">Como contar</span>
-                        <select name="loyalty_count_scope" class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100">
+                        <select data-loyalty-count-scope name="loyalty_count_scope" class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100">
                             @foreach ($loyaltyCountScopes as $value => $label)
                                 <option value="{{ $value }}" @selected(old('loyalty_count_scope', $loyaltyProgram->count_scope ?: \App\Models\LoyaltyProgram::COUNT_ANY) === $value)>{{ $label }}</option>
                             @endforeach
@@ -217,7 +217,7 @@
                         @error('loyalty_count_scope') <span class="text-sm text-red-600">{{ $message }}</span> @enderror
                     </label>
 
-                    <label class="block">
+                    <label class="block" data-loyalty-field="category">
                         <span class="text-sm font-semibold text-slate-700">Categoria contada</span>
                         <select name="loyalty_qualifying_category" class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100">
                             <option value="">Selecione quando usar categoria</option>
@@ -228,7 +228,7 @@
                         @error('loyalty_qualifying_category') <span class="text-sm text-red-600">{{ $message }}</span> @enderror
                     </label>
 
-                    <label class="block">
+                    <label class="block" data-loyalty-field="service">
                         <span class="text-sm font-semibold text-slate-700">Serviço contado</span>
                         <select name="loyalty_qualifying_service_id" class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100">
                             <option value="">Selecione quando usar serviço específico</option>
@@ -241,7 +241,7 @@
 
                     <label class="block">
                         <span class="text-sm font-semibold text-slate-700">Prêmio</span>
-                        <select name="loyalty_reward_type" class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100">
+                        <select data-loyalty-reward-type name="loyalty_reward_type" class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100">
                             @foreach ($loyaltyRewardTypes as $value => $label)
                                 <option value="{{ $value }}" @selected(old('loyalty_reward_type', $loyaltyProgram->reward_type ?: \App\Models\LoyaltyProgram::REWARD_FIXED_SERVICE) === $value)>{{ $label }}</option>
                             @endforeach
@@ -249,7 +249,7 @@
                         @error('loyalty_reward_type') <span class="text-sm text-red-600">{{ $message }}</span> @enderror
                     </label>
 
-                    <label class="block">
+                    <label class="block" data-loyalty-field="reward-service">
                         <span class="text-sm font-semibold text-slate-700">Serviço do cupom</span>
                         <select name="loyalty_reward_service_id" class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100">
                             <option value="">Selecione quando o prêmio for serviço definido</option>
@@ -260,7 +260,7 @@
                         @error('loyalty_reward_service_id') <span class="text-sm text-red-600">{{ $message }}</span> @enderror
                     </label>
 
-                    <label class="block">
+                    <label class="block" data-loyalty-field="discount">
                         <span class="text-sm font-semibold text-slate-700">Valor do desconto</span>
                         <input name="loyalty_discount_value" inputmode="decimal" value="{{ old('loyalty_discount_value', $loyaltyProgram->discount_value) }}" placeholder="Ex: 20 ou 15" class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100">
                         <span class="mt-1 block text-xs text-slate-500">Use apenas quando o prêmio for desconto em reais ou percentual.</span>
@@ -367,6 +367,53 @@
             form.addEventListener('input', syncCoordinates);
             form.addEventListener('change', syncCoordinates);
             form.addEventListener('submit', syncCoordinates);
+
+            const loyaltyActive = form.querySelector('[data-loyalty-active]');
+            const countScope = form.querySelector('[data-loyalty-count-scope]');
+            const rewardType = form.querySelector('[data-loyalty-reward-type]');
+
+            const setFieldState = (field, visible) => {
+                const wrapper = form.querySelector(`[data-loyalty-field="${field}"]`);
+
+                if (!wrapper) {
+                    return;
+                }
+
+                wrapper.classList.toggle('hidden', !visible);
+                wrapper.querySelectorAll('input, select, textarea').forEach((input) => {
+                    input.disabled = !visible;
+                });
+            };
+
+            const syncLoyaltyFields = () => {
+                const isActive = loyaltyActive?.checked ?? false;
+                const countValue = countScope?.value || 'any';
+                const rewardValue = rewardType?.value || 'fixed_service';
+
+                if (countScope) {
+                    countScope.disabled = !isActive;
+                }
+
+                if (rewardType) {
+                    rewardType.disabled = !isActive;
+                }
+
+                form.querySelectorAll('input[name^="loyalty_"]').forEach((input) => {
+                    if (input !== loyaltyActive) {
+                        input.disabled = !isActive;
+                    }
+                });
+
+                setFieldState('category', isActive && countValue === 'category');
+                setFieldState('service', isActive && countValue === 'service');
+                setFieldState('reward-service', isActive && rewardValue === 'fixed_service');
+                setFieldState('discount', isActive && ['discount_amount', 'discount_percent'].includes(rewardValue));
+            };
+
+            loyaltyActive?.addEventListener('change', syncLoyaltyFields);
+            countScope?.addEventListener('change', syncLoyaltyFields);
+            rewardType?.addEventListener('change', syncLoyaltyFields);
+            syncLoyaltyFields();
         });
     </script>
 </x-app.layout>
