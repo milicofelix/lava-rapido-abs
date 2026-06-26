@@ -24,6 +24,7 @@ class DashboardController extends Controller
         }
 
         $today = today();
+        $yesterday = $today->copy()->subDay();
         $monthStart = $today->copy()->startOfMonth();
         $monthEnd = $today->copy()->endOfMonth();
         $previousMonthStart = $monthStart->copy()->subMonthNoOverflow()->startOfMonth();
@@ -37,6 +38,10 @@ class DashboardController extends Controller
         );
         $todayRevenue = (clone $todayPayments)->sum('amount');
         $todayPaymentCount = (clone $todayPayments)->count();
+        $yesterdayPayments = TenantContext::scopePayments(
+            Payment::query()->whereBetween('paid_at', [$yesterday->copy()->startOfDay(), $yesterday->copy()->endOfDay()])
+        );
+        $yesterdayRevenue = (clone $yesterdayPayments)->sum('amount');
         $monthlyPayments = TenantContext::scopePayments(
             Payment::query()->whereBetween('paid_at', [$monthStart->copy()->startOfDay(), $monthEnd->copy()->endOfDay()])
         );
@@ -79,6 +84,14 @@ class DashboardController extends Controller
             'deliveredWashOrdersToday' => TenantContext::scopeWashOrders(WashOrder::query())->whereDate('entered_at', $today)->where('status', WashOrder::STATUS_DELIVERED)->count(),
             'todayRevenue' => $todayRevenue,
             'ticketAverage' => $todayPaymentCount > 0 ? $todayRevenue / $todayPaymentCount : 0,
+            'todayComparisons' => [
+                'washOrders' => $this->comparisonLabel(
+                    TenantContext::scopeWashOrders(WashOrder::query())->whereDate('entered_at', $today)->count(),
+                    TenantContext::scopeWashOrders(WashOrder::query())->whereDate('entered_at', $yesterday)->count(),
+                    'ontem',
+                ),
+                'revenue' => $this->comparisonLabel((float) $todayRevenue, (float) $yesterdayRevenue, 'ontem'),
+            ],
             'monthLabel' => $today->translatedFormat('F Y'),
             'monthlyWashOrders' => $monthlyWashOrders,
             'monthlyRevenue' => $monthlyRevenue,
@@ -86,10 +99,10 @@ class DashboardController extends Controller
             'monthlyRecurringCustomers' => $monthlyRecurringCustomers,
             'monthlyTopServices' => $monthlyTopServices,
             'executiveComparisons' => [
-                'washOrders' => $this->comparisonLabel($monthlyWashOrders, $previousMonthlyWashOrders),
-                'revenue' => $this->comparisonLabel((float) $monthlyRevenue, (float) $previousMonthlyRevenue),
-                'ticketAverage' => $this->comparisonLabel((float) $monthlyTicketAverage, (float) $previousMonthlyTicketAverage),
-                'recurringCustomers' => $this->comparisonLabel(count($monthlyRecurringCustomers), count($previousMonthlyRecurringCustomers)),
+                'washOrders' => $this->comparisonLabel($monthlyWashOrders, $previousMonthlyWashOrders, 'mes anterior'),
+                'revenue' => $this->comparisonLabel((float) $monthlyRevenue, (float) $previousMonthlyRevenue, 'mes anterior'),
+                'ticketAverage' => $this->comparisonLabel((float) $monthlyTicketAverage, (float) $previousMonthlyTicketAverage, 'mes anterior'),
+                'recurringCustomers' => $this->comparisonLabel(count($monthlyRecurringCustomers), count($previousMonthlyRecurringCustomers), 'mes anterior'),
             ],
             'topService' => $this->topService($today),
             'averageWashMinutes' => $this->averageWashMinutes($today),
@@ -353,18 +366,18 @@ class DashboardController extends Controller
     /**
      * @return array{label: string, tone: string}
      */
-    private function comparisonLabel(float|int $current, float|int $previous): array
+    private function comparisonLabel(float|int $current, float|int $previous, string $previousLabel): array
     {
         if ((float) $previous === 0.0) {
             if ((float) $current === 0.0) {
-                return ['label' => 'Sem movimento no mes anterior', 'tone' => 'neutral'];
+                return ['label' => 'Sem movimento vs '.$previousLabel, 'tone' => 'neutral'];
             }
 
-            return ['label' => 'Novo movimento vs mes anterior', 'tone' => 'positive'];
+            return ['label' => 'Novo movimento vs '.$previousLabel, 'tone' => 'positive'];
         }
 
         $change = (((float) $current - (float) $previous) / (float) $previous) * 100;
-        $formatted = number_format(abs($change), 0, ',', '.').'% vs mes anterior';
+        $formatted = number_format(abs($change), 0, ',', '.').'% vs '.$previousLabel;
 
         if ($change > 0) {
             return ['label' => '+'.$formatted, 'tone' => 'positive'];
@@ -374,6 +387,6 @@ class DashboardController extends Controller
             return ['label' => '-'.$formatted, 'tone' => 'negative'];
         }
 
-        return ['label' => 'Estavel vs mes anterior', 'tone' => 'neutral'];
+        return ['label' => 'Estavel vs '.$previousLabel, 'tone' => 'neutral'];
     }
 }

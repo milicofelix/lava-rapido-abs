@@ -106,12 +106,19 @@
 
         <section class="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
             @foreach ([
-                ['label' => 'Lavagens hoje', 'value' => $washOrdersToday, 'hint' => '14% vs ontem', 'color' => 'from-blue-500 to-blue-700', 'icon' => 'L'],
-                ['label' => 'Em andamento', 'value' => $activeWashOrders, 'hint' => 'Ver detalhes', 'color' => 'from-amber-400 to-orange-500', 'icon' => 'T'],
-                ['label' => 'Prontas', 'value' => $readyWashOrders, 'hint' => 'Ver detalhes', 'color' => 'from-emerald-400 to-green-600', 'icon' => 'P'],
-                ['label' => 'Entregues hoje', 'value' => $deliveredWashOrdersToday, 'hint' => 'Finalizadas', 'color' => 'from-slate-600 to-slate-950', 'icon' => 'E'],
-                ['label' => 'Faturamento hoje', 'value' => 'R$ '.number_format((float) $todayRevenue, 2, ',', '.'), 'hint' => '21% vs ontem', 'color' => 'from-violet-500 to-purple-700', 'icon' => '$'],
+                ['label' => 'Lavagens hoje', 'value' => $washOrdersToday, 'hint' => $todayComparisons['washOrders']['label'], 'tone' => $todayComparisons['washOrders']['tone'], 'color' => 'from-blue-500 to-blue-700', 'icon' => 'L'],
+                ['label' => 'Em andamento', 'value' => $activeWashOrders, 'hint' => 'Fluxo do dia', 'tone' => 'neutral', 'color' => 'from-amber-400 to-orange-500', 'icon' => 'T'],
+                ['label' => 'Prontas', 'value' => $readyWashOrders, 'hint' => 'Aguardando retirada', 'tone' => 'neutral', 'color' => 'from-emerald-400 to-green-600', 'icon' => 'P'],
+                ['label' => 'Entregues hoje', 'value' => $deliveredWashOrdersToday, 'hint' => 'Finalizadas hoje', 'tone' => 'neutral', 'color' => 'from-slate-600 to-slate-950', 'icon' => 'E'],
+                ['label' => 'Faturamento hoje', 'value' => 'R$ '.number_format((float) $todayRevenue, 2, ',', '.'), 'hint' => $todayComparisons['revenue']['label'], 'tone' => $todayComparisons['revenue']['tone'], 'color' => 'from-violet-500 to-purple-700', 'icon' => '$'],
             ] as $card)
+                @php
+                    $hintClass = match ($card['tone']) {
+                        'positive' => 'text-emerald-600',
+                        'negative' => 'text-red-600',
+                        default => 'text-slate-500',
+                    };
+                @endphp
                 <div class="min-w-0 rounded-xl border border-slate-200 bg-white p-4 shadow-sm" aria-label="{{ $card['label'] }}: {{ $card['value'] }}">
                     <div class="flex items-center justify-between gap-3">
                         <div class="flex min-w-0 items-center gap-3">
@@ -119,7 +126,7 @@
                             <div class="min-w-0">
                                 <p class="truncate text-xs font-semibold text-slate-700">{{ $card['label'] }}</p>
                                 <p class="mt-1 truncate text-xl font-bold text-slate-950">{{ $card['value'] }}</p>
-                                <p class="mt-1 truncate text-xs font-semibold text-green-600">{{ $card['hint'] }}</p>
+                                <p class="mt-1 truncate text-xs font-semibold {{ $hintClass }}">{{ $card['hint'] }}</p>
                             </div>
                         </div>
                         <div class="hidden h-10 w-14 shrink-0 items-end gap-1 2xl:flex">

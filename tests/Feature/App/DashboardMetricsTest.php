@@ -113,6 +113,8 @@ class DashboardMetricsTest extends TestCase
             ->assertSee('Cliente Recorrente')
             ->assertSee('Faturamento hoje')
             ->assertSee('Entregues hoje')
+            ->assertSee('+100% vs ontem')
+            ->assertSee('Novo movimento vs ontem')
             ->assertSee('aria-label="Em andamento: 0"', false)
             ->assertSee('aria-label="Prontas: 1"', false)
             ->assertSee('aria-label="Entregues hoje: 1"', false)
