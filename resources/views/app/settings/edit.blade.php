@@ -181,6 +181,95 @@
             </section>
 
             <section class="border-t border-slate-200 pt-5">
+                <p class="text-xs font-bold uppercase tracking-[0.2em] text-blue-700">Programa de fidelidade</p>
+                <h2 class="mt-1 text-xl font-bold text-slate-950">Cupons para clientes recorrentes</h2>
+                <p class="mt-1 text-sm text-slate-500">Configure quando o cliente ganha um cupom e qual beneficio sera oferecido.</p>
+
+                <div class="mt-4 grid gap-4 md:grid-cols-2">
+                    <label class="flex cursor-pointer items-start gap-3 rounded-2xl border border-slate-200 p-4 hover:bg-slate-50 md:col-span-2">
+                        <input type="checkbox" name="loyalty_is_active" value="1" @checked(old('loyalty_is_active', $loyaltyProgram->is_active)) class="mt-1 h-4 w-4 rounded border-slate-300 text-blue-700">
+                        <span>
+                            <span class="block font-bold text-slate-900">Habilitar Programa de Fidelidade</span>
+                            <span class="mt-1 block text-sm text-slate-500">Ao completar a meta, o sistema gera um cupom personalizado para o cliente.</span>
+                        </span>
+                    </label>
+
+                    <label class="block">
+                        <span class="text-sm font-semibold text-slate-700">Meta de lavagens</span>
+                        <input name="loyalty_threshold" type="number" min="2" max="99" value="{{ old('loyalty_threshold', $loyaltyProgram->threshold ?: 10) }}" class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100">
+                        @error('loyalty_threshold') <span class="text-sm text-red-600">{{ $message }}</span> @enderror
+                    </label>
+
+                    <label class="block">
+                        <span class="text-sm font-semibold text-slate-700">Validade do cupom</span>
+                        <input name="loyalty_coupon_valid_days" type="number" min="1" max="365" value="{{ old('loyalty_coupon_valid_days', $loyaltyProgram->coupon_valid_days ?: 30) }}" class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100">
+                        <span class="mt-1 block text-xs text-slate-500">Quantidade de dias após a emissão.</span>
+                        @error('loyalty_coupon_valid_days') <span class="text-sm text-red-600">{{ $message }}</span> @enderror
+                    </label>
+
+                    <label class="block">
+                        <span class="text-sm font-semibold text-slate-700">Como contar</span>
+                        <select name="loyalty_count_scope" class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100">
+                            @foreach ($loyaltyCountScopes as $value => $label)
+                                <option value="{{ $value }}" @selected(old('loyalty_count_scope', $loyaltyProgram->count_scope ?: \App\Models\LoyaltyProgram::COUNT_ANY) === $value)>{{ $label }}</option>
+                            @endforeach
+                        </select>
+                        @error('loyalty_count_scope') <span class="text-sm text-red-600">{{ $message }}</span> @enderror
+                    </label>
+
+                    <label class="block">
+                        <span class="text-sm font-semibold text-slate-700">Categoria contada</span>
+                        <select name="loyalty_qualifying_category" class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100">
+                            <option value="">Selecione quando usar categoria</option>
+                            @foreach ($loyaltyCategories as $category)
+                                <option value="{{ $category }}" @selected(old('loyalty_qualifying_category', $loyaltyProgram->qualifying_category) === $category)>{{ $category }}</option>
+                            @endforeach
+                        </select>
+                        @error('loyalty_qualifying_category') <span class="text-sm text-red-600">{{ $message }}</span> @enderror
+                    </label>
+
+                    <label class="block">
+                        <span class="text-sm font-semibold text-slate-700">Serviço contado</span>
+                        <select name="loyalty_qualifying_service_id" class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100">
+                            <option value="">Selecione quando usar serviço específico</option>
+                            @foreach ($loyaltyServices as $service)
+                                <option value="{{ $service->id }}" @selected((string) old('loyalty_qualifying_service_id', $loyaltyProgram->qualifying_service_id) === (string) $service->id)>{{ $service->name }} · {{ $service->category }}</option>
+                            @endforeach
+                        </select>
+                        @error('loyalty_qualifying_service_id') <span class="text-sm text-red-600">{{ $message }}</span> @enderror
+                    </label>
+
+                    <label class="block">
+                        <span class="text-sm font-semibold text-slate-700">Prêmio</span>
+                        <select name="loyalty_reward_type" class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100">
+                            @foreach ($loyaltyRewardTypes as $value => $label)
+                                <option value="{{ $value }}" @selected(old('loyalty_reward_type', $loyaltyProgram->reward_type ?: \App\Models\LoyaltyProgram::REWARD_FIXED_SERVICE) === $value)>{{ $label }}</option>
+                            @endforeach
+                        </select>
+                        @error('loyalty_reward_type') <span class="text-sm text-red-600">{{ $message }}</span> @enderror
+                    </label>
+
+                    <label class="block">
+                        <span class="text-sm font-semibold text-slate-700">Serviço do cupom</span>
+                        <select name="loyalty_reward_service_id" class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100">
+                            <option value="">Selecione quando o prêmio for serviço definido</option>
+                            @foreach ($loyaltyServices as $service)
+                                <option value="{{ $service->id }}" @selected((string) old('loyalty_reward_service_id', $loyaltyProgram->reward_service_id) === (string) $service->id)>{{ $service->name }} · {{ $service->category }}</option>
+                            @endforeach
+                        </select>
+                        @error('loyalty_reward_service_id') <span class="text-sm text-red-600">{{ $message }}</span> @enderror
+                    </label>
+
+                    <label class="block">
+                        <span class="text-sm font-semibold text-slate-700">Valor do desconto</span>
+                        <input name="loyalty_discount_value" inputmode="decimal" value="{{ old('loyalty_discount_value', $loyaltyProgram->discount_value) }}" placeholder="Ex: 20 ou 15" class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100">
+                        <span class="mt-1 block text-xs text-slate-500">Use apenas quando o prêmio for desconto em reais ou percentual.</span>
+                        @error('loyalty_discount_value') <span class="text-sm text-red-600">{{ $message }}</span> @enderror
+                    </label>
+                </div>
+            </section>
+
+            <section class="border-t border-slate-200 pt-5">
                 <p class="text-xs font-bold uppercase tracking-[0.2em] text-blue-700">Permissoes da equipe</p>
                 <h2 class="mt-1 text-xl font-bold text-slate-950">Privilégios operacionais</h2>
                 <p class="mt-1 text-sm text-slate-500">Ajuste excecoes por perfil sem liberar areas sensiveis como financeiro, assinatura ou administracao do produto.</p>
@@ -255,6 +344,7 @@
                     <div class="flex justify-between gap-4"><dt>Caixa</dt><dd class="font-semibold {{ $cashRegisterEnabled ? 'text-green-700' : 'text-slate-500' }}">{{ $cashRegisterEnabled ? 'Habilitado' : 'Desabilitado' }}</dd></div>
                     <div class="flex justify-between gap-4"><dt>Fiado</dt><dd class="font-semibold {{ $creditReceivablesEnabled ? 'text-green-700' : 'text-slate-500' }}">{{ $creditReceivablesEnabled ? 'Habilitado' : 'Desabilitado' }}</dd></div>
                     <div class="flex justify-between gap-4"><dt>Agenda</dt><dd class="font-semibold {{ $scheduleEnabled ? 'text-green-700' : 'text-slate-500' }}">{{ $scheduleEnabled ? 'Habilitada' : 'Desabilitada' }}</dd></div>
+                    <div class="flex justify-between gap-4"><dt>Fidelidade</dt><dd class="font-semibold {{ $loyaltyProgram->is_active ? 'text-green-700' : 'text-slate-500' }}">{{ $loyaltyProgram->is_active ? 'Habilitada' : 'Desabilitada' }}</dd></div>
                     <div class="flex justify-between gap-4"><dt>Tema</dt><dd class="font-semibold text-slate-900">{{ $themes[$settings['theme']] ?? 'Padrao claro' }}</dd></div>
                 </dl>
             </div>

@@ -5,7 +5,9 @@ namespace App\Http\Controllers\App;
 use App\Http\Controllers\Controller;
 use App\Models\AuditLog;
 use App\Models\AppSetting;
+use App\Models\LoyaltyProgram;
 use App\Models\RolePermissionSetting;
+use App\Models\Service;
 use App\Models\User;
 use App\Support\AuditLogger;
 use App\Support\Access\AccessControl;
@@ -24,6 +26,11 @@ class SettingsController extends Controller
         return view('app.settings.edit', [
             'settings' => AppSetting::allSettings(),
             'currentLocation' => TenantContext::currentLocation(),
+            'loyaltyProgram' => $this->loyaltyProgramForCurrentLocation(),
+            'loyaltyCountScopes' => LoyaltyProgram::countScopes(),
+            'loyaltyRewardTypes' => LoyaltyProgram::rewardTypes(),
+            'loyaltyServices' => TenantContext::scopeServices(Service::query())->where('active', true)->orderBy('name')->get(['id', 'name', 'category']),
+            'loyaltyCategories' => TenantContext::scopeServices(Service::query())->where('active', true)->select('category')->distinct()->orderBy('category')->pluck('category')->filter()->values(),
             'roleLabels' => User::roleLabels(),
             'permissionLabels' => AccessControl::permissionLabels(),
             'permissionDescriptions' => AccessControl::permissionDescriptions(),
@@ -68,6 +75,36 @@ class SettingsController extends Controller
             'module_cash_register' => ['nullable', 'boolean'],
             'module_credit_receivables' => ['nullable', 'boolean'],
             'module_schedule' => ['nullable', 'boolean'],
+            'loyalty_is_active' => ['nullable', 'boolean'],
+            'loyalty_threshold' => ['nullable', 'integer', 'min:2', 'max:99'],
+            'loyalty_count_scope' => ['nullable', Rule::in(array_keys(LoyaltyProgram::countScopes()))],
+            'loyalty_qualifying_service_id' => [
+                'nullable',
+                Rule::requiredIf(fn () => $request->boolean('loyalty_is_active') && $request->input('loyalty_count_scope') === LoyaltyProgram::COUNT_SERVICE),
+                'integer',
+                Rule::exists('services', 'id')->where('wash_location_id', TenantContext::currentLocationId()),
+            ],
+            'loyalty_qualifying_category' => [
+                'nullable',
+                Rule::requiredIf(fn () => $request->boolean('loyalty_is_active') && $request->input('loyalty_count_scope') === LoyaltyProgram::COUNT_CATEGORY),
+                'string',
+                'max:120',
+            ],
+            'loyalty_reward_type' => ['nullable', Rule::in(array_keys(LoyaltyProgram::rewardTypes()))],
+            'loyalty_reward_service_id' => [
+                'nullable',
+                Rule::requiredIf(fn () => $request->boolean('loyalty_is_active') && $request->input('loyalty_reward_type') === LoyaltyProgram::REWARD_FIXED_SERVICE),
+                'integer',
+                Rule::exists('services', 'id')->where('wash_location_id', TenantContext::currentLocationId()),
+            ],
+            'loyalty_discount_value' => [
+                'nullable',
+                Rule::requiredIf(fn () => $request->boolean('loyalty_is_active') && in_array($request->input('loyalty_reward_type'), [LoyaltyProgram::REWARD_DISCOUNT_AMOUNT, LoyaltyProgram::REWARD_DISCOUNT_PERCENT], true)),
+                'numeric',
+                'min:0.01',
+                'max:9999.99',
+            ],
+            'loyalty_coupon_valid_days' => ['nullable', 'integer', 'min:1', 'max:365'],
             'role_permissions' => ['nullable', 'array'],
         ]);
 
@@ -123,6 +160,8 @@ class SettingsController extends Controller
         ]);
 
         if ($currentLocation) {
+            $this->updateLoyaltyProgram($request, (int) $currentLocation->id);
+
             $permissionChanges = $this->updateRolePermissions($request, (int) $currentLocation->id);
 
             if ($permissionChanges !== []) {
@@ -136,6 +175,43 @@ class SettingsController extends Controller
         }
 
         return back()->with('status', 'Configuracoes salvas com sucesso.');
+    }
+
+    private function loyaltyProgramForCurrentLocation(): LoyaltyProgram
+    {
+        return LoyaltyProgram::query()->firstOrNew(
+            ['wash_location_id' => TenantContext::currentLocationId()],
+            [
+                'is_active' => false,
+                'threshold' => 10,
+                'count_scope' => LoyaltyProgram::COUNT_ANY,
+                'reward_type' => LoyaltyProgram::REWARD_FIXED_SERVICE,
+                'coupon_valid_days' => 30,
+            ],
+        );
+    }
+
+    private function updateLoyaltyProgram(Request $request, int $locationId): void
+    {
+        $countScope = $request->input('loyalty_count_scope', LoyaltyProgram::COUNT_ANY);
+        $rewardType = $request->input('loyalty_reward_type', LoyaltyProgram::REWARD_FIXED_SERVICE);
+
+        LoyaltyProgram::query()->updateOrCreate(
+            ['wash_location_id' => $locationId],
+            [
+                'is_active' => $request->boolean('loyalty_is_active'),
+                'threshold' => (int) $request->input('loyalty_threshold', 10),
+                'count_scope' => $countScope,
+                'qualifying_service_id' => $countScope === LoyaltyProgram::COUNT_SERVICE ? $request->input('loyalty_qualifying_service_id') : null,
+                'qualifying_category' => $countScope === LoyaltyProgram::COUNT_CATEGORY ? $request->input('loyalty_qualifying_category') : null,
+                'reward_type' => $rewardType,
+                'reward_service_id' => $rewardType === LoyaltyProgram::REWARD_FIXED_SERVICE ? $request->input('loyalty_reward_service_id') : null,
+                'discount_value' => in_array($rewardType, [LoyaltyProgram::REWARD_DISCOUNT_AMOUNT, LoyaltyProgram::REWARD_DISCOUNT_PERCENT], true)
+                    ? $request->input('loyalty_discount_value')
+                    : null,
+                'coupon_valid_days' => (int) $request->input('loyalty_coupon_valid_days', 30),
+            ],
+        );
     }
 
     /**

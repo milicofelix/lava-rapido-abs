@@ -247,6 +247,31 @@
                 </section>
             @endif
 
+            @if ($washOrder->customer->loyaltyCoupons->isNotEmpty())
+                <section class="rounded-2xl border border-fuchsia-200 bg-fuchsia-50 p-5 shadow-sm">
+                    <p class="text-xs font-black uppercase tracking-[0.18em] text-fuchsia-700">Fidelidade</p>
+                    <h2 class="mt-1 font-black text-fuchsia-950">Cupons ativos</h2>
+                    <div class="mt-4 space-y-3">
+                        @foreach ($washOrder->customer->loyaltyCoupons->take(3) as $coupon)
+                            <div class="rounded-2xl border border-fuchsia-200 bg-white p-3">
+                                <div class="flex items-start justify-between gap-3">
+                                    <div>
+                                        <p class="font-black tracking-wide text-slate-950">{{ $coupon->code }}</p>
+                                        <p class="mt-1 text-xs text-slate-500">
+                                            {{ $coupon->rewardService?->name ?? 'Beneficio configurado' }}
+                                            @if ($coupon->expires_at)
+                                                · vence em {{ $coupon->expires_at->format('d/m/Y') }}
+                                            @endif
+                                        </p>
+                                    </div>
+                                    <span class="rounded-full bg-fuchsia-100 px-3 py-1 text-xs font-black text-fuchsia-700">{{ $coupon->statusLabel() }}</span>
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                </section>
+            @endif
+
             @if ($canSeeWashFinancial)
                 <section class="rounded-2xl border border-amber-200 bg-amber-50 p-5 shadow-sm">
                     <p class="text-xs font-black uppercase tracking-[0.18em] text-amber-700">Documento</p>

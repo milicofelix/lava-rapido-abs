@@ -6,12 +6,17 @@ use App\Events\WashOrderStatusChanged;
 use App\Models\AuditLog;
 use App\Models\User;
 use App\Models\WashOrder;
+use App\Services\Loyalty\EvaluateLoyaltyProgramService;
 use App\Support\AuditLogger;
 use App\Support\WashOrders\WashOrderStatusFlow;
 use InvalidArgumentException;
 
 class ChangeWashOrderStatusService
 {
+    public function __construct(
+        private readonly EvaluateLoyaltyProgramService $loyalty,
+    ) {}
+
     public function handle(WashOrder $washOrder, string $status, ?User $user = null, ?string $notes = null): WashOrder
     {
         if (! WashOrderStatusFlow::isKnownStatus($status)) {
@@ -65,6 +70,7 @@ class ChangeWashOrderStatusService
         );
 
         event(new WashOrderStatusChanged($washOrder, $fromStatus));
+        $this->loyalty->handle($washOrder);
 
         return $washOrder;
     }

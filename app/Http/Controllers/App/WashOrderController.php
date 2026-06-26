@@ -114,7 +114,20 @@ class WashOrderController extends Controller
             unset($paymentMethods[Payment::METHOD_CREDIT_PENDING]);
         }
 
-        $washOrder = $washOrder->load(['customer', 'vehicle', 'assignedUser', 'teamMembers', 'services', 'statusHistories.user', 'payments.user', 'customerNotifications.user']);
+        $washOrder = $washOrder->load([
+            'customer.loyaltyCoupons' => fn ($query) => $query
+                ->where('wash_location_id', $washOrder->wash_location_id)
+                ->where('status', \App\Models\LoyaltyCoupon::STATUS_ACTIVE)
+                ->with('rewardService')
+                ->latest('earned_at'),
+            'vehicle',
+            'assignedUser',
+            'teamMembers',
+            'services',
+            'statusHistories.user',
+            'payments.user',
+            'customerNotifications.user',
+        ]);
         $user = request()->user();
         $canUpdateStatus = AccessControl::allows($user, AccessControl::UPDATE_WASH_ORDER_STATUS)
             && (! $user?->isOperator() || $washOrder->teamMembers->contains('id', $user->id));

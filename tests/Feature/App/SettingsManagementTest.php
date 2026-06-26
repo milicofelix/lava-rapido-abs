@@ -4,6 +4,8 @@ namespace Tests\Feature\App;
 
 use App\Models\AppSetting;
 use App\Models\AuditLog;
+use App\Models\LoyaltyProgram;
+use App\Models\Service;
 use App\Models\User;
 use App\Models\WashLocation;
 use App\Support\Access\AccessControl;
@@ -25,6 +27,7 @@ class SettingsManagementTest extends TestCase
             ->assertSee('Configuracoes')
             ->assertSee('Habilitar Caixa')
             ->assertSee('Habilitar Fiado')
+            ->assertSee('Programa de fidelidade')
             ->assertSee('Tema do painel')
             ->assertDontSee('URL do Google Maps');
     }
@@ -134,6 +137,50 @@ class SettingsManagementTest extends TestCase
 
         $this->assertSame('-23.5191405', (string) $location->latitude);
         $this->assertSame('-46.4207678', (string) $location->longitude);
+    }
+
+    public function test_admin_can_update_loyalty_program_settings(): void
+    {
+        $location = WashLocation::factory()->create();
+        $admin = User::factory()->create([
+            'role' => User::ROLE_ADMIN,
+            'wash_location_id' => $location->id,
+        ]);
+        $service = Service::factory()->create([
+            'wash_location_id' => $location->id,
+            'name' => 'Ducha simples',
+            'category' => 'Lavagem',
+            'active' => true,
+        ]);
+
+        $this->actingAs($admin)
+            ->put(route('settings.update'), [
+                'company_name' => $location->name,
+                'company_whatsapp' => $location->phone,
+                'address' => $location->address,
+                'district' => $location->district,
+                'city' => $location->city,
+                'state' => $location->state ?? 'SP',
+                'theme' => AppSetting::THEME_LIGHT,
+                'module_schedule' => '1',
+                'loyalty_is_active' => '1',
+                'loyalty_threshold' => 10,
+                'loyalty_coupon_valid_days' => 45,
+                'loyalty_count_scope' => LoyaltyProgram::COUNT_ANY,
+                'loyalty_reward_type' => LoyaltyProgram::REWARD_FIXED_SERVICE,
+                'loyalty_reward_service_id' => $service->id,
+            ])
+            ->assertRedirect();
+
+        $this->assertDatabaseHas('loyalty_programs', [
+            'wash_location_id' => $location->id,
+            'is_active' => true,
+            'threshold' => 10,
+            'count_scope' => LoyaltyProgram::COUNT_ANY,
+            'reward_type' => LoyaltyProgram::REWARD_FIXED_SERVICE,
+            'reward_service_id' => $service->id,
+            'coupon_valid_days' => 45,
+        ]);
     }
 
     public function test_admin_can_update_operator_permissions_and_audit_change(): void
