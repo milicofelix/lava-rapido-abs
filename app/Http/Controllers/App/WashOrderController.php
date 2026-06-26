@@ -118,7 +118,7 @@ class WashOrderController extends Controller
             'customer.loyaltyCoupons' => fn ($query) => $query
                 ->where('wash_location_id', $washOrder->wash_location_id)
                 ->where('status', \App\Models\LoyaltyCoupon::STATUS_ACTIVE)
-                ->with('rewardService')
+                ->with(['loyaltyProgram', 'rewardService', 'sourceWashOrder.services'])
                 ->latest('earned_at'),
             'vehicle',
             'assignedUser',

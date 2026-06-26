@@ -120,9 +120,95 @@ class CustomerManagementTest extends TestCase
             ->get(route('customers.edit', $customer))
             ->assertOk()
             ->assertSee('Progresso do cliente')
+            ->assertSee('Cupom disponível')
+            ->assertSee('Faltam para o próximo cupom')
             ->assertSee('Últimos cupons')
             ->assertSee('FID-CLI-123')
             ->assertSee('Ducha simples');
+    }
+
+    public function test_loyalty_coupon_page_shows_personalized_coupon_and_whatsapp_action(): void
+    {
+        $location = WashLocation::factory()->create(['name' => 'Lava Rapido Central']);
+        $user = User::factory()->create(['wash_location_id' => $location->id]);
+        $customer = Customer::factory()->create([
+            'wash_location_id' => $location->id,
+            'name' => 'Cliente Cupom',
+            'phone' => '(11) 99999-0000',
+        ]);
+        $vehicle = Vehicle::factory()->for($customer)->create(['wash_location_id' => $location->id]);
+        $service = Service::factory()->create([
+            'wash_location_id' => $location->id,
+            'name' => 'Ducha simples',
+            'active' => true,
+        ]);
+        $program = LoyaltyProgram::query()->create([
+            'wash_location_id' => $location->id,
+            'is_active' => true,
+            'threshold' => 3,
+            'count_scope' => LoyaltyProgram::COUNT_ANY,
+            'reward_type' => LoyaltyProgram::REWARD_FIXED_SERVICE,
+            'reward_service_id' => $service->id,
+            'coupon_valid_days' => 30,
+        ]);
+        $washOrder = $this->createDeliveredOrder($location, $customer, $vehicle, $service);
+        $coupon = LoyaltyCoupon::query()->create([
+            'wash_location_id' => $location->id,
+            'loyalty_program_id' => $program->id,
+            'customer_id' => $customer->id,
+            'source_wash_order_id' => $washOrder->id,
+            'reward_service_id' => $service->id,
+            'code' => 'FID-CLI-123',
+            'status' => LoyaltyCoupon::STATUS_ACTIVE,
+            'earned_at' => now(),
+            'expires_at' => now()->addDays(30),
+        ]);
+
+        $this->actingAs($user)
+            ->get(route('loyalty-coupons.show', $coupon))
+            ->assertOk()
+            ->assertSee('Cupom de fidelidade')
+            ->assertSee('FID-CLI-123')
+            ->assertSee('Cliente Cupom')
+            ->assertSee('Lava Rapido Central')
+            ->assertSee('Ducha simples')
+            ->assertSee('Compartilhar via WhatsApp')
+            ->assertSee('https://wa.me/5511999990000', false);
+    }
+
+    public function test_user_cannot_open_loyalty_coupon_from_another_location(): void
+    {
+        $location = WashLocation::factory()->create();
+        $otherLocation = WashLocation::factory()->create();
+        $user = User::factory()->create(['wash_location_id' => $otherLocation->id]);
+        $customer = Customer::factory()->create(['wash_location_id' => $location->id]);
+        $vehicle = Vehicle::factory()->for($customer)->create(['wash_location_id' => $location->id]);
+        $service = Service::factory()->create(['wash_location_id' => $location->id]);
+        $program = LoyaltyProgram::query()->create([
+            'wash_location_id' => $location->id,
+            'is_active' => true,
+            'threshold' => 3,
+            'count_scope' => LoyaltyProgram::COUNT_ANY,
+            'reward_type' => LoyaltyProgram::REWARD_FIXED_SERVICE,
+            'reward_service_id' => $service->id,
+            'coupon_valid_days' => 30,
+        ]);
+        $washOrder = $this->createDeliveredOrder($location, $customer, $vehicle, $service);
+        $coupon = LoyaltyCoupon::query()->create([
+            'wash_location_id' => $location->id,
+            'loyalty_program_id' => $program->id,
+            'customer_id' => $customer->id,
+            'source_wash_order_id' => $washOrder->id,
+            'reward_service_id' => $service->id,
+            'code' => 'FID-OUTRA-123',
+            'status' => LoyaltyCoupon::STATUS_ACTIVE,
+            'earned_at' => now(),
+            'expires_at' => now()->addDays(30),
+        ]);
+
+        $this->actingAs($user)
+            ->get(route('loyalty-coupons.show', $coupon))
+            ->assertNotFound();
     }
 
     private function createDeliveredOrder(

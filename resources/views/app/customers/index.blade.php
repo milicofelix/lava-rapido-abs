@@ -60,11 +60,16 @@
                         <div>
                             @php($progress = $customer->loyalty_progress)
                             @if ($progress['enabled'])
-                                <p class="text-xs font-black uppercase tracking-[0.12em] text-slate-500">Fidelidade</p>
+                                <div class="flex items-center justify-between gap-2">
+                                    <p class="text-xs font-black uppercase tracking-[0.12em] text-slate-500">Fidelidade</p>
+                                    @if ($progress['has_active_coupon'])
+                                        <span class="rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-black text-emerald-700">Cupom disponível</span>
+                                    @endif
+                                </div>
                                 <div class="mt-1 h-2 rounded-full bg-slate-100">
                                     <div class="h-2 rounded-full bg-fuchsia-600" style="width: {{ $progress['percent'] }}%"></div>
                                 </div>
-                                <p class="mt-1 text-xs font-bold text-slate-600">{{ $progress['current'] }}/{{ $progress['threshold'] }} lavadas · {{ $progress['active_coupons'] }} cupom(ns)</p>
+                                <p class="mt-1 text-xs font-bold text-slate-600">{{ $progress['current'] }}/{{ $progress['threshold'] }} lavadas para o próximo · {{ $progress['active_coupons'] }} ativo(s)</p>
                             @else
                                 <span class="inline-flex rounded-full bg-slate-100 px-3 py-1 text-xs font-black text-slate-500">Fidelidade off</span>
                             @endif

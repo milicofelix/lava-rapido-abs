@@ -77,7 +77,7 @@ class CustomerController extends Controller
             ->first();
         $loyaltyProgress = LoyaltyProgress::forCustomer($customer, $loyaltyProgram);
         $loyaltyCoupons = LoyaltyCoupon::query()
-            ->with('rewardService')
+            ->with(['loyaltyProgram', 'rewardService', 'sourceWashOrder.services'])
             ->where('wash_location_id', $customer->wash_location_id)
             ->where('customer_id', $customer->id)
             ->latest('earned_at')

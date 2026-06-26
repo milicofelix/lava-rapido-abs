@@ -54,6 +54,42 @@ class LoyaltyCoupon extends Model
         return self::statuses()[$this->status] ?? $this->status;
     }
 
+    public function benefitLabel(): string
+    {
+        if ($this->rewardService) {
+            return $this->rewardService->name;
+        }
+
+        if (! $this->loyaltyProgram) {
+            return 'Beneficio configurado';
+        }
+
+        return match ($this->loyaltyProgram->reward_type) {
+            LoyaltyProgram::REWARD_DISCOUNT_AMOUNT => 'Desconto de R$ '.number_format((float) $this->loyaltyProgram->discount_value, 2, ',', '.'),
+            LoyaltyProgram::REWARD_DISCOUNT_PERCENT => 'Desconto de '.number_format((float) $this->loyaltyProgram->discount_value, 0, ',', '.').'%',
+            LoyaltyProgram::REWARD_SAME_SERVICE => $this->sourceWashOrder?->services?->first()?->name ?? 'Mesmo servico da contagem',
+            default => 'Beneficio configurado',
+        };
+    }
+
+    public function whatsappShareMessage(): string
+    {
+        $customerName = $this->customer?->name ?? 'cliente';
+        $locationName = $this->washLocation?->name ?? 'nosso lava-rapido';
+        $expiresAt = $this->expires_at?->format('d/m/Y') ?? 'sem data de vencimento';
+
+        return "Ola {$customerName}! Voce ganhou um cupom de fidelidade no {$locationName}.\n\n".
+            "Codigo: {$this->code}\n".
+            "Beneficio: {$this->benefitLabel()}\n".
+            "Validade: {$expiresAt}\n\n".
+            'Apresente este cupom na proxima visita.';
+    }
+
+    public function whatsappShareUrl(): ?string
+    {
+        return $this->customer?->whatsappManualUrl($this->whatsappShareMessage());
+    }
+
     public function washLocation(): BelongsTo
     {
         return $this->belongsTo(WashLocation::class);

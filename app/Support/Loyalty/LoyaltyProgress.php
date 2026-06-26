@@ -11,7 +11,7 @@ use Illuminate\Database\Eloquent\Builder;
 class LoyaltyProgress
 {
     /**
-     * @return array{enabled: bool, current: int, threshold: int, remaining: int, percent: float, active_coupons: int, label: string}
+     * @return array{enabled: bool, current: int, threshold: int, remaining: int, percent: float, active_coupons: int, has_active_coupon: bool, label: string}
      */
     public static function forCustomer(Customer $customer, ?LoyaltyProgram $program = null): array
     {
@@ -34,15 +34,18 @@ class LoyaltyProgress
                 'remaining' => 0,
                 'percent' => 0,
                 'active_coupons' => $activeCoupons,
+                'has_active_coupon' => $activeCoupons > 0,
                 'label' => 'Fidelidade desabilitada',
             ];
         }
 
-        $lastCouponEarnedAt = LoyaltyCoupon::query()
+        $lastCouponSource = LoyaltyCoupon::query()
+            ->with('sourceWashOrder:id,entered_at')
             ->where('loyalty_program_id', $program->id)
             ->where('customer_id', $customer->id)
             ->latest('earned_at')
-            ->value('earned_at');
+            ->first()
+            ?->sourceWashOrder;
 
         $current = WashOrder::query()
             ->where('wash_location_id', $customer->wash_location_id)
@@ -53,7 +56,15 @@ class LoyaltyProgress
                 WashOrder::PAYMENT_COURTESY,
                 WashOrder::PAYMENT_CREDIT_PENDING,
             ])
-            ->when($lastCouponEarnedAt, fn (Builder $query) => $query->where('entered_at', '>', $lastCouponEarnedAt))
+            ->when($lastCouponSource, function (Builder $query) use ($lastCouponSource) {
+                $query->where(function (Builder $query) use ($lastCouponSource) {
+                    $query->where('entered_at', '>', $lastCouponSource->entered_at)
+                        ->orWhere(function (Builder $query) use ($lastCouponSource) {
+                            $query->where('entered_at', $lastCouponSource->entered_at)
+                                ->where('id', '>', $lastCouponSource->id);
+                        });
+                });
+            })
             ->whereHas('services', fn (Builder $query) => self::applyServiceScope($query, $program))
             ->count();
 
@@ -67,6 +78,7 @@ class LoyaltyProgress
             'remaining' => $remaining,
             'percent' => min(100, ($current / $threshold) * 100),
             'active_coupons' => $activeCoupons,
+            'has_active_coupon' => $activeCoupons > 0,
             'label' => self::scopeLabel($program),
         ];
     }

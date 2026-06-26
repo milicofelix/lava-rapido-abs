@@ -10,6 +10,8 @@ use App\Models\User;
 use App\Models\Vehicle;
 use App\Models\WashLocation;
 use App\Models\WashOrder;
+use App\Services\Loyalty\EvaluateLoyaltyProgramService;
+use App\Support\Loyalty\LoyaltyProgress;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -105,6 +107,41 @@ class LoyaltyProgramTest extends TestCase
             ->assertRedirect();
 
         $this->assertDatabaseCount('loyalty_coupons', 0);
+    }
+
+    public function test_accumulated_customer_history_generates_available_coupons(): void
+    {
+        $location = WashLocation::factory()->create();
+        $customer = Customer::factory()->create(['wash_location_id' => $location->id]);
+        $vehicle = Vehicle::factory()->for($customer)->create(['wash_location_id' => $location->id]);
+        $service = Service::factory()->create([
+            'wash_location_id' => $location->id,
+            'name' => 'Ducha simples',
+            'category' => 'Lavagem',
+            'active' => true,
+        ]);
+        $program = LoyaltyProgram::query()->create([
+            'wash_location_id' => $location->id,
+            'is_active' => true,
+            'threshold' => 3,
+            'count_scope' => LoyaltyProgram::COUNT_ANY,
+            'reward_type' => LoyaltyProgram::REWARD_FIXED_SERVICE,
+            'reward_service_id' => $service->id,
+            'coupon_valid_days' => 30,
+        ]);
+
+        for ($i = 0; $i < 6; $i++) {
+            $this->createDeliveredWashOrder($location, $customer, $vehicle, $service);
+        }
+
+        $created = app(EvaluateLoyaltyProgramService::class)->handleEligibleCustomers($program);
+        $progress = LoyaltyProgress::forCustomer($customer, $program);
+
+        $this->assertSame(2, $created);
+        $this->assertDatabaseCount('loyalty_coupons', 2);
+        $this->assertSame(0, $progress['current']);
+        $this->assertSame(2, $progress['active_coupons']);
+        $this->assertTrue($progress['has_active_coupon']);
     }
 
     public function test_active_coupon_is_visible_on_wash_order_page(): void

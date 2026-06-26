@@ -7,6 +7,7 @@ use App\Http\Controllers\App\AuditLogController;
 use App\Http\Controllers\App\DashboardController;
 use App\Http\Controllers\App\EmployeeController;
 use App\Http\Controllers\App\FinanceController;
+use App\Http\Controllers\App\LoyaltyCouponController;
 use App\Http\Controllers\App\OwnerSubscriptionController;
 use App\Http\Controllers\App\PaymentController;
 use App\Http\Controllers\App\ScheduleController;
@@ -107,6 +108,7 @@ Route::middleware('auth')->group(function () {
 
         Route::middleware('permission:'.AccessControl::MANAGE_CUSTOMERS)->group(function () {
             Route::resource('clientes', CustomerController::class)->parameters(['clientes' => 'customer'])->names('customers')->except(['show', 'destroy']);
+            Route::get('cupons-fidelidade/{loyaltyCoupon}', LoyaltyCouponController::class)->name('loyalty-coupons.show');
         });
 
         Route::middleware('permission:'.AccessControl::MANAGE_VEHICLES)->group(function () {

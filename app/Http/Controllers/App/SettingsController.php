@@ -9,6 +9,7 @@ use App\Models\LoyaltyProgram;
 use App\Models\RolePermissionSetting;
 use App\Models\Service;
 use App\Models\User;
+use App\Services\Loyalty\EvaluateLoyaltyProgramService;
 use App\Support\AuditLogger;
 use App\Support\Access\AccessControl;
 use App\Support\MapsCoordinates;
@@ -168,7 +169,11 @@ class SettingsController extends Controller
         ]);
 
         if ($currentLocation) {
-            $this->updateLoyaltyProgram($request, (int) $currentLocation->id);
+            $loyaltyProgram = $this->updateLoyaltyProgram($request, (int) $currentLocation->id);
+
+            if ($loyaltyProgram->is_active) {
+                app(EvaluateLoyaltyProgramService::class)->handleEligibleCustomers($loyaltyProgram->loadMissing(['qualifyingService', 'rewardService']));
+            }
 
             $permissionChanges = $this->updateRolePermissions($request, (int) $currentLocation->id);
 
@@ -199,12 +204,12 @@ class SettingsController extends Controller
         );
     }
 
-    private function updateLoyaltyProgram(Request $request, int $locationId): void
+    private function updateLoyaltyProgram(Request $request, int $locationId): LoyaltyProgram
     {
         $countScope = $request->input('loyalty_count_scope', LoyaltyProgram::COUNT_ANY);
         $rewardType = $request->input('loyalty_reward_type', LoyaltyProgram::REWARD_FIXED_SERVICE);
 
-        LoyaltyProgram::query()->updateOrCreate(
+        return LoyaltyProgram::query()->updateOrCreate(
             ['wash_location_id' => $locationId],
             [
                 'is_active' => $request->boolean('loyalty_is_active'),

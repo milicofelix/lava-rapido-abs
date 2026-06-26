@@ -253,20 +253,39 @@
                     <h2 class="mt-1 font-black text-fuchsia-950">Cupons ativos</h2>
                     <div class="mt-4 space-y-3">
                         @foreach ($washOrder->customer->loyaltyCoupons->take(3) as $coupon)
-                            <div class="rounded-2xl border border-fuchsia-200 bg-white p-3">
-                                <div class="flex items-start justify-between gap-3">
-                                    <div>
-                                        <p class="font-black tracking-wide text-slate-950">{{ $coupon->code }}</p>
-                                        <p class="mt-1 text-xs text-slate-500">
-                                            {{ $coupon->rewardService?->name ?? 'Beneficio configurado' }}
-                                            @if ($coupon->expires_at)
-                                                · vence em {{ $coupon->expires_at->format('d/m/Y') }}
-                                            @endif
-                                        </p>
+                            @php($canOpenCoupon = auth()->user()->canAccess(\App\Support\Access\AccessControl::MANAGE_CUSTOMERS))
+                            @if ($canOpenCoupon)
+                                <a href="{{ route('loyalty-coupons.show', $coupon) }}" class="block rounded-2xl border border-fuchsia-200 bg-white p-3 transition hover:bg-fuchsia-50">
+                                    <div class="flex items-start justify-between gap-3">
+                                        <div>
+                                            <p class="font-black tracking-wide text-slate-950">{{ $coupon->code }}</p>
+                                            <p class="mt-1 text-xs text-slate-500">
+                                                {{ $coupon->benefitLabel() }}
+                                                @if ($coupon->expires_at)
+                                                    · vence em {{ $coupon->expires_at->format('d/m/Y') }}
+                                                @endif
+                                            </p>
+                                        </div>
+                                        <span class="rounded-full bg-fuchsia-100 px-3 py-1 text-xs font-black text-fuchsia-700">{{ $coupon->statusLabel() }}</span>
                                     </div>
-                                    <span class="rounded-full bg-fuchsia-100 px-3 py-1 text-xs font-black text-fuchsia-700">{{ $coupon->statusLabel() }}</span>
+                                    <p class="mt-3 text-xs font-black text-fuchsia-700">Abrir cupom</p>
+                                </a>
+                            @else
+                                <div class="rounded-2xl border border-fuchsia-200 bg-white p-3">
+                                    <div class="flex items-start justify-between gap-3">
+                                        <div>
+                                            <p class="font-black tracking-wide text-slate-950">{{ $coupon->code }}</p>
+                                            <p class="mt-1 text-xs text-slate-500">
+                                                {{ $coupon->benefitLabel() }}
+                                                @if ($coupon->expires_at)
+                                                    · vence em {{ $coupon->expires_at->format('d/m/Y') }}
+                                                @endif
+                                            </p>
+                                        </div>
+                                        <span class="rounded-full bg-fuchsia-100 px-3 py-1 text-xs font-black text-fuchsia-700">{{ $coupon->statusLabel() }}</span>
+                                    </div>
                                 </div>
-                            </div>
+                            @endif
                         @endforeach
                     </div>
                 </section>
