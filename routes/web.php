@@ -11,6 +11,7 @@ use App\Http\Controllers\App\FinanceController;
 use App\Http\Controllers\App\LoyaltyCouponController;
 use App\Http\Controllers\App\OwnerSubscriptionController;
 use App\Http\Controllers\App\PaymentController;
+use App\Http\Controllers\App\RemoveLoyaltyCouponController;
 use App\Http\Controllers\App\ScheduleController;
 use App\Http\Controllers\App\ServiceController;
 use App\Http\Controllers\App\SettingsController;
@@ -106,6 +107,7 @@ Route::middleware('auth')->group(function () {
         Route::middleware('permission:'.AccessControl::REGISTER_PAYMENT)->group(function () {
             Route::post('lavagens/{wash_order}/pagamentos', [PaymentController::class, 'store'])->name('payments.store');
             Route::post('lavagens/{wash_order}/cupom-fidelidade', ApplyLoyaltyCouponController::class)->name('wash-orders.loyalty-coupons.apply');
+            Route::delete('lavagens/{wash_order}/cupom-fidelidade', RemoveLoyaltyCouponController::class)->name('wash-orders.loyalty-coupons.remove');
         });
 
         Route::middleware('permission:'.AccessControl::MANAGE_CUSTOMERS)->group(function () {

@@ -148,6 +148,16 @@
                                     </div>
                                     <p class="font-black text-fuchsia-700">- R$ {{ number_format((float) $washOrder->loyalty_discount_amount, 2, ',', '.') }}</p>
                                 </div>
+                                @if ($loyaltyCouponRemovalState['can_remove'])
+                                    <form method="POST" action="{{ route('wash-orders.loyalty-coupons.remove', $washOrder) }}" class="mt-3">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button class="rounded-xl border border-fuchsia-300 bg-white px-4 py-2 text-xs font-black text-fuchsia-800 hover:bg-fuchsia-50">Remover cupom aplicado</button>
+                                    </form>
+                                @else
+                                    <p class="mt-3 rounded-2xl bg-slate-50 px-4 py-3 text-xs font-bold text-slate-600">{{ $loyaltyCouponRemovalState['reason'] }}</p>
+                                @endif
+                                @error('loyalty_coupon_id') <p class="mt-3 text-sm font-bold text-red-600">{{ $message }}</p> @enderror
                             </div>
                         @endif
 

@@ -12,6 +12,7 @@ use App\Models\User;
 use App\Models\Vehicle;
 use App\Models\WashOrder;
 use App\Services\Loyalty\LoyaltyCouponApplicabilityService;
+use App\Services\Loyalty\RemoveLoyaltyCouponService;
 use App\Services\WashOrders\ChangeWashOrderStatusService;
 use App\Services\WashOrders\CreateWashOrderService;
 use App\Support\TenantContext;
@@ -105,8 +106,11 @@ class WashOrderController extends Controller
             ->with('status', 'Ordem de lavagem criada com sucesso.');
     }
 
-    public function show(WashOrder $washOrder, LoyaltyCouponApplicabilityService $couponApplicability): View
-    {
+    public function show(
+        WashOrder $washOrder,
+        LoyaltyCouponApplicabilityService $couponApplicability,
+        RemoveLoyaltyCouponService $removeLoyaltyCoupon,
+    ): View {
         TenantContext::abortUnlessModelBelongsToTenant($washOrder);
 
         $paymentMethods = Payment::methods();
@@ -153,6 +157,7 @@ class WashOrderController extends Controller
             'notificationTemplates' => CustomerNotification::templates(),
             'loyaltyCouponEvaluations' => $loyaltyCouponEvaluations,
             'applicableLoyaltyCoupons' => $applicableLoyaltyCoupons,
+            'loyaltyCouponRemovalState' => $removeLoyaltyCoupon->removableState($washOrder),
         ]);
     }
 

@@ -372,6 +372,145 @@ class LoyaltyProgramTest extends TestCase
         $this->assertSame(35.0, (float) $washOrder->refresh()->loyalty_discount_amount);
     }
 
+    public function test_applied_coupon_can_be_removed_before_real_payment_or_delivery(): void
+    {
+        $location = WashLocation::factory()->create();
+        $admin = User::factory()->create([
+            'role' => User::ROLE_ADMIN,
+            'wash_location_id' => $location->id,
+        ]);
+        $customer = Customer::factory()->create(['wash_location_id' => $location->id]);
+        $vehicle = Vehicle::factory()->for($customer)->create(['wash_location_id' => $location->id]);
+        $service = Service::factory()->create([
+            'wash_location_id' => $location->id,
+            'name' => 'Ducha simples',
+            'base_price' => 35,
+        ]);
+        $program = LoyaltyProgram::query()->create([
+            'wash_location_id' => $location->id,
+            'is_active' => true,
+            'threshold' => 3,
+            'count_scope' => LoyaltyProgram::COUNT_ANY,
+            'reward_type' => LoyaltyProgram::REWARD_FIXED_SERVICE,
+            'reward_service_id' => $service->id,
+            'coupon_valid_days' => 30,
+        ]);
+        $sourceOrder = $this->createDeliveredWashOrder($location, $customer, $vehicle, $service);
+        $washOrder = $this->createReadyPaidWashOrder($location, $customer, $vehicle, $service);
+        $washOrder->forceFill([
+            'payment_status' => WashOrder::PAYMENT_PENDING,
+            'total_amount' => 35,
+        ])->save();
+        $coupon = LoyaltyCoupon::query()->create([
+            'wash_location_id' => $location->id,
+            'loyalty_program_id' => $program->id,
+            'customer_id' => $customer->id,
+            'source_wash_order_id' => $sourceOrder->id,
+            'reward_service_id' => $service->id,
+            'code' => 'FID-REMOVE-1',
+            'status' => LoyaltyCoupon::STATUS_ACTIVE,
+            'earned_at' => now(),
+            'expires_at' => now()->addDays(30),
+        ]);
+
+        $this->actingAs($admin)
+            ->post(route('wash-orders.loyalty-coupons.apply', $washOrder), [
+                'loyalty_coupon_id' => $coupon->id,
+            ])
+            ->assertRedirect();
+
+        $this->actingAs($admin)
+            ->get(route('wash-orders.show', $washOrder))
+            ->assertOk()
+            ->assertSee('Remover cupom aplicado');
+
+        $this->actingAs($admin)
+            ->delete(route('wash-orders.loyalty-coupons.remove', $washOrder))
+            ->assertRedirect();
+
+        $this->assertDatabaseHas('loyalty_coupons', [
+            'id' => $coupon->id,
+            'status' => LoyaltyCoupon::STATUS_ACTIVE,
+            'used_wash_order_id' => null,
+            'used_by_user_id' => null,
+            'used_at' => null,
+        ]);
+        $this->assertDatabaseHas('wash_orders', [
+            'id' => $washOrder->id,
+            'loyalty_coupon_id' => null,
+            'loyalty_discount_amount' => 0,
+            'payment_status' => WashOrder::PAYMENT_PENDING,
+        ]);
+        $this->assertDatabaseMissing('payments', [
+            'wash_order_id' => $washOrder->id,
+            'notes' => 'Lavagem quitada com cupom de fidelidade FID-REMOVE-1.',
+        ]);
+    }
+
+    public function test_applied_coupon_cannot_be_removed_after_real_payment(): void
+    {
+        $location = WashLocation::factory()->create();
+        $admin = User::factory()->create([
+            'role' => User::ROLE_ADMIN,
+            'wash_location_id' => $location->id,
+        ]);
+        $customer = Customer::factory()->create(['wash_location_id' => $location->id]);
+        $vehicle = Vehicle::factory()->for($customer)->create(['wash_location_id' => $location->id]);
+        $service = Service::factory()->create([
+            'wash_location_id' => $location->id,
+            'name' => 'Ducha simples',
+            'base_price' => 20,
+        ]);
+        $program = LoyaltyProgram::query()->create([
+            'wash_location_id' => $location->id,
+            'is_active' => true,
+            'threshold' => 3,
+            'count_scope' => LoyaltyProgram::COUNT_ANY,
+            'reward_type' => LoyaltyProgram::REWARD_FIXED_SERVICE,
+            'reward_service_id' => $service->id,
+            'coupon_valid_days' => 30,
+        ]);
+        $sourceOrder = $this->createDeliveredWashOrder($location, $customer, $vehicle, $service);
+        $washOrder = $this->createReadyPaidWashOrder($location, $customer, $vehicle, $service);
+        $washOrder->forceFill([
+            'payment_status' => WashOrder::PAYMENT_PENDING,
+            'total_amount' => 50,
+        ])->save();
+        $coupon = LoyaltyCoupon::query()->create([
+            'wash_location_id' => $location->id,
+            'loyalty_program_id' => $program->id,
+            'customer_id' => $customer->id,
+            'source_wash_order_id' => $sourceOrder->id,
+            'reward_service_id' => $service->id,
+            'code' => 'FID-BLOCK-1',
+            'status' => LoyaltyCoupon::STATUS_ACTIVE,
+            'earned_at' => now(),
+            'expires_at' => now()->addDays(30),
+        ]);
+
+        $this->actingAs($admin)
+            ->post(route('wash-orders.loyalty-coupons.apply', $washOrder), [
+                'loyalty_coupon_id' => $coupon->id,
+            ])
+            ->assertRedirect();
+
+        $washOrder->payments()->create([
+            'user_id' => $admin->id,
+            'method' => \App\Models\Payment::METHOD_PIX,
+            'amount' => 30,
+            'paid_at' => now(),
+            'notes' => 'Pagamento restante.',
+        ]);
+        $washOrder->forceFill(['payment_status' => WashOrder::PAYMENT_PAID])->save();
+
+        $this->actingAs($admin)
+            ->delete(route('wash-orders.loyalty-coupons.remove', $washOrder))
+            ->assertSessionHasErrors('loyalty_coupon_id');
+
+        $this->assertSame(LoyaltyCoupon::STATUS_USED, $coupon->refresh()->status);
+        $this->assertSame($coupon->id, $washOrder->refresh()->loyalty_coupon_id);
+    }
+
     public function test_wax_status_is_hidden_and_blocked_when_wash_order_has_no_wax_service(): void
     {
         $location = WashLocation::factory()->create();
