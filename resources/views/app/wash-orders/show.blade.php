@@ -73,6 +73,24 @@
                         </div>
                     @endforeach
                 </div>
+                @if ($canSeeWashFinancial)
+                    <div class="border-t border-slate-200 bg-slate-50 px-5 py-4">
+                        <dl class="grid gap-3 text-sm sm:grid-cols-3">
+                            <div>
+                                <dt class="font-bold text-slate-500">Valor bruto</dt>
+                                <dd class="mt-1 font-black text-slate-950">R$ {{ number_format((float) $washOrder->total_amount, 2, ',', '.') }}</dd>
+                            </div>
+                            <div>
+                                <dt class="font-bold text-slate-500">Desconto fidelidade</dt>
+                                <dd class="mt-1 font-black text-fuchsia-700">R$ {{ number_format((float) $washOrder->loyalty_discount_amount, 2, ',', '.') }}</dd>
+                            </div>
+                            <div>
+                                <dt class="font-bold text-slate-500">Valor a receber</dt>
+                                <dd class="mt-1 font-black text-emerald-700">R$ {{ number_format($washOrder->payableAmount(), 2, ',', '.') }}</dd>
+                            </div>
+                        </dl>
+                    </div>
+                @endif
             </section>
 
             @if ($canSeeWashFinancial)
@@ -82,6 +100,20 @@
                         <h2 class="mt-1 font-black text-slate-950">Pagamentos</h2>
                     </div>
                     <div class="divide-y divide-slate-100">
+                        @if ($washOrder->loyaltyCoupon)
+                            <div class="px-5 py-4">
+                                <div class="flex flex-wrap items-start justify-between gap-3 rounded-2xl border border-fuchsia-200 bg-fuchsia-50 px-4 py-3">
+                                    <div>
+                                        <p class="font-black text-fuchsia-950">Cupom aplicado: {{ $washOrder->loyaltyCoupon->code }}</p>
+                                        <p class="mt-1 text-sm font-semibold text-fuchsia-800">
+                                            {{ $washOrder->loyaltyCoupon->benefitLabel() }} · usado em {{ $washOrder->loyaltyCoupon->used_at?->format('d/m/Y H:i') ?? '-' }}
+                                        </p>
+                                    </div>
+                                    <p class="font-black text-fuchsia-700">- R$ {{ number_format((float) $washOrder->loyalty_discount_amount, 2, ',', '.') }}</p>
+                                </div>
+                            </div>
+                        @endif
+
                         @forelse ($washOrder->payments->sortByDesc('paid_at') as $payment)
                             <div class="px-5 py-4">
                                 <div class="flex flex-wrap items-start justify-between gap-3">
@@ -158,6 +190,43 @@
             @endif
 
             @if ($canSeeWashFinancial)
+                @if (! $washOrder->loyaltyCoupon && ! $washOrder->hasIdentifiedPayment() && $washOrder->customer->loyaltyCoupons->isNotEmpty())
+                    <section class="rounded-2xl border border-fuchsia-200 bg-fuchsia-50 p-5 shadow-sm">
+                        <p class="text-xs font-black uppercase tracking-[0.18em] text-fuchsia-700">Fidelidade</p>
+                        <h2 class="mt-1 font-black text-fuchsia-950">Aplicar cupom</h2>
+                        <form method="POST" action="{{ route('wash-orders.loyalty-coupons.apply', $washOrder) }}" class="mt-4 space-y-3">
+                            @csrf
+                            <label class="block">
+                                <span class="text-sm font-bold text-fuchsia-950">Cupom disponível</span>
+                                <select name="loyalty_coupon_id" class="mt-1 w-full rounded-xl border border-fuchsia-200 bg-white px-3 py-2.5 text-sm shadow-sm">
+                                    @foreach ($washOrder->customer->loyaltyCoupons as $coupon)
+                                        <option value="{{ $coupon->id }}" @selected(old('loyalty_coupon_id') == $coupon->id)>
+                                            {{ $coupon->code }} · {{ $coupon->benefitLabel() }}@if ($coupon->expires_at) · vence {{ $coupon->expires_at->format('d/m/Y') }}@endif
+                                        </option>
+                                    @endforeach
+                                </select>
+                                @error('loyalty_coupon_id') <span class="text-sm text-red-600">{{ $message }}</span> @enderror
+                            </label>
+                            <p class="text-xs font-semibold text-fuchsia-800">O cupom sera baixado e o desconto entrara no valor a receber desta lavagem.</p>
+                            <button class="w-full rounded-xl bg-fuchsia-700 px-4 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-fuchsia-800">Aplicar cupom</button>
+                        </form>
+                    </section>
+                @elseif ($washOrder->loyaltyCoupon)
+                    <section class="rounded-2xl border border-fuchsia-200 bg-fuchsia-50 p-5 shadow-sm">
+                        <p class="text-xs font-black uppercase tracking-[0.18em] text-fuchsia-700">Fidelidade</p>
+                        <h2 class="mt-1 font-black text-fuchsia-950">Cupom utilizado</h2>
+                        @if (auth()->user()->canAccess(\App\Support\Access\AccessControl::MANAGE_CUSTOMERS))
+                            <a href="{{ route('loyalty-coupons.show', $washOrder->loyaltyCoupon) }}" class="mt-3 block rounded-2xl bg-white px-4 py-3 text-sm font-bold text-fuchsia-800 hover:bg-fuchsia-100">
+                                {{ $washOrder->loyaltyCoupon->code }} · {{ $washOrder->loyaltyCoupon->benefitLabel() }}
+                            </a>
+                        @else
+                            <div class="mt-3 rounded-2xl bg-white px-4 py-3 text-sm font-bold text-fuchsia-800">
+                                {{ $washOrder->loyaltyCoupon->code }} · {{ $washOrder->loyaltyCoupon->benefitLabel() }}
+                            </div>
+                        @endif
+                    </section>
+                @endif
+
                 <section class="rounded-2xl border border-emerald-200 bg-emerald-50 p-5 shadow-sm">
                     <p class="text-xs font-black uppercase tracking-[0.18em] text-emerald-700">Recebimento</p>
                     <h2 class="mt-1 font-black text-emerald-950">Registrar pagamento</h2>
@@ -174,7 +243,7 @@
                         </label>
                         <label class="block">
                             <span class="text-sm font-bold text-emerald-950">Valor</span>
-                            <input name="amount" type="number" min="0" step="0.01" value="{{ old('amount', $washOrder->total_amount) }}" class="mt-1 w-full rounded-xl border border-emerald-200 bg-white px-3 py-2.5 text-sm shadow-sm">
+                            <input name="amount" type="number" min="0" step="0.01" value="{{ old('amount', number_format($washOrder->payableAmount(), 2, '.', '')) }}" class="mt-1 w-full rounded-xl border border-emerald-200 bg-white px-3 py-2.5 text-sm shadow-sm">
                             @error('amount') <span class="text-sm text-red-600">{{ $message }}</span> @enderror
                         </label>
                         <label class="block">

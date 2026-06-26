@@ -33,6 +33,12 @@ class ChangeWashOrderStatusService
             throw new InvalidArgumentException('Transicao de status nao permitida.');
         }
 
+        $washOrder->load('services');
+
+        if (! WashOrderStatusFlow::washOrderCanUseStatus($washOrder, $status)) {
+            throw new InvalidArgumentException('Este status nao se aplica aos servicos selecionados nesta lavagem.');
+        }
+
         if ($status === WashOrder::STATUS_DELIVERED && ! $washOrder->hasIdentifiedPayment()) {
             throw new InvalidArgumentException('Registre o pagamento antes de marcar a lavagem como entregue.');
         }

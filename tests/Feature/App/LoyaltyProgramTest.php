@@ -12,6 +12,7 @@ use App\Models\WashLocation;
 use App\Models\WashOrder;
 use App\Services\Loyalty\EvaluateLoyaltyProgramService;
 use App\Support\Loyalty\LoyaltyProgress;
+use App\Support\WashOrders\WashOrderStatusFlow;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -186,6 +187,162 @@ class LoyaltyProgramTest extends TestCase
             ->assertSee('Cupons ativos')
             ->assertSee('FID-TESTE-123')
             ->assertSee('Ducha simples');
+    }
+
+    public function test_coupon_can_be_applied_to_compatible_wash_order_and_is_marked_as_used(): void
+    {
+        $location = WashLocation::factory()->create();
+        $admin = User::factory()->create([
+            'role' => User::ROLE_ADMIN,
+            'wash_location_id' => $location->id,
+        ]);
+        $customer = Customer::factory()->create(['wash_location_id' => $location->id]);
+        $vehicle = Vehicle::factory()->for($customer)->create(['wash_location_id' => $location->id]);
+        $service = Service::factory()->create([
+            'wash_location_id' => $location->id,
+            'name' => 'Ducha + aspiracao',
+            'base_price' => 45,
+        ]);
+        $program = LoyaltyProgram::query()->create([
+            'wash_location_id' => $location->id,
+            'is_active' => true,
+            'threshold' => 3,
+            'count_scope' => LoyaltyProgram::COUNT_ANY,
+            'reward_type' => LoyaltyProgram::REWARD_FIXED_SERVICE,
+            'reward_service_id' => $service->id,
+            'coupon_valid_days' => 30,
+        ]);
+        $sourceOrder = $this->createDeliveredWashOrder($location, $customer, $vehicle, $service);
+        $washOrder = $this->createReadyPaidWashOrder($location, $customer, $vehicle, $service);
+        $washOrder->forceFill([
+            'payment_status' => WashOrder::PAYMENT_PENDING,
+            'total_amount' => 45,
+        ])->save();
+        $coupon = LoyaltyCoupon::query()->create([
+            'wash_location_id' => $location->id,
+            'loyalty_program_id' => $program->id,
+            'customer_id' => $customer->id,
+            'source_wash_order_id' => $sourceOrder->id,
+            'reward_service_id' => $service->id,
+            'code' => 'FID-APLICAR-1',
+            'status' => LoyaltyCoupon::STATUS_ACTIVE,
+            'earned_at' => now(),
+            'expires_at' => now()->addDays(30),
+        ]);
+
+        $this->actingAs($admin)
+            ->post(route('wash-orders.loyalty-coupons.apply', $washOrder), [
+                'loyalty_coupon_id' => $coupon->id,
+            ])
+            ->assertRedirect();
+
+        $this->assertDatabaseHas('loyalty_coupons', [
+            'id' => $coupon->id,
+            'status' => LoyaltyCoupon::STATUS_USED,
+            'used_wash_order_id' => $washOrder->id,
+            'used_by_user_id' => $admin->id,
+        ]);
+        $this->assertDatabaseHas('wash_orders', [
+            'id' => $washOrder->id,
+            'loyalty_coupon_id' => $coupon->id,
+            'loyalty_discount_amount' => 45,
+            'payment_status' => WashOrder::PAYMENT_COURTESY,
+        ]);
+        $this->assertDatabaseHas('payments', [
+            'wash_order_id' => $washOrder->id,
+            'method' => \App\Models\Payment::METHOD_COURTESY,
+            'amount' => 0,
+        ]);
+        $this->assertSame(0.0, $washOrder->refresh()->payableAmount());
+    }
+
+    public function test_coupon_cannot_be_applied_when_reward_service_is_not_in_wash_order(): void
+    {
+        $location = WashLocation::factory()->create();
+        $admin = User::factory()->create(['wash_location_id' => $location->id]);
+        $customer = Customer::factory()->create(['wash_location_id' => $location->id]);
+        $vehicle = Vehicle::factory()->for($customer)->create(['wash_location_id' => $location->id]);
+        $ducha = Service::factory()->create([
+            'wash_location_id' => $location->id,
+            'name' => 'Ducha simples',
+            'base_price' => 30,
+        ]);
+        $cera = Service::factory()->create([
+            'wash_location_id' => $location->id,
+            'name' => 'Cera',
+            'base_price' => 25,
+        ]);
+        $program = LoyaltyProgram::query()->create([
+            'wash_location_id' => $location->id,
+            'is_active' => true,
+            'threshold' => 3,
+            'count_scope' => LoyaltyProgram::COUNT_ANY,
+            'reward_type' => LoyaltyProgram::REWARD_FIXED_SERVICE,
+            'reward_service_id' => $cera->id,
+            'coupon_valid_days' => 30,
+        ]);
+        $sourceOrder = $this->createDeliveredWashOrder($location, $customer, $vehicle, $cera);
+        $washOrder = $this->createReadyPaidWashOrder($location, $customer, $vehicle, $ducha);
+        $washOrder->forceFill(['payment_status' => WashOrder::PAYMENT_PENDING])->save();
+        $coupon = LoyaltyCoupon::query()->create([
+            'wash_location_id' => $location->id,
+            'loyalty_program_id' => $program->id,
+            'customer_id' => $customer->id,
+            'source_wash_order_id' => $sourceOrder->id,
+            'reward_service_id' => $cera->id,
+            'code' => 'FID-CERA-1',
+            'status' => LoyaltyCoupon::STATUS_ACTIVE,
+            'earned_at' => now(),
+            'expires_at' => now()->addDays(30),
+        ]);
+
+        $this->actingAs($admin)
+            ->post(route('wash-orders.loyalty-coupons.apply', $washOrder), [
+                'loyalty_coupon_id' => $coupon->id,
+            ])
+            ->assertSessionHasErrors('loyalty_coupon_id');
+
+        $this->assertSame(LoyaltyCoupon::STATUS_ACTIVE, $coupon->refresh()->status);
+        $this->assertNull($washOrder->refresh()->loyalty_coupon_id);
+    }
+
+    public function test_wax_status_is_hidden_and_blocked_when_wash_order_has_no_wax_service(): void
+    {
+        $location = WashLocation::factory()->create();
+        $admin = User::factory()->create([
+            'role' => User::ROLE_ADMIN,
+            'wash_location_id' => $location->id,
+        ]);
+        $customer = Customer::factory()->create(['wash_location_id' => $location->id]);
+        $vehicle = Vehicle::factory()->for($customer)->create(['wash_location_id' => $location->id]);
+        $service = Service::factory()->create([
+            'wash_location_id' => $location->id,
+            'name' => 'Ducha simples',
+            'category' => 'Lavagem',
+        ]);
+        $washOrder = $this->createReadyPaidWashOrder($location, $customer, $vehicle, $service);
+        $washOrder->forceFill([
+            'status' => WashOrder::STATUS_WASHING,
+            'payment_status' => WashOrder::PAYMENT_PENDING,
+        ])->save();
+
+        $this->assertFalse(WashOrderStatusFlow::washOrderCanUseStatus($washOrder->load('services'), WashOrder::STATUS_WAXING));
+
+        $this->actingAs($admin)
+            ->get(route('wash-orders.show', $washOrder))
+            ->assertOk()
+            ->assertDontSee('Aplicando cera');
+
+        $this->actingAs($admin)
+            ->patch(route('wash-orders.update-status', $washOrder), [
+                'status' => WashOrder::STATUS_WAXING,
+            ])
+            ->assertRedirect();
+
+        $this->assertDatabaseHas('wash_orders', [
+            'id' => $washOrder->id,
+            'status' => WashOrder::STATUS_WASHING,
+        ]);
     }
 
     private function createDeliveredWashOrder(

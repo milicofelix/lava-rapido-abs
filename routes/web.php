@@ -4,6 +4,7 @@ use App\Http\Controllers\App\CashRegisterController;
 use App\Http\Controllers\App\CreditReceivableController;
 use App\Http\Controllers\App\CustomerController;
 use App\Http\Controllers\App\AuditLogController;
+use App\Http\Controllers\App\ApplyLoyaltyCouponController;
 use App\Http\Controllers\App\DashboardController;
 use App\Http\Controllers\App\EmployeeController;
 use App\Http\Controllers\App\FinanceController;
@@ -104,6 +105,7 @@ Route::middleware('auth')->group(function () {
 
         Route::middleware('permission:'.AccessControl::REGISTER_PAYMENT)->group(function () {
             Route::post('lavagens/{wash_order}/pagamentos', [PaymentController::class, 'store'])->name('payments.store');
+            Route::post('lavagens/{wash_order}/cupom-fidelidade', ApplyLoyaltyCouponController::class)->name('wash-orders.loyalty-coupons.apply');
         });
 
         Route::middleware('permission:'.AccessControl::MANAGE_CUSTOMERS)->group(function () {

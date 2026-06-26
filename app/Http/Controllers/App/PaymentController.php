@@ -32,7 +32,7 @@ class PaymentController extends Controller
 
         if (! in_array($data['method'], [Payment::METHOD_COURTESY, Payment::METHOD_CREDIT_PENDING], true)) {
             $request->validate([
-                'amount' => ['required', 'numeric', 'min:0.01', 'max:999999.99'],
+                'amount' => ['required', 'numeric', 'min:0.01', 'max:'.$washOrder->payableAmount()],
             ]);
             $data['amount'] = $request->input('amount');
         }

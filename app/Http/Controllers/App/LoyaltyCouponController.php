@@ -18,6 +18,8 @@ class LoyaltyCouponController extends Controller
             'loyaltyProgram',
             'rewardService',
             'sourceWashOrder.services',
+            'usedWashOrder',
+            'usedByUser',
             'washLocation',
         ]);
 

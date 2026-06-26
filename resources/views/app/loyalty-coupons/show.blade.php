@@ -95,6 +95,18 @@
                                 <dd class="mt-1 text-sm font-semibold text-slate-500">{{ $coupon->sourceWashOrder->entered_at->format('d/m/Y H:i') }}</dd>
                             @endif
                         </div>
+                        @if ($coupon->usedWashOrder)
+                            <div class="rounded-2xl bg-white p-4 shadow-sm">
+                                <dt class="text-xs font-black uppercase tracking-[0.14em] text-slate-500">Usado na lavagem</dt>
+                                <dd class="mt-1 font-black text-slate-950">{{ $coupon->usedWashOrder->code }}</dd>
+                                <dd class="mt-1 text-sm font-semibold text-slate-500">
+                                    {{ $coupon->used_at?->format('d/m/Y H:i') ?? '-' }}
+                                    @if ($coupon->usedByUser)
+                                        · {{ $coupon->usedByUser->name }}
+                                    @endif
+                                </dd>
+                            </div>
+                        @endif
                     </dl>
                 </aside>
             </div>

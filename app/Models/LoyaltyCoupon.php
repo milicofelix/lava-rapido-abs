@@ -20,6 +20,8 @@ class LoyaltyCoupon extends Model
         'loyalty_program_id',
         'customer_id',
         'source_wash_order_id',
+        'used_wash_order_id',
+        'used_by_user_id',
         'reward_service_id',
         'code',
         'status',
@@ -90,6 +92,11 @@ class LoyaltyCoupon extends Model
         return $this->customer?->whatsappManualUrl($this->whatsappShareMessage());
     }
 
+    public function isExpired(): bool
+    {
+        return $this->expires_at !== null && $this->expires_at->isPast();
+    }
+
     public function washLocation(): BelongsTo
     {
         return $this->belongsTo(WashLocation::class);
@@ -108,6 +115,16 @@ class LoyaltyCoupon extends Model
     public function sourceWashOrder(): BelongsTo
     {
         return $this->belongsTo(WashOrder::class, 'source_wash_order_id');
+    }
+
+    public function usedWashOrder(): BelongsTo
+    {
+        return $this->belongsTo(WashOrder::class, 'used_wash_order_id');
+    }
+
+    public function usedByUser(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'used_by_user_id');
     }
 
     public function rewardService(): BelongsTo

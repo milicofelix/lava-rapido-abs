@@ -49,6 +49,8 @@ class WashOrder extends Model
         'vehicle_id',
         'assigned_user_id',
         'total_amount',
+        'loyalty_discount_amount',
+        'loyalty_coupon_id',
         'status',
         'payment_status',
         'entered_at',
@@ -64,6 +66,7 @@ class WashOrder extends Model
             'estimated_completion_at' => 'datetime',
             'completed_at' => 'datetime',
             'total_amount' => 'decimal:2',
+            'loyalty_discount_amount' => 'decimal:2',
         ];
     }
 
@@ -120,6 +123,16 @@ class WashOrder extends Model
         ], true);
     }
 
+    public function payableAmount(): float
+    {
+        return max(0, (float) $this->total_amount - (float) $this->loyalty_discount_amount);
+    }
+
+    public function hasLoyaltyDiscount(): bool
+    {
+        return (float) $this->loyalty_discount_amount > 0 && $this->loyalty_coupon_id !== null;
+    }
+
     public function trackingUrl(): string
     {
         return route('tracking.show', $this->code);
@@ -165,6 +178,11 @@ class WashOrder extends Model
     public function payments(): HasMany
     {
         return $this->hasMany(Payment::class);
+    }
+
+    public function loyaltyCoupon(): BelongsTo
+    {
+        return $this->belongsTo(LoyaltyCoupon::class);
     }
 
     public function customerNotifications(): HasMany

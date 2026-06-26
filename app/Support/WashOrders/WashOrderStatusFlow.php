@@ -151,8 +151,67 @@ class WashOrderStatusFlow
             ->all();
     }
 
+    /**
+     * @return array<string, string>
+     */
+    public static function allowedStatusLabelsForWashOrder(WashOrder $washOrder): array
+    {
+        $allowed = self::allowedTransitions()[$washOrder->status] ?? [];
+        $allowed = self::filterStatusesByServices($allowed, $washOrder);
+        $labels = self::labels();
+
+        return collect($allowed)
+            ->mapWithKeys(fn (string $status) => [$status => $labels[$status] ?? $status])
+            ->all();
+    }
+
+    /**
+     * @param  array<int, string>  $statuses
+     * @return array<int, string>
+     */
+    public static function filterStatusesByServices(array $statuses, WashOrder $washOrder): array
+    {
+        if (in_array(WashOrder::STATUS_WAXING, $statuses, true) && ! self::washOrderHasWaxLikeService($washOrder)) {
+            $statuses = array_values(array_diff($statuses, [WashOrder::STATUS_WAXING]));
+        }
+
+        if (in_array(WashOrder::STATUS_VACUUMING, $statuses, true) && ! self::washOrderHasVacuumLikeService($washOrder)) {
+            $statuses = array_values(array_diff($statuses, [WashOrder::STATUS_VACUUMING]));
+        }
+
+        return $statuses;
+    }
+
+    public static function washOrderCanUseStatus(WashOrder $washOrder, string $status): bool
+    {
+        return in_array($status, self::filterStatusesByServices([$status], $washOrder), true);
+    }
+
     public static function labelFor(string $status): string
     {
         return self::labels()[$status] ?? $status;
+    }
+
+    private static function washOrderHasWaxLikeService(WashOrder $washOrder): bool
+    {
+        return $washOrder->services->contains(function ($service) {
+            $text = mb_strtolower(($service->pivot->service_name ?? $service->name).' '.$service->category);
+
+            return str_contains($text, 'cera')
+                || str_contains($text, 'polimento')
+                || str_contains($text, 'cristalizacao')
+                || str_contains($text, 'cristalização');
+        });
+    }
+
+    private static function washOrderHasVacuumLikeService(WashOrder $washOrder): bool
+    {
+        return $washOrder->services->contains(function ($service) {
+            $text = mb_strtolower(($service->pivot->service_name ?? $service->name).' '.$service->category);
+
+            return str_contains($text, 'aspir')
+                || str_contains($text, 'interna')
+                || str_contains($text, 'higien');
+        });
     }
 }

@@ -124,6 +124,9 @@ class WashOrderController extends Controller
             'assignedUser',
             'teamMembers',
             'services',
+            'loyaltyCoupon.loyaltyProgram',
+            'loyaltyCoupon.rewardService',
+            'loyaltyCoupon.usedByUser',
             'statusHistories.user',
             'payments.user',
             'customerNotifications.user',
@@ -137,7 +140,7 @@ class WashOrderController extends Controller
             'statuses' => WashOrder::statuses(),
             'statusOptions' => [
                 $washOrder->status => $washOrder->statusLabel(),
-                ...WashOrderStatusFlow::allowedStatusLabelsFrom($washOrder->status),
+                ...WashOrderStatusFlow::allowedStatusLabelsForWashOrder($washOrder),
             ],
             'canUpdateStatus' => $canUpdateStatus,
             'paymentMethods' => $paymentMethods,
