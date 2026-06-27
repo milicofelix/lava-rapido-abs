@@ -130,6 +130,69 @@ class LoyaltyReportTest extends TestCase
             ->assertDontSee('FID-OCULTO-001');
     }
 
+    public function test_owner_can_export_filtered_loyalty_report_as_csv(): void
+    {
+        $location = WashLocation::factory()->create();
+        $owner = User::factory()->create([
+            'role' => User::ROLE_OWNER,
+            'wash_location_id' => $location->id,
+        ]);
+        $service = Service::factory()->create([
+            'wash_location_id' => $location->id,
+            'name' => 'Lavagem completa',
+        ]);
+        $program = $this->program($location, $service);
+        $customer = Customer::factory()->create([
+            'wash_location_id' => $location->id,
+            'name' => 'Cliente Exportado',
+        ]);
+        $otherCustomer = Customer::factory()->create([
+            'wash_location_id' => $location->id,
+            'name' => 'Cliente Fora',
+        ]);
+        $vehicle = Vehicle::factory()->for($customer)->create(['wash_location_id' => $location->id]);
+        $otherVehicle = Vehicle::factory()->for($otherCustomer)->create(['wash_location_id' => $location->id]);
+        $sourceOrder = $this->deliveredOrder($location, $customer, $vehicle, $service, now());
+        $otherSourceOrder = $this->deliveredOrder($location, $otherCustomer, $otherVehicle, $service, now());
+
+        LoyaltyCoupon::query()->create([
+            'wash_location_id' => $location->id,
+            'loyalty_program_id' => $program->id,
+            'customer_id' => $customer->id,
+            'source_wash_order_id' => $sourceOrder->id,
+            'reward_service_id' => $service->id,
+            'code' => 'FID-CSV-001',
+            'status' => LoyaltyCoupon::STATUS_ACTIVE,
+            'earned_at' => now(),
+            'expires_at' => now()->addDays(30),
+        ]);
+        LoyaltyCoupon::query()->create([
+            'wash_location_id' => $location->id,
+            'loyalty_program_id' => $program->id,
+            'customer_id' => $otherCustomer->id,
+            'source_wash_order_id' => $otherSourceOrder->id,
+            'reward_service_id' => $service->id,
+            'code' => 'FID-CSV-FORA',
+            'status' => LoyaltyCoupon::STATUS_ACTIVE,
+            'earned_at' => now(),
+            'expires_at' => now()->addDays(30),
+        ]);
+
+        $response = $this->actingAs($owner)->get(route('loyalty-reports.export', [
+            'customer_id' => $customer->id,
+            'status' => LoyaltyCoupon::STATUS_ACTIVE,
+        ]));
+
+        $response->assertOk();
+        $response->assertHeader('content-type', 'text/csv; charset=UTF-8');
+
+        $content = $response->streamedContent();
+
+        $this->assertStringContainsString('FID-CSV-001', $content);
+        $this->assertStringContainsString('Cliente Exportado', $content);
+        $this->assertStringNotContainsString('FID-CSV-FORA', $content);
+    }
+
     public function test_operator_cannot_view_loyalty_report(): void
     {
         $operator = User::factory()->create(['role' => User::ROLE_OPERATOR]);

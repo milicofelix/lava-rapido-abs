@@ -15,6 +15,7 @@ use Illuminate\Support\Carbon;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class LoyaltyReportController extends Controller
 {
@@ -58,6 +59,50 @@ class LoyaltyReportController extends Controller
                 ->take(8),
             'customerProgress' => $customerProgress->take(20),
             'coupons' => $coupons,
+        ]);
+    }
+
+    public function export(Request $request): StreamedResponse
+    {
+        [$filters, $start, $end] = $this->filters($request);
+
+        $coupons = $this->couponsForPeriod($start, $end, $filters)
+            ->with(['customer', 'rewardService', 'loyaltyProgram', 'sourceWashOrder.services', 'usedWashOrder'])
+            ->oldest('earned_at')
+            ->get();
+
+        return response()->streamDownload(function () use ($coupons) {
+            $handle = fopen('php://output', 'w');
+
+            fputcsv($handle, [
+                'Codigo',
+                'Cliente',
+                'Status',
+                'Beneficio',
+                'Gerado em',
+                'Validade',
+                'Usado em',
+                'Lavagem origem',
+                'Lavagem uso',
+            ]);
+
+            foreach ($coupons as $coupon) {
+                fputcsv($handle, [
+                    $coupon->code,
+                    $coupon->customer?->name ?? 'Cliente nao informado',
+                    $coupon->statusLabel(),
+                    $coupon->benefitLabel(),
+                    $coupon->earned_at?->format('d/m/Y H:i') ?? '',
+                    $coupon->expires_at?->format('d/m/Y') ?? '',
+                    $coupon->used_at?->format('d/m/Y H:i') ?? '',
+                    $coupon->sourceWashOrder?->code ?? '',
+                    $coupon->usedWashOrder?->code ?? '',
+                ]);
+            }
+
+            fclose($handle);
+        }, 'fidelidade-'.$filters['start'].'-'.$filters['end'].'.csv', [
+            'Content-Type' => 'text/csv; charset=UTF-8',
         ]);
     }
 

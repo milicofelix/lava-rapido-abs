@@ -7,11 +7,14 @@
                     <h2 class="mt-1 text-2xl font-black text-slate-950">Relatorio gerencial</h2>
                     <p class="mt-1 text-sm text-slate-500">Acompanhe cupons gerados, uso, descontos concedidos e clientes perto de ganhar beneficio.</p>
                 </div>
-                @if ($loyaltyProgram)
-                    <span class="rounded-full bg-emerald-50 px-3 py-1 text-xs font-black text-emerald-700 ring-1 ring-emerald-200">Programa ativo</span>
-                @else
-                    <span class="rounded-full bg-slate-100 px-3 py-1 text-xs font-black text-slate-600 ring-1 ring-slate-200">Programa desativado</span>
-                @endif
+                <div class="flex flex-wrap items-center gap-2">
+                    <a href="{{ route('loyalty-reports.export', request()->query()) }}" class="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-bold text-slate-700 shadow-sm hover:bg-slate-50">Exportar CSV</a>
+                    @if ($loyaltyProgram)
+                        <span class="rounded-full bg-emerald-50 px-3 py-1 text-xs font-black text-emerald-700 ring-1 ring-emerald-200">Programa ativo</span>
+                    @else
+                        <span class="rounded-full bg-slate-100 px-3 py-1 text-xs font-black text-slate-600 ring-1 ring-slate-200">Programa desativado</span>
+                    @endif
+                </div>
             </div>
 
             <form method="GET" class="mt-5 grid gap-3 lg:grid-cols-[160px_160px_1fr_190px_auto]">

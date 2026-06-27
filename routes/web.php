@@ -113,6 +113,7 @@ Route::middleware('auth')->group(function () {
 
         Route::middleware('permission:'.AccessControl::MANAGE_CUSTOMERS)->group(function () {
             Route::get('fidelidade', [LoyaltyReportController::class, 'index'])->name('loyalty-reports.index');
+            Route::get('fidelidade/exportar', [LoyaltyReportController::class, 'export'])->name('loyalty-reports.export');
             Route::resource('clientes', CustomerController::class)->parameters(['clientes' => 'customer'])->names('customers')->except(['show', 'destroy']);
             Route::get('cupons-fidelidade/{loyaltyCoupon}', LoyaltyCouponController::class)->name('loyalty-coupons.show');
         });
