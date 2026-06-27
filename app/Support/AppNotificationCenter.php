@@ -4,6 +4,7 @@ namespace App\Support;
 
 use App\Models\AppSetting;
 use App\Models\CashRegister;
+use App\Models\LoyaltyCoupon;
 use App\Models\Subscription;
 use App\Models\User;
 use App\Models\WashOrder;
@@ -35,6 +36,10 @@ class AppNotificationCenter
 
         if ($location && AccessControl::allows($user, AccessControl::VIEW_DASHBOARD)) {
             array_push($notifications, ...self::operationalNotifications());
+        }
+
+        if ($location && AccessControl::allows($user, AccessControl::MANAGE_CUSTOMERS)) {
+            array_push($notifications, ...self::loyaltyNotifications());
         }
 
         if (
@@ -125,6 +130,48 @@ class AppNotificationCenter
                 'tone' => 'info',
                 'url' => route('kanban'),
                 'action' => 'Abrir Kanban',
+            ];
+        }
+
+        return $notifications;
+    }
+
+    /**
+     * @return array<int, array{title: string, body: string, tone: string, url: string|null, action: string|null}>
+     */
+    private static function loyaltyNotifications(): array
+    {
+        $notifications = [];
+
+        $expiredActiveCoupons = TenantContext::scopeByColumn(LoyaltyCoupon::query())
+            ->where('status', LoyaltyCoupon::STATUS_ACTIVE)
+            ->whereNotNull('expires_at')
+            ->where('expires_at', '<', now())
+            ->count();
+
+        if ($expiredActiveCoupons > 0) {
+            $notifications[] = [
+                'title' => $expiredActiveCoupons.' cupom'.($expiredActiveCoupons === 1 ? '' : 's').' vencido'.($expiredActiveCoupons === 1 ? '' : 's'),
+                'body' => 'Existem cupons ativos com validade vencida. A rotina diaria fara a expiracao automaticamente.',
+                'tone' => 'warning',
+                'url' => route('loyalty-reports.index', ['status' => LoyaltyCoupon::STATUS_ACTIVE]),
+                'action' => 'Ver fidelidade',
+            ];
+        }
+
+        $expiringSoonCoupons = TenantContext::scopeByColumn(LoyaltyCoupon::query())
+            ->where('status', LoyaltyCoupon::STATUS_ACTIVE)
+            ->whereNotNull('expires_at')
+            ->whereBetween('expires_at', [now(), now()->addDays(3)->endOfDay()])
+            ->count();
+
+        if ($expiringSoonCoupons > 0) {
+            $notifications[] = [
+                'title' => $expiringSoonCoupons.' cupom'.($expiringSoonCoupons === 1 ? '' : 's').' vencendo',
+                'body' => 'Ha cupons de fidelidade vencendo nos proximos 3 dias. Vale acionar estes clientes antes da validade acabar.',
+                'tone' => 'info',
+                'url' => route('loyalty-reports.index', ['status' => LoyaltyCoupon::STATUS_ACTIVE]),
+                'action' => 'Ver cupons',
             ];
         }
 
