@@ -3,6 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\WashOrder;
+use App\Models\LoyaltyCoupon;
+use App\Models\LoyaltyProgram;
+use App\Support\Loyalty\LoyaltyProgress;
 use Illuminate\Http\JsonResponse;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -27,8 +30,21 @@ class PublicWashTrackingController extends Controller
         $washOrder = WashOrder::query()
             ->where('code', $code)
             ->when(ctype_digit($code), fn ($query) => $query->orWhere('id', (int) $code))
-            ->with(['vehicle', 'services', 'statusHistories', 'washLocation'])
+            ->with(['customer', 'vehicle', 'services', 'statusHistories', 'washLocation'])
             ->firstOrFail();
+        $loyaltyProgram = LoyaltyProgram::query()
+            ->where('wash_location_id', $washOrder->wash_location_id)
+            ->where('is_active', true)
+            ->first();
+        $loyaltyProgress = LoyaltyProgress::forCustomer($washOrder->customer, $loyaltyProgram);
+        $activeCoupons = LoyaltyCoupon::query()
+            ->with(['loyaltyProgram', 'rewardService', 'sourceWashOrder.services'])
+            ->where('wash_location_id', $washOrder->wash_location_id)
+            ->where('customer_id', $washOrder->customer_id)
+            ->where('status', LoyaltyCoupon::STATUS_ACTIVE)
+            ->latest('earned_at')
+            ->limit(3)
+            ->get();
 
         return [
             'logoUrl' => $washOrder->washLocation?->logoUrl() ?? asset('images/autoflow-logo.png'),
@@ -57,6 +73,22 @@ class PublicWashTrackingController extends Controller
                         'label' => WashOrder::statuses()[$history->to_status] ?? $history->to_status,
                         'created_at' => $history->created_at->format('d/m/Y H:i'),
                     ])->all(),
+            ],
+            'loyalty' => [
+                'enabled' => $loyaltyProgress['enabled'],
+                'current' => $loyaltyProgress['current'],
+                'threshold' => $loyaltyProgress['threshold'],
+                'remaining' => $loyaltyProgress['remaining'],
+                'percent' => $loyaltyProgress['percent'],
+                'active_coupons' => $loyaltyProgress['active_coupons'],
+                'has_active_coupon' => $loyaltyProgress['has_active_coupon'],
+                'label' => $loyaltyProgress['label'],
+                'coupons' => $activeCoupons->map(fn (LoyaltyCoupon $coupon) => [
+                    'id' => $coupon->id,
+                    'code' => $coupon->code,
+                    'benefit' => $coupon->benefitLabel(),
+                    'expires_at' => $coupon->expires_at?->format('d/m/Y'),
+                ])->all(),
             ],
             'statuses' => WashOrder::statuses(),
             'progressStatuses' => WashOrder::publicProgressStatuses(),

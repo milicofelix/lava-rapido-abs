@@ -16,13 +16,15 @@ function ProgressStep({ label, done, current }) {
     );
 }
 
-export default function Tracking({ washOrder: initialWashOrder, statuses, progressStatuses, feedUrl, logoUrl }) {
+export default function Tracking({ washOrder: initialWashOrder, loyalty: initialLoyalty, statuses, progressStatuses, feedUrl, logoUrl }) {
     const [washOrder, setWashOrder] = useState(initialWashOrder);
+    const [loyalty, setLoyalty] = useState(initialLoyalty);
     const [realtimeUpdated, setRealtimeUpdated] = useState(false);
 
     const refreshFeed = async () => {
         const { data } = await window.axios.get(feedUrl);
         setWashOrder(data.washOrder);
+        setLoyalty(data.loyalty);
         setRealtimeUpdated(true);
     };
 
@@ -73,6 +75,52 @@ export default function Tracking({ washOrder: initialWashOrder, statuses, progre
                         <p className="mt-2 text-2xl font-semibold">{washOrder.services.length}</p>
                     </div>
                 </section>
+
+                {loyalty?.enabled && (
+                    <section className="mb-5 rounded-lg border border-fuchsia-200 bg-white p-5">
+                        <div className="flex flex-wrap items-start justify-between gap-4">
+                            <div>
+                                <p className="text-xs font-black uppercase tracking-[0.18em] text-fuchsia-700">Programa de fidelidade</p>
+                                <h2 className="mt-1 text-lg font-semibold text-zinc-950">Seu progresso</h2>
+                                <p className="mt-1 text-sm text-zinc-500">{loyalty.label}</p>
+                            </div>
+                            {loyalty.has_active_coupon ? (
+                                <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-black text-emerald-700">Cupom disponível</span>
+                            ) : (
+                                <span className="rounded-full bg-fuchsia-100 px-3 py-1 text-xs font-black text-fuchsia-700">
+                                    Faltam {loyalty.remaining}
+                                </span>
+                            )}
+                        </div>
+
+                        <div className="mt-4 rounded-2xl bg-fuchsia-50 p-4">
+                            <div className="flex items-center justify-between gap-3">
+                                <p className="text-sm font-bold text-fuchsia-950">
+                                    {loyalty.current}/{loyalty.threshold} lavagens válidas
+                                </p>
+                                <p className="text-sm font-black text-fuchsia-700">
+                                    {loyalty.remaining === 0 ? 'Benefício conquistado' : `${loyalty.remaining} para o próximo cupom`}
+                                </p>
+                            </div>
+                            <div className="mt-3 h-3 overflow-hidden rounded-full bg-white">
+                                <div className="h-full rounded-full bg-fuchsia-600" style={{ width: `${Math.min(100, loyalty.percent)}%` }} />
+                            </div>
+                        </div>
+
+                        {loyalty.coupons?.length > 0 && (
+                            <div className="mt-4 grid gap-3 md:grid-cols-3">
+                                {loyalty.coupons.map((coupon) => (
+                                    <div key={coupon.id} className="rounded-2xl border border-fuchsia-100 bg-fuchsia-50 px-4 py-3">
+                                        <p className="text-xs font-black uppercase tracking-[0.14em] text-fuchsia-700">Cupom ativo</p>
+                                        <p className="mt-1 font-black text-zinc-950">{coupon.code}</p>
+                                        <p className="mt-1 text-sm font-semibold text-zinc-600">{coupon.benefit}</p>
+                                        {coupon.expires_at && <p className="mt-1 text-xs text-zinc-500">Vence em {coupon.expires_at}</p>}
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </section>
+                )}
 
                 <section className="rounded-lg border border-zinc-200 bg-white p-5">
                     <h2 className="text-lg font-semibold">Andamento</h2>
