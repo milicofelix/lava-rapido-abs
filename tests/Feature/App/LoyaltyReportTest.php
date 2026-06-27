@@ -1,0 +1,179 @@
+<?php
+
+namespace Tests\Feature\App;
+
+use App\Models\Customer;
+use App\Models\LoyaltyCoupon;
+use App\Models\LoyaltyProgram;
+use App\Models\Service;
+use App\Models\User;
+use App\Models\Vehicle;
+use App\Models\WashLocation;
+use App\Models\WashOrder;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\TestCase;
+
+class LoyaltyReportTest extends TestCase
+{
+    use RefreshDatabase;
+
+    public function test_owner_can_view_loyalty_report_metrics(): void
+    {
+        $location = WashLocation::factory()->create();
+        $owner = User::factory()->create([
+            'role' => User::ROLE_OWNER,
+            'wash_location_id' => $location->id,
+        ]);
+        $customer = Customer::factory()->create([
+            'wash_location_id' => $location->id,
+            'name' => 'Cliente Relatorio',
+            'phone' => '(11) 99999-1111',
+        ]);
+        $vehicle = Vehicle::factory()->for($customer)->create(['wash_location_id' => $location->id]);
+        $service = Service::factory()->create([
+            'wash_location_id' => $location->id,
+            'name' => 'Ducha simples',
+            'base_price' => 35,
+        ]);
+        $program = $this->program($location, $service);
+        $sourceOrder = $this->deliveredOrder($location, $customer, $vehicle, $service, now()->subDays(2));
+        $usedOrder = $this->deliveredOrder($location, $customer, $vehicle, $service, now()->subDay());
+
+        LoyaltyCoupon::query()->create([
+            'wash_location_id' => $location->id,
+            'loyalty_program_id' => $program->id,
+            'customer_id' => $customer->id,
+            'source_wash_order_id' => $sourceOrder->id,
+            'reward_service_id' => $service->id,
+            'code' => 'FID-ATIVO-001',
+            'status' => LoyaltyCoupon::STATUS_ACTIVE,
+            'earned_at' => now(),
+            'expires_at' => now()->addDays(30),
+        ]);
+
+        $usedCoupon = LoyaltyCoupon::query()->create([
+            'wash_location_id' => $location->id,
+            'loyalty_program_id' => $program->id,
+            'customer_id' => $customer->id,
+            'source_wash_order_id' => $sourceOrder->id,
+            'used_wash_order_id' => $usedOrder->id,
+            'used_by_user_id' => $owner->id,
+            'reward_service_id' => $service->id,
+            'code' => 'FID-USADO-001',
+            'status' => LoyaltyCoupon::STATUS_USED,
+            'earned_at' => now(),
+            'expires_at' => now()->addDays(30),
+            'used_at' => now(),
+        ]);
+        $usedOrder->forceFill([
+            'loyalty_coupon_id' => $usedCoupon->id,
+            'loyalty_discount_amount' => 35,
+        ])->save();
+
+        $this->actingAs($owner)
+            ->get(route('loyalty-reports.index'))
+            ->assertOk()
+            ->assertSee('Relatorio gerencial')
+            ->assertSee('Cliente Relatorio')
+            ->assertSee('FID-ATIVO-001')
+            ->assertSee('FID-USADO-001')
+            ->assertSee('R$ 35,00');
+    }
+
+    public function test_loyalty_report_filters_by_customer_and_status(): void
+    {
+        $location = WashLocation::factory()->create();
+        $user = User::factory()->create([
+            'role' => User::ROLE_ADMIN,
+            'wash_location_id' => $location->id,
+        ]);
+        $service = Service::factory()->create(['wash_location_id' => $location->id]);
+        $program = $this->program($location, $service);
+        $customer = Customer::factory()->create(['wash_location_id' => $location->id, 'name' => 'Cliente Filtrado']);
+        $otherCustomer = Customer::factory()->create(['wash_location_id' => $location->id, 'name' => 'Cliente Oculto']);
+        $vehicle = Vehicle::factory()->for($customer)->create(['wash_location_id' => $location->id]);
+        $otherVehicle = Vehicle::factory()->for($otherCustomer)->create(['wash_location_id' => $location->id]);
+        $sourceOrder = $this->deliveredOrder($location, $customer, $vehicle, $service, now());
+        $otherSourceOrder = $this->deliveredOrder($location, $otherCustomer, $otherVehicle, $service, now());
+
+        LoyaltyCoupon::query()->create([
+            'wash_location_id' => $location->id,
+            'loyalty_program_id' => $program->id,
+            'customer_id' => $customer->id,
+            'source_wash_order_id' => $sourceOrder->id,
+            'reward_service_id' => $service->id,
+            'code' => 'FID-FILTRO-001',
+            'status' => LoyaltyCoupon::STATUS_ACTIVE,
+            'earned_at' => now(),
+            'expires_at' => now()->addDays(30),
+        ]);
+        LoyaltyCoupon::query()->create([
+            'wash_location_id' => $location->id,
+            'loyalty_program_id' => $program->id,
+            'customer_id' => $otherCustomer->id,
+            'source_wash_order_id' => $otherSourceOrder->id,
+            'reward_service_id' => $service->id,
+            'code' => 'FID-OCULTO-001',
+            'status' => LoyaltyCoupon::STATUS_USED,
+            'earned_at' => now(),
+            'expires_at' => now()->addDays(30),
+            'used_at' => now(),
+        ]);
+
+        $this->actingAs($user)
+            ->get(route('loyalty-reports.index', [
+                'customer_id' => $customer->id,
+                'status' => LoyaltyCoupon::STATUS_ACTIVE,
+            ]))
+            ->assertOk()
+            ->assertSee('FID-FILTRO-001')
+            ->assertDontSee('FID-OCULTO-001');
+    }
+
+    public function test_operator_cannot_view_loyalty_report(): void
+    {
+        $operator = User::factory()->create(['role' => User::ROLE_OPERATOR]);
+
+        $this->actingAs($operator)
+            ->get(route('loyalty-reports.index'))
+            ->assertForbidden();
+    }
+
+    private function program(WashLocation $location, Service $service): LoyaltyProgram
+    {
+        return LoyaltyProgram::query()->create([
+            'wash_location_id' => $location->id,
+            'is_active' => true,
+            'threshold' => 3,
+            'count_scope' => LoyaltyProgram::COUNT_ANY,
+            'reward_type' => LoyaltyProgram::REWARD_FIXED_SERVICE,
+            'reward_service_id' => $service->id,
+            'coupon_valid_days' => 30,
+        ]);
+    }
+
+    private function deliveredOrder(
+        WashLocation $location,
+        Customer $customer,
+        Vehicle $vehicle,
+        Service $service,
+        $enteredAt,
+    ): WashOrder {
+        $washOrder = WashOrder::factory()->for($customer)->for($vehicle)->create([
+            'wash_location_id' => $location->id,
+            'assigned_user_id' => User::factory()->create(['wash_location_id' => $location->id])->id,
+            'status' => WashOrder::STATUS_DELIVERED,
+            'payment_status' => WashOrder::PAYMENT_PAID,
+            'entered_at' => $enteredAt,
+            'total_amount' => $service->base_price,
+        ]);
+
+        $washOrder->services()->attach($service->id, [
+            'service_name' => $service->name,
+            'price' => $service->base_price,
+            'estimated_minutes' => $service->estimated_minutes,
+        ]);
+
+        return $washOrder;
+    }
+}

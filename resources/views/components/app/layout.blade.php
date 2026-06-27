@@ -60,6 +60,7 @@
                         ['route' => 'schedule.index', 'label' => 'Agenda', 'icon' => 'AG', 'permission' => \App\Support\Access\AccessControl::VIEW_SCHEDULE, 'module' => 'module_schedule'],
                         ['route' => 'history.index', 'label' => 'Historico', 'icon' => 'H', 'permission' => \App\Support\Access\AccessControl::VIEW_OPERATIONAL_HISTORY],
                         ['route' => 'customers.index', 'label' => 'Clientes', 'icon' => 'C', 'permission' => \App\Support\Access\AccessControl::MANAGE_CUSTOMERS],
+                        ['route' => 'loyalty-reports.index', 'label' => 'Fidelidade', 'icon' => 'FID', 'permission' => \App\Support\Access\AccessControl::MANAGE_CUSTOMERS],
                         ['route' => 'vehicles.index', 'label' => 'Veiculos', 'icon' => 'V', 'permission' => \App\Support\Access\AccessControl::MANAGE_VEHICLES],
                         ['route' => 'services.index', 'label' => 'Servicos', 'icon' => 'S', 'permission' => \App\Support\Access\AccessControl::MANAGE_SERVICES],
                         ['route' => 'employees.index', 'label' => 'Equipe', 'icon' => 'E', 'permission' => \App\Support\Access\AccessControl::MANAGE_EMPLOYEES],
@@ -229,6 +230,7 @@
                         @endif
                         @if ($canAccess(\App\Support\Access\AccessControl::MANAGE_CUSTOMERS))
                             <a href="{{ route('customers.index') }}" class="shrink-0 rounded-lg border border-slate-200 px-3 py-1.5 text-sm font-medium">Clientes</a>
+                            <a href="{{ route('loyalty-reports.index') }}" class="shrink-0 rounded-lg border border-slate-200 px-3 py-1.5 text-sm font-medium">Fidelidade</a>
                         @endif
                         @if ($canAccess(\App\Support\Access\AccessControl::MANAGE_VEHICLES))
                             <a href="{{ route('vehicles.index') }}" class="shrink-0 rounded-lg border border-slate-200 px-3 py-1.5 text-sm font-medium">Veiculos</a>

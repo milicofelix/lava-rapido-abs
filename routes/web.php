@@ -9,6 +9,7 @@ use App\Http\Controllers\App\DashboardController;
 use App\Http\Controllers\App\EmployeeController;
 use App\Http\Controllers\App\FinanceController;
 use App\Http\Controllers\App\LoyaltyCouponController;
+use App\Http\Controllers\App\LoyaltyReportController;
 use App\Http\Controllers\App\OwnerSubscriptionController;
 use App\Http\Controllers\App\PaymentController;
 use App\Http\Controllers\App\RemoveLoyaltyCouponController;
@@ -111,6 +112,7 @@ Route::middleware('auth')->group(function () {
         });
 
         Route::middleware('permission:'.AccessControl::MANAGE_CUSTOMERS)->group(function () {
+            Route::get('fidelidade', [LoyaltyReportController::class, 'index'])->name('loyalty-reports.index');
             Route::resource('clientes', CustomerController::class)->parameters(['clientes' => 'customer'])->names('customers')->except(['show', 'destroy']);
             Route::get('cupons-fidelidade/{loyaltyCoupon}', LoyaltyCouponController::class)->name('loyalty-coupons.show');
         });
