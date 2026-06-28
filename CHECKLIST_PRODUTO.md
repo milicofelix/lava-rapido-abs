@@ -102,8 +102,9 @@ Documento de acompanhamento do que ja foi construido e do que ainda falta para d
 - [x] Fiado habilitavel por configuracao.
 - [x] Bloqueio de entrega sem pagamento identificado.
 - [x] Cupom de fidelidade impactando valor a receber.
+- [x] Relatorio executivo financeiro com comparativo por periodo.
 - [ ] Fechamento de caixa mais completo.
-- [ ] Relatorios financeiros avancados.
+- [x] Relatorios financeiros avancados.
 - [ ] Estorno e conciliacao mais robustos.
 
 ## Assinaturas, planos e Mercado Pago
@@ -163,8 +164,9 @@ Documento de acompanhamento do que ja foi construido e do que ainda falta para d
 - [x] Auditoria operacional.
 - [x] Exportacao CSV financeiro.
 - [x] Exportacao CSV fidelidade.
-- [ ] Graficos mais refinados para diretoria.
-- [ ] Comparativos por periodo.
+- [x] Relatorio executivo avancado.
+- [x] Graficos mais refinados para diretoria.
+- [x] Comparativos por periodo.
 - [ ] Exportacao PDF.
 
 ## Agenda e modulos opcionais
@@ -249,7 +251,6 @@ Documento de acompanhamento do que ja foi construido e do que ainda falta para d
 
 1. Revisao visual final e responsiva.
 2. Hardening de producao: logs, backup, indices e uploads.
-3. Relatorios executivos avancados.
-4. Pagamento real Mercado Pago.
-5. WhatsApp oficial/API.
-6. Multi-gateway.
+3. Pagamento real Mercado Pago.
+4. WhatsApp oficial/API.
+5. Multi-gateway.

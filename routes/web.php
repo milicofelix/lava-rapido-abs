@@ -8,6 +8,7 @@ use App\Http\Controllers\App\AuditLogController;
 use App\Http\Controllers\App\ApplyLoyaltyCouponController;
 use App\Http\Controllers\App\DashboardController;
 use App\Http\Controllers\App\EmployeeController;
+use App\Http\Controllers\App\ExecutiveReportController;
 use App\Http\Controllers\App\FinanceController;
 use App\Http\Controllers\App\LoyaltyCouponController;
 use App\Http\Controllers\App\LoyaltyReportController;
@@ -154,6 +155,7 @@ Route::middleware('auth')->group(function () {
         Route::middleware('permission:'.AccessControl::VIEW_FINANCE)->group(function () {
             Route::get('financeiro', [FinanceController::class, 'index'])->name('finance.index');
             Route::get('financeiro/exportar', [FinanceController::class, 'export'])->name('finance.export');
+            Route::get('relatorios/executivo', ExecutiveReportController::class)->name('reports.executive');
         });
 
         Route::middleware('permission:'.AccessControl::MANAGE_CASH_REGISTER)->group(function () {

@@ -78,7 +78,7 @@
                     @endforeach
 
                     @foreach ([
-                        ['label' => 'Relatorios', 'icon' => 'R', 'href' => route('finance.index'), 'permission' => \App\Support\Access\AccessControl::VIEW_FINANCE],
+                        ['label' => 'Relatorios', 'icon' => 'R', 'href' => route('reports.executive'), 'permission' => \App\Support\Access\AccessControl::VIEW_FINANCE],
                         ['label' => 'Assinatura', 'icon' => 'A', 'href' => route('subscriptions.show'), 'permission' => \App\Support\Access\AccessControl::MANAGE_SUBSCRIPTION],
                         ['label' => 'Configuracoes', 'icon' => 'G', 'href' => route('settings.edit'), 'permission' => \App\Support\Access\AccessControl::MANAGE_SETTINGS],
                     ] as $item)
@@ -237,6 +237,7 @@
                         @endif
                         @if ($canAccess(\App\Support\Access\AccessControl::VIEW_FINANCE))
                             <a href="{{ route('finance.index') }}" class="shrink-0 rounded-lg border border-slate-200 px-3 py-1.5 text-sm font-medium">Financeiro</a>
+                            <a href="{{ route('reports.executive') }}" class="shrink-0 rounded-lg border border-slate-200 px-3 py-1.5 text-sm font-medium">Relatorios</a>
                         @endif
                         @if ($canAccess(\App\Support\Access\AccessControl::MANAGE_CASH_REGISTER))
                             @if (! empty($appSettings['module_cash_register']))
