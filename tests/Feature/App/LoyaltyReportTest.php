@@ -193,6 +193,67 @@ class LoyaltyReportTest extends TestCase
         $this->assertStringNotContainsString('FID-CSV-FORA', $content);
     }
 
+    public function test_loyalty_report_searches_by_coupon_code_and_customer_data(): void
+    {
+        $location = WashLocation::factory()->create();
+        $user = User::factory()->create([
+            'role' => User::ROLE_ADMIN,
+            'wash_location_id' => $location->id,
+        ]);
+        $service = Service::factory()->create(['wash_location_id' => $location->id]);
+        $program = $this->program($location, $service);
+        $customer = Customer::factory()->create([
+            'wash_location_id' => $location->id,
+            'name' => 'Cliente Busca',
+            'phone' => '(11) 98888-7777',
+            'cpf' => '111.222.333-44',
+        ]);
+        $otherCustomer = Customer::factory()->create([
+            'wash_location_id' => $location->id,
+            'name' => 'Cliente Invisivel',
+        ]);
+        $vehicle = Vehicle::factory()->for($customer)->create(['wash_location_id' => $location->id]);
+        $otherVehicle = Vehicle::factory()->for($otherCustomer)->create(['wash_location_id' => $location->id]);
+        $sourceOrder = $this->deliveredOrder($location, $customer, $vehicle, $service, now());
+        $otherSourceOrder = $this->deliveredOrder($location, $otherCustomer, $otherVehicle, $service, now());
+
+        LoyaltyCoupon::query()->create([
+            'wash_location_id' => $location->id,
+            'loyalty_program_id' => $program->id,
+            'customer_id' => $customer->id,
+            'source_wash_order_id' => $sourceOrder->id,
+            'reward_service_id' => $service->id,
+            'code' => 'FID-BUSCA-001',
+            'status' => LoyaltyCoupon::STATUS_ACTIVE,
+            'earned_at' => now(),
+            'expires_at' => now()->addDays(30),
+        ]);
+        LoyaltyCoupon::query()->create([
+            'wash_location_id' => $location->id,
+            'loyalty_program_id' => $program->id,
+            'customer_id' => $otherCustomer->id,
+            'source_wash_order_id' => $otherSourceOrder->id,
+            'reward_service_id' => $service->id,
+            'code' => 'FID-OUTRO-001',
+            'status' => LoyaltyCoupon::STATUS_ACTIVE,
+            'earned_at' => now(),
+            'expires_at' => now()->addDays(30),
+        ]);
+
+        $this->actingAs($user)
+            ->get(route('loyalty-reports.index', ['search' => '98888']))
+            ->assertOk()
+            ->assertSee('FID-BUSCA-001')
+            ->assertSee('Cliente Busca')
+            ->assertDontSee('FID-OUTRO-001');
+
+        $this->actingAs($user)
+            ->get(route('loyalty-reports.index', ['search' => 'BUSCA-001']))
+            ->assertOk()
+            ->assertSee('FID-BUSCA-001')
+            ->assertDontSee('FID-OUTRO-001');
+    }
+
     public function test_owner_can_process_pending_loyalty_coupons(): void
     {
         $location = WashLocation::factory()->create();

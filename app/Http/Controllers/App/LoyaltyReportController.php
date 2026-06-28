@@ -46,10 +46,10 @@ class LoyaltyReportController extends Controller
                 ->get(['id', 'name']),
             'loyaltyProgram' => $loyaltyProgram,
             'metrics' => [
-                'active_coupons' => $this->activeCoupons($filters['customer_id']),
-                'used_coupons' => $this->usedCoupons($start, $end, $filters['customer_id']),
-                'expired_coupons' => $this->expiredCoupons($start, $end, $filters['customer_id']),
-                'discount_granted' => $this->discountGranted($start, $end, $filters['customer_id']),
+                'active_coupons' => $this->activeCoupons($filters),
+                'used_coupons' => $this->usedCoupons($start, $end, $filters),
+                'expired_coupons' => $this->expiredCoupons($start, $end, $filters),
+                'discount_granted' => $this->discountGranted($start, $end, $filters),
             ],
             'nearRewardCustomers' => $customerProgress
                 ->filter(fn (Customer $customer) => $customer->loyalty_progress['enabled']
@@ -107,7 +107,7 @@ class LoyaltyReportController extends Controller
     }
 
     /**
-     * @return array{0: array{start: string, end: string, customer_id: ?int, status: ?string}, 1: Carbon, 2: Carbon}
+     * @return array{0: array{start: string, end: string, customer_id: ?int, status: ?string, search: string}, 1: Carbon, 2: Carbon}
      */
     private function filters(Request $request): array
     {
@@ -122,11 +122,13 @@ class LoyaltyReportController extends Controller
                 Rule::exists('customers', 'id')->where('wash_location_id', TenantContext::currentLocationId()),
             ],
             'status' => ['nullable', Rule::in(array_keys(LoyaltyCoupon::statuses()))],
+            'search' => ['nullable', 'string', 'max:80'],
         ], [], [
             'start' => 'data inicial',
             'end' => 'data final',
             'customer_id' => 'cliente',
             'status' => 'status',
+            'search' => 'busca',
         ]);
 
         $start = Carbon::parse($validated['start'] ?? today()->startOfMonth()->toDateString())->startOfDay();
@@ -143,56 +145,94 @@ class LoyaltyReportController extends Controller
             'end' => $end->toDateString(),
             'customer_id' => isset($validated['customer_id']) ? (int) $validated['customer_id'] : null,
             'status' => $validated['status'] ?? null,
+            'search' => trim((string) ($validated['search'] ?? '')),
         ], $start, $end];
     }
 
     /**
-     * @param  array{customer_id: ?int, status: ?string}  $filters
+     * @param  array{customer_id: ?int, status: ?string, search: string}  $filters
      */
     private function couponsForPeriod(Carbon $start, Carbon $end, array $filters): Builder
     {
         return TenantContext::scopeByColumn(LoyaltyCoupon::query())
             ->whereBetween('earned_at', [$start, $end])
             ->when($filters['customer_id'], fn (Builder $query, int $customerId) => $query->where('customer_id', $customerId))
-            ->when($filters['status'], fn (Builder $query, string $status) => $query->where('status', $status));
+            ->when($filters['status'], fn (Builder $query, string $status) => $query->where('status', $status))
+            ->when($filters['search'] !== '', fn (Builder $query) => $this->applySearch($query, $filters['search']));
     }
 
-    private function discountGranted(Carbon $start, Carbon $end, ?int $customerId): float
+    /**
+     * @param  array{customer_id: ?int, search: string}  $filters
+     */
+    private function discountGranted(Carbon $start, Carbon $end, array $filters): float
     {
         return (float) TenantContext::scopeWashOrders(WashOrder::query())
             ->whereNotNull('loyalty_coupon_id')
-            ->when($customerId, fn (Builder $query, int $customerId) => $query->where('customer_id', $customerId))
+            ->when($filters['customer_id'], fn (Builder $query, int $customerId) => $query->where('customer_id', $customerId))
             ->whereHas('loyaltyCoupon', function (Builder $query) use ($start, $end): void {
                 $query->where('status', LoyaltyCoupon::STATUS_USED)
                     ->whereBetween('used_at', [$start, $end]);
             })
+            ->when($filters['search'] !== '', function (Builder $query) use ($filters): void {
+                $query->where(function (Builder $query) use ($filters): void {
+                    $query->whereHas('loyaltyCoupon', fn (Builder $couponQuery) => $this->applySearch($couponQuery, $filters['search']))
+                        ->orWhereHas('customer', fn (Builder $customerQuery) => $this->applyCustomerSearch($customerQuery, $filters['search']));
+                });
+            })
             ->sum('loyalty_discount_amount');
     }
 
-    private function activeCoupons(?int $customerId): int
+    /**
+     * @param  array{customer_id: ?int, search: string}  $filters
+     */
+    private function activeCoupons(array $filters): int
     {
         return TenantContext::scopeByColumn(LoyaltyCoupon::query())
             ->where('status', LoyaltyCoupon::STATUS_ACTIVE)
-            ->when($customerId, fn (Builder $query, int $customerId) => $query->where('customer_id', $customerId))
+            ->when($filters['customer_id'], fn (Builder $query, int $customerId) => $query->where('customer_id', $customerId))
+            ->when($filters['search'] !== '', fn (Builder $query) => $this->applySearch($query, $filters['search']))
             ->count();
     }
 
-    private function usedCoupons(Carbon $start, Carbon $end, ?int $customerId): int
+    /**
+     * @param  array{customer_id: ?int, search: string}  $filters
+     */
+    private function usedCoupons(Carbon $start, Carbon $end, array $filters): int
     {
         return TenantContext::scopeByColumn(LoyaltyCoupon::query())
             ->where('status', LoyaltyCoupon::STATUS_USED)
             ->whereBetween('used_at', [$start, $end])
-            ->when($customerId, fn (Builder $query, int $customerId) => $query->where('customer_id', $customerId))
+            ->when($filters['customer_id'], fn (Builder $query, int $customerId) => $query->where('customer_id', $customerId))
+            ->when($filters['search'] !== '', fn (Builder $query) => $this->applySearch($query, $filters['search']))
             ->count();
     }
 
-    private function expiredCoupons(Carbon $start, Carbon $end, ?int $customerId): int
+    /**
+     * @param  array{customer_id: ?int, search: string}  $filters
+     */
+    private function expiredCoupons(Carbon $start, Carbon $end, array $filters): int
     {
         return TenantContext::scopeByColumn(LoyaltyCoupon::query())
             ->where('status', LoyaltyCoupon::STATUS_EXPIRED)
             ->whereBetween('expires_at', [$start, $end])
-            ->when($customerId, fn (Builder $query, int $customerId) => $query->where('customer_id', $customerId))
+            ->when($filters['customer_id'], fn (Builder $query, int $customerId) => $query->where('customer_id', $customerId))
+            ->when($filters['search'] !== '', fn (Builder $query) => $this->applySearch($query, $filters['search']))
             ->count();
+    }
+
+    private function applySearch(Builder $query, string $search): void
+    {
+        $query->where(function (Builder $query) use ($search): void {
+            $query->where('code', 'like', '%'.$search.'%')
+                ->orWhereHas('customer', fn (Builder $customerQuery) => $this->applyCustomerSearch($customerQuery, $search));
+        });
+    }
+
+    private function applyCustomerSearch(Builder $query, string $search): void
+    {
+        $query->where('name', 'like', '%'.$search.'%')
+            ->orWhere('phone', 'like', '%'.$search.'%')
+            ->orWhere('cpf', 'like', '%'.$search.'%');
     }
 
     private function customerProgress(?LoyaltyProgram $loyaltyProgram, ?int $customerId)

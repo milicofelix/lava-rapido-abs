@@ -35,7 +35,7 @@
                 </div>
             @enderror
 
-            <form method="GET" class="mt-5 grid gap-3 lg:grid-cols-[160px_160px_1fr_190px_auto]">
+            <form method="GET" class="mt-5 grid gap-3 lg:grid-cols-[160px_160px_1fr_1fr_190px_auto]">
                 <label class="block">
                     <span class="mb-1 block text-xs font-bold text-slate-500">Inicio</span>
                     <input type="date" name="start" value="{{ $filters['start'] }}" class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100">
@@ -55,6 +55,11 @@
                         @endforeach
                     </select>
                     @error('customer_id') <span class="mt-1 block text-xs font-bold text-red-600">{{ $message }}</span> @enderror
+                </label>
+                <label class="block">
+                    <span class="mb-1 block text-xs font-bold text-slate-500">Busca</span>
+                    <input name="search" value="{{ $filters['search'] }}" placeholder="Codigo, nome, telefone ou CPF" class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100">
+                    @error('search') <span class="mt-1 block text-xs font-bold text-red-600">{{ $message }}</span> @enderror
                 </label>
                 <label class="block">
                     <span class="mb-1 block text-xs font-bold text-slate-500">Status</span>
