@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class LoyaltyCoupon extends Model
@@ -53,7 +54,26 @@ class LoyaltyCoupon extends Model
 
     public function statusLabel(): string
     {
-        return self::statuses()[$this->status] ?? $this->status;
+        return self::statuses()[$this->effectiveStatus()] ?? $this->effectiveStatus();
+    }
+
+    public function effectiveStatus(): string
+    {
+        if ($this->status === self::STATUS_ACTIVE && $this->isExpired()) {
+            return self::STATUS_EXPIRED;
+        }
+
+        return $this->status;
+    }
+
+    public function scopeActiveAndValid(Builder $query): Builder
+    {
+        return $query
+            ->where('status', self::STATUS_ACTIVE)
+            ->where(function (Builder $query): void {
+                $query->whereNull('expires_at')
+                    ->orWhere('expires_at', '>=', now());
+            });
     }
 
     public function benefitLabel(): string

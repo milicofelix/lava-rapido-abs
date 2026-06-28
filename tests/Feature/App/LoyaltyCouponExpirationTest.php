@@ -77,6 +77,34 @@ class LoyaltyCouponExpirationTest extends TestCase
         ));
     }
 
+    public function test_owner_expired_coupon_notification_points_to_expired_filter(): void
+    {
+        $location = WashLocation::factory()->create();
+        $owner = User::factory()->create([
+            'role' => User::ROLE_OWNER,
+            'wash_location_id' => $location->id,
+        ]);
+        $customer = Customer::factory()->create(['wash_location_id' => $location->id]);
+        $vehicle = Vehicle::factory()->for($customer)->create(['wash_location_id' => $location->id]);
+        $service = Service::factory()->create(['wash_location_id' => $location->id]);
+        $program = $this->program($location, $service);
+        $washOrder = $this->deliveredOrder($location, $customer, $vehicle, $service);
+
+        $this->coupon($location, $program, $customer, $washOrder, $service, [
+            'code' => 'FID-JA-VENCEU',
+            'expires_at' => now()->subDay(),
+        ]);
+
+        $this->actingAs($owner);
+
+        $notifications = AppNotificationCenter::for($owner);
+
+        $this->assertTrue(collect($notifications)->contains(
+            fn (array $notification) => $notification['title'] === '1 cupom vencido'
+                && $notification['url'] === route('loyalty-reports.index', ['status' => LoyaltyCoupon::STATUS_EXPIRED])
+        ));
+    }
+
     private function program(WashLocation $location, Service $service): LoyaltyProgram
     {
         return LoyaltyProgram::query()->create([

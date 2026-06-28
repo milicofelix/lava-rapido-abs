@@ -23,7 +23,7 @@ class LoyaltyProgress
         $activeCoupons = LoyaltyCoupon::query()
             ->where('wash_location_id', $customer->wash_location_id)
             ->where('customer_id', $customer->id)
-            ->where('status', LoyaltyCoupon::STATUS_ACTIVE)
+            ->activeAndValid()
             ->count();
 
         if (! $program) {

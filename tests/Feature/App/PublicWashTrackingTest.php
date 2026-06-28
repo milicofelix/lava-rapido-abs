@@ -131,6 +131,48 @@ class PublicWashTrackingTest extends TestCase
             );
     }
 
+    public function test_tracking_page_does_not_show_overdue_active_coupon_as_available(): void
+    {
+        $washOrder = WashOrder::factory()->create([
+            'code' => 'ABS-LOYALTY-EXPIRED',
+            'status' => WashOrder::STATUS_WASHING,
+        ]);
+        $service = Service::factory()->create([
+            'wash_location_id' => $washOrder->wash_location_id,
+            'name' => 'Ducha simples',
+        ]);
+        $program = LoyaltyProgram::query()->create([
+            'wash_location_id' => $washOrder->wash_location_id,
+            'is_active' => true,
+            'threshold' => 3,
+            'count_scope' => LoyaltyProgram::COUNT_ANY,
+            'reward_type' => LoyaltyProgram::REWARD_FIXED_SERVICE,
+            'reward_service_id' => $service->id,
+            'coupon_valid_days' => 30,
+        ]);
+
+        LoyaltyCoupon::query()->create([
+            'wash_location_id' => $washOrder->wash_location_id,
+            'loyalty_program_id' => $program->id,
+            'customer_id' => $washOrder->customer_id,
+            'source_wash_order_id' => $washOrder->id,
+            'reward_service_id' => $service->id,
+            'code' => 'FID-PUBLIC-VENCIDO',
+            'status' => LoyaltyCoupon::STATUS_ACTIVE,
+            'earned_at' => now()->subDays(5),
+            'expires_at' => now()->subDay(),
+        ]);
+
+        $this->get(route('tracking.show', 'ABS-LOYALTY-EXPIRED'))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('Tracking')
+                ->where('loyalty.active_coupons', 0)
+                ->where('loyalty.has_active_coupon', false)
+                ->where('loyalty.coupons', [])
+            );
+    }
+
     public function test_internal_wash_order_detail_shows_customer_tracking_link(): void
     {
         $user = User::factory()->create();

@@ -41,7 +41,7 @@ class PublicWashTrackingController extends Controller
             ->with(['loyaltyProgram', 'rewardService', 'sourceWashOrder.services'])
             ->where('wash_location_id', $washOrder->wash_location_id)
             ->where('customer_id', $washOrder->customer_id)
-            ->where('status', LoyaltyCoupon::STATUS_ACTIVE)
+            ->activeAndValid()
             ->latest('earned_at')
             ->limit(3)
             ->get();

@@ -17,7 +17,7 @@ class CancelLoyaltyCouponController extends Controller
     {
         TenantContext::abortUnlessModelBelongsToTenant($loyaltyCoupon);
 
-        if ($loyaltyCoupon->status !== LoyaltyCoupon::STATUS_ACTIVE) {
+        if ($loyaltyCoupon->effectiveStatus() !== LoyaltyCoupon::STATUS_ACTIVE) {
             throw ValidationException::withMessages([
                 'coupon' => 'Somente cupons ativos podem ser cancelados.',
             ]);

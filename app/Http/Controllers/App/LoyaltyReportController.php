@@ -157,7 +157,7 @@ class LoyaltyReportController extends Controller
         return TenantContext::scopeByColumn(LoyaltyCoupon::query())
             ->whereBetween('earned_at', [$start, $end])
             ->when($filters['customer_id'], fn (Builder $query, int $customerId) => $query->where('customer_id', $customerId))
-            ->when($filters['status'], fn (Builder $query, string $status) => $query->where('status', $status))
+            ->when($filters['status'], fn (Builder $query, string $status) => $this->applyEffectiveStatus($query, $status))
             ->when($filters['search'] !== '', fn (Builder $query) => $this->applySearch($query, $filters['search']));
     }
 
@@ -188,7 +188,7 @@ class LoyaltyReportController extends Controller
     private function activeCoupons(array $filters): int
     {
         return TenantContext::scopeByColumn(LoyaltyCoupon::query())
-            ->where('status', LoyaltyCoupon::STATUS_ACTIVE)
+            ->activeAndValid()
             ->when($filters['customer_id'], fn (Builder $query, int $customerId) => $query->where('customer_id', $customerId))
             ->when($filters['search'] !== '', fn (Builder $query) => $this->applySearch($query, $filters['search']))
             ->count();
@@ -213,11 +213,40 @@ class LoyaltyReportController extends Controller
     private function expiredCoupons(Carbon $start, Carbon $end, array $filters): int
     {
         return TenantContext::scopeByColumn(LoyaltyCoupon::query())
-            ->where('status', LoyaltyCoupon::STATUS_EXPIRED)
             ->whereBetween('expires_at', [$start, $end])
+            ->where(function (Builder $query): void {
+                $query->where('status', LoyaltyCoupon::STATUS_EXPIRED)
+                    ->orWhere(function (Builder $query): void {
+                        $query->where('status', LoyaltyCoupon::STATUS_ACTIVE)
+                            ->where('expires_at', '<', now());
+                    });
+            })
             ->when($filters['customer_id'], fn (Builder $query, int $customerId) => $query->where('customer_id', $customerId))
             ->when($filters['search'] !== '', fn (Builder $query) => $this->applySearch($query, $filters['search']))
             ->count();
+    }
+
+    private function applyEffectiveStatus(Builder $query, string $status): void
+    {
+        if ($status === LoyaltyCoupon::STATUS_ACTIVE) {
+            $query->activeAndValid();
+
+            return;
+        }
+
+        if ($status === LoyaltyCoupon::STATUS_EXPIRED) {
+            $query->where(function (Builder $query): void {
+                $query->where('status', LoyaltyCoupon::STATUS_EXPIRED)
+                    ->orWhere(function (Builder $query): void {
+                        $query->where('status', LoyaltyCoupon::STATUS_ACTIVE)
+                            ->where('expires_at', '<', now());
+                    });
+            });
+
+            return;
+        }
+
+        $query->where('status', $status);
     }
 
     private function applySearch(Builder $query, string $search): void

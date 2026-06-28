@@ -130,6 +130,78 @@ class LoyaltyReportTest extends TestCase
             ->assertDontSee('FID-OCULTO-001');
     }
 
+    public function test_loyalty_report_treats_overdue_active_coupon_as_expired(): void
+    {
+        $location = WashLocation::factory()->create();
+        $user = User::factory()->create([
+            'role' => User::ROLE_ADMIN,
+            'wash_location_id' => $location->id,
+        ]);
+        $service = Service::factory()->create(['wash_location_id' => $location->id]);
+        $program = $this->program($location, $service);
+        $customer = Customer::factory()->create(['wash_location_id' => $location->id, 'name' => 'Cliente Vencido']);
+        $vehicle = Vehicle::factory()->for($customer)->create(['wash_location_id' => $location->id]);
+        $sourceOrder = $this->deliveredOrder($location, $customer, $vehicle, $service, now()->subDays(5));
+
+        LoyaltyCoupon::query()->create([
+            'wash_location_id' => $location->id,
+            'loyalty_program_id' => $program->id,
+            'customer_id' => $customer->id,
+            'source_wash_order_id' => $sourceOrder->id,
+            'reward_service_id' => $service->id,
+            'code' => 'FID-ATIVO-VENCIDO',
+            'status' => LoyaltyCoupon::STATUS_ACTIVE,
+            'earned_at' => now()->subDays(5),
+            'expires_at' => now()->subDay(),
+        ]);
+
+        $this->actingAs($user)
+            ->get(route('loyalty-reports.index', ['status' => LoyaltyCoupon::STATUS_ACTIVE]))
+            ->assertOk()
+            ->assertDontSee('FID-ATIVO-VENCIDO');
+
+        $this->actingAs($user)
+            ->get(route('loyalty-reports.index', ['status' => LoyaltyCoupon::STATUS_EXPIRED]))
+            ->assertOk()
+            ->assertSee('FID-ATIVO-VENCIDO')
+            ->assertSee('Expirado');
+    }
+
+    public function test_loyalty_report_csv_exports_effective_expired_status(): void
+    {
+        $location = WashLocation::factory()->create();
+        $owner = User::factory()->create([
+            'role' => User::ROLE_OWNER,
+            'wash_location_id' => $location->id,
+        ]);
+        $service = Service::factory()->create(['wash_location_id' => $location->id]);
+        $program = $this->program($location, $service);
+        $customer = Customer::factory()->create(['wash_location_id' => $location->id, 'name' => 'Cliente CSV Vencido']);
+        $vehicle = Vehicle::factory()->for($customer)->create(['wash_location_id' => $location->id]);
+        $sourceOrder = $this->deliveredOrder($location, $customer, $vehicle, $service, now()->subDays(5));
+
+        LoyaltyCoupon::query()->create([
+            'wash_location_id' => $location->id,
+            'loyalty_program_id' => $program->id,
+            'customer_id' => $customer->id,
+            'source_wash_order_id' => $sourceOrder->id,
+            'reward_service_id' => $service->id,
+            'code' => 'FID-CSV-VENCIDO',
+            'status' => LoyaltyCoupon::STATUS_ACTIVE,
+            'earned_at' => now()->subDays(5),
+            'expires_at' => now()->subDay(),
+        ]);
+
+        $response = $this->actingAs($owner)->get(route('loyalty-reports.export', [
+            'status' => LoyaltyCoupon::STATUS_EXPIRED,
+        ]));
+
+        $content = $response->streamedContent();
+
+        $this->assertStringContainsString('FID-CSV-VENCIDO', $content);
+        $this->assertStringContainsString('Expirado', $content);
+    }
+
     public function test_owner_can_export_filtered_loyalty_report_as_csv(): void
     {
         $location = WashLocation::factory()->create();

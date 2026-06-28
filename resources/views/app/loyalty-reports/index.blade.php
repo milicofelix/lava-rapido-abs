@@ -171,7 +171,7 @@
                 </div>
                 <div class="divide-y divide-slate-100">
                     @forelse ($coupons as $coupon)
-                        @php($statusTone = match ($coupon->status) {
+                        @php($statusTone = match ($coupon->effectiveStatus()) {
                             \App\Models\LoyaltyCoupon::STATUS_ACTIVE => 'bg-emerald-50 text-emerald-700',
                             \App\Models\LoyaltyCoupon::STATUS_USED => 'bg-blue-50 text-blue-700',
                             \App\Models\LoyaltyCoupon::STATUS_EXPIRED => 'bg-amber-50 text-amber-700',

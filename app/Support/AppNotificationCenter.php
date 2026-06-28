@@ -154,7 +154,7 @@ class AppNotificationCenter
                 'title' => $expiredActiveCoupons.' cupom'.($expiredActiveCoupons === 1 ? '' : 's').' vencido'.($expiredActiveCoupons === 1 ? '' : 's'),
                 'body' => 'Existem cupons ativos com validade vencida. A rotina diaria fara a expiracao automaticamente.',
                 'tone' => 'warning',
-                'url' => route('loyalty-reports.index', ['status' => LoyaltyCoupon::STATUS_ACTIVE]),
+                'url' => route('loyalty-reports.index', ['status' => LoyaltyCoupon::STATUS_EXPIRED]),
                 'action' => 'Ver fidelidade',
             ];
         }
