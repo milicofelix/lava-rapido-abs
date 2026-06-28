@@ -193,6 +193,58 @@ class LoyaltyReportTest extends TestCase
         $this->assertStringNotContainsString('FID-CSV-FORA', $content);
     }
 
+    public function test_owner_can_process_pending_loyalty_coupons(): void
+    {
+        $location = WashLocation::factory()->create();
+        $owner = User::factory()->create([
+            'role' => User::ROLE_OWNER,
+            'wash_location_id' => $location->id,
+        ]);
+        $customer = Customer::factory()->create([
+            'wash_location_id' => $location->id,
+            'name' => 'Cliente Elegivel',
+        ]);
+        $vehicle = Vehicle::factory()->for($customer)->create(['wash_location_id' => $location->id]);
+        $service = Service::factory()->create(['wash_location_id' => $location->id]);
+
+        $this->program($location, $service);
+        $this->deliveredOrder($location, $customer, $vehicle, $service, now()->subDays(3));
+        $this->deliveredOrder($location, $customer, $vehicle, $service, now()->subDays(2));
+        $this->deliveredOrder($location, $customer, $vehicle, $service, now()->subDay());
+
+        $this->assertDatabaseCount('loyalty_coupons', 0);
+
+        $this->actingAs($owner)
+            ->post(route('loyalty-reports.process-coupons'))
+            ->assertRedirect(route('loyalty-reports.index'))
+            ->assertSessionHas('status', '1 cupom pendente foi gerado.');
+
+        $this->assertDatabaseHas('loyalty_coupons', [
+            'wash_location_id' => $location->id,
+            'customer_id' => $customer->id,
+            'status' => LoyaltyCoupon::STATUS_ACTIVE,
+        ]);
+        $this->assertDatabaseHas('audit_logs', [
+            'action' => \App\Models\AuditLog::ACTION_LOYALTY_COUPONS_PROCESSED,
+            'wash_location_id' => $location->id,
+        ]);
+    }
+
+    public function test_process_pending_loyalty_coupons_requires_active_program(): void
+    {
+        $location = WashLocation::factory()->create();
+        $owner = User::factory()->create([
+            'role' => User::ROLE_OWNER,
+            'wash_location_id' => $location->id,
+        ]);
+
+        $this->actingAs($owner)
+            ->from(route('loyalty-reports.index'))
+            ->post(route('loyalty-reports.process-coupons'))
+            ->assertRedirect(route('loyalty-reports.index'))
+            ->assertSessionHasErrors('loyalty_program');
+    }
+
     public function test_operator_cannot_view_loyalty_report(): void
     {
         $operator = User::factory()->create(['role' => User::ROLE_OPERATOR]);

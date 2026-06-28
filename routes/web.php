@@ -13,6 +13,7 @@ use App\Http\Controllers\App\LoyaltyCouponController;
 use App\Http\Controllers\App\LoyaltyReportController;
 use App\Http\Controllers\App\OwnerSubscriptionController;
 use App\Http\Controllers\App\PaymentController;
+use App\Http\Controllers\App\ProcessLoyaltyCouponsController;
 use App\Http\Controllers\App\RemoveLoyaltyCouponController;
 use App\Http\Controllers\App\ScheduleController;
 use App\Http\Controllers\App\ServiceController;
@@ -115,6 +116,7 @@ Route::middleware('auth')->group(function () {
         Route::middleware('permission:'.AccessControl::MANAGE_CUSTOMERS)->group(function () {
             Route::get('fidelidade', [LoyaltyReportController::class, 'index'])->name('loyalty-reports.index');
             Route::get('fidelidade/exportar', [LoyaltyReportController::class, 'export'])->name('loyalty-reports.export');
+            Route::post('fidelidade/processar-cupons', ProcessLoyaltyCouponsController::class)->name('loyalty-reports.process-coupons');
             Route::resource('clientes', CustomerController::class)->parameters(['clientes' => 'customer'])->names('customers')->except(['show', 'destroy']);
             Route::get('cupons-fidelidade/{loyaltyCoupon}', LoyaltyCouponController::class)->name('loyalty-coupons.show');
             Route::patch('cupons-fidelidade/{loyaltyCoupon}/cancelar', CancelLoyaltyCouponController::class)->name('loyalty-coupons.cancel');

@@ -8,6 +8,12 @@
                     <p class="mt-1 text-sm text-slate-500">Acompanhe cupons gerados, uso, descontos concedidos e clientes perto de ganhar beneficio.</p>
                 </div>
                 <div class="flex flex-wrap items-center gap-2">
+                    @if ($loyaltyProgram)
+                        <form method="POST" action="{{ route('loyalty-reports.process-coupons') }}">
+                            @csrf
+                            <button class="rounded-xl bg-fuchsia-700 px-4 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-fuchsia-800">Processar cupons</button>
+                        </form>
+                    @endif
                     <a href="{{ route('loyalty-reports.export', request()->query()) }}" class="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-bold text-slate-700 shadow-sm hover:bg-slate-50">Exportar CSV</a>
                     @if ($loyaltyProgram)
                         <span class="rounded-full bg-emerald-50 px-3 py-1 text-xs font-black text-emerald-700 ring-1 ring-emerald-200">Programa ativo</span>
@@ -16,6 +22,18 @@
                     @endif
                 </div>
             </div>
+
+            @if (session('status'))
+                <div class="mt-4 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-800">
+                    {{ session('status') }}
+                </div>
+            @endif
+
+            @error('loyalty_program')
+                <div class="mt-4 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-bold text-red-700">
+                    {{ $message }}
+                </div>
+            @enderror
 
             <form method="GET" class="mt-5 grid gap-3 lg:grid-cols-[160px_160px_1fr_190px_auto]">
                 <label class="block">
