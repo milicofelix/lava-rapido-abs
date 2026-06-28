@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\App\CashRegisterController;
+use App\Http\Controllers\App\CancelLoyaltyCouponController;
 use App\Http\Controllers\App\CreditReceivableController;
 use App\Http\Controllers\App\CustomerController;
 use App\Http\Controllers\App\AuditLogController;
@@ -116,6 +117,7 @@ Route::middleware('auth')->group(function () {
             Route::get('fidelidade/exportar', [LoyaltyReportController::class, 'export'])->name('loyalty-reports.export');
             Route::resource('clientes', CustomerController::class)->parameters(['clientes' => 'customer'])->names('customers')->except(['show', 'destroy']);
             Route::get('cupons-fidelidade/{loyaltyCoupon}', LoyaltyCouponController::class)->name('loyalty-coupons.show');
+            Route::patch('cupons-fidelidade/{loyaltyCoupon}/cancelar', CancelLoyaltyCouponController::class)->name('loyalty-coupons.cancel');
         });
 
         Route::middleware('permission:'.AccessControl::MANAGE_VEHICLES)->group(function () {

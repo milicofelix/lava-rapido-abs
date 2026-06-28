@@ -28,6 +28,8 @@ class AuditLog extends Model
 
     public const ACTION_LOYALTY_COUPON_EXPIRED = 'loyalty_coupon.expired';
 
+    public const ACTION_LOYALTY_COUPON_CANCELED = 'loyalty_coupon.canceled';
+
     public const ACTION_LOCATION_PROFILE_UPDATED = 'location.profile_updated';
 
     public const ACTION_LOCATION_REQUEST_APPROVED = 'location_request.approved';
@@ -67,6 +69,7 @@ class AuditLog extends Model
             self::ACTION_LOYALTY_COUPON_APPLIED => 'Cupom de fidelidade aplicado',
             self::ACTION_LOYALTY_COUPON_REMOVED => 'Cupom de fidelidade removido',
             self::ACTION_LOYALTY_COUPON_EXPIRED => 'Cupom de fidelidade expirado',
+            self::ACTION_LOYALTY_COUPON_CANCELED => 'Cupom de fidelidade cancelado',
             self::ACTION_LOCATION_PROFILE_UPDATED => 'Perfil da unidade atualizado',
             self::ACTION_LOCATION_REQUEST_APPROVED => 'Solicitação aprovada',
             self::ACTION_LOCATION_REQUEST_REJECTED => 'Solicitação rejeitada',
