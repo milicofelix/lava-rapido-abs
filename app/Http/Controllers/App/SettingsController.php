@@ -67,7 +67,7 @@ class SettingsController extends Controller
             'latitude' => ['nullable', 'required_with:longitude', 'numeric', 'between:-90,90'],
             'longitude' => ['nullable', 'required_with:latitude', 'numeric', 'between:-180,180'],
             'opening_hours' => ['nullable', 'string', 'max:2000'],
-            'logo' => ['nullable', 'image', 'max:5120'],
+            'logo' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120', 'dimensions:max_width=3000,max_height=3000'],
             'theme' => ['required', Rule::in([
                 AppSetting::THEME_LIGHT,
                 AppSetting::THEME_DARK,
@@ -115,6 +115,7 @@ class SettingsController extends Controller
             'loyalty_reward_service_id' => 'serviço do cupom',
             'loyalty_discount_value' => 'valor do desconto',
             'loyalty_coupon_valid_days' => 'validade do cupom',
+            'logo' => 'logo da unidade',
         ]);
 
         if ($currentLocation) {

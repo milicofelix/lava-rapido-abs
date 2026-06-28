@@ -10,7 +10,9 @@ use App\Models\User;
 use App\Models\WashLocation;
 use App\Support\Access\AccessControl;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 class SettingsManagementTest extends TestCase
@@ -137,6 +139,95 @@ class SettingsManagementTest extends TestCase
 
         $this->assertSame('-23.5191405', (string) $location->latitude);
         $this->assertSame('-46.4207678', (string) $location->longitude);
+    }
+
+    public function test_admin_can_upload_valid_unit_logo(): void
+    {
+        Storage::fake('public');
+
+        $location = WashLocation::factory()->create();
+        $admin = User::factory()->create([
+            'role' => User::ROLE_ADMIN,
+            'wash_location_id' => $location->id,
+        ]);
+
+        $this->actingAs($admin)
+            ->put(route('settings.update'), [
+                'company_name' => $location->name,
+                'company_whatsapp' => $location->phone,
+                'address' => $location->address,
+                'district' => $location->district,
+                'city' => $location->city,
+                'state' => $location->state ?? 'SP',
+                'theme' => AppSetting::THEME_LIGHT,
+                'module_schedule' => '1',
+                'logo' => UploadedFile::fake()->image('logo.png', 900, 500)->size(700),
+            ])
+            ->assertRedirect()
+            ->assertSessionHasNoErrors();
+
+        $location->refresh();
+
+        $this->assertNotNull($location->logo_path);
+        Storage::disk('public')->assertExists($location->logo_path);
+    }
+
+    public function test_unit_logo_upload_rejects_unsupported_file_type(): void
+    {
+        Storage::fake('public');
+
+        $location = WashLocation::factory()->create();
+        $admin = User::factory()->create([
+            'role' => User::ROLE_ADMIN,
+            'wash_location_id' => $location->id,
+        ]);
+
+        $this->actingAs($admin)
+            ->from(route('settings.edit'))
+            ->put(route('settings.update'), [
+                'company_name' => $location->name,
+                'company_whatsapp' => $location->phone,
+                'address' => $location->address,
+                'district' => $location->district,
+                'city' => $location->city,
+                'state' => $location->state ?? 'SP',
+                'theme' => AppSetting::THEME_LIGHT,
+                'module_schedule' => '1',
+                'logo' => UploadedFile::fake()->create('logo.svg', 20, 'image/svg+xml'),
+            ])
+            ->assertRedirect(route('settings.edit'))
+            ->assertSessionHasErrors('logo');
+
+        $this->assertNull($location->fresh()->logo_path);
+    }
+
+    public function test_unit_logo_upload_rejects_oversized_dimensions(): void
+    {
+        Storage::fake('public');
+
+        $location = WashLocation::factory()->create();
+        $admin = User::factory()->create([
+            'role' => User::ROLE_ADMIN,
+            'wash_location_id' => $location->id,
+        ]);
+
+        $this->actingAs($admin)
+            ->from(route('settings.edit'))
+            ->put(route('settings.update'), [
+                'company_name' => $location->name,
+                'company_whatsapp' => $location->phone,
+                'address' => $location->address,
+                'district' => $location->district,
+                'city' => $location->city,
+                'state' => $location->state ?? 'SP',
+                'theme' => AppSetting::THEME_LIGHT,
+                'module_schedule' => '1',
+                'logo' => UploadedFile::fake()->image('logo.png', 3200, 800)->size(900),
+            ])
+            ->assertRedirect(route('settings.edit'))
+            ->assertSessionHasErrors('logo');
+
+        $this->assertNull($location->fresh()->logo_path);
     }
 
     public function test_admin_can_update_loyalty_program_settings(): void
