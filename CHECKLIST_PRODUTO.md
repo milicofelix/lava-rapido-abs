@@ -233,13 +233,13 @@ Documento de acompanhamento do que ja foi construido e do que ainda falta para d
 - [x] Endpoint de saude `/up` validado por teste.
 - [x] Headers basicos de seguranca aplicados por middleware.
 - [x] Comando `app:production-check` para validar configuracoes antes do deploy.
-- [x] Suite completa validada no pacote de hardening atual: 249 testes e 1259 assercoes.
+- [x] Suite completa validada no pacote de hardening atual: 250 testes e 1270 assercoes.
 - [ ] Rodar suite completa antes de release.
 - [ ] Configurar CI/CD.
 - [ ] Configurar backup.
 - [ ] Revisar logs e monitoramento.
 - [x] Revisar seguranca de upload.
-- [ ] Revisar indices de banco para escala.
+- [x] Revisar indices de banco para escala.
 - [x] Checklist de deploy e homologacao documentado.
 
 ## Antes de voltar para pagamento real e WhatsApp oficial

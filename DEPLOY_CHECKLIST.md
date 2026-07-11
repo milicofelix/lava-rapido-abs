@@ -124,12 +124,12 @@ php artisan queue:restart
 - [ ] Migracoes executadas com sucesso.
 - [ ] Sem erro em `migrations`.
 - [ ] Indices revisados para tabelas grandes:
-  - [ ] `wash_orders`
-  - [ ] `payments`
-  - [ ] `loyalty_coupons`
-  - [ ] `audit_logs`
-  - [ ] `customers`
-  - [ ] `vehicles`
+  - [x] `wash_orders`
+  - [x] `payments`
+  - [x] `loyalty_coupons`
+  - [x] `audit_logs`
+  - [x] `customers`
+  - [x] `vehicles`
 - [ ] Rodar smoke test de leitura e escrita.
 
 ## 6. Smoke test tecnico
