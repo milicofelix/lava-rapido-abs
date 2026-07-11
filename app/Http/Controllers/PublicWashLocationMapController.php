@@ -20,8 +20,6 @@ class PublicWashLocationMapController extends Controller
             ->whereNotNull('slug')
             ->where('slug', '!=', '')
             ->whereIn('account_status', [WashLocation::ACCOUNT_STATUS_TRIAL, WashLocation::ACCOUNT_STATUS_ACTIVE])
-            ->when($onlyOpen, fn ($query) => $query->where('status', WashLocation::STATUS_OPEN))
-            ->when(! $onlyOpen && $status !== '', fn ($query) => $query->where('status', $status))
             ->when($search !== '', function ($query) use ($search) {
                 $like = '%'.$search.'%';
 
@@ -37,7 +35,26 @@ class PublicWashLocationMapController extends Controller
             ->orderByRaw('status = ? desc', [WashLocation::STATUS_OPEN])
             ->orderByDesc('active_orders_count')
             ->orderBy('name')
-            ->get();
+            ->get()
+            ->filter(function (WashLocation $location) use ($onlyOpen, $status) {
+                $publicStatus = $location->publicStatus();
+
+                if ($onlyOpen) {
+                    return $publicStatus === WashLocation::STATUS_OPEN || $publicStatus === WashLocation::STATUS_BUSY;
+                }
+
+                return $status === '' || $publicStatus === $status;
+            })
+            ->sortBy([
+                fn (WashLocation $location) => match ($location->publicStatus()) {
+                    WashLocation::STATUS_OPEN => 0,
+                    WashLocation::STATUS_BUSY => 1,
+                    default => 2,
+                },
+                fn (WashLocation $location) => -1 * $location->active_orders_count,
+                fn (WashLocation $location) => $location->name,
+            ])
+            ->values();
 
         return view('public.locations.index', [
             'locations' => $locations,
@@ -52,8 +69,9 @@ class PublicWashLocationMapController extends Controller
                 'address' => $location->fullAddress(),
                 'district' => $location->district,
                 'city' => $location->city,
-                'status' => $location->status,
-                'status_label' => $location->statusLabel(),
+                'status' => $location->publicStatus(),
+                'status_label' => $location->publicStatusLabel(),
+                'opening_hours' => $location->opening_hours ?: $location->openingHoursSummary(),
                 'phone' => $location->phone,
                 'active_orders_count' => $location->active_orders_count,
                 'latitude' => $location->mapLatitude(),

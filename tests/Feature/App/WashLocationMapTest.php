@@ -6,6 +6,7 @@ use App\Models\Service;
 use App\Models\User;
 use App\Models\WashLocation;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
@@ -115,27 +116,66 @@ class WashLocationMapTest extends TestCase
 
     public function test_visitor_can_filter_public_map_to_only_open_locations(): void
     {
-        WashLocation::query()->create([
-            'name' => 'Lava Aberto',
-            'address' => 'Rua A, 10',
-            'status' => WashLocation::STATUS_OPEN,
-            'latitude' => -23.54891,
-            'longitude' => -46.63412,
-        ]);
+        Carbon::setTestNow('2026-06-26 10:00:00');
 
-        WashLocation::query()->create([
-            'name' => 'Lava Fechado',
-            'address' => 'Rua B, 20',
-            'status' => WashLocation::STATUS_CLOSED,
-            'latitude' => -23.50011,
-            'longitude' => -46.62221,
-        ]);
+        try {
+            WashLocation::query()->create([
+                'name' => 'Lava Aberto',
+                'address' => 'Rua A, 10',
+                'status' => WashLocation::STATUS_OPEN,
+                'latitude' => -23.54891,
+                'longitude' => -46.63412,
+            ]);
 
-        $this->get(route('public.locations.index', ['only_open' => 1]))
-            ->assertOk()
-            ->assertSee('Lava Aberto')
-            ->assertDontSee('Lava Fechado')
-            ->assertSee('Somente abertos');
+            WashLocation::query()->create([
+                'name' => 'Lava Fechado',
+                'address' => 'Rua B, 20',
+                'status' => WashLocation::STATUS_CLOSED,
+                'latitude' => -23.50011,
+                'longitude' => -46.62221,
+            ]);
+
+            $this->get(route('public.locations.index', ['only_open' => 1]))
+                ->assertOk()
+                ->assertSee('Lava Aberto')
+                ->assertDontSee('Lava Fechado')
+                ->assertSee('Somente abertos');
+        } finally {
+            Carbon::setTestNow();
+        }
+    }
+
+    public function test_public_map_uses_business_hours_to_show_closed_location(): void
+    {
+        Carbon::setTestNow('2026-06-26 20:00:00');
+
+        try {
+            WashLocation::factory()->create([
+                'name' => 'Lava Horario Comercial',
+                'status' => WashLocation::STATUS_OPEN,
+                'business_hours' => [
+                    'monday' => ['is_open' => true, 'opens' => '08:00', 'closes' => '18:00'],
+                    'tuesday' => ['is_open' => true, 'opens' => '08:00', 'closes' => '18:00'],
+                    'wednesday' => ['is_open' => true, 'opens' => '08:00', 'closes' => '18:00'],
+                    'thursday' => ['is_open' => true, 'opens' => '08:00', 'closes' => '18:00'],
+                    'friday' => ['is_open' => true, 'opens' => '08:00', 'closes' => '18:00'],
+                    'saturday' => ['is_open' => false, 'opens' => '08:00', 'closes' => '18:00'],
+                    'sunday' => ['is_open' => false, 'opens' => '08:00', 'closes' => '18:00'],
+                ],
+            ]);
+
+            $this->get(route('public.locations.index'))
+                ->assertOk()
+                ->assertSee('Lava Horario Comercial')
+                ->assertSee('Fechado')
+                ->assertSee('"status":"closed"', false);
+
+            $this->get(route('public.locations.index', ['only_open' => 1]))
+                ->assertOk()
+                ->assertDontSee('Lava Horario Comercial');
+        } finally {
+            Carbon::setTestNow();
+        }
     }
 
     public function test_internal_dashboard_does_not_show_old_map_link(): void

@@ -50,6 +50,8 @@ Documento de acompanhamento do que ja foi construido e do que ainda falta para d
 - [x] Aprovacao pelo Super Admin.
 - [x] Cadastro de dados da unidade.
 - [x] Campos de perfil: nome, WhatsApp, tema, logo, CNPJ, razao social, endereco, cidade, UF e horario.
+- [x] Horario de funcionamento estruturado por dia da semana.
+- [x] Status publico Aberto/Fechado calculado pelo expediente.
 - [x] Upload de logo com ajuste de limite de payload.
 - [x] Upload de logo restrito a JPG, PNG e WebP com limite de tamanho e dimensoes.
 - [x] Logo da unidade replicado nas telas internas.

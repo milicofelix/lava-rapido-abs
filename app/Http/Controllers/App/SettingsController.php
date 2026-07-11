@@ -18,6 +18,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
 class SettingsController extends Controller
@@ -45,6 +46,8 @@ class SettingsController extends Controller
                 AppSetting::THEME_DARK => 'Dark',
                 AppSetting::THEME_SYSTEM => 'Sistema',
             ],
+            'businessHourDays' => \App\Models\WashLocation::businessHourDays(),
+            'businessHours' => $currentLocation?->normalizedBusinessHours() ?? \App\Models\WashLocation::defaultBusinessHours(),
         ]);
     }
 
@@ -67,6 +70,10 @@ class SettingsController extends Controller
             'latitude' => ['nullable', 'required_with:longitude', 'numeric', 'between:-90,90'],
             'longitude' => ['nullable', 'required_with:latitude', 'numeric', 'between:-180,180'],
             'opening_hours' => ['nullable', 'string', 'max:2000'],
+            'business_hours' => ['nullable', 'array'],
+            'business_hours.*.is_open' => ['nullable', 'boolean'],
+            'business_hours.*.opens' => ['nullable', 'date_format:H:i'],
+            'business_hours.*.closes' => ['nullable', 'date_format:H:i'],
             'logo' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120', 'dimensions:max_width=3000,max_height=3000'],
             'theme' => ['required', Rule::in([
                 AppSetting::THEME_LIGHT,
@@ -118,6 +125,8 @@ class SettingsController extends Controller
             'logo' => 'logo da unidade',
         ]);
 
+        $businessHours = $request->has('business_hours') ? $this->normalizeBusinessHours($request) : null;
+
         if ($currentLocation) {
             $locationData = [
                 'name' => $data['company_name'],
@@ -129,8 +138,12 @@ class SettingsController extends Controller
                 'district' => $data['district'] ?? null,
                 'city' => $data['city'] ?? $currentLocation->city,
                 'state' => isset($data['state']) ? mb_strtoupper($data['state']) : null,
-                'opening_hours' => $data['opening_hours'] ?? null,
+                'opening_hours' => $businessHours !== null ? $this->summarizeBusinessHours($businessHours) : ($data['opening_hours'] ?? null),
             ];
+
+            if ($businessHours !== null) {
+                $locationData['business_hours'] = $businessHours;
+            }
 
             if ($request->has('latitude') || $request->has('longitude')) {
                 $locationData['latitude'] = $data['latitude'] ?? null;
@@ -148,7 +161,10 @@ class SettingsController extends Controller
             $before = $currentLocation->only(array_keys($locationData));
             $currentLocation->update($locationData);
             $after = $currentLocation->fresh()->only(array_keys($locationData));
-            $changedFields = array_keys(array_diff_assoc($after, $before));
+            $changedFields = collect($after)
+                ->filter(fn ($value, string $field) => json_encode($value) !== json_encode($before[$field] ?? null))
+                ->keys()
+                ->all();
 
             if ($changedFields !== []) {
                 AuditLogger::record(
@@ -189,6 +205,67 @@ class SettingsController extends Controller
         }
 
         return back()->with('status', 'Configuracoes salvas com sucesso.');
+    }
+
+    /**
+     * @return array<string, array{is_open: bool, opens: string, closes: string}>
+     */
+    private function normalizeBusinessHours(Request $request): array
+    {
+        $submitted = $request->input('business_hours', []);
+        $hours = [];
+        $errors = [];
+
+        foreach (\App\Models\WashLocation::businessHourDays() as $day => $label) {
+            $dayInput = is_array($submitted[$day] ?? null) ? $submitted[$day] : [];
+            $isOpen = (bool) ($dayInput['is_open'] ?? false);
+            $opens = (string) ($dayInput['opens'] ?? '08:00');
+            $closes = (string) ($dayInput['closes'] ?? '18:00');
+
+            if ($isOpen) {
+                if (! preg_match('/^\d{2}:\d{2}$/', $opens)) {
+                    $errors["business_hours.{$day}.opens"] = "Informe o horário de abertura de {$label}.";
+                }
+
+                if (! preg_match('/^\d{2}:\d{2}$/', $closes)) {
+                    $errors["business_hours.{$day}.closes"] = "Informe o horário de fechamento de {$label}.";
+                }
+
+                if ($opens === $closes) {
+                    $errors["business_hours.{$day}.closes"] = "O horário de fechamento de {$label} deve ser diferente da abertura.";
+                }
+            }
+
+            $hours[$day] = [
+                'is_open' => $isOpen,
+                'opens' => $opens !== '' ? $opens : '08:00',
+                'closes' => $closes !== '' ? $closes : '18:00',
+            ];
+        }
+
+        if ($errors !== []) {
+            throw ValidationException::withMessages($errors);
+        }
+
+        return $hours;
+    }
+
+    /**
+     * @param  array<string, array{is_open: bool, opens: string, closes: string}>  $businessHours
+     */
+    private function summarizeBusinessHours(array $businessHours): string
+    {
+        return collect(\App\Models\WashLocation::businessHourDays())
+            ->map(function (string $label, string $day) use ($businessHours) {
+                $dayHours = $businessHours[$day] ?? ['is_open' => false, 'opens' => '08:00', 'closes' => '18:00'];
+
+                if (! $dayHours['is_open']) {
+                    return $label.': fechado';
+                }
+
+                return $label.': '.$dayHours['opens'].' as '.$dayHours['closes'];
+            })
+            ->implode('; ');
     }
 
     private function loyaltyProgramForCurrentLocation(): LoyaltyProgram

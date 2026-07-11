@@ -141,6 +141,45 @@ class SettingsManagementTest extends TestCase
         $this->assertSame('-46.4207678', (string) $location->longitude);
     }
 
+    public function test_admin_can_update_structured_business_hours(): void
+    {
+        $location = WashLocation::factory()->create();
+        $admin = User::factory()->create([
+            'role' => User::ROLE_ADMIN,
+            'wash_location_id' => $location->id,
+        ]);
+
+        $this->actingAs($admin)
+            ->put(route('settings.update'), [
+                'company_name' => $location->name,
+                'company_whatsapp' => $location->phone,
+                'address' => $location->address,
+                'address_number' => $location->address_number,
+                'district' => $location->district,
+                'city' => $location->city,
+                'state' => $location->state ?? 'SP',
+                'theme' => AppSetting::THEME_LIGHT,
+                'business_hours' => [
+                    'monday' => ['is_open' => '1', 'opens' => '07:30', 'closes' => '18:30'],
+                    'tuesday' => ['is_open' => '1', 'opens' => '07:30', 'closes' => '18:30'],
+                    'wednesday' => ['is_open' => '1', 'opens' => '07:30', 'closes' => '18:30'],
+                    'thursday' => ['is_open' => '1', 'opens' => '07:30', 'closes' => '18:30'],
+                    'friday' => ['is_open' => '1', 'opens' => '07:30', 'closes' => '18:30'],
+                    'saturday' => ['is_open' => '1', 'opens' => '08:00', 'closes' => '14:00'],
+                    'sunday' => ['is_open' => '0', 'opens' => '08:00', 'closes' => '14:00'],
+                ],
+            ])
+            ->assertRedirect();
+
+        $location->refresh();
+
+        $this->assertSame('07:30', $location->business_hours['monday']['opens']);
+        $this->assertTrue($location->business_hours['saturday']['is_open']);
+        $this->assertFalse($location->business_hours['sunday']['is_open']);
+        $this->assertStringContainsString('Segunda: 07:30 as 18:30', $location->opening_hours);
+        $this->assertStringContainsString('Domingo: fechado', $location->opening_hours);
+    }
+
     public function test_admin_can_upload_valid_unit_logo(): void
     {
         Storage::fake('public');

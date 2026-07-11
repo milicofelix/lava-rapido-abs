@@ -112,11 +112,43 @@
                         </div>
                     </div>
 
-                    <label class="block md:col-span-2">
-                        <span class="text-sm font-semibold text-slate-700">Horario de funcionamento</span>
-                        <textarea name="opening_hours" rows="4" placeholder="Seg a sex: 08:00 as 18:00&#10;Sab: 08:00 as 14:00" class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100">{{ old('opening_hours', $currentLocation?->opening_hours) }}</textarea>
-                        @error('opening_hours') <span class="text-sm text-red-600">{{ $message }}</span> @enderror
-                    </label>
+                    <div class="md:col-span-2 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                        <div class="flex flex-wrap items-start justify-between gap-3">
+                            <div>
+                                <p class="text-sm font-black text-slate-900">Horario de funcionamento</p>
+                                <p class="mt-1 text-xs leading-5 text-slate-500">Defina os dias e horarios para o mapa publico exibir Aberto ou Fechado automaticamente.</p>
+                            </div>
+                            <span class="rounded-full bg-blue-50 px-3 py-1 text-xs font-black text-blue-700 ring-1 ring-blue-100">Afeta o mapa publico</span>
+                        </div>
+
+                        <div class="mt-4 grid gap-3">
+                            @foreach ($businessHourDays as $day => $label)
+                                @php
+                                    $dayHours = $businessHours[$day] ?? ['is_open' => false, 'opens' => '08:00', 'closes' => '18:00'];
+                                    $isOpen = (bool) old('business_hours.'.$day.'.is_open', $dayHours['is_open']);
+                                @endphp
+                                <div class="grid gap-3 rounded-xl border border-slate-200 bg-white p-3 md:grid-cols-[150px_1fr_1fr] md:items-end">
+                                    <label class="flex items-center gap-3 md:pb-2">
+                                        <input type="hidden" name="business_hours[{{ $day }}][is_open]" value="0">
+                                        <input type="checkbox" name="business_hours[{{ $day }}][is_open]" value="1" @checked($isOpen) class="h-4 w-4 rounded border-slate-300 text-blue-700">
+                                        <span class="text-sm font-black text-slate-900">{{ $label }}</span>
+                                    </label>
+
+                                    <label class="block">
+                                        <span class="text-xs font-bold text-slate-500">Abertura</span>
+                                        <input type="time" name="business_hours[{{ $day }}][opens]" value="{{ old('business_hours.'.$day.'.opens', $dayHours['opens']) }}" class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100">
+                                        @error('business_hours.'.$day.'.opens') <span class="text-sm text-red-600">{{ $message }}</span> @enderror
+                                    </label>
+
+                                    <label class="block">
+                                        <span class="text-xs font-bold text-slate-500">Fechamento</span>
+                                        <input type="time" name="business_hours[{{ $day }}][closes]" value="{{ old('business_hours.'.$day.'.closes', $dayHours['closes']) }}" class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100">
+                                        @error('business_hours.'.$day.'.closes') <span class="text-sm text-red-600">{{ $message }}</span> @enderror
+                                    </label>
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
                 </div>
             </section>
 
@@ -331,6 +363,7 @@
                     <div class="flex justify-between gap-4"><dt>CNPJ</dt><dd class="font-semibold text-slate-900">{{ $currentLocation?->document ?: '-' }}</dd></div>
                     <div class="flex justify-between gap-4"><dt>Endereço</dt><dd class="max-w-44 truncate font-semibold text-slate-900">{{ $currentLocation?->fullAddress() ?: '-' }}</dd></div>
                     <div class="flex justify-between gap-4"><dt>Cidade/UF</dt><dd class="font-semibold text-slate-900">{{ trim(($currentLocation?->city ?? '').'/'.($currentLocation?->state ?? ''), '/') ?: '-' }}</dd></div>
+                    <div class="flex justify-between gap-4"><dt>Funcionamento</dt><dd class="max-w-44 truncate font-semibold text-slate-900">{{ $currentLocation?->opening_hours ?: '-' }}</dd></div>
                     <div class="flex justify-between gap-4"><dt>Mapa</dt><dd class="font-semibold {{ $currentLocation?->hasCoordinates() ? 'text-green-700' : 'text-amber-700' }}">{{ $currentLocation?->hasCoordinates() ? 'Com coordenadas' : 'Pendente' }}</dd></div>
                 </dl>
             </div>

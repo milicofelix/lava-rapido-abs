@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Str;
 
 class WashLocation extends Model
@@ -53,6 +54,7 @@ class WashLocation extends Model
         'active_orders_count',
         'phone',
         'opening_hours',
+        'business_hours',
     ];
 
     protected static function booted(): void
@@ -103,6 +105,7 @@ class WashLocation extends Model
             'trial_ends_at' => 'datetime',
             'subscription_ends_at' => 'datetime',
             'blocked_at' => 'datetime',
+            'business_hours' => 'array',
         ];
     }
 
@@ -145,6 +148,104 @@ class WashLocation extends Model
             self::STATUS_BUSY => 'Em movimento',
             self::STATUS_CLOSED => 'Fechado',
         ];
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    public static function businessHourDays(): array
+    {
+        return [
+            'monday' => 'Segunda',
+            'tuesday' => 'Terca',
+            'wednesday' => 'Quarta',
+            'thursday' => 'Quinta',
+            'friday' => 'Sexta',
+            'saturday' => 'Sabado',
+            'sunday' => 'Domingo',
+        ];
+    }
+
+    /**
+     * @return array<string, array{is_open: bool, opens: string, closes: string}>
+     */
+    public static function defaultBusinessHours(): array
+    {
+        return collect(self::businessHourDays())
+            ->mapWithKeys(fn (string $label, string $day) => [
+                $day => [
+                    'is_open' => $day !== 'sunday',
+                    'opens' => '08:00',
+                    'closes' => '18:00',
+                ],
+            ])
+            ->all();
+    }
+
+    /**
+     * @return array<string, array{is_open: bool, opens: string, closes: string}>
+     */
+    public function normalizedBusinessHours(): array
+    {
+        $hours = is_array($this->business_hours) && $this->business_hours !== []
+            ? $this->business_hours
+            : self::defaultBusinessHours();
+
+        return collect(self::businessHourDays())
+            ->mapWithKeys(function (string $label, string $day) use ($hours) {
+                $dayHours = is_array($hours[$day] ?? null) ? $hours[$day] : [];
+
+                return [
+                    $day => [
+                        'is_open' => (bool) ($dayHours['is_open'] ?? false),
+                        'opens' => $this->normalizeHour((string) ($dayHours['opens'] ?? '08:00')),
+                        'closes' => $this->normalizeHour((string) ($dayHours['closes'] ?? '18:00')),
+                    ],
+                ];
+            })
+            ->all();
+    }
+
+    public function isOpenNow(?Carbon $moment = null): bool
+    {
+        $moment ??= now();
+
+        return $this->isOpenAt($moment);
+    }
+
+    public function publicStatus(?Carbon $moment = null): string
+    {
+        if ($this->status === self::STATUS_CLOSED) {
+            return self::STATUS_CLOSED;
+        }
+
+        if (! $this->isOpenNow($moment)) {
+            return self::STATUS_CLOSED;
+        }
+
+        return $this->status === self::STATUS_BUSY ? self::STATUS_BUSY : self::STATUS_OPEN;
+    }
+
+    public function publicStatusLabel(?Carbon $moment = null): string
+    {
+        return self::statuses()[$this->publicStatus($moment)] ?? $this->publicStatus($moment);
+    }
+
+    public function openingHoursSummary(): string
+    {
+        $hours = $this->normalizedBusinessHours();
+
+        return collect(self::businessHourDays())
+            ->map(function (string $label, string $day) use ($hours) {
+                $dayHours = $hours[$day];
+
+                if (! $dayHours['is_open']) {
+                    return $label.': fechado';
+                }
+
+                return $label.': '.$dayHours['opens'].' as '.$dayHours['closes'];
+            })
+            ->implode('; ');
     }
 
     public static function accountStatuses(): array
@@ -218,6 +319,59 @@ class WashLocation extends Model
     public function statusLabel(): string
     {
         return self::statuses()[$this->status] ?? $this->status;
+    }
+
+    private function isOpenAt(Carbon $moment): bool
+    {
+        $hours = $this->normalizedBusinessHours();
+        $dayKey = strtolower($moment->englishDayOfWeek);
+        $dayHours = $hours[$dayKey] ?? null;
+
+        if ($this->isMomentInsideDayHours($moment, $dayHours)) {
+            return true;
+        }
+
+        $previousDayKey = strtolower($moment->copy()->subDay()->englishDayOfWeek);
+        $previousDayHours = $hours[$previousDayKey] ?? null;
+
+        return $this->isMomentInsideDayHours($moment, $previousDayHours, true);
+    }
+
+    /**
+     * @param  array{is_open: bool, opens: string, closes: string}|null  $dayHours
+     */
+    private function isMomentInsideDayHours(Carbon $moment, ?array $dayHours, bool $fromPreviousDay = false): bool
+    {
+        if (! $dayHours || ! $dayHours['is_open']) {
+            return false;
+        }
+
+        $open = $moment->copy()->setTimeFromTimeString($dayHours['opens']);
+        $close = $moment->copy()->setTimeFromTimeString($dayHours['closes']);
+        $isOvernight = $close->lessThanOrEqualTo($open);
+
+        if ($fromPreviousDay && ! $isOvernight) {
+            return false;
+        }
+
+        if ($fromPreviousDay) {
+            $open->subDay();
+        }
+
+        if ($isOvernight && ! $fromPreviousDay) {
+            $close->addDay();
+        }
+
+        return $moment->greaterThanOrEqualTo($open) && $moment->lessThan($close);
+    }
+
+    private function normalizeHour(string $hour): string
+    {
+        if (preg_match('/^\d{2}:\d{2}$/', $hour) === 1) {
+            return $hour;
+        }
+
+        return '08:00';
     }
 
     public function subscriptionStatus(): string
