@@ -21,6 +21,31 @@ class ProductionHardeningTest extends TestCase
             ->assertHeader('Permissions-Policy', 'accelerometer=(), camera=(), geolocation=(self), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=()');
     }
 
+    public function test_request_id_header_is_added_to_responses(): void
+    {
+        $this->get('/up')
+            ->assertHeader('X-Request-Id');
+    }
+
+    public function test_valid_incoming_request_id_is_preserved(): void
+    {
+        $this->withHeader('X-Request-Id', 'monitor-123456')
+            ->get('/up')
+            ->assertHeader('X-Request-Id', 'monitor-123456');
+    }
+
+    public function test_invalid_incoming_request_id_is_replaced(): void
+    {
+        $response = $this->withHeader('X-Request-Id', '<script>')
+            ->get('/up');
+
+        $this->assertNotSame('<script>', $response->headers->get('X-Request-Id'));
+        $this->assertMatchesRegularExpression(
+            '/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/',
+            (string) $response->headers->get('X-Request-Id'),
+        );
+    }
+
     public function test_hsts_header_is_applied_to_secure_requests(): void
     {
         $this->get('https://localhost/up')

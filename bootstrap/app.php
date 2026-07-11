@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Middleware\EnsureActiveSubscription;
+use App\Http\Middleware\RequestId;
 use App\Http\Middleware\SecurityHeaders;
 use App\Http\Middleware\EnsureUserCanAccess;
 use App\Http\Middleware\EnsureUserHasRole;
@@ -30,6 +31,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $schedule->command('loyalty:expire-coupons')->dailyAt('03:30');
     })
     ->withMiddleware(function (Middleware $middleware): void {
+        $middleware->append(RequestId::class);
         $middleware->append(SecurityHeaders::class);
 
         $middleware->web(append: [

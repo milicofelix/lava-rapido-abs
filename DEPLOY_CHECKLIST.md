@@ -152,6 +152,7 @@ Confirmar no retorno HTTP:
 - [ ] Status `200 OK` no endpoint `/up`.
 - [ ] Status `200 OK` no endpoint `/ready`.
 - [ ] Header `X-Frame-Options: SAMEORIGIN`.
+- [ ] Header `X-Request-Id` presente para rastrear logs por requisicao.
 - [ ] Header `X-Content-Type-Options: nosniff`.
 - [ ] Header `Referrer-Policy: strict-origin-when-cross-origin`.
 - [ ] Header `Strict-Transport-Security` quando estiver em HTTPS.
