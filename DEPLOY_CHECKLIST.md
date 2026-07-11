@@ -137,11 +137,20 @@ php artisan queue:restart
 Executar apos deploy:
 
 ```bash
+curl -I https://seudominio.com/up
 php artisan about
 php artisan route:list
 php artisan schedule:list
 php artisan mercado-pago:diagnose
 ```
+
+Confirmar no retorno HTTP:
+
+- [ ] Status `200 OK` no endpoint `/up`.
+- [ ] Header `X-Frame-Options: SAMEORIGIN`.
+- [ ] Header `X-Content-Type-Options: nosniff`.
+- [ ] Header `Referrer-Policy: strict-origin-when-cross-origin`.
+- [ ] Header `Strict-Transport-Security` quando estiver em HTTPS.
 
 Se estiver em homologacao sandbox com API liberada:
 
