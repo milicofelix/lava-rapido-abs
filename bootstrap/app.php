@@ -7,6 +7,7 @@ use App\Http\Middleware\EnsureUserHasRole;
 use App\Http\Middleware\HandleInertiaRequests;
 use App\Console\Commands\ExpireLoyaltyCouponsCommand;
 use App\Console\Commands\ProductionCheckCommand;
+use App\Console\Commands\ReadinessCheckCommand;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -22,6 +23,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withCommands([
         ExpireLoyaltyCouponsCommand::class,
         ProductionCheckCommand::class,
+        ReadinessCheckCommand::class,
     ])
     ->withSchedule(function (Schedule $schedule): void {
         $schedule->command('subscriptions:expire')->hourly();

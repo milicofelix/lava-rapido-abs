@@ -34,10 +34,23 @@ use App\Http\Controllers\MercadoPagoWebhookController;
 use App\Http\Controllers\PublicWashLocationMapController;
 use App\Http\Controllers\PublicWashLocationRequestController;
 use App\Http\Controllers\PublicWashTrackingController;
+use App\Http\Controllers\ReadinessController;
 use App\Models\User;
 use App\Support\Access\AccessControl;
+use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
+use Illuminate\Foundation\Http\Middleware\ValidateCsrfToken;
+use Illuminate\Session\Middleware\StartSession;
 use Illuminate\Support\Facades\Route;
+use Illuminate\View\Middleware\ShareErrorsFromSession;
 
+Route::get('/ready', ReadinessController::class)
+    ->withoutMiddleware([
+        AddQueuedCookiesToResponse::class,
+        StartSession::class,
+        ShareErrorsFromSession::class,
+        ValidateCsrfToken::class,
+    ])
+    ->name('readiness.show');
 Route::redirect('/', '/lava-rapidos');
 Route::get('/quero-cadastrar-meu-lava-rapido', [PublicWashLocationRequestController::class, 'create'])->name('public.location-requests.create');
 Route::post('/quero-cadastrar-meu-lava-rapido', [PublicWashLocationRequestController::class, 'store'])->name('public.location-requests.store');

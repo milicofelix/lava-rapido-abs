@@ -138,8 +138,10 @@ Executar apos deploy:
 
 ```bash
 curl -I https://seudominio.com/up
+curl -I https://seudominio.com/ready
 php artisan about
 php artisan app:production-check
+php artisan app:readiness-check
 php artisan route:list
 php artisan schedule:list
 php artisan mercado-pago:diagnose
@@ -148,11 +150,13 @@ php artisan mercado-pago:diagnose
 Confirmar no retorno HTTP:
 
 - [ ] Status `200 OK` no endpoint `/up`.
+- [ ] Status `200 OK` no endpoint `/ready`.
 - [ ] Header `X-Frame-Options: SAMEORIGIN`.
 - [ ] Header `X-Content-Type-Options: nosniff`.
 - [ ] Header `Referrer-Policy: strict-origin-when-cross-origin`.
 - [ ] Header `Strict-Transport-Security` quando estiver em HTTPS.
 - [ ] `php artisan app:production-check` sem falhas criticas.
+- [ ] `php artisan app:readiness-check` aprovado.
 
 Se estiver em homologacao sandbox com API liberada:
 

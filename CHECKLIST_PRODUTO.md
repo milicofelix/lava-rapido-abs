@@ -231,9 +231,11 @@ Documento de acompanhamento do que ja foi construido e do que ainda falta para d
 - [x] Configuracao pt_BR.
 - [x] Comandos agendados: assinatura e expiracao de cupons.
 - [x] Endpoint de saude `/up` validado por teste.
+- [x] Endpoint de readiness `/ready` para monitoramento de banco, cache e escrita.
 - [x] Headers basicos de seguranca aplicados por middleware.
 - [x] Comando `app:production-check` para validar configuracoes antes do deploy.
-- [x] Suite completa validada no pacote de hardening atual: 250 testes e 1270 assercoes.
+- [x] Comando `app:readiness-check` para validacao operacional em runtime.
+- [x] Suite completa validada no pacote de hardening atual: 252 testes e 1280 assercoes.
 - [ ] Rodar suite completa antes de release.
 - [ ] Configurar CI/CD.
 - [ ] Configurar backup.
