@@ -232,7 +232,8 @@ Documento de acompanhamento do que ja foi construido e do que ainda falta para d
 - [x] Comandos agendados: assinatura e expiracao de cupons.
 - [x] Endpoint de saude `/up` validado por teste.
 - [x] Headers basicos de seguranca aplicados por middleware.
-- [x] Suite completa validada no pacote de hardening atual: 246 testes e 1248 assercoes.
+- [x] Comando `app:production-check` para validar configuracoes antes do deploy.
+- [x] Suite completa validada no pacote de hardening atual: 249 testes e 1259 assercoes.
 - [ ] Rodar suite completa antes de release.
 - [ ] Configurar CI/CD.
 - [ ] Configurar backup.

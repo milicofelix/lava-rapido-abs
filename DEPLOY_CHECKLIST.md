@@ -139,6 +139,7 @@ Executar apos deploy:
 ```bash
 curl -I https://seudominio.com/up
 php artisan about
+php artisan app:production-check
 php artisan route:list
 php artisan schedule:list
 php artisan mercado-pago:diagnose
@@ -151,11 +152,18 @@ Confirmar no retorno HTTP:
 - [ ] Header `X-Content-Type-Options: nosniff`.
 - [ ] Header `Referrer-Policy: strict-origin-when-cross-origin`.
 - [ ] Header `Strict-Transport-Security` quando estiver em HTTPS.
+- [ ] `php artisan app:production-check` sem falhas criticas.
 
 Se estiver em homologacao sandbox com API liberada:
 
 ```bash
 php artisan mercado-pago:diagnose --api
+```
+
+Se o objetivo for bloquear qualquer aviso antes de producao real:
+
+```bash
+php artisan app:production-check --strict
 ```
 
 ## 7. Homologacao manual obrigatoria
