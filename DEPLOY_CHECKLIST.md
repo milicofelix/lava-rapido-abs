@@ -157,6 +157,13 @@ php artisan schedule:list
 php artisan mercado-pago:diagnose
 ```
 
+Se houver unidades antigas sem latitude/longitude, simular antes de gravar:
+
+```bash
+php artisan app:reprocess-location-coordinates --dry-run --limit=20
+php artisan app:reprocess-location-coordinates --limit=20
+```
+
 Confirmar no retorno HTTP:
 
 - [ ] Status `200 OK` no endpoint `/up`.
@@ -169,6 +176,7 @@ Confirmar no retorno HTTP:
 - [ ] `php artisan app:backup-check` aprovado.
 - [ ] `php artisan app:production-check` sem falhas criticas.
 - [ ] `php artisan app:readiness-check` aprovado.
+- [ ] Coordenadas pendentes reprocessadas quando houver unidades com mapa pendente.
 
 Se estiver em homologacao sandbox com API liberada:
 
