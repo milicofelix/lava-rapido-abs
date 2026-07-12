@@ -238,7 +238,8 @@ Documento de acompanhamento do que ja foi construido e do que ainda falta para d
 - [x] Comando `app:readiness-check` para validacao operacional em runtime.
 - [x] Suite completa validada no pacote de hardening atual: 255 testes e 1285 assercoes.
 - [ ] Rodar suite completa antes de release.
-- [ ] Configurar CI/CD.
+- [x] Configurar CI/CD.
+- [x] GitHub Actions com validacao Composer, testes PHP e build Vite.
 - [ ] Configurar backup.
 - [x] Revisar logs e monitoramento.
 - [x] Revisar seguranca de upload.

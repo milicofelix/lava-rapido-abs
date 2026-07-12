@@ -1,0 +1,69 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+      - master
+      - develop
+  pull_request:
+
+jobs:
+  tests:
+    name: Tests and build
+    runs-on: ubuntu-latest
+
+    env:
+      APP_ENV: testing
+      APP_DEBUG: "false"
+      APP_TIMEZONE: America/Sao_Paulo
+      APP_LOCALE: pt_BR
+      APP_FALLBACK_LOCALE: pt_BR
+      APP_FAKER_LOCALE: pt_BR
+      DB_CONNECTION: sqlite
+      DB_DATABASE: ":memory:"
+      CACHE_STORE: array
+      SESSION_DRIVER: array
+      QUEUE_CONNECTION: sync
+      BROADCAST_CONNECTION: "null"
+      MAIL_MAILER: array
+      MERCADO_PAGO_ENVIRONMENT: sandbox
+      MERCADO_PAGO_LIVE_ENABLED: "false"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.2"
+          extensions: bcmath, ctype, curl, dom, fileinfo, filter, mbstring, openssl, pdo_sqlite, tokenizer, xml
+          coverage: none
+
+      - name: Validate Composer
+        run: composer validate --strict --no-check-publish
+
+      - name: Install Composer dependencies
+        run: composer install --prefer-dist --no-interaction --no-progress
+
+      - name: Prepare Laravel
+        run: |
+          cp .env.example .env
+          php artisan key:generate --ansi
+          php artisan config:clear --ansi
+
+      - name: Run PHP tests
+        run: php artisan test
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Install Node dependencies
+        run: npm ci
+
+      - name: Build frontend
+        run: npm run build

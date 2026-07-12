@@ -5,6 +5,7 @@ Use este documento antes de colocar uma nova versao em homologacao ou producao.
 ## 1. Antes do deploy
 
 - [ ] Confirmar branch/tag que sera publicada.
+- [ ] Confirmar pipeline CI verde na branch/tag que sera publicada.
 - [ ] Confirmar que nao existem migracoes pendentes sem revisao.
 - [ ] Confirmar que o `CHECKLIST_PRODUTO.md` foi atualizado.
 - [ ] Confirmar se a entrega mexe em pagamento, assinatura, WhatsApp, permissao ou dados financeiros.
