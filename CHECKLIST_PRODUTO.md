@@ -42,7 +42,7 @@ Documento de acompanhamento do que ja foi construido e do que ainda falta para d
 - [x] Permissoes configuraveis para operador em alguns acessos.
 - [x] Operador sem acesso a financeiro, assinatura e areas administrativas.
 - [x] Testes para bloqueios de acesso.
-- [ ] Tela mais completa para configurar permissoes por perfil.
+- [x] Tela mais completa para configurar permissoes por perfil.
 - [ ] Auditoria visual de permissoes por usuario.
 
 ## Lava-rapidos e unidades
@@ -239,7 +239,7 @@ Documento de acompanhamento do que ja foi construido e do que ainda falta para d
 - [x] Comando `app:readiness-check` para validacao operacional em runtime.
 - [x] Comando `app:backup-check` para validar requisitos de backup.
 - [x] Runbook de backup e restore documentado.
-- [x] Suite completa validada no pacote de hardening atual: 260 testes e 1307 assercoes.
+- [x] Suite completa validada no pacote de hardening atual: 261 testes e 1319 assercoes.
 - [ ] Rodar suite completa antes de release.
 - [x] Configurar CI/CD.
 - [x] GitHub Actions com validacao Composer, testes PHP e build Vite.

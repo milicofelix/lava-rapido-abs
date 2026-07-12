@@ -5,6 +5,7 @@ namespace Tests\Feature\App;
 use App\Models\AppSetting;
 use App\Models\AuditLog;
 use App\Models\LoyaltyProgram;
+use App\Models\RolePermissionSetting;
 use App\Models\Service;
 use App\Models\User;
 use App\Models\WashLocation;
@@ -31,7 +32,37 @@ class SettingsManagementTest extends TestCase
             ->assertSee('Habilitar Fiado')
             ->assertSee('Programa de fidelidade')
             ->assertSee('Tema do painel')
+            ->assertSee('Matriz de acesso por perfil')
+            ->assertSee('Exceções configuráveis')
             ->assertDontSee('URL do Google Maps');
+    }
+
+    public function test_settings_page_shows_permission_matrix_by_profile(): void
+    {
+        $location = WashLocation::factory()->create();
+        $admin = User::factory()->create([
+            'role' => User::ROLE_ADMIN,
+            'wash_location_id' => $location->id,
+        ]);
+
+        RolePermissionSetting::setForLocation($location->id, User::ROLE_OPERATOR, [
+            AccessControl::VIEW_WASH_ORDERS => true,
+            AccessControl::CREATE_WASH_ORDER => false,
+            AccessControl::SEND_WASH_NOTIFICATIONS => false,
+        ]);
+
+        $this->actingAs($admin)
+            ->get(route('settings.edit'))
+            ->assertOk()
+            ->assertSee('Matriz de acesso por perfil')
+            ->assertSee('Dono')
+            ->assertSee('Administrador')
+            ->assertSee('Atendente')
+            ->assertSee('Operador')
+            ->assertSee('Avançar status da lavagem')
+            ->assertSee('+ Visualizar detalhes da lavagem')
+            ->assertSee('Bloqueado por configuração')
+            ->assertSee('Abrir e listar lavagens');
     }
 
     public function test_settings_page_tolerates_cached_settings_without_new_modules(): void

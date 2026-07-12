@@ -25,9 +25,16 @@ class SettingsController extends Controller
 {
     public function edit(): View
     {
+        $currentLocation = TenantContext::currentLocation();
+        $rolePermissionGroups = AccessControl::configurableRolePermissions();
+        $rolePermissionValues = RolePermissionSetting::valuesForLocation(
+            TenantContext::currentLocationId(),
+            $rolePermissionGroups,
+        );
+
         return view('app.settings.edit', [
             'settings' => AppSetting::allSettings(),
-            'currentLocation' => TenantContext::currentLocation(),
+            'currentLocation' => $currentLocation,
             'loyaltyProgram' => $this->loyaltyProgramForCurrentLocation(),
             'loyaltyCountScopes' => LoyaltyProgram::countScopes(),
             'loyaltyRewardTypes' => LoyaltyProgram::rewardTypes(),
@@ -36,11 +43,9 @@ class SettingsController extends Controller
             'roleLabels' => User::roleLabels(),
             'permissionLabels' => AccessControl::permissionLabels(),
             'permissionDescriptions' => AccessControl::permissionDescriptions(),
-            'rolePermissionGroups' => AccessControl::configurableRolePermissions(),
-            'rolePermissionValues' => RolePermissionSetting::valuesForLocation(
-                TenantContext::currentLocationId(),
-                AccessControl::configurableRolePermissions(),
-            ),
+            'rolePermissionGroups' => $rolePermissionGroups,
+            'rolePermissionValues' => $rolePermissionValues,
+            'permissionMatrix' => $this->permissionMatrix($rolePermissionGroups, $rolePermissionValues),
             'themes' => [
                 AppSetting::THEME_LIGHT => 'Padrao claro',
                 AppSetting::THEME_DARK => 'Dark',
@@ -335,6 +340,44 @@ class SettingsController extends Controller
         }
 
         return $changes;
+    }
+
+    /**
+     * @param  array<string, array<int, string>>  $configurableGroups
+     * @param  array<string, array<string, bool>>  $configuredValues
+     * @return array<string, array{base: array<int, string>, configurable: array<int, string>, enabled: array<int, string>, blocked: array<int, string>}>
+     */
+    private function permissionMatrix(array $configurableGroups, array $configuredValues): array
+    {
+        $roles = [
+            User::ROLE_OWNER,
+            User::ROLE_ADMIN,
+            User::ROLE_ATTENDANT,
+            User::ROLE_OPERATOR,
+        ];
+
+        return collect($roles)
+            ->mapWithKeys(function (string $role) use ($configurableGroups, $configuredValues): array {
+                $base = AccessControl::rolePermissions()[$role] ?? [];
+                $configurable = $configurableGroups[$role] ?? [];
+                $enabled = collect($configurable)
+                    ->filter(fn (string $permission): bool => (bool) ($configuredValues[$role][$permission] ?? false))
+                    ->values()
+                    ->all();
+
+                $blocked = collect($configurable)
+                    ->reject(fn (string $permission): bool => in_array($permission, $enabled, true))
+                    ->values()
+                    ->all();
+
+                return [$role => [
+                    'base' => $base,
+                    'configurable' => $configurable,
+                    'enabled' => $enabled,
+                    'blocked' => $blocked,
+                ]];
+            })
+            ->all();
     }
 
     private function mergeCoordinatesFromMapsUrl(Request $request): void

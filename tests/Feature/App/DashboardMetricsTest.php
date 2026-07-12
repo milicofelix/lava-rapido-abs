@@ -16,8 +16,17 @@ class DashboardMetricsTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected function tearDown(): void
+    {
+        Carbon::setTestNow();
+
+        parent::tearDown();
+    }
+
     public function test_dashboard_shows_operational_and_financial_metrics(): void
     {
+        Carbon::setTestNow(Carbon::parse('2026-06-18 10:00:00'));
+
         $user = User::factory()->create();
         $customer = Customer::factory()->create(['name' => 'Cliente Recorrente']);
         $vehicle = Vehicle::factory()->for($customer)->create(['plate' => 'HOJ1A23']);
@@ -127,6 +136,8 @@ class DashboardMetricsTest extends TestCase
             ->assertSee('Serviços mais realizados')
             ->assertSee('Lavagem premium')
             ->assertSee('Atividades recentes');
+
+        Carbon::setTestNow();
     }
 
     public function test_dashboard_greeting_follows_current_time(): void
