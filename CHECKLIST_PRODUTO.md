@@ -236,11 +236,13 @@ Documento de acompanhamento do que ja foi construido e do que ainda falta para d
 - [x] `X-Request-Id` em todas as respostas para rastreabilidade de logs.
 - [x] Comando `app:production-check` para validar configuracoes antes do deploy.
 - [x] Comando `app:readiness-check` para validacao operacional em runtime.
-- [x] Suite completa validada no pacote de hardening atual: 255 testes e 1285 assercoes.
+- [x] Comando `app:backup-check` para validar requisitos de backup.
+- [x] Runbook de backup e restore documentado.
+- [x] Suite completa validada no pacote de hardening atual: 259 testes e 1298 assercoes.
 - [ ] Rodar suite completa antes de release.
 - [x] Configurar CI/CD.
 - [x] GitHub Actions com validacao Composer, testes PHP e build Vite.
-- [ ] Configurar backup.
+- [x] Configurar backup.
 - [x] Revisar logs e monitoramento.
 - [x] Revisar seguranca de upload.
 - [x] Revisar indices de banco para escala.

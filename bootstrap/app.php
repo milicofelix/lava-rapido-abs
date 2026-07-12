@@ -3,6 +3,7 @@
 use App\Http\Middleware\EnsureActiveSubscription;
 use App\Http\Middleware\RequestId;
 use App\Http\Middleware\SecurityHeaders;
+use App\Console\Commands\BackupCheckCommand;
 use App\Http\Middleware\EnsureUserCanAccess;
 use App\Http\Middleware\EnsureUserHasRole;
 use App\Http\Middleware\HandleInertiaRequests;
@@ -22,6 +23,7 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withCommands([
+        BackupCheckCommand::class,
         ExpireLoyaltyCouponsCommand::class,
         ProductionCheckCommand::class,
         ReadinessCheckCommand::class,

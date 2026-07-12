@@ -47,6 +47,14 @@ Use este documento antes de colocar uma nova versao em homologacao ou producao.
 - [ ] Rotacao de logs configurada.
 - [ ] Monitoramento de erro definido, se houver.
 
+### Backup
+
+- [ ] `BACKUP_STORAGE_PATH` definido quando houver destino local/volume dedicado.
+- [ ] `BACKUP_RETENTION_DAYS` definido, minimo recomendado de 30 dias.
+- [ ] Runbook [BACKUP_RUNBOOK.md](BACKUP_RUNBOOK.md) revisado.
+- [ ] `php artisan app:backup-check` executado.
+- [ ] Restore testado em homologacao antes da primeira producao.
+
 ### Mercado Pago
 
 - [ ] `MERCADO_PAGO_ENVIRONMENT=sandbox` em homologacao.
@@ -141,6 +149,7 @@ Executar apos deploy:
 curl -I https://seudominio.com/up
 curl -I https://seudominio.com/ready
 php artisan about
+php artisan app:backup-check
 php artisan app:production-check
 php artisan app:readiness-check
 php artisan route:list
@@ -157,6 +166,7 @@ Confirmar no retorno HTTP:
 - [ ] Header `X-Content-Type-Options: nosniff`.
 - [ ] Header `Referrer-Policy: strict-origin-when-cross-origin`.
 - [ ] Header `Strict-Transport-Security` quando estiver em HTTPS.
+- [ ] `php artisan app:backup-check` aprovado.
 - [ ] `php artisan app:production-check` sem falhas criticas.
 - [ ] `php artisan app:readiness-check` aprovado.
 
