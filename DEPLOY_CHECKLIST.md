@@ -184,6 +184,8 @@ php artisan app:production-check --strict
 
 ## 7. Homologacao manual obrigatoria
 
+Use o roteiro completo em [HOMOLOGACAO_MANUAL.md](HOMOLOGACAO_MANUAL.md) para registrar perfis, cenarios, evidencias e pendencias da rodada.
+
 ### Login e permissoes
 
 - [ ] Acessar como Super Admin.

@@ -248,6 +248,7 @@ Documento de acompanhamento do que ja foi construido e do que ainda falta para d
 - [x] Revisar seguranca de upload.
 - [x] Revisar indices de banco para escala.
 - [x] Checklist de deploy e homologacao documentado.
+- [x] Roteiro dedicado de homologacao manual com dados reais documentado.
 
 ## Antes de voltar para pagamento real e WhatsApp oficial
 
