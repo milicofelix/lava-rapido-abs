@@ -5,6 +5,7 @@ namespace Tests\Feature\App;
 use App\Models\Customer;
 use App\Models\LoyaltyCoupon;
 use App\Models\LoyaltyProgram;
+use App\Models\Payment;
 use App\Models\Service;
 use App\Models\User;
 use App\Models\Vehicle;
@@ -125,6 +126,67 @@ class CustomerManagementTest extends TestCase
             ->assertSee('Últimos cupons')
             ->assertSee('FID-CLI-123')
             ->assertSee('Ducha simples');
+    }
+
+    public function test_customer_edit_shows_consolidated_history_insights(): void
+    {
+        $location = WashLocation::factory()->create();
+        $user = User::factory()->create(['wash_location_id' => $location->id]);
+        $customer = Customer::factory()->create([
+            'wash_location_id' => $location->id,
+            'name' => 'Cliente Histórico',
+        ]);
+        $vehicle = Vehicle::factory()->for($customer)->create([
+            'wash_location_id' => $location->id,
+            'plate' => 'ABC1D23',
+            'brand' => 'Hyundai',
+            'model' => 'HB20',
+        ]);
+        $service = Service::factory()->create([
+            'wash_location_id' => $location->id,
+            'name' => 'Ducha premium',
+            'base_price' => 90,
+            'active' => true,
+        ]);
+        $firstOrder = $this->createDeliveredOrder($location, $customer, $vehicle, $service);
+        $firstOrder->forceFill([
+            'entered_at' => now()->subDays(8),
+            'total_amount' => 90,
+        ])->save();
+        $secondOrder = $this->createDeliveredOrder($location, $customer, $vehicle, $service);
+        $secondOrder->forceFill([
+            'entered_at' => now()->subDay(),
+            'total_amount' => 90,
+        ])->save();
+
+        Payment::factory()->for($firstOrder)->for($user)->create([
+            'amount' => 120,
+            'paid_at' => now()->subDays(8),
+        ]);
+        Payment::factory()->for($secondOrder)->for($user)->create([
+            'amount' => 60,
+            'paid_at' => now()->subDay(),
+        ]);
+
+        $this->actingAs($user)
+            ->get(route('customers.edit', $customer))
+            ->assertOk()
+            ->assertSee('Histórico consolidado')
+            ->assertSee('Resumo do relacionamento')
+            ->assertSee('Lavagens totais')
+            ->assertSee('Receita gerada')
+            ->assertSee('R$ 180,00')
+            ->assertSee('Ticket médio')
+            ->assertSee('R$ 90,00')
+            ->assertSee('Serviço favorito: Ducha premium')
+            ->assertSee('Veículos do cliente')
+            ->assertSee('ABC1D23')
+            ->assertSee('Hyundai HB20')
+            ->assertSee('2 lavagens')
+            ->assertSee('Serviços mais consumidos')
+            ->assertSee('Ducha premium')
+            ->assertSee('Últimas lavagens')
+            ->assertSee($secondOrder->code);
     }
 
     public function test_loyalty_coupon_page_shows_personalized_coupon_and_whatsapp_action(): void

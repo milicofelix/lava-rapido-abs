@@ -7,11 +7,14 @@ use App\Models\Customer;
 use App\Models\AuditLog;
 use App\Models\LoyaltyCoupon;
 use App\Models\LoyaltyProgram;
+use App\Models\Payment;
+use App\Models\WashOrder;
 use App\Support\AuditLogger;
 use App\Support\Loyalty\LoyaltyProgress;
 use App\Support\TenantContext;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
 class CustomerController extends Controller
@@ -83,8 +86,9 @@ class CustomerController extends Controller
             ->latest('earned_at')
             ->limit(10)
             ->get();
+        $customerInsights = $this->customerInsights($customer);
 
-        return view('app.customers.edit', compact('customer', 'loyaltyProgram', 'loyaltyProgress', 'loyaltyCoupons'));
+        return view('app.customers.edit', compact('customer', 'loyaltyProgram', 'loyaltyProgress', 'loyaltyCoupons', 'customerInsights'));
     }
 
     public function update(Request $request, Customer $customer): RedirectResponse
@@ -115,5 +119,72 @@ class CustomerController extends Controller
             'cpf' => ['nullable', 'string', 'max:20'],
             'notes' => ['nullable', 'string', 'max:2000'],
         ]);
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function customerInsights(Customer $customer): array
+    {
+        $ordersQuery = WashOrder::query()
+            ->where('wash_location_id', $customer->wash_location_id)
+            ->where('customer_id', $customer->id);
+
+        $totalWashOrders = (clone $ordersQuery)->count();
+        $deliveredWashOrders = (clone $ordersQuery)->where('status', WashOrder::STATUS_DELIVERED)->count();
+        $lastWashOrder = (clone $ordersQuery)->with(['vehicle', 'services'])->latest('entered_at')->first();
+        $firstWashDate = (clone $ordersQuery)->oldest('entered_at')->value('entered_at');
+        $totalRevenue = (float) Payment::query()
+            ->whereHas('washOrder', fn ($query) => $query
+                ->where('wash_location_id', $customer->wash_location_id)
+                ->where('customer_id', $customer->id))
+            ->sum('amount');
+        $paidWashOrders = (clone $ordersQuery)
+            ->whereIn('payment_status', [WashOrder::PAYMENT_PAID, WashOrder::PAYMENT_COURTESY, WashOrder::PAYMENT_CREDIT_PENDING])
+            ->count();
+
+        $topServices = DB::table('service_wash_order')
+            ->join('wash_orders', 'wash_orders.id', '=', 'service_wash_order.wash_order_id')
+            ->where('wash_orders.wash_location_id', $customer->wash_location_id)
+            ->where('wash_orders.customer_id', $customer->id)
+            ->select(
+                'service_wash_order.service_name',
+                DB::raw('COUNT(*) as total'),
+                DB::raw('SUM(service_wash_order.price) as revenue')
+            )
+            ->groupBy('service_wash_order.service_name')
+            ->orderByDesc('total')
+            ->limit(5)
+            ->get();
+
+        return [
+            'total_wash_orders' => $totalWashOrders,
+            'delivered_wash_orders' => $deliveredWashOrders,
+            'total_revenue' => $totalRevenue,
+            'average_ticket' => $paidWashOrders > 0 ? $totalRevenue / $paidWashOrders : 0,
+            'first_wash_date' => $firstWashDate,
+            'last_wash_order' => $lastWashOrder,
+            'top_services' => $topServices,
+            'favorite_service' => $topServices->first()?->service_name,
+            'vehicles' => $customer->vehicles()
+                ->withCount('washOrders')
+                ->orderByDesc('wash_orders_count')
+                ->orderBy('brand')
+                ->get(),
+            'recent_wash_orders' => (clone $ordersQuery)
+                ->with(['vehicle', 'services', 'payments'])
+                ->latest('entered_at')
+                ->limit(8)
+                ->get(),
+            'active_coupons_count' => LoyaltyCoupon::query()
+                ->where('wash_location_id', $customer->wash_location_id)
+                ->where('customer_id', $customer->id)
+                ->where('status', LoyaltyCoupon::STATUS_ACTIVE)
+                ->where(function ($query): void {
+                    $query->whereNull('expires_at')
+                        ->orWhere('expires_at', '>=', now());
+                })
+                ->count(),
+        ];
     }
 }
