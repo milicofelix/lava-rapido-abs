@@ -29,7 +29,8 @@ Documento de acompanhamento do que ja foi construido e do que ainda falta para d
 - [x] Tela de login mais semantica e fundo claro.
 - [x] Tela publica de acompanhamento com visual claro.
 - [x] Substituicao de textos tecnicos como `Owner` por termos amigaveis.
-- [ ] Revisao visual final responsiva em todas as telas.
+- [x] Revisao visual final responsiva em todas as telas.
+- [x] Navegacao principal mobile fixa para rotas mais usadas.
 - [ ] Padronizar todos os textos acentuados em pt-BR.
 
 ## Usuarios, ACL e permissoes
@@ -238,7 +239,7 @@ Documento de acompanhamento do que ja foi construido e do que ainda falta para d
 - [x] Comando `app:readiness-check` para validacao operacional em runtime.
 - [x] Comando `app:backup-check` para validar requisitos de backup.
 - [x] Runbook de backup e restore documentado.
-- [x] Suite completa validada no pacote de hardening atual: 259 testes e 1298 assercoes.
+- [x] Suite completa validada no pacote de hardening atual: 260 testes e 1307 assercoes.
 - [ ] Rodar suite completa antes de release.
 - [x] Configurar CI/CD.
 - [x] GitHub Actions com validacao Composer, testes PHP e build Vite.
@@ -254,7 +255,7 @@ Documento de acompanhamento do que ja foi construido e do que ainda falta para d
 - [x] Garantir que operador nao veja financeiro.
 - [x] Garantir que cupom nao distorca financeiro.
 - [x] Garantir que vencidos nao aparecam como ativos.
-- [ ] Revisao geral de UX mobile.
+- [x] Revisao geral de UX mobile.
 - [ ] Suite completa de testes.
 - [x] Checklist de deploy.
 - [ ] Homologacao manual com dados reais.
