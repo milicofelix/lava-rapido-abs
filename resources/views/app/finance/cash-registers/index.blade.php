@@ -21,7 +21,7 @@
         @if (! $openRegister)
             <section class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
                 <div class="border-b border-slate-200 pb-4">
-                    <p class="text-xs font-black uppercase tracking-[0.18em] text-blue-700">Inicio do turno</p>
+                    <p class="text-xs font-black uppercase tracking-[0.18em] text-blue-700">Início do turno</p>
                     <h2 class="mt-1 text-xl font-black text-slate-950">Abrir caixa</h2>
                     <p class="mt-1 text-sm text-slate-500">Informe o saldo inicial em dinheiro para iniciar o controle do turno.</p>
                 </div>
@@ -80,7 +80,7 @@
                             <input name="amount" type="number" step="0.01" min="0.01" value="{{ old('amount') }}" class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100">
                         </label>
                         <label class="block">
-                            <span class="text-sm font-bold text-slate-700">Descricao</span>
+                            <span class="text-sm font-bold text-slate-700">Descrição</span>
                             <input name="description" value="{{ old('description') }}" class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100" placeholder="Ex: Sangria para cofre">
                         </label>
                         <button class="rounded-xl bg-slate-950 px-4 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-slate-800">Registrar movimentacao</button>
@@ -138,8 +138,8 @@
 
         <section class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
             <div class="border-b border-slate-200 px-5 py-4">
-                <p class="text-xs font-black uppercase tracking-[0.18em] text-slate-500">Historico</p>
-                <h2 class="mt-1 font-black text-slate-950">Historico de caixas</h2>
+                <p class="text-xs font-black uppercase tracking-[0.18em] text-slate-500">Histórico</p>
+                <h2 class="mt-1 font-black text-slate-950">Histórico de caixas</h2>
             </div>
             <div class="divide-y divide-slate-100">
                 @forelse ($recentRegisters as $register)

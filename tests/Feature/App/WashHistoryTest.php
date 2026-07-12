@@ -68,7 +68,7 @@ class WashHistoryTest extends TestCase
             'payment_method' => Payment::METHOD_PIX,
         ]))
             ->assertOk()
-            ->assertSee('Historico operacional')
+            ->assertSee('Histórico operacional')
             ->assertSee('ABS-HIST-001')
             ->assertSee('Joao Historico')
             ->assertSee('HST1A23')
@@ -113,7 +113,7 @@ class WashHistoryTest extends TestCase
 
         $content = $response->streamedContent();
 
-        $this->assertStringContainsString('Entrada,Codigo,Cliente,Placa,Veiculo,Servicos,Status,Equipe,Pagamento,Total', $content);
+        $this->assertStringContainsString('Entrada,Código,Cliente,Placa,Veículo,Serviços,Status,Equipe,Pagamento,Total', $content);
         $this->assertStringContainsString('ABS-CSV-001', $content);
         $this->assertStringContainsString('Cliente Exportacao', $content);
         $this->assertStringContainsString('CSV2B34', $content);

@@ -63,11 +63,11 @@ class WashHistoryController extends Controller
 
             fputcsv($handle, [
                 'Entrada',
-                'Codigo',
+                'Código',
                 'Cliente',
                 'Placa',
-                'Veiculo',
-                'Servicos',
+                'Veículo',
+                'Serviços',
                 'Status',
                 'Equipe',
                 'Pagamento',

@@ -204,7 +204,7 @@ class SettingsController extends Controller
             }
         }
 
-        return back()->with('status', 'Configuracoes salvas com sucesso.');
+        return back()->with('status', 'Configurações salvas com sucesso.');
     }
 
     /**

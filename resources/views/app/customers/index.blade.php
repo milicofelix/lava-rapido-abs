@@ -30,11 +30,11 @@
                 <p class="mt-2 text-3xl font-black text-slate-950">{{ $customers->total() }}</p>
             </div>
             <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-                <p class="text-sm font-bold text-slate-500">Veiculos nesta pagina</p>
+                <p class="text-sm font-bold text-slate-500">Veículos nesta página</p>
                 <p class="mt-2 text-3xl font-black text-blue-700">{{ $customers->getCollection()->sum('vehicles_count') }}</p>
             </div>
             <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-                <p class="text-sm font-bold text-slate-500">Pagina atual</p>
+                <p class="text-sm font-bold text-slate-500">Página atual</p>
                 <p class="mt-2 text-3xl font-black text-emerald-700">{{ $customers->count() }}</p>
             </div>
         </section>
@@ -55,7 +55,7 @@
                         </div>
                         <div class="text-sm text-slate-600">
                             <p class="font-bold text-slate-900">{{ $customer->phone }}</p>
-                            <p class="truncate">{{ $customer->email ?: 'E-mail nao informado' }}</p>
+                            <p class="truncate">{{ $customer->email ?: 'E-mail não informado' }}</p>
                         </div>
                         <div>
                             @php($progress = $customer->loyalty_progress)

@@ -25,7 +25,7 @@
                     </label>
 
                     <label class="block">
-                        <span class="text-sm font-bold text-slate-700">Veiculo</span>
+                        <span class="text-sm font-bold text-slate-700">Veículo</span>
                         <select name="vehicle_id" required data-vehicle-select data-old-vehicle="{{ old('vehicle_id') }}" class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100">
                             <option value="">Selecione um cliente primeiro</option>
                         </select>
@@ -54,7 +54,7 @@
                 <div class="border-b border-slate-200 pb-4">
                     <p class="text-xs font-black uppercase tracking-[0.18em] text-blue-700">Equipe da lavagem</p>
                     <h2 class="mt-1 text-xl font-black text-slate-950">Responsaveis pela execucao</h2>
-                    <p class="mt-1 text-sm text-slate-500">Selecione todos que participam. O primeiro selecionado sera o responsavel principal.</p>
+                    <p class="mt-1 text-sm text-slate-500">Selecione todos que participam. O primeiro selecionado será o responsável principal.</p>
                 </div>
 
                 <div class="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -74,8 +74,8 @@
 
             <section class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
                 <div class="border-b border-slate-200 px-5 py-4">
-                    <p class="text-xs font-black uppercase tracking-[0.18em] text-blue-700">Catalogo</p>
-                    <h2 class="mt-1 text-xl font-black text-slate-950">Servicos</h2>
+                    <p class="text-xs font-black uppercase tracking-[0.18em] text-blue-700">Catálogo</p>
+                    <h2 class="mt-1 text-xl font-black text-slate-950">Serviços</h2>
                 </div>
                 <div class="grid gap-3 p-5 md:grid-cols-2">
                     @foreach ($services as $service)
@@ -151,7 +151,7 @@
 
             if (vehicles.length === 1) {
                 vehicleSelect.value = vehicles[0].id;
-                vehicleHelp.textContent = 'Veiculo unico do cliente selecionado automaticamente.';
+                vehicleHelp.textContent = 'Veículo único do cliente selecionado automaticamente.';
             } else if (vehicles.some((vehicle) => String(vehicle.id) === String(selectedVehicle))) {
                 vehicleSelect.value = selectedVehicle;
                 vehicleHelp.textContent = 'Escolha um dos veiculos vinculados a este cliente.';

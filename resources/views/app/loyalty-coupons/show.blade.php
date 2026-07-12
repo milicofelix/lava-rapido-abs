@@ -143,7 +143,7 @@
             <div class="flex flex-wrap items-start justify-between gap-3">
                 <div>
                     <p class="text-sm font-black text-slate-950">Controle interno</p>
-                    <p class="mt-1 text-sm text-slate-500">Cancele apenas quando o cupom nao deve mais ser aceito no atendimento.</p>
+                    <p class="mt-1 text-sm text-slate-500">Cancele apenas quando o cupom não deve mais ser aceito no atendimento.</p>
                 </div>
                 @if ($coupon->status === \App\Models\LoyaltyCoupon::STATUS_ACTIVE)
                     <span class="rounded-full bg-emerald-50 px-3 py-1 text-xs font-black text-emerald-700">Pode cancelar</span>
@@ -166,7 +166,7 @@
                     </button>
                 </form>
             @else
-                <p class="mt-4 rounded-2xl bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-600">Este cupom nao esta ativo, por isso nao pode ser cancelado manualmente.</p>
+                <p class="mt-4 rounded-2xl bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-600">Este cupom não está ativo, por isso não pode ser cancelado manualmente.</p>
                 @if (($coupon->metadata['canceled_reason'] ?? null) || ($coupon->metadata['canceled_at'] ?? null))
                     <div class="mt-3 rounded-2xl bg-slate-50 px-4 py-3 text-sm text-slate-600">
                         @if ($coupon->metadata['canceled_at'] ?? null)

@@ -54,7 +54,7 @@ class FinanceReportTest extends TestCase
         $response->assertOk();
         $content = $response->streamedContent();
 
-        $this->assertStringContainsString('Data,Codigo,Cliente,Placa,Metodo,Valor', $content);
+        $this->assertStringContainsString('Data,Código,Cliente,Placa,Método,Valor', $content);
         $this->assertStringContainsString($washOrder->code, $content);
         $this->assertStringContainsString('Dinheiro', $content);
     }

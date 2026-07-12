@@ -59,7 +59,7 @@ class FinanceController extends Controller
         return response()->streamDownload(function () use ($payments) {
             $handle = fopen('php://output', 'w');
 
-            fputcsv($handle, ['Data', 'Codigo', 'Cliente', 'Placa', 'Metodo', 'Valor', 'Registrado por']);
+            fputcsv($handle, ['Data', 'Código', 'Cliente', 'Placa', 'Método', 'Valor', 'Registrado por']);
 
             foreach ($payments as $payment) {
                 fputcsv($handle, [

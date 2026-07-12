@@ -20,7 +20,7 @@ class MercadoPagoDiagnosticsTest extends TestCase
         $this->artisan('mercado-pago:diagnose')
             ->expectsOutputToContain('[OK] Access token configurado.')
             ->expectsOutputToContain('[OK] Ambiente sandbox/teste.')
-            ->expectsOutputToContain('[ATENCAO] Webhook: http://localhost/webhooks/mercado-pago')
+            ->expectsOutputToContain('[ATENÇÃO] Webhook: http://localhost/webhooks/mercado-pago')
             ->assertExitCode(1);
     }
 

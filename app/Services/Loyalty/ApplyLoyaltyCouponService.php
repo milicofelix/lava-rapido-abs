@@ -24,7 +24,7 @@ class ApplyLoyaltyCouponService
             $coupon = $coupon->fresh(['loyaltyProgram', 'rewardService', 'sourceWashOrder.services']);
 
             if (! $washOrder || ! $coupon) {
-                throw new InvalidArgumentException('Cupom ou lavagem nao encontrados.');
+                throw new InvalidArgumentException('Cupom ou lavagem não encontrados.');
             }
 
             $evaluation = $this->applicability->evaluate($washOrder, $coupon);

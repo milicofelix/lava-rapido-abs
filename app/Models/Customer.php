@@ -74,6 +74,6 @@ class Customer extends Model
 
     public function whatsappTrackingUrl(WashOrder $washOrder): ?string
     {
-        return $this->whatsappManualUrl("Ola {$this->name}, acompanhe o status da lavagem do seu veiculo pelo link: {$washOrder->trackingUrl()}");
+        return $this->whatsappManualUrl("Olá {$this->name}, acompanhe o status da lavagem do seu veículo pelo link: {$washOrder->trackingUrl()}");
     }
 }

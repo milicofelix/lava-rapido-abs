@@ -69,11 +69,11 @@
                         ['route' => 'wash-orders.index', 'label' => 'Lavagens', 'icon' => 'L', 'permission' => \App\Support\Access\AccessControl::CREATE_WASH_ORDER],
                         ['route' => 'kanban', 'label' => 'Kanban de Lavagens', 'icon' => 'K', 'permission' => \App\Support\Access\AccessControl::VIEW_KANBAN],
                         ['route' => 'schedule.index', 'label' => 'Agenda', 'icon' => 'AG', 'permission' => \App\Support\Access\AccessControl::VIEW_SCHEDULE, 'module' => 'module_schedule'],
-                        ['route' => 'history.index', 'label' => 'Historico', 'icon' => 'H', 'permission' => \App\Support\Access\AccessControl::VIEW_OPERATIONAL_HISTORY],
+                        ['route' => 'history.index', 'label' => 'Histórico', 'icon' => 'H', 'permission' => \App\Support\Access\AccessControl::VIEW_OPERATIONAL_HISTORY],
                         ['route' => 'customers.index', 'label' => 'Clientes', 'icon' => 'C', 'permission' => \App\Support\Access\AccessControl::MANAGE_CUSTOMERS],
                         ['route' => 'loyalty-reports.index', 'label' => 'Fidelidade', 'icon' => 'FID', 'permission' => \App\Support\Access\AccessControl::MANAGE_CUSTOMERS],
-                        ['route' => 'vehicles.index', 'label' => 'Veiculos', 'icon' => 'V', 'permission' => \App\Support\Access\AccessControl::MANAGE_VEHICLES],
-                        ['route' => 'services.index', 'label' => 'Servicos', 'icon' => 'S', 'permission' => \App\Support\Access\AccessControl::MANAGE_SERVICES],
+                        ['route' => 'vehicles.index', 'label' => 'Veículos', 'icon' => 'V', 'permission' => \App\Support\Access\AccessControl::MANAGE_VEHICLES],
+                        ['route' => 'services.index', 'label' => 'Serviços', 'icon' => 'S', 'permission' => \App\Support\Access\AccessControl::MANAGE_SERVICES],
                         ['route' => 'employees.index', 'label' => 'Equipe', 'icon' => 'E', 'permission' => \App\Support\Access\AccessControl::MANAGE_EMPLOYEES],
                         ['route' => 'audit-logs.index', 'label' => 'Auditoria', 'icon' => 'A', 'permission' => \App\Support\Access\AccessControl::VIEW_AUDIT_LOGS],
                         ['route' => 'finance.index', 'label' => 'Financeiro', 'icon' => '$', 'permission' => \App\Support\Access\AccessControl::VIEW_FINANCE],
@@ -91,7 +91,7 @@
                     @foreach ([
                         ['label' => 'Relatorios', 'icon' => 'R', 'href' => route('reports.executive'), 'permission' => \App\Support\Access\AccessControl::VIEW_FINANCE],
                         ['label' => 'Assinatura', 'icon' => 'A', 'href' => route('subscriptions.show'), 'permission' => \App\Support\Access\AccessControl::MANAGE_SUBSCRIPTION],
-                        ['label' => 'Configuracoes', 'icon' => 'G', 'href' => route('settings.edit'), 'permission' => \App\Support\Access\AccessControl::MANAGE_SETTINGS],
+                        ['label' => 'Configurações', 'icon' => 'G', 'href' => route('settings.edit'), 'permission' => \App\Support\Access\AccessControl::MANAGE_SETTINGS],
                     ] as $item)
                         @continue(! $canAccess($item['permission']))
                         <a href="{{ $item['href'] }}" class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-slate-200 transition hover:bg-white/10 hover:text-white">
@@ -237,14 +237,14 @@
                             <a href="{{ route('schedule.index') }}" class="shrink-0 rounded-lg border border-slate-200 px-3 py-1.5 text-sm font-medium">Agenda</a>
                         @endif
                         @if ($canAccess(\App\Support\Access\AccessControl::VIEW_OPERATIONAL_HISTORY))
-                            <a href="{{ route('history.index') }}" class="shrink-0 rounded-lg border border-slate-200 px-3 py-1.5 text-sm font-medium">Historico</a>
+                            <a href="{{ route('history.index') }}" class="shrink-0 rounded-lg border border-slate-200 px-3 py-1.5 text-sm font-medium">Histórico</a>
                         @endif
                         @if ($canAccess(\App\Support\Access\AccessControl::MANAGE_CUSTOMERS))
                             <a href="{{ route('customers.index') }}" class="shrink-0 rounded-lg border border-slate-200 px-3 py-1.5 text-sm font-medium">Clientes</a>
                             <a href="{{ route('loyalty-reports.index') }}" class="shrink-0 rounded-lg border border-slate-200 px-3 py-1.5 text-sm font-medium">Fidelidade</a>
                         @endif
                         @if ($canAccess(\App\Support\Access\AccessControl::MANAGE_VEHICLES))
-                            <a href="{{ route('vehicles.index') }}" class="shrink-0 rounded-lg border border-slate-200 px-3 py-1.5 text-sm font-medium">Veiculos</a>
+                            <a href="{{ route('vehicles.index') }}" class="shrink-0 rounded-lg border border-slate-200 px-3 py-1.5 text-sm font-medium">Veículos</a>
                         @endif
                         @if ($canAccess(\App\Support\Access\AccessControl::VIEW_FINANCE))
                             <a href="{{ route('finance.index') }}" class="shrink-0 rounded-lg border border-slate-200 px-3 py-1.5 text-sm font-medium">Financeiro</a>
@@ -270,7 +270,7 @@
                             <a href="{{ route('subscriptions.show') }}" class="shrink-0 rounded-lg border border-slate-200 px-3 py-1.5 text-sm font-medium">Assinatura</a>
                         @endif
                         @if ($canAccess(\App\Support\Access\AccessControl::MANAGE_SETTINGS))
-                            <a href="{{ route('settings.edit') }}" class="shrink-0 rounded-lg border border-slate-200 px-3 py-1.5 text-sm font-medium">Configuracoes</a>
+                            <a href="{{ route('settings.edit') }}" class="shrink-0 rounded-lg border border-slate-200 px-3 py-1.5 text-sm font-medium">Configurações</a>
                         @endif
                     @endif
                 </nav>

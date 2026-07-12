@@ -21,7 +21,7 @@ class MercadoPagoCheckoutService
             return 'manual';
         }
 
-        return $this->isProductionEnvironment() ? 'producao' : 'teste';
+        return $this->isProductionEnvironment() ? 'produção' : 'teste';
     }
 
     public function isLiveCheckoutAllowed(): bool
@@ -44,11 +44,11 @@ class MercadoPagoCheckoutService
     public function createPreference(Subscription $subscription): array
     {
         if (! $this->isConfigured()) {
-            throw new RuntimeException('Mercado Pago nao configurado.');
+            throw new RuntimeException('Mercado Pago não configurado.');
         }
 
         if (! $this->isLiveCheckoutAllowed()) {
-            throw new RuntimeException('Checkout real bloqueado. Defina MERCADO_PAGO_LIVE_ENABLED=true para liberar cobrancas em producao.');
+            throw new RuntimeException('Checkout real bloqueado. Defina MERCADO_PAGO_LIVE_ENABLED=true para liberar cobranças em produção.');
         }
 
         $subscription->loadMissing(['plan', 'washLocation']);
@@ -110,7 +110,7 @@ class MercadoPagoCheckoutService
     public function findPayment(string|int $paymentId): array
     {
         if (! $this->isConfigured()) {
-            throw new RuntimeException('Mercado Pago nao configurado.');
+            throw new RuntimeException('Mercado Pago não configurado.');
         }
 
         return $this->client()

@@ -320,7 +320,7 @@ class LoyaltyProgramTest extends TestCase
             ->assertOk()
             ->assertSee('O cliente tem cupom ativo, mas nenhum é compatível com os serviços desta lavagem.')
             ->assertSee('Sem abatimento')
-            ->assertSee('Cupom nao gera abatimento para esta lavagem.')
+            ->assertSee('Cupom não gera abatimento para esta lavagem.')
             ->assertDontSee('Cupom aplicável nesta lavagem');
     }
 

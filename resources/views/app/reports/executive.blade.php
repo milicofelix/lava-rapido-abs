@@ -1,4 +1,4 @@
-<x-app.layout title="Relatorios executivos - AutoFlow" heading="Relatorios executivos">
+<x-app.layout title="Relatórios executivos - AutoFlow" heading="Relatórios executivos">
     @php
         $money = fn ($value) => 'R$ '.number_format((float) $value, 2, ',', '.');
         $number = fn ($value) => number_format((float) $value, 0, ',', '.');
@@ -8,10 +8,10 @@
             }
 
             if ((float) $value === 0.0) {
-                return 'estavel';
+                return 'estável';
             }
 
-            return (($value > 0) ? '+' : '').number_format((float) $value, 1, ',', '.').'% vs periodo anterior';
+            return (($value > 0) ? '+' : '').number_format((float) $value, 1, ',', '.').'% vs período anterior';
         };
         $variationClass = fn ($value) => $value === null
             ? 'bg-blue-50 text-blue-700 ring-blue-100'
@@ -22,17 +22,17 @@
         <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
             <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
                 <div>
-                    <p class="text-xs font-black uppercase tracking-[0.18em] text-blue-700">Visao gerencial</p>
-                    <h2 class="mt-1 text-2xl font-black text-slate-950">Resumo executivo do periodo</h2>
+                    <p class="text-xs font-black uppercase tracking-[0.18em] text-blue-700">Visão gerencial</p>
+                    <h2 class="mt-1 text-2xl font-black text-slate-950">Resumo executivo do período</h2>
                     <p class="mt-1 text-sm text-slate-500">
-                        Comparando {{ \Illuminate\Support\Carbon::parse($start)->format('d/m/Y') }} ate {{ \Illuminate\Support\Carbon::parse($end)->format('d/m/Y') }}
-                        com {{ \Illuminate\Support\Carbon::parse($previousStart)->format('d/m/Y') }} ate {{ \Illuminate\Support\Carbon::parse($previousEnd)->format('d/m/Y') }}.
+                        Comparando {{ \Illuminate\Support\Carbon::parse($start)->format('d/m/Y') }} até {{ \Illuminate\Support\Carbon::parse($end)->format('d/m/Y') }}
+                        com {{ \Illuminate\Support\Carbon::parse($previousStart)->format('d/m/Y') }} até {{ \Illuminate\Support\Carbon::parse($previousEnd)->format('d/m/Y') }}.
                     </p>
                 </div>
 
                 <form method="GET" action="{{ route('reports.executive') }}" class="grid gap-3 sm:grid-cols-[1fr_1fr_auto_auto] sm:items-end">
                     <label class="block">
-                        <span class="text-xs font-bold text-slate-500">Inicio</span>
+                        <span class="text-xs font-bold text-slate-500">Início</span>
                         <input type="date" name="start" value="{{ $start }}" max="{{ today()->toDateString() }}" class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100">
                     </label>
                     <label class="block">
@@ -40,7 +40,7 @@
                         <input type="date" name="end" value="{{ $end }}" max="{{ today()->toDateString() }}" class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100">
                     </label>
                     <button class="rounded-xl bg-blue-700 px-4 py-2.5 text-sm font-black text-white shadow-sm transition hover:bg-blue-800">Filtrar</button>
-                    <a href="{{ route('reports.executive') }}" class="rounded-xl border border-slate-300 px-4 py-2.5 text-center text-sm font-bold text-slate-700 hover:bg-slate-50">Mes atual</a>
+                    <a href="{{ route('reports.executive') }}" class="rounded-xl border border-slate-300 px-4 py-2.5 text-center text-sm font-bold text-slate-700 hover:bg-slate-50">Mês atual</a>
                 </form>
             </div>
 
@@ -53,17 +53,17 @@
 
         <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
             <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-                <p class="text-sm font-bold text-slate-500">Receita do periodo</p>
+                <p class="text-sm font-bold text-slate-500">Receita do período</p>
                 <p class="mt-3 text-3xl font-black text-slate-950">{{ $money($summary['revenue']) }}</p>
                 <span class="mt-4 inline-flex rounded-full px-3 py-1 text-xs font-black ring-1 {{ $variationClass($variations['revenue']) }}">{{ $variationLabel($variations['revenue']) }}</span>
             </div>
             <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-                <p class="text-sm font-bold text-slate-500">Lavagens no periodo</p>
+                <p class="text-sm font-bold text-slate-500">Lavagens no período</p>
                 <p class="mt-3 text-3xl font-black text-slate-950">{{ $number($summary['orders_count']) }}</p>
                 <span class="mt-4 inline-flex rounded-full px-3 py-1 text-xs font-black ring-1 {{ $variationClass($variations['orders']) }}">{{ $variationLabel($variations['orders']) }}</span>
             </div>
             <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-                <p class="text-sm font-bold text-slate-500">Ticket medio</p>
+                <p class="text-sm font-bold text-slate-500">Ticket médio</p>
                 <p class="mt-3 text-3xl font-black text-slate-950">{{ $money($summary['ticket_average']) }}</p>
                 <span class="mt-4 inline-flex rounded-full px-3 py-1 text-xs font-black ring-1 {{ $variationClass($variations['ticket_average']) }}">{{ $variationLabel($variations['ticket_average']) }}</span>
             </div>
@@ -97,8 +97,8 @@
             <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
                 <div class="flex items-center justify-between gap-3">
                     <div>
-                        <p class="text-sm font-black text-slate-950">Top servicos</p>
-                        <p class="text-xs text-slate-500">Servicos mais realizados no periodo.</p>
+                        <p class="text-sm font-black text-slate-950">Top serviços</p>
+                        <p class="text-xs text-slate-500">Serviços mais realizados no período.</p>
                     </div>
                     <span class="rounded-full bg-blue-50 px-3 py-1 text-xs font-black text-blue-700">{{ count($topServices) }} itens</span>
                 </div>
@@ -112,17 +112,17 @@
                             <div class="mt-2 h-2 rounded-full bg-slate-100">
                                 <div class="h-2 rounded-full bg-blue-700" style="width: {{ max(6, $service['share']) }}%"></div>
                             </div>
-                            <p class="mt-1 text-xs text-slate-500">{{ $money($service['revenue']) }} em servicos</p>
+                            <p class="mt-1 text-xs text-slate-500">{{ $money($service['revenue']) }} em serviços</p>
                         </div>
                     @empty
-                        <p class="rounded-xl border border-dashed border-slate-200 bg-slate-50 px-4 py-8 text-center text-sm text-slate-500">Nenhum servico no periodo.</p>
+                        <p class="rounded-xl border border-dashed border-slate-200 bg-slate-50 px-4 py-8 text-center text-sm text-slate-500">Nenhum serviço no período.</p>
                     @endforelse
                 </div>
             </div>
 
             <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-                <p class="text-sm font-black text-slate-950">Pagamentos por metodo</p>
-                <p class="text-xs text-slate-500">Distribuicao financeira do periodo.</p>
+                <p class="text-sm font-black text-slate-950">Pagamentos por método</p>
+                <p class="text-xs text-slate-500">Distribuição financeira do período.</p>
                 <div class="mt-5 space-y-4">
                     @forelse ($paymentMethods as $method)
                         <div>
@@ -136,7 +136,7 @@
                             <p class="mt-1 text-xs text-slate-500">{{ $method['count'] }} pagamento{{ $method['count'] === 1 ? '' : 's' }}</p>
                         </div>
                     @empty
-                        <p class="rounded-xl border border-dashed border-slate-200 bg-slate-50 px-4 py-8 text-center text-sm text-slate-500">Nenhum pagamento no periodo.</p>
+                        <p class="rounded-xl border border-dashed border-slate-200 bg-slate-50 px-4 py-8 text-center text-sm text-slate-500">Nenhum pagamento no período.</p>
                     @endforelse
                 </div>
             </div>
@@ -145,7 +145,7 @@
         <div class="grid gap-5 xl:grid-cols-3">
             <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm xl:col-span-2">
                 <p class="text-sm font-black text-slate-950">Top clientes</p>
-                <p class="text-xs text-slate-500">Clientes com mais lavagens no periodo.</p>
+                <p class="text-xs text-slate-500">Clientes com mais lavagens no período.</p>
                 <div class="mt-5 divide-y divide-slate-100">
                     @forelse ($topCustomers as $customer)
                         <div class="grid gap-3 py-3 sm:grid-cols-[1fr_auto] sm:items-center">
@@ -162,14 +162,14 @@
                             </div>
                         </div>
                     @empty
-                        <p class="rounded-xl border border-dashed border-slate-200 bg-slate-50 px-4 py-8 text-center text-sm text-slate-500">Nenhum cliente com lavagem no periodo.</p>
+                        <p class="rounded-xl border border-dashed border-slate-200 bg-slate-50 px-4 py-8 text-center text-sm text-slate-500">Nenhum cliente com lavagem no período.</p>
                     @endforelse
                 </div>
             </div>
 
             <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
                 <p class="text-sm font-black text-slate-950">Status das lavagens</p>
-                <p class="text-xs text-slate-500">Distribuicao operacional.</p>
+                <p class="text-xs text-slate-500">Distribuição operacional.</p>
                 <div class="mt-5 space-y-4">
                     @forelse ($statusDistribution as $status)
                         <div>
@@ -182,15 +182,15 @@
                             </div>
                         </div>
                     @empty
-                        <p class="rounded-xl border border-dashed border-slate-200 bg-slate-50 px-4 py-8 text-center text-sm text-slate-500">Nenhuma lavagem no periodo.</p>
+                        <p class="rounded-xl border border-dashed border-slate-200 bg-slate-50 px-4 py-8 text-center text-sm text-slate-500">Nenhuma lavagem no período.</p>
                     @endforelse
                 </div>
             </div>
         </div>
 
         <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-            <p class="text-sm font-black text-slate-950">Volume diario</p>
-            <p class="text-xs text-slate-500">Ajuda a perceber picos de movimento dentro do periodo filtrado.</p>
+            <p class="text-sm font-black text-slate-950">Volume diário</p>
+            <p class="text-xs text-slate-500">Ajuda a perceber picos de movimento dentro do período filtrado.</p>
             <div class="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7">
                 @forelse ($dailyVolume as $day)
                     <div class="rounded-xl border border-slate-200 bg-slate-50 p-3">
@@ -205,7 +205,7 @@
                         </div>
                     </div>
                 @empty
-                    <p class="rounded-xl border border-dashed border-slate-200 bg-slate-50 px-4 py-8 text-center text-sm text-slate-500 lg:col-span-4 xl:col-span-7">Nenhuma movimentacao no periodo.</p>
+                    <p class="rounded-xl border border-dashed border-slate-200 bg-slate-50 px-4 py-8 text-center text-sm text-slate-500 lg:col-span-4 xl:col-span-7">Nenhuma movimentação no período.</p>
                 @endforelse
             </div>
         </div>

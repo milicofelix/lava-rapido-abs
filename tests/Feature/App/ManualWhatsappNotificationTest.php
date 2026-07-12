@@ -113,15 +113,15 @@ class ManualWhatsappNotificationTest extends TestCase
         $this->actingAs($user)
             ->post(route('wash-orders.notifications.whatsapp-manual.store', $washOrder), [
                 'template_key' => CustomerNotification::TEMPLATE_PROMOTION,
-                'notes' => '10% de desconto na proxima lavagem completa.',
+                'notes' => '10% de desconto na próxima lavagem completa.',
             ])
             ->assertRedirect(route('wash-orders.show', $washOrder));
 
         $notification = CustomerNotification::first();
 
         $this->assertSame(CustomerNotification::TEMPLATE_PROMOTION, $notification->template_key);
-        $this->assertStringContainsString('condicao especial', $notification->message);
-        $this->assertStringContainsString('10% de desconto na proxima lavagem completa.', $notification->message);
+        $this->assertStringContainsString('condição especial', $notification->message);
+        $this->assertStringContainsString('10% de desconto na próxima lavagem completa.', $notification->message);
     }
 
     public function test_wash_order_detail_shows_manual_notification_area(): void
@@ -132,10 +132,10 @@ class ManualWhatsappNotificationTest extends TestCase
         $this->actingAs($user)
             ->get(route('wash-orders.show', $washOrder))
             ->assertOk()
-            ->assertSee('Notificacao manual')
+            ->assertSee('Notificação manual')
             ->assertSee('Prepare a mensagem e envie manualmente pelo WhatsApp')
             ->assertSee('Lavagem iniciada')
-            ->assertSee('Lavagem concluida')
+            ->assertSee('Lavagem concluída')
             ->assertSee('Promocao')
             ->assertSee('Preparar mensagem');
     }

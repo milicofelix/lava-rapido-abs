@@ -17,8 +17,8 @@ class ProductionCheckCommandTest extends TestCase
 
         $this->artisan('app:production-check')
             ->expectsOutputToContain('[FALHA] APP_DEBUG precisa ficar false.')
-            ->expectsOutputToContain('[FALHA] APP_KEY nao pode ficar vazio.')
-            ->expectsOutputToContain('[FALHA] APP_URL deve usar HTTPS em producao.')
+            ->expectsOutputToContain('[FALHA] APP_KEY não pode ficar vazio.')
+            ->expectsOutputToContain('[FALHA] APP_URL deve usar HTTPS em produção.')
             ->assertExitCode(1);
     }
 
@@ -33,8 +33,8 @@ class ProductionCheckCommandTest extends TestCase
 
         $this->artisan('app:production-check')
             ->expectsOutputToContain('[OK] APP_ENV=production.')
-            ->expectsOutputToContain('[ATENCAO] Mercado Pago esta em sandbox; correto para homologacao, nao para cobranca real.')
-            ->expectsOutputToContain('Checklist tecnico de producao aprovado.')
+            ->expectsOutputToContain('[ATENÇÃO] Mercado Pago está em sandbox; correto para homologação, não para cobrança real.')
+            ->expectsOutputToContain('Checklist técnico de produção aprovado.')
             ->assertExitCode(0);
     }
 
@@ -48,8 +48,8 @@ class ProductionCheckCommandTest extends TestCase
         ]);
 
         $this->artisan('app:production-check --strict')
-            ->expectsOutputToContain('[ATENCAO] Mercado Pago esta em sandbox; correto para homologacao, nao para cobranca real.')
-            ->expectsOutputToContain('Ambiente ainda nao esta pronto para liberacao.')
+            ->expectsOutputToContain('[ATENÇÃO] Mercado Pago está em sandbox; correto para homologação, não para cobrança real.')
+            ->expectsOutputToContain('Ambiente ainda não está pronto para liberação.')
             ->assertExitCode(1);
     }
 

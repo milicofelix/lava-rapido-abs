@@ -26,7 +26,7 @@ class SettingsManagementTest extends TestCase
         $this->actingAs($admin)
             ->get(route('settings.edit'))
             ->assertOk()
-            ->assertSee('Configuracoes')
+            ->assertSee('Configurações')
             ->assertSee('Habilitar Caixa')
             ->assertSee('Habilitar Fiado')
             ->assertSee('Programa de fidelidade')

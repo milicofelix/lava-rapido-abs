@@ -15,8 +15,8 @@ class BackupCheckCommandTest extends TestCase
         ]);
 
         $this->artisan('app:backup-check')
-            ->expectsOutputToContain('[OK] Conexao de banco definida.')
-            ->expectsOutputToContain('[ATENCAO] BACKUP_STORAGE_PATH nao definido; documente o destino externo dos backups.')
+            ->expectsOutputToContain('[OK] Conexão de banco definida.')
+            ->expectsOutputToContain('[ATENÇÃO] BACKUP_STORAGE_PATH não definido; documente o destino externo dos backups.')
             ->expectsOutputToContain('Plano de backup validado.')
             ->assertExitCode(0);
     }
@@ -29,8 +29,8 @@ class BackupCheckCommandTest extends TestCase
         ]);
 
         $this->artisan('app:backup-check --strict')
-            ->expectsOutputToContain('[ATENCAO] BACKUP_STORAGE_PATH nao definido; documente o destino externo dos backups.')
-            ->expectsOutputToContain('Plano de backup ainda nao esta pronto para producao.')
+            ->expectsOutputToContain('[ATENÇÃO] BACKUP_STORAGE_PATH não definido; documente o destino externo dos backups.')
+            ->expectsOutputToContain('Plano de backup ainda não está pronto para produção.')
             ->assertExitCode(1);
     }
 
@@ -46,7 +46,7 @@ class BackupCheckCommandTest extends TestCase
 
         $this->artisan('app:backup-check --strict')
             ->expectsOutputToContain('[OK] Destino externo de backup configurado.')
-            ->expectsOutputToContain('[OK] Diretorio de destino do backup existe neste ambiente.')
+            ->expectsOutputToContain('[OK] Diretório de destino do backup existe neste ambiente.')
             ->expectsOutputToContain('Plano de backup validado.')
             ->assertExitCode(0);
     }
@@ -60,7 +60,7 @@ class BackupCheckCommandTest extends TestCase
         ]);
 
         $this->artisan('app:backup-check')
-            ->expectsOutputToContain('[FALHA] Configuracao da conexao de banco nao encontrada.')
+            ->expectsOutputToContain('[FALHA] Configuração da conexão de banco não encontrada.')
             ->assertExitCode(1);
     }
 }

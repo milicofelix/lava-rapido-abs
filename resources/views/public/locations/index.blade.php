@@ -1030,7 +1030,7 @@
                             </div>
                             <div class="autoflow-popup-info" style="grid-column:1 / -1;">
                                 <span class="autoflow-popup-label">Funcionamento</span>
-                                <span class="autoflow-popup-value" style="font-size:12px;line-height:1.45;">${escapeHtml(location.opening_hours || 'Nao informado')}</span>
+                                        <span class="autoflow-popup-value" style="font-size:12px;line-height:1.45;">${escapeHtml(location.opening_hours || 'Não informado')}</span>
                             </div>
                         </div>
                         <div class="autoflow-popup-actions">

@@ -54,7 +54,7 @@ class ReadinessReport
 
             return $value === 'ok'
                 ? $this->ok('cache', 'Cache acessivel.')
-                : $this->failure('cache', 'Cache nao confirmou leitura e escrita.');
+                : $this->failure('cache', 'Cache não confirmou leitura e escrita.');
         } catch (Throwable) {
             return $this->failure('cache', 'Cache indisponivel.');
         }

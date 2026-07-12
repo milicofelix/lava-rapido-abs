@@ -1,10 +1,10 @@
-<x-app.layout heading="Veiculos" title="Veiculos · AutoFlow">
+<x-app.layout heading="Veículos" title="Veículos · AutoFlow">
     <div class="space-y-5">
         <section class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
             <div class="flex flex-wrap items-start justify-between gap-4">
                 <div>
                     <p class="text-xs font-black uppercase tracking-[0.18em] text-blue-700">Garagem dos clientes</p>
-                    <h2 class="mt-1 text-2xl font-black text-slate-950">Veiculos cadastrados</h2>
+                    <h2 class="mt-1 text-2xl font-black text-slate-950">Veículos cadastrados</h2>
                     <p class="mt-1 text-sm text-slate-500">Busque por placa, modelo, marca ou cliente responsavel.</p>
                 </div>
                 <a href="{{ route('vehicles.create') }}" class="rounded-xl bg-blue-700 px-4 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-blue-800">Novo veiculo</a>
@@ -26,15 +26,15 @@
 
         <section class="grid gap-3 md:grid-cols-3">
             <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-                <p class="text-sm font-bold text-slate-500">Veiculos na lista</p>
+                <p class="text-sm font-bold text-slate-500">Veículos na lista</p>
                 <p class="mt-2 text-3xl font-black text-slate-950">{{ $vehicles->total() }}</p>
             </div>
             <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-                <p class="text-sm font-bold text-slate-500">Clientes nesta pagina</p>
+                <p class="text-sm font-bold text-slate-500">Clientes nesta página</p>
                 <p class="mt-2 text-3xl font-black text-blue-700">{{ $vehicles->getCollection()->pluck('customer_id')->unique()->count() }}</p>
             </div>
             <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-                <p class="text-sm font-bold text-slate-500">Pagina atual</p>
+                <p class="text-sm font-bold text-slate-500">Página atual</p>
                 <p class="mt-2 text-3xl font-black text-emerald-700">{{ $vehicles->count() }}</p>
             </div>
         </section>

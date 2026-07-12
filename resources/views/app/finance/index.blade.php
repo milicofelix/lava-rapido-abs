@@ -26,7 +26,7 @@
 
             <form method="GET" action="{{ route('finance.index') }}" class="mt-5 grid gap-3 lg:grid-cols-[1fr_1fr_auto_auto] lg:items-end">
                 <label class="block">
-                    <span class="text-sm font-bold text-slate-700">Inicio</span>
+                    <span class="text-sm font-bold text-slate-700">Início</span>
                     <input data-period-start name="start" type="date" value="{{ $start }}" max="{{ today()->toDateString() }}" class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100">
                     @error('start') <span class="mt-1 block text-sm text-red-600">{{ $message }}</span> @enderror
                 </label>

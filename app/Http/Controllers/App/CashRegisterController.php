@@ -22,7 +22,7 @@ class CashRegisterController extends Controller
     public function index(CloseCashRegisterService $closeCashRegister): View|\Illuminate\Http\RedirectResponse
     {
         if (! AppSetting::isModuleEnabled('module_cash_register')) {
-            return redirect()->route('settings.edit')->with('status', 'Modulo Caixa esta desabilitado. Habilite em Configuracoes para usar.');
+            return redirect()->route('settings.edit')->with('status', 'Módulo Caixa está desabilitado. Habilite em Configurações para usar.');
         }
 
         $openRegister = CashRegister::openRegister(TenantContext::currentLocationId())?->load(['openedBy', 'movements.user']);

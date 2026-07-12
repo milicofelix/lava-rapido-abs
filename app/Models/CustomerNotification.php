@@ -56,9 +56,9 @@ class CustomerNotification extends Model
         return [
             self::TEMPLATE_TRACKING_LINK => 'Enviar link de acompanhamento',
             self::TEMPLATE_STATUS_UPDATE => 'Atualizar cliente sobre o status',
-            self::TEMPLATE_READY_FOR_PICKUP => 'Avisar que esta pronto para retirada',
+            self::TEMPLATE_READY_FOR_PICKUP => 'Avisar que está pronto para retirada',
             self::TEMPLATE_WASH_STARTED => 'Lavagem iniciada',
-            self::TEMPLATE_WASH_COMPLETED => 'Lavagem concluida',
+            self::TEMPLATE_WASH_COMPLETED => 'Lavagem concluída',
             self::TEMPLATE_PROMOTION => 'Promocao',
         ];
     }

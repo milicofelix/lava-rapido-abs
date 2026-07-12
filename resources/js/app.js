@@ -146,7 +146,7 @@ if (inertiaRoot && inertiaPage) {
             const page = pages[`./Pages/${name}.jsx`];
 
             if (!page) {
-                throw new Error(`Pagina Inertia nao encontrada: ${name}`);
+                throw new Error(`Página Inertia não encontrada: ${name}`);
             }
 
             const module = typeof page === 'function' ? await page() : page;

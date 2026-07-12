@@ -43,7 +43,7 @@ class SubscriptionManagementTest extends TestCase
             ->assertSee('Próxima cobrança')
             ->assertSee('Plano atual')
             ->assertSee('Assinatura ativa')
-            ->assertSee('Este e o plano ativo da unidade.');
+            ->assertSee('Este é o plano ativo da unidade.');
     }
 
     public function test_owner_ve_plano_atual_no_card_do_plano_contratado(): void
@@ -72,11 +72,11 @@ class SubscriptionManagementTest extends TestCase
             ->get(route('subscriptions.show'))
             ->assertOk()
             ->assertSee('Assinatura ativa')
-            ->assertSee('Este e o plano ativo da unidade.');
+            ->assertSee('Este é o plano ativo da unidade.');
 
         $content = $response->getContent();
 
-        $this->assertMatchesRegularExpression('/<h2[^>]*>Starter<\/h2>.*Disponivel/s', $content);
+        $this->assertMatchesRegularExpression('/<h2[^>]*>Starter<\/h2>.*Disponível/s', $content);
         $this->assertMatchesRegularExpression('/<h2[^>]*>Professional<\/h2>.*Plano atual/s', $content);
     }
 
@@ -108,8 +108,8 @@ class SubscriptionManagementTest extends TestCase
         $this->actingAs($owner)
             ->get(route('subscriptions.show'))
             ->assertOk()
-            ->assertSee('Historico de assinatura')
-            ->assertSee('Ultimas escolhas de plano, pagamentos e renovacoes da unidade.')
+            ->assertSee('Histórico de assinatura')
+            ->assertSee('Últimas escolhas de plano, pagamentos e renovações da unidade.')
             ->assertSee('Starter')
             ->assertSee('Mercado Pago')
             ->assertSee('pay_456')
@@ -160,7 +160,7 @@ class SubscriptionManagementTest extends TestCase
             ->assertOk()
             ->assertSee('Escolha de plano')
             ->assertSee('Starter')
-            ->assertSee('Disponivel')
+            ->assertSee('Disponível')
             ->assertDontSee('>Ativo<', false);
     }
 

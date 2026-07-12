@@ -55,7 +55,7 @@ class ExecutiveReportTest extends TestCase
             $this->actingAs($admin)
                 ->get(route('reports.executive'))
                 ->assertOk()
-                ->assertSee('Relatorios executivos')
+                ->assertSee('Relatórios executivos')
                 ->assertSee('R$ 200,00')
                 ->assertSee('Ducha Premium')
                 ->assertSee('Carlos Recorrente')

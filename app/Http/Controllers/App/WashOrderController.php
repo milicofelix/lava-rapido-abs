@@ -84,7 +84,7 @@ class WashOrderController extends Controller
 
         if ((int) $vehicle->customer_id !== (int) $data['customer_id']) {
             return back()
-                ->withErrors(['vehicle_id' => 'O veiculo selecionado nao pertence ao cliente informado.'])
+                ->withErrors(['vehicle_id' => 'O veículo selecionado não pertence ao cliente informado.'])
                 ->withInput();
         }
 

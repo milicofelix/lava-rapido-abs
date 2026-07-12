@@ -20,7 +20,7 @@ class ReceiveCreditPaymentService
     public function handle(WashOrder $washOrder, array $data, User $user): Payment
     {
         if ($washOrder->payment_status !== WashOrder::PAYMENT_CREDIT_PENDING) {
-            throw new DomainException('Esta lavagem nao esta marcada como fiado / pendente.');
+            throw new DomainException('Esta lavagem não está marcada como fiado / pendente.');
         }
 
         return $this->registerPayment->handle($washOrder, [

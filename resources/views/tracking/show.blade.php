@@ -14,7 +14,7 @@
             <div>
                 <img src="{{ $washOrder->washLocation?->logoUrl() ?? asset('images/autoflow-logo.png') }}" alt="{{ $washOrder->washLocation?->name ?? 'AutoFlow' }}" class="max-h-24 w-40 object-contain">
                 <h1 class="mt-4 text-3xl font-bold sm:text-4xl">{{ $washOrder->vehicle->model }} {{ $washOrder->vehicle->color }} - {{ $washOrder->vehicle->plate }}</h1>
-                <p class="mt-2 text-sm text-zinc-500">Codigo {{ $washOrder->code }}</p>
+                <p class="mt-2 text-sm text-zinc-500">Código {{ $washOrder->code }}</p>
                 @if (request()->boolean('realtime'))
                     <p class="mt-1 text-xs font-medium text-cyan-700">Atualizado em tempo real.</p>
                 @endif
@@ -27,7 +27,7 @@
 
         <section class="grid gap-4 py-6 md:grid-cols-3">
             <div class="rounded-lg border border-zinc-200 bg-white p-5">
-                <p class="text-sm text-zinc-500">Previsao</p>
+                <p class="text-sm text-zinc-500">Previsão</p>
                 <p class="mt-2 text-2xl font-semibold">{{ $washOrder->estimated_completion_at?->format('H:i') ?? '-' }}</p>
             </div>
             <div class="rounded-lg border border-zinc-200 bg-white p-5">
@@ -35,7 +35,7 @@
                 <p class="mt-2 text-2xl font-semibold">{{ $washOrder->entered_at->format('H:i') }}</p>
             </div>
             <div class="rounded-lg border border-zinc-200 bg-white p-5">
-                <p class="text-sm text-zinc-500">Servicos</p>
+                <p class="text-sm text-zinc-500">Serviços</p>
                 <p class="mt-2 text-2xl font-semibold">{{ $washOrder->services->count() }}</p>
             </div>
         </section>
@@ -60,15 +60,15 @@
             @if ($washOrder->status === \App\Models\WashOrder::STATUS_CANCELED)
                 <div class="mt-5 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">Lavagem cancelada.</div>
             @elseif ($washOrder->status === \App\Models\WashOrder::STATUS_READY)
-                <div class="mt-5 rounded-md border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">Veiculo pronto para retirada.</div>
+                <div class="mt-5 rounded-md border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">Veículo pronto para retirada.</div>
             @elseif ($washOrder->status === \App\Models\WashOrder::STATUS_DELIVERED)
-                <div class="mt-5 rounded-md border border-zinc-200 bg-zinc-50 px-4 py-3 text-sm text-zinc-700">Veiculo entregue.</div>
+                <div class="mt-5 rounded-md border border-zinc-200 bg-zinc-50 px-4 py-3 text-sm text-zinc-700">Veículo entregue.</div>
             @endif
         </section>
 
         <div class="mt-5 grid gap-5 lg:grid-cols-[1fr_380px]">
             <section class="rounded-lg border border-zinc-200 bg-white p-5">
-                <h2 class="text-lg font-semibold">Servicos</h2>
+                <h2 class="text-lg font-semibold">Serviços</h2>
                 <div class="mt-4 divide-y divide-zinc-100">
                     @foreach ($washOrder->services as $service)
                         <div class="flex items-center justify-between gap-4 py-3">
@@ -80,7 +80,7 @@
             </section>
 
             <section class="rounded-lg border border-zinc-200 bg-white p-5">
-                <h2 class="text-lg font-semibold">Historico</h2>
+                <h2 class="text-lg font-semibold">Histórico</h2>
                 <div class="mt-4 space-y-4">
                     @foreach ($washOrder->statusHistories->sortByDesc('created_at') as $history)
                         <div class="border-l-2 border-cyan-700 pl-3">

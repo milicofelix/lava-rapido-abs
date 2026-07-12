@@ -4,7 +4,7 @@
             <div class="mb-5 flex flex-wrap items-center justify-between gap-3">
                 <div>
                     <h2 class="text-xl font-bold">Lava-rapidos no mapa</h2>
-                    <p class="text-sm text-slate-500">Visualizacao inicial das unidades e volume em andamento.</p>
+                    <p class="text-sm text-slate-500">Visualização inicial das unidades e volume em andamento.</p>
                 </div>
                 <form method="GET" class="flex gap-2">
                     <select name="status" class="rounded-lg border border-slate-200 px-3 py-2 text-sm">

@@ -37,7 +37,7 @@
 
             <form method="GET" class="mt-5 grid gap-3 lg:grid-cols-[160px_160px_1fr_1fr_190px_auto]">
                 <label class="block">
-                    <span class="mb-1 block text-xs font-bold text-slate-500">Inicio</span>
+                    <span class="mb-1 block text-xs font-bold text-slate-500">Início</span>
                     <input type="date" name="start" value="{{ $filters['start'] }}" class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100">
                     @error('start') <span class="mt-1 block text-xs font-bold text-red-600">{{ $message }}</span> @enderror
                 </label>
@@ -58,7 +58,7 @@
                 </label>
                 <label class="block">
                     <span class="mb-1 block text-xs font-bold text-slate-500">Busca</span>
-                    <input name="search" value="{{ $filters['search'] }}" placeholder="Codigo, nome, telefone ou CPF" class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100">
+                    <input name="search" value="{{ $filters['search'] }}" placeholder="Código, nome, telefone ou CPF" class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100">
                     @error('search') <span class="mt-1 block text-xs font-bold text-red-600">{{ $message }}</span> @enderror
                 </label>
                 <label class="block">
@@ -180,7 +180,7 @@
                         <article class="grid gap-3 px-5 py-4 md:grid-cols-[1fr_150px_120px_auto] md:items-center">
                             <div class="min-w-0">
                                 <a href="{{ route('loyalty-coupons.show', $coupon) }}" class="font-black text-slate-950 hover:text-blue-700">{{ $coupon->code }}</a>
-                                <p class="mt-1 truncate text-sm font-semibold text-slate-600">{{ $coupon->customer?->name ?? 'Cliente nao informado' }}</p>
+                                <p class="mt-1 truncate text-sm font-semibold text-slate-600">{{ $coupon->customer?->name ?? 'Cliente não informado' }}</p>
                                 <p class="mt-1 truncate text-xs text-slate-500">{{ $coupon->benefitLabel() }}</p>
                             </div>
                             <div class="text-sm text-slate-600">

@@ -66,11 +66,11 @@
                                 @if ($isDelayed)
                                     <span class="rounded-full bg-red-100 px-3 py-1 text-xs font-black text-red-700">Atrasada</span>
                                 @elseif ($washOrder->estimated_completion_at && ! $isTerminal)
-                                    <span class="rounded-full bg-blue-50 px-3 py-1 text-xs font-black text-blue-700">Previsao {{ $washOrder->estimated_completion_at->format('H:i') }}</span>
+                                    <span class="rounded-full bg-blue-50 px-3 py-1 text-xs font-black text-blue-700">Previsão {{ $washOrder->estimated_completion_at->format('H:i') }}</span>
                                 @endif
                             </div>
                             <p class="mt-1 truncate text-sm font-semibold text-slate-700">{{ $washOrder->customer->name }} · {{ $washOrder->vehicle->brand }} {{ $washOrder->vehicle->model }}</p>
-                            <p class="mt-2 text-sm text-slate-500">{{ $washOrder->services->pluck('pivot.service_name')->filter()->join(', ') ?: 'Servico nao informado' }}</p>
+                            <p class="mt-2 text-sm text-slate-500">{{ $washOrder->services->pluck('pivot.service_name')->filter()->join(', ') ?: 'Serviço não informado' }}</p>
                         </div>
                         <div class="text-sm text-slate-600 md:text-right">
                             <p class="font-bold text-slate-900">{{ $washOrder->teamMembers->isNotEmpty() ? $washOrder->teamMembers->pluck('name')->join(', ') : 'Sem equipe' }}</p>

@@ -75,7 +75,7 @@ class LoyaltyReportController extends Controller
             $handle = fopen('php://output', 'w');
 
             fputcsv($handle, [
-                'Codigo',
+                'Código',
                 'Cliente',
                 'Status',
                 'Beneficio',
@@ -89,7 +89,7 @@ class LoyaltyReportController extends Controller
             foreach ($coupons as $coupon) {
                 fputcsv($handle, [
                     $coupon->code,
-                    $coupon->customer?->name ?? 'Cliente nao informado',
+                    $coupon->customer?->name ?? 'Cliente não informado',
                     $coupon->statusLabel(),
                     $coupon->benefitLabel(),
                     $coupon->earned_at?->format('d/m/Y H:i') ?? '',

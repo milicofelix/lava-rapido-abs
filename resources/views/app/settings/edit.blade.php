@@ -1,4 +1,4 @@
-<x-app.layout heading="Configuracoes" title="Configuracoes · AutoFlow">
+<x-app.layout heading="Configurações" title="Configurações · AutoFlow">
     <div class="grid gap-5 xl:grid-cols-[1fr_360px]">
         <form method="POST" action="{{ route('settings.update') }}" enctype="multipart/form-data" class="space-y-5 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm" data-theme-settings-form>
             @csrf
@@ -23,7 +23,7 @@
                             </div>
                             <div class="min-w-0 flex-1">
                                 <input name="logo" type="file" accept="image/png,image/jpeg,image/webp" class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm shadow-sm file:mr-3 file:rounded-lg file:border-0 file:bg-blue-50 file:px-3 file:py-1.5 file:text-sm file:font-bold file:text-blue-700">
-                                <p class="mt-1 text-xs text-slate-500">PNG, JPG ou WEBP ate 5MB.</p>
+                                <p class="mt-1 text-xs text-slate-500">PNG, JPG ou WEBP até 5MB.</p>
                                 @error('logo') <span class="text-sm text-red-600">{{ $message }}</span> @enderror
                             </div>
                         </div>
@@ -183,7 +183,7 @@
             <section class="border-t border-slate-200 pt-5">
                 <p class="text-xs font-bold uppercase tracking-[0.2em] text-blue-700">Modulos opcionais</p>
                 <h2 class="mt-1 text-xl font-bold text-slate-950">Controle o que aparece no sistema</h2>
-                <p class="mt-1 text-sm text-slate-500">Ideal para lava-rapidos menores que nao precisam operar agenda, caixa completo ou fiado.</p>
+                <p class="mt-1 text-sm text-slate-500">Ideal para lava-rápidos menores que não precisam operar agenda, caixa completo ou fiado.</p>
 
                 <div class="mt-4 grid gap-3 md:grid-cols-3">
                     <label class="flex cursor-pointer items-start gap-3 rounded-2xl border border-slate-200 p-4 hover:bg-slate-50">
@@ -215,7 +215,7 @@
             <section class="border-t border-slate-200 pt-5">
                 <p class="text-xs font-bold uppercase tracking-[0.2em] text-blue-700">Programa de fidelidade</p>
                 <h2 class="mt-1 text-xl font-bold text-slate-950">Cupons para clientes recorrentes</h2>
-                <p class="mt-1 text-sm text-slate-500">Configure quando o cliente ganha um cupom e qual beneficio sera oferecido.</p>
+                <p class="mt-1 text-sm text-slate-500">Configure quando o cliente ganha um cupom e qual benefício será oferecido.</p>
 
                 <div class="mt-4 grid gap-4 md:grid-cols-2">
                     <label class="flex cursor-pointer items-start gap-3 rounded-2xl border border-slate-200 p-4 hover:bg-slate-50 md:col-span-2">

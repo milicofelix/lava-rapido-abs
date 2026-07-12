@@ -42,15 +42,15 @@
                 <p class="mt-2 text-3xl font-black text-slate-950">{{ $washOrders->total() }}</p>
             </div>
             <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-                <p class="text-sm font-bold text-slate-500">Nesta pagina</p>
+                <p class="text-sm font-bold text-slate-500">Nesta página</p>
                 <p class="mt-2 text-3xl font-black text-blue-700">{{ $washOrders->count() }}</p>
             </div>
             <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-                <p class="text-sm font-bold text-slate-500">Pendentes nesta pagina</p>
+                <p class="text-sm font-bold text-slate-500">Pendentes nesta página</p>
                 <p class="mt-2 text-3xl font-black text-amber-700">{{ $washOrders->getCollection()->whereNotIn('status', [\App\Models\WashOrder::STATUS_DELIVERED])->count() }}</p>
             </div>
             <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-                <p class="text-sm font-bold text-slate-500">Total nesta pagina</p>
+                <p class="text-sm font-bold text-slate-500">Total nesta página</p>
                 <p class="mt-2 text-3xl font-black text-emerald-700">R$ {{ number_format((float) $washOrders->getCollection()->sum('total_amount'), 2, ',', '.') }}</p>
             </div>
         </section>
@@ -64,7 +64,7 @@
                 @forelse ($washOrders as $washOrder)
                     <article class="grid gap-4 px-5 py-4 xl:grid-cols-[160px_1fr_1fr_180px_140px_auto] xl:items-center">
                         <div>
-                            <p class="text-xs font-black uppercase tracking-[0.16em] text-slate-500">Codigo</p>
+                            <p class="text-xs font-black uppercase tracking-[0.16em] text-slate-500">Código</p>
                             <p class="mt-1 font-black text-slate-950">{{ $washOrder->code }}</p>
                         </div>
                         <div class="min-w-0">
@@ -77,7 +77,7 @@
                         </div>
                         <div>
                             @include('app.wash-orders._status-badge', ['status' => $washOrder->status, 'label' => $washOrder->statusLabel()])
-                            <p class="mt-2 text-xs font-bold text-slate-500">Previsao: {{ $washOrder->estimated_completion_at?->format('H:i') ?? '-' }}</p>
+                            <p class="mt-2 text-xs font-bold text-slate-500">Previsão: {{ $washOrder->estimated_completion_at?->format('H:i') ?? '-' }}</p>
                         </div>
                         <div>
                             <p class="text-xs font-black uppercase tracking-[0.16em] text-slate-500">Total</p>

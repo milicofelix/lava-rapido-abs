@@ -55,7 +55,7 @@ class VehicleController extends Controller
 
         Vehicle::create($data);
 
-        return redirect()->route('vehicles.index')->with('status', 'Veiculo cadastrado com sucesso.');
+        return redirect()->route('vehicles.index')->with('status', 'Veículo cadastrado com sucesso.');
     }
 
     public function edit(Vehicle $vehicle): View
@@ -81,7 +81,7 @@ class VehicleController extends Controller
 
         $vehicle->update($data);
 
-        return redirect()->route('vehicles.index')->with('status', 'Veiculo atualizado com sucesso.');
+        return redirect()->route('vehicles.index')->with('status', 'Veículo atualizado com sucesso.');
     }
 
     private function validated(Request $request, ?Vehicle $vehicle = null): array

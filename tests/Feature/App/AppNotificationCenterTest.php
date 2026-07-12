@@ -264,7 +264,7 @@ class AppNotificationCenterTest extends TestCase
             ->get(route('dashboard'))
             ->assertOk()
             ->assertSee('Pagamento aprovado')
-            ->assertSee('Assinatura Professional ativa ate')
+            ->assertSee('Assinatura Professional ativa até')
             ->assertSee('Ver assinatura');
     }
 
@@ -291,7 +291,7 @@ class AppNotificationCenterTest extends TestCase
         $this->actingAs($owner)
             ->get(route('dashboard'))
             ->assertOk()
-            ->assertSee('Pagamento nao aprovado')
+            ->assertSee('Pagamento não aprovado')
             ->assertSee('Tentar novamente');
     }
 }

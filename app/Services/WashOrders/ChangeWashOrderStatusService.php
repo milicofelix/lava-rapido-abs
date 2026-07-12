@@ -30,13 +30,13 @@ class ChangeWashOrderStatusService
         }
 
         if (! WashOrderStatusFlow::canTransition($fromStatus, $status)) {
-            throw new InvalidArgumentException('Transicao de status nao permitida.');
+            throw new InvalidArgumentException('Transição de status não permitida.');
         }
 
         $washOrder->load('services');
 
         if (! WashOrderStatusFlow::washOrderCanUseStatus($washOrder, $status)) {
-            throw new InvalidArgumentException('Este status nao se aplica aos servicos selecionados nesta lavagem.');
+            throw new InvalidArgumentException('Este status não se aplica aos serviços selecionados nesta lavagem.');
         }
 
         if ($status === WashOrder::STATUS_DELIVERED && ! $washOrder->hasIdentifiedPayment()) {
@@ -44,7 +44,7 @@ class ChangeWashOrderStatusService
         }
 
         if ($user?->isOperator() && ! $washOrder->teamMembers()->whereKey($user->id)->exists()) {
-            throw new InvalidArgumentException('Operador nao faz parte da equipe desta lavagem.');
+            throw new InvalidArgumentException('Operador não faz parte da equipe desta lavagem.');
         }
 
         $washOrder->forceFill([

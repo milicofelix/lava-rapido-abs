@@ -80,11 +80,11 @@ class EmployeeController extends Controller
         $this->abortUnlessManageable($employee);
 
         if ($employee->is(auth()->user())) {
-            return back()->withErrors(['employee' => 'Voce nao pode desativar o proprio usuario.']);
+            return back()->withErrors(['employee' => 'Você não pode desativar o próprio usuário.']);
         }
 
         if ($employee->isOwner() && $this->activeOwnersCount() <= 1) {
-            return back()->withErrors(['employee' => 'Nao e possivel desativar o ultimo dono da unidade.']);
+            return back()->withErrors(['employee' => 'Não é possível desativar o último dono da unidade.']);
         }
 
         $employee->update(['is_active' => false]);
@@ -127,7 +127,7 @@ class EmployeeController extends Controller
         }
 
         if ($employee && $employee->isOwner() && ($data['role'] ?? $employee->role) !== User::ROLE_OWNER && $this->activeOwnersCount() <= 1) {
-            abort(422, 'Nao e possivel remover o ultimo dono da unidade.');
+            abort(422, 'Não é possível remover o último dono da unidade.');
         }
 
         if (($data['password'] ?? '') === '') {

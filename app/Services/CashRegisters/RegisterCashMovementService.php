@@ -15,7 +15,7 @@ class RegisterCashMovementService
     public function handle(CashRegister $cashRegister, array $data, User $user): CashMovement
     {
         if ($cashRegister->status !== CashRegister::STATUS_OPEN) {
-            throw new DomainException('Nao e possivel movimentar um caixa fechado.');
+            throw new DomainException('Não é possível movimentar um caixa fechado.');
         }
 
         return $cashRegister->movements()->create([

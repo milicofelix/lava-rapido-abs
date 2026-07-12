@@ -17,7 +17,7 @@ class CloseCashRegisterService
     public function handle(CashRegister $cashRegister, array $data, User $user): CashRegister
     {
         if ($cashRegister->status !== CashRegister::STATUS_OPEN) {
-            throw new DomainException('Este caixa ja esta fechado.');
+            throw new DomainException('Este caixa já está fechado.');
         }
 
         $expectedCash = $this->expectedCash($cashRegister);

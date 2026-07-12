@@ -8,7 +8,7 @@ class BackupCheckCommand extends Command
 {
     protected $signature = 'app:backup-check {--strict : Trata avisos como falha para release}';
 
-    protected $description = 'Valida requisitos basicos do plano de backup e restore.';
+    protected $description = 'Valida requisitos básicos do plano de backup e restore.';
 
     public function handle(): int
     {
@@ -24,7 +24,7 @@ class BackupCheckCommand extends Command
 
             if ($check['level'] === 'warning') {
                 $hasWarnings = true;
-                $this->warn('[ATENCAO] '.$check['message']);
+                $this->warn('[ATENÇÃO] '.$check['message']);
                 continue;
             }
 
@@ -34,7 +34,7 @@ class BackupCheckCommand extends Command
 
         if ($hasFailures || ($this->option('strict') && $hasWarnings)) {
             $this->newLine();
-            $this->error('Plano de backup ainda nao esta pronto para producao.');
+            $this->error('Plano de backup ainda não está pronto para produção.');
 
             return self::FAILURE;
         }
@@ -55,21 +55,21 @@ class BackupCheckCommand extends Command
         $defaultConnection = config('database.default');
 
         $checks = [
-            $this->check(filled($defaultConnection), 'Conexao de banco definida.', 'Conexao de banco nao definida.'),
+            $this->check(filled($defaultConnection), 'Conexão de banco definida.', 'Conexão de banco não definida.'),
             $this->check(
                 filled(config("database.connections.{$defaultConnection}")),
-                'Configuracao da conexao de banco encontrada.',
-                'Configuracao da conexao de banco nao encontrada.',
+                'Configuração da conexão de banco encontrada.',
+                'Configuração da conexão de banco não encontrada.',
             ),
-            $this->check(is_dir(storage_path('app/public')), 'Diretorio de uploads publicos encontrado.', 'Diretorio storage/app/public nao encontrado.'),
-            $this->check(is_readable(storage_path('app/public')), 'Diretorio de uploads publicos legivel.', 'Diretorio storage/app/public precisa estar legivel para backup.'),
-            $this->check(is_dir(storage_path('logs')), 'Diretorio de logs encontrado.', 'Diretorio storage/logs nao encontrado.'),
-            $this->check($retentionDays >= 7, 'Retencao minima de backup configurada.', 'BACKUP_RETENTION_DAYS deve ser pelo menos 7.'),
-            $this->warnIf(blank($backupPath), 'BACKUP_STORAGE_PATH nao definido; documente o destino externo dos backups.', 'Destino externo de backup configurado.'),
+            $this->check(is_dir(storage_path('app/public')), 'Diretório de uploads públicos encontrado.', 'Diretório storage/app/public não encontrado.'),
+            $this->check(is_readable(storage_path('app/public')), 'Diretório de uploads públicos legível.', 'Diretório storage/app/public precisa estar legível para backup.'),
+            $this->check(is_dir(storage_path('logs')), 'Diretório de logs encontrado.', 'Diretório storage/logs não encontrado.'),
+            $this->check($retentionDays >= 7, 'Retenção mínima de backup configurada.', 'BACKUP_RETENTION_DAYS deve ser pelo menos 7.'),
+            $this->warnIf(blank($backupPath), 'BACKUP_STORAGE_PATH não definido; documente o destino externo dos backups.', 'Destino externo de backup configurado.'),
         ];
 
         if (filled($backupPath)) {
-            $checks[] = $this->warnIf(! is_dir((string) $backupPath), 'BACKUP_STORAGE_PATH aponta para um diretorio inexistente neste ambiente.', 'Diretorio de destino do backup existe neste ambiente.');
+            $checks[] = $this->warnIf(! is_dir((string) $backupPath), 'BACKUP_STORAGE_PATH aponta para um diretório inexistente neste ambiente.', 'Diretório de destino do backup existe neste ambiente.');
         }
 
         return $checks;

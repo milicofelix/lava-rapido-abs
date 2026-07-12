@@ -13,7 +13,7 @@
             <div class="w-full max-w-2xl">
                 <img src="{{ asset('images/autoflow-logo.png') }}" alt="AutoFlow" class="w-full max-w-2xl">
                 <h1 class="mt-8 text-3xl font-semibold text-zinc-950 sm:text-4xl">Operacao clara da entrada ao pagamento.</h1>
-                <p class="mt-4 max-w-xl text-zinc-600">Controle clientes, veiculos, servicos, lavagens e acompanhamento em uma rotina simples para lava-rapidos.</p>
+                <p class="mt-4 max-w-xl text-zinc-600">Controle clientes, veículos, serviços, lavagens e acompanhamento em uma rotina simples para lava-rápidos.</p>
             </div>
         </section>
 
@@ -22,7 +22,7 @@
                 @csrf
                 <div>
                     <h2 class="text-2xl font-semibold">Entrar</h2>
-                    <p class="mt-1 text-sm text-zinc-500">Use admin@lavaabs.test / password apos rodar o seed.</p>
+                    <p class="mt-1 text-sm text-zinc-500">Use admin@lavaabs.test / password após rodar o seed.</p>
                 </div>
 
                 <label class="block">

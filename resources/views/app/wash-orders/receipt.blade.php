@@ -136,7 +136,7 @@
                 <div class="grid">
                     <p><span class="label">Cliente</span><span class="value">{{ $washOrder->customer->name }}</span></p>
                     <p><span class="label">Telefone</span><span class="value">{{ $washOrder->customer->phone ?? '-' }}</span></p>
-                    <p><span class="label">Veiculo</span><span class="value">{{ $washOrder->vehicle->brand }} {{ $washOrder->vehicle->model }}</span></p>
+                    <p><span class="label">Veículo</span><span class="value">{{ $washOrder->vehicle->brand }} {{ $washOrder->vehicle->model }}</span></p>
                     <p><span class="label">Placa</span><span class="value">{{ $washOrder->vehicle->plate }}</span></p>
                     <p><span class="label">Status</span><span class="value">{{ $washOrder->statusLabel() }}</span></p>
                     <p><span class="label">Pagamento</span><span class="value">{{ $washOrder->paymentStatusLabel() }}</span></p>
@@ -144,7 +144,7 @@
             </section>
 
             <section class="section">
-                <h2>Servicos</h2>
+                <h2>Serviços</h2>
                 @foreach ($washOrder->services as $service)
                     <div class="item row">
                         <div>

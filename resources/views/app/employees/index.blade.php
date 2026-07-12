@@ -32,11 +32,11 @@
                 <p class="mt-2 text-3xl font-black text-slate-950">{{ $employees->total() }}</p>
             </div>
             <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-                <p class="text-sm font-bold text-slate-500">Ativos nesta pagina</p>
+                <p class="text-sm font-bold text-slate-500">Ativos nesta página</p>
                 <p class="mt-2 text-3xl font-black text-emerald-700">{{ $employees->getCollection()->where('is_active', true)->count() }}</p>
             </div>
             <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-                <p class="text-sm font-bold text-slate-500">Perfis nesta pagina</p>
+                <p class="text-sm font-bold text-slate-500">Perfis nesta página</p>
                 <p class="mt-2 text-3xl font-black text-blue-700">{{ $employees->getCollection()->pluck('role')->unique()->count() }}</p>
             </div>
         </section>

@@ -204,7 +204,7 @@ class WashOrderManagementTest extends TestCase
         $this->actingAs($operator)->get(route('wash-orders.show', $washOrder))
             ->assertOk()
             ->assertDontSee('Atualizar status')
-            ->assertSee('Status restrito a responsaveis da equipe desta lavagem.');
+            ->assertSee('Status restrito a responsáveis da equipe desta lavagem.');
 
         $this->actingAs($operator)->patch(route('wash-orders.update-status', $washOrder), [
             'status' => WashOrder::STATUS_WASHING,

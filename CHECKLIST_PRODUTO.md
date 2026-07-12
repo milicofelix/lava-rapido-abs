@@ -31,7 +31,7 @@ Documento de acompanhamento do que ja foi construido e do que ainda falta para d
 - [x] Substituicao de textos tecnicos como `Owner` por termos amigaveis.
 - [x] Revisao visual final responsiva em todas as telas.
 - [x] Navegacao principal mobile fixa para rotas mais usadas.
-- [ ] Padronizar todos os textos acentuados em pt-BR.
+- [x] Padronizar todos os textos acentuados em pt-BR.
 
 ## Usuarios, ACL e permissoes
 
@@ -256,7 +256,7 @@ Documento de acompanhamento do que ja foi construido e do que ainda falta para d
 - [x] Garantir que cupom nao distorca financeiro.
 - [x] Garantir que vencidos nao aparecam como ativos.
 - [x] Revisao geral de UX mobile.
-- [ ] Suite completa de testes.
+- [x] Suite completa de testes.
 - [x] Checklist de deploy.
 - [ ] Homologacao manual com dados reais.
 

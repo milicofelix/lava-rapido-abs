@@ -49,7 +49,7 @@ class ChangeWashOrderStatusServiceTest extends TestCase
             app(ChangeWashOrderStatusService::class)->handle($washOrder, WashOrder::STATUS_DELIVERED, $user);
             $this->fail('A transicao invalida deveria ter sido bloqueada.');
         } catch (InvalidArgumentException $exception) {
-            $this->assertSame('Transicao de status nao permitida.', $exception->getMessage());
+            $this->assertSame('Transição de status não permitida.', $exception->getMessage());
         }
 
         $this->assertSame(WashOrder::STATUS_AWAITING, $washOrder->refresh()->status);
