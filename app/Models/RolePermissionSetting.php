@@ -18,9 +18,6 @@ class RolePermissionSetting extends Model
         'allowed' => 'boolean',
     ];
 
-    /** @var array<string, bool|null> */
-    private static array $memo = [];
-
     public function washLocation(): BelongsTo
     {
         return $this->belongsTo(WashLocation::class);
@@ -28,19 +25,13 @@ class RolePermissionSetting extends Model
 
     public static function allowedFor(int $locationId, string $role, string $permission): ?bool
     {
-        $key = "{$locationId}:{$role}:{$permission}";
-
-        if (array_key_exists($key, self::$memo)) {
-            return self::$memo[$key];
-        }
-
         $value = self::query()
             ->where('wash_location_id', $locationId)
             ->where('role', $role)
             ->where('permission', $permission)
             ->value('allowed');
 
-        return self::$memo[$key] = $value === null ? null : (bool) $value;
+        return $value === null ? null : (bool) $value;
     }
 
     /**
@@ -59,7 +50,6 @@ class RolePermissionSetting extends Model
             );
         }
 
-        self::$memo = [];
     }
 
     /**

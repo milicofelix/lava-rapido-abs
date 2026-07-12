@@ -190,6 +190,60 @@ class AccessControl
     /**
      * @return array<int, string>
      */
+    public static function effectivePermissionsFor(User $user): array
+    {
+        $permissions = self::basePermissionsForRole($user->role);
+
+        foreach (self::configurablePermissionsForRole($user->role) as $permission) {
+            if (self::allows($user, $permission)) {
+                $permissions[] = $permission;
+            }
+        }
+
+        return collect($permissions)->unique()->values()->all();
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    public static function basePermissionsForRole(string $role): array
+    {
+        return self::rolePermissions()[$role] ?? [];
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    public static function configurablePermissionsForRole(string $role): array
+    {
+        return self::configurableRolePermissions()[$role] ?? [];
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    public static function enabledConfigurablePermissionsFor(User $user): array
+    {
+        return collect(self::configurablePermissionsForRole($user->role))
+            ->filter(fn (string $permission): bool => self::allows($user, $permission))
+            ->values()
+            ->all();
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    public static function blockedConfigurablePermissionsFor(User $user): array
+    {
+        return collect(self::configurablePermissionsForRole($user->role))
+            ->reject(fn (string $permission): bool => self::allows($user, $permission))
+            ->values()
+            ->all();
+    }
+
+    /**
+     * @return array<int, string>
+     */
     public static function rolesFor(string $permission): array
     {
         return collect(self::rolePermissions())

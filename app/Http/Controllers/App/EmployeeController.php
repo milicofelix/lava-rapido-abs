@@ -4,6 +4,7 @@ namespace App\Http\Controllers\App;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Support\Access\AccessControl;
 use App\Support\TenantContext;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -30,10 +31,20 @@ class EmployeeController extends Controller
             ->paginate(10)
             ->withQueryString();
 
+        $employees->getCollection()->each(function (User $employee): void {
+            $employee->setAttribute('permission_audit', [
+                'effective' => AccessControl::effectivePermissionsFor($employee),
+                'enabled_overrides' => AccessControl::enabledConfigurablePermissionsFor($employee),
+                'blocked_overrides' => AccessControl::blockedConfigurablePermissionsFor($employee),
+            ]);
+        });
+
         return view('app.employees.index', [
             'employees' => $employees,
             'search' => $search,
             'roles' => self::rolesFor(auth()->user()),
+            'permissionLabels' => AccessControl::permissionLabels(),
+            'permissionDescriptions' => AccessControl::permissionDescriptions(),
         ]);
     }
 

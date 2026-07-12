@@ -2,7 +2,9 @@
 
 namespace Tests\Feature\App;
 
+use App\Models\RolePermissionSetting;
 use App\Models\User;
+use App\Support\Access\AccessControl;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
 use Tests\TestCase;
@@ -65,5 +67,33 @@ class EmployeeManagementTest extends TestCase
             'role' => 'operator',
             'password' => 'password',
         ])->assertSessionHasErrors('email');
+    }
+
+    public function test_employee_index_shows_visual_permission_audit(): void
+    {
+        $admin = User::factory()->create(['role' => User::ROLE_ADMIN]);
+        $operator = User::factory()->create([
+            'name' => 'Operador Kanban',
+            'email' => 'operador@lavaabs.test',
+            'role' => User::ROLE_OPERATOR,
+            'wash_location_id' => $admin->wash_location_id,
+        ]);
+
+        RolePermissionSetting::setForLocation((int) $admin->wash_location_id, User::ROLE_OPERATOR, [
+            AccessControl::VIEW_WASH_ORDERS => true,
+            AccessControl::CREATE_WASH_ORDER => false,
+            AccessControl::SEND_WASH_NOTIFICATIONS => false,
+        ]);
+
+        $this->actingAs($admin)
+            ->get(route('employees.index'))
+            ->assertOk()
+            ->assertSee('Auditoria de permissões')
+            ->assertSee('Operador Kanban')
+            ->assertSee('Possui exceção configurada')
+            ->assertSee('+ Visualizar detalhes da lavagem')
+            ->assertSee('Bloqueadas pela configuração')
+            ->assertSee('Abrir e listar lavagens')
+            ->assertSee('Enviar notificações manuais ao cliente');
     }
 }
