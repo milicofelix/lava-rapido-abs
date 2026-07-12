@@ -25,7 +25,10 @@ class AddressGeocoder
                 ])
                 ->get('https://nominatim.openstreetmap.org/search', [
                     'format' => 'jsonv2',
-                    'limit' => 1,
+                    'limit' => 3,
+                    'addressdetails' => 1,
+                    'dedupe' => 1,
+                    'accept-language' => 'pt-BR',
                     'countrycodes' => 'br',
                     'q' => $query,
                 ]);
@@ -34,23 +37,23 @@ class AddressGeocoder
                 continue;
             }
 
-            $result = $response->json('0');
+            foreach (($response->json() ?? []) as $result) {
+                if (! is_array($result) || ! isset($result['lat'], $result['lon'])) {
+                    continue;
+                }
 
-            if (! is_array($result) || ! isset($result['lat'], $result['lon'])) {
-                continue;
+                $latitude = (float) $result['lat'];
+                $longitude = (float) $result['lon'];
+
+                if ($latitude < -90 || $latitude > 90 || $longitude < -180 || $longitude > 180) {
+                    continue;
+                }
+
+                return [
+                    'latitude' => $latitude,
+                    'longitude' => $longitude,
+                ];
             }
-
-            $latitude = (float) $result['lat'];
-            $longitude = (float) $result['lon'];
-
-            if ($latitude < -90 || $latitude > 90 || $longitude < -180 || $longitude > 180) {
-                continue;
-            }
-
-            return [
-                'latitude' => $latitude,
-                'longitude' => $longitude,
-            ];
         }
 
         return null;
@@ -61,22 +64,26 @@ class AddressGeocoder
      */
     private function queryVariations(string $address): array
     {
-        $address = trim($address);
+        $address = trim(preg_replace('/\s+/', ' ', $address) ?? $address);
 
         if ($address === '') {
             return [];
         }
 
+        $address = $this->withCountry($this->normalizeSeparators($address));
         $withoutZipCode = trim(preg_replace('/\b\d{5}-?\d{3}\b/', '', $address) ?? $address, " \t\n\r\0\x0B,");
         $withoutNumber = trim(preg_replace('/,\s*\d+\b/', '', $withoutZipCode) ?? $withoutZipCode, " \t\n\r\0\x0B,");
+        $withoutDistrict = $this->withoutMiddleAddressPart($withoutZipCode);
 
         $queries = [
             $address,
             $withoutZipCode,
             $withoutNumber,
+            $withoutDistrict,
             $this->ascii($address),
             $this->ascii($withoutZipCode),
             $this->ascii($withoutNumber),
+            $this->ascii($withoutDistrict),
         ];
 
         preg_match('/\b\d{5}-?\d{3}\b/', $address, $zipCode);
@@ -91,6 +98,38 @@ class AddressGeocoder
             ->unique()
             ->values()
             ->all();
+    }
+
+    private function normalizeSeparators(string $address): string
+    {
+        $address = preg_replace('/\s*\/\s*/', ', ', $address) ?? $address;
+
+        return trim($address, " \t\n\r\0\x0B,");
+    }
+
+    private function withCountry(string $address): string
+    {
+        if (preg_match('/\bbrasil\b|\bbrazil\b/i', $address) === 1) {
+            return $address;
+        }
+
+        return $address.', Brasil';
+    }
+
+    private function withoutMiddleAddressPart(string $address): string
+    {
+        $parts = collect(explode(',', $address))
+            ->map(fn (string $part) => trim($part))
+            ->filter()
+            ->values();
+
+        if ($parts->count() < 5) {
+            return $address;
+        }
+
+        $parts->forget(2);
+
+        return $parts->values()->implode(', ');
     }
 
     private function ascii(string $value): string

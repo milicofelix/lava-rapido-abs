@@ -43,7 +43,7 @@ class ReprocessWashLocationCoordinatesCommand extends Command
         $skipped = 0;
 
         foreach ($locations as $location) {
-            $address = $location->fullAddress();
+            $address = $this->addressForGeocoding($location);
 
             if ($address === '') {
                 $skipped++;
@@ -88,5 +88,16 @@ class ReprocessWashLocationCoordinatesCommand extends Command
         $this->info("Resumo: {$updated} atualizada(s), {$notFound} pendente(s), {$skipped} ignorada(s).");
 
         return self::SUCCESS;
+    }
+
+    private function addressForGeocoding(WashLocation $location): string
+    {
+        return collect([
+            trim(collect([$location->address, $location->address_number])->filter()->implode(', ')),
+            $location->district,
+            $location->city,
+            $location->state,
+            'Brasil',
+        ])->filter()->implode(', ');
     }
 }
