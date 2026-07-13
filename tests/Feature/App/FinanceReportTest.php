@@ -30,6 +30,7 @@ class FinanceReportTest extends TestCase
         ]))
             ->assertOk()
             ->assertSee('Financeiro')
+            ->assertSee('Método')
             ->assertSee('Pix')
             ->assertSee('R$ 90,00')
             ->assertSee($washOrder->code);

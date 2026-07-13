@@ -121,6 +121,7 @@ class ExecutiveReportTest extends TestCase
             $content = $response->getContent();
 
             $this->assertStringStartsWith('%PDF-1.4', $content);
+            $this->assertStringContainsString('/WinAnsiEncoding', $content);
             $this->assertStringContainsString('Relat', $content);
             $this->assertStringContainsString('Lavagem PDF', $content);
             $this->assertStringContainsString('Cliente PDF', $content);
