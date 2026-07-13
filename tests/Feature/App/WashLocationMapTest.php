@@ -246,6 +246,43 @@ class WashLocationMapTest extends TestCase
             ->assertSee('https://wa.me/5511988881101', false);
     }
 
+    public function test_public_location_detail_shows_real_time_business_hours_summary(): void
+    {
+        Carbon::setTestNow('2026-06-22 10:00:00');
+
+        try {
+            $location = WashLocation::factory()->create([
+                'name' => 'Lava Horario Certo',
+                'address' => 'Av. Horario, 100',
+                'district' => 'Centro',
+                'city' => 'Sao Paulo',
+                'state' => 'SP',
+                'status' => WashLocation::STATUS_OPEN,
+                'business_hours' => [
+                    'monday' => ['is_open' => true, 'opens' => '08:00', 'closes' => '18:00'],
+                    'tuesday' => ['is_open' => true, 'opens' => '08:00', 'closes' => '18:00'],
+                    'wednesday' => ['is_open' => true, 'opens' => '08:00', 'closes' => '18:00'],
+                    'thursday' => ['is_open' => true, 'opens' => '08:00', 'closes' => '18:00'],
+                    'friday' => ['is_open' => true, 'opens' => '08:00', 'closes' => '18:00'],
+                    'saturday' => ['is_open' => false, 'opens' => '08:00', 'closes' => '18:00'],
+                    'sunday' => ['is_open' => false, 'opens' => '08:00', 'closes' => '18:00'],
+                ],
+            ]);
+
+            $this->get(route('public.locations.show', $location))
+                ->assertOk()
+                ->assertSee('Funcionamento hoje')
+                ->assertSee('Aberto até 18:00')
+                ->assertSee('Segunda')
+                ->assertSee('08:00 às 18:00')
+                ->assertSee('Sábado')
+                ->assertSee('Fechado')
+                ->assertSee('Horários de funcionamento');
+        } finally {
+            Carbon::setTestNow();
+        }
+    }
+
     public function test_public_location_without_coordinates_uses_address_search_instead_of_fake_marker(): void
     {
         $location = WashLocation::query()->create([

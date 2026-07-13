@@ -157,11 +157,11 @@ class WashLocation extends Model
     {
         return [
             'monday' => 'Segunda',
-            'tuesday' => 'Terca',
+            'tuesday' => 'Terça',
             'wednesday' => 'Quarta',
             'thursday' => 'Quinta',
             'friday' => 'Sexta',
-            'saturday' => 'Sabado',
+            'saturday' => 'Sábado',
             'sunday' => 'Domingo',
         ];
     }

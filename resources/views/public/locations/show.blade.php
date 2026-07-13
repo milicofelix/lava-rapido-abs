@@ -4,12 +4,15 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{{ $location->name }} · AutoFlow</title>
+    <meta name="description" content="{{ $location->name }} em {{ $location->fullAddress() }}. Consulte status, horário de funcionamento, serviços, contato e rota.">
+    <meta property="og:title" content="{{ $location->name }} · AutoFlow">
+    <meta property="og:description" content="Veja status, serviços, horário e rota para {{ $location->name }}.">
     @include('components.favicon')
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 <body class="bg-slate-950 text-slate-950 antialiased">
     @php
-        $publicStatus = $location->publicStatus();
+        $publicStatus = $operatingSummary['status'];
         $statusClass = match ($publicStatus) {
             \App\Models\WashLocation::STATUS_BUSY => 'bg-orange-100 text-orange-700 ring-orange-200',
             \App\Models\WashLocation::STATUS_CLOSED => 'bg-slate-100 text-slate-600 ring-slate-200',
@@ -41,15 +44,26 @@
                         <div>
                             <h1 class="text-3xl font-black text-slate-950 sm:text-4xl">{{ $location->name }}</h1>
                             <p class="mt-2 max-w-2xl text-sm leading-6 text-slate-500">{{ $location->fullAddress() }}</p>
+                            <div class="mt-4 flex flex-wrap gap-2">
+                                <a href="{{ $directionsUrl }}" target="_blank" rel="noopener" class="rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-black text-white shadow-lg shadow-blue-900/20 hover:bg-blue-700">Como chegar</a>
+                                @if ($whatsappUrl)
+                                    <a href="{{ $whatsappUrl }}" target="_blank" rel="noopener" class="rounded-xl bg-green-600 px-4 py-2.5 text-sm font-black text-white shadow-lg shadow-green-900/20 hover:bg-green-700">Chamar no WhatsApp</a>
+                                @endif
+                            </div>
                         </div>
-                        <span class="rounded-full px-3 py-1.5 text-xs font-black ring-1 {{ $statusClass }}">{{ $location->publicStatusLabel() }}</span>
+                        <div class="text-right">
+                            <span class="rounded-full px-3 py-1.5 text-xs font-black ring-1 {{ $statusClass }}">{{ $operatingSummary['status_label'] }}</span>
+                            <p class="mt-2 text-sm font-black text-slate-950">{{ $operatingSummary['next_event'] }}</p>
+                            <p class="mt-1 text-xs font-bold text-slate-500">{{ $operatingSummary['today_label'] }} · {{ $operatingSummary['today_hours'] }}</p>
+                        </div>
                     </div>
                 </div>
 
                 <div class="grid gap-4 p-6 sm:grid-cols-3 sm:p-8">
                     <div class="rounded-2xl bg-blue-50 p-4">
                         <p class="text-xs font-semibold text-slate-500">Status</p>
-                        <p class="mt-1 text-lg font-black text-blue-800">{{ $location->publicStatusLabel() }}</p>
+                        <p class="mt-1 text-lg font-black text-blue-800">{{ $operatingSummary['status_label'] }}</p>
+                        <p class="mt-1 text-xs font-bold text-blue-700">{{ $operatingSummary['next_event'] }}</p>
                     </div>
                     <div class="rounded-2xl bg-emerald-50 p-4">
                         <p class="text-xs font-semibold text-slate-500">Em atendimento</p>
@@ -58,6 +72,42 @@
                     <div class="rounded-2xl bg-slate-50 p-4">
                         <p class="text-xs font-semibold text-slate-500">Contato</p>
                         <p class="mt-1 truncate text-lg font-black text-slate-950">{{ $location->phone ?: 'Não informado' }}</p>
+                    </div>
+                </div>
+
+                <div class="border-t border-slate-200 p-6 sm:p-8">
+                    <div class="grid gap-4 lg:grid-cols-[1fr_260px]">
+                        <div>
+                            <h2 class="text-xl font-black text-slate-950">Perfil da unidade</h2>
+                            <p class="mt-1 text-sm text-slate-500">Informações públicas para decidir o melhor momento de ir até o lava-rápido.</p>
+                            <dl class="mt-5 grid gap-3 sm:grid-cols-2">
+                                <div class="rounded-2xl border border-slate-200 p-4">
+                                    <dt class="text-xs font-black uppercase tracking-[0.14em] text-slate-500">Endereço</dt>
+                                    <dd class="mt-2 text-sm font-bold leading-6 text-slate-900">{{ $location->fullAddress() }}</dd>
+                                </div>
+                                <div class="rounded-2xl border border-slate-200 p-4">
+                                    <dt class="text-xs font-black uppercase tracking-[0.14em] text-slate-500">Contato</dt>
+                                    <dd class="mt-2 text-sm font-bold leading-6 text-slate-900">{{ $location->phone ?: 'Não informado' }}</dd>
+                                </div>
+                            </dl>
+                        </div>
+                        <div class="rounded-2xl border border-blue-100 bg-blue-50 p-4">
+                            <p class="text-xs font-black uppercase tracking-[0.14em] text-blue-700">Funcionamento hoje</p>
+                            <p class="mt-2 text-2xl font-black text-blue-950">{{ $operatingSummary['today_hours'] }}</p>
+                            <p class="mt-1 text-sm font-bold text-blue-800">{{ $operatingSummary['next_event'] }}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="border-t border-slate-200 p-6 sm:p-8">
+                    <h2 class="text-xl font-black text-slate-950">Horários de funcionamento</h2>
+                    <div class="mt-5 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+                        @foreach ($businessHours as $day)
+                            <div class="rounded-2xl border {{ $day['is_today'] ? 'border-blue-200 bg-blue-50' : 'border-slate-200 bg-white' }} p-4">
+                                <p class="text-xs font-black uppercase tracking-[0.14em] {{ $day['is_today'] ? 'text-blue-700' : 'text-slate-500' }}">{{ $day['day'] }}</p>
+                                <p class="mt-2 font-black {{ $day['is_today'] ? 'text-blue-950' : 'text-slate-950' }}">{{ $day['hours'] }}</p>
+                            </div>
+                        @endforeach
                     </div>
                 </div>
 
@@ -100,7 +150,8 @@
 
                 <section class="rounded-3xl border border-white/10 bg-white p-5 shadow-2xl shadow-black/20">
                     <h2 class="text-lg font-black text-slate-950">Funcionamento</h2>
-                    <p class="mt-2 text-sm leading-6 text-slate-500">{{ $location->opening_hours ?: $location->openingHoursSummary() }}</p>
+                    <p class="mt-2 text-sm font-black text-slate-950">{{ $operatingSummary['next_event'] }}</p>
+                    <p class="mt-1 text-sm leading-6 text-slate-500">{{ $location->opening_hours ?: $location->openingHoursSummary() }}</p>
                 </section>
 
                 <section class="rounded-3xl border border-white/10 bg-white p-5 shadow-2xl shadow-black/20">

@@ -210,9 +210,9 @@ Documento de acompanhamento do que ja foi construido e do que ainda falta para d
 - [x] Cadastro publico de lava-rapido.
 - [x] Ajuste de rotas publicas por slug.
 - [ ] SEO.
-- [ ] Pagina publica mais completa da unidade.
+- [x] Pagina publica mais completa da unidade.
 - [ ] Avaliacoes/depoimentos.
-- [ ] Horarios em tempo real.
+- [x] Horarios em tempo real.
 
 ## Seeders e dados de teste
 
@@ -241,7 +241,7 @@ Documento de acompanhamento do que ja foi construido e do que ainda falta para d
 - [x] Comando `app:readiness-check` para validacao operacional em runtime.
 - [x] Comando `app:backup-check` para validar requisitos de backup.
 - [x] Runbook de backup e restore documentado.
-- [x] Suite completa validada no pacote de hardening atual: 279 testes e 1444 assercoes.
+- [x] Suite completa validada no pacote de hardening atual: 280 testes e 1452 assercoes.
 - [ ] Rodar suite completa antes de release.
 - [x] Configurar CI/CD.
 - [x] GitHub Actions com validacao Composer, testes PHP e build Vite.
