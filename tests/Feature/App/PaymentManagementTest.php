@@ -2,6 +2,8 @@
 
 namespace Tests\Feature\App;
 
+use App\Models\LoyaltyCoupon;
+use App\Models\LoyaltyProgram;
 use App\Models\Payment;
 use App\Models\User;
 use App\Models\WashOrder;
@@ -35,10 +37,62 @@ class PaymentManagementTest extends TestCase
         ]);
     }
 
-    public function test_courtesy_payment_marks_order_as_courtesy_with_zero_amount(): void
+    public function test_courtesy_payment_requires_an_applied_loyalty_coupon(): void
     {
         $user = User::factory()->create();
         $washOrder = WashOrder::factory()->create(['total_amount' => 120]);
+
+        $this->actingAs($user)
+            ->from(route('wash-orders.show', $washOrder))
+            ->post(route('payments.store', $washOrder), [
+                'method' => Payment::METHOD_COURTESY,
+                'amount' => 120,
+            ])
+            ->assertRedirect(route('wash-orders.show', $washOrder))
+            ->assertSessionHasErrors('method');
+
+        $this->assertDatabaseCount('payments', 0);
+        $this->assertSame(WashOrder::PAYMENT_PENDING, $washOrder->refresh()->payment_status);
+    }
+
+    public function test_courtesy_option_is_hidden_when_order_has_no_applied_coupon(): void
+    {
+        $user = User::factory()->create();
+        $washOrder = WashOrder::factory()->create([
+            'wash_location_id' => $user->wash_location_id,
+            'payment_status' => WashOrder::PAYMENT_PENDING,
+            'total_amount' => 120,
+        ]);
+
+        $this->actingAs($user)
+            ->get(route('wash-orders.show', $washOrder))
+            ->assertOk()
+            ->assertDontSee('Cortesia');
+    }
+
+    public function test_courtesy_payment_marks_order_as_courtesy_when_coupon_covers_total_amount(): void
+    {
+        $user = User::factory()->create();
+        $washOrder = WashOrder::factory()->create([
+            'wash_location_id' => $user->wash_location_id,
+            'total_amount' => 120,
+            'loyalty_discount_amount' => 120,
+        ]);
+        $program = LoyaltyProgram::query()->create([
+            'wash_location_id' => $user->wash_location_id,
+            'is_active' => true,
+        ]);
+        $coupon = LoyaltyCoupon::query()->create([
+            'wash_location_id' => $user->wash_location_id,
+            'loyalty_program_id' => $program->id,
+            'customer_id' => $washOrder->customer_id,
+            'source_wash_order_id' => $washOrder->id,
+            'code' => 'FID-CORTESIA-OK',
+            'status' => LoyaltyCoupon::STATUS_USED,
+            'earned_at' => now(),
+            'used_at' => now(),
+        ]);
+        $washOrder->forceFill(['loyalty_coupon_id' => $coupon->id])->save();
 
         $this->actingAs($user)->post(route('payments.store', $washOrder), [
             'method' => Payment::METHOD_COURTESY,

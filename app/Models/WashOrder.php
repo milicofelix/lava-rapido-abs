@@ -133,6 +133,11 @@ class WashOrder extends Model
         return (float) $this->loyalty_discount_amount > 0 && $this->loyalty_coupon_id !== null;
     }
 
+    public function canRegisterCourtesyPayment(): bool
+    {
+        return $this->loyalty_coupon_id !== null && $this->payableAmount() <= 0.0;
+    }
+
     public function trackingUrl(): string
     {
         return route('tracking.show', $this->code);

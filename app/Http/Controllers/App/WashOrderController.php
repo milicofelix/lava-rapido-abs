@@ -3,8 +3,8 @@
 namespace App\Http\Controllers\App;
 
 use App\Http\Controllers\Controller;
-use App\Models\Customer;
 use App\Models\AppSetting;
+use App\Models\Customer;
 use App\Models\CustomerNotification;
 use App\Models\Payment;
 use App\Models\Service;
@@ -15,16 +15,16 @@ use App\Services\Loyalty\LoyaltyCouponApplicabilityService;
 use App\Services\Loyalty\RemoveLoyaltyCouponService;
 use App\Services\WashOrders\ChangeWashOrderStatusService;
 use App\Services\WashOrders\CreateWashOrderService;
-use App\Support\TenantContext;
 use App\Support\Access\AccessControl;
+use App\Support\TenantContext;
 use App\Support\WashOrders\WashOrderStatusFlow;
-use Illuminate\Support\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Validation\Rule;
-use InvalidArgumentException;
 use Illuminate\View\View;
+use InvalidArgumentException;
 
 class WashOrderController extends Controller
 {
@@ -135,6 +135,10 @@ class WashOrderController extends Controller
 
         if (! AppSetting::isModuleEnabled('module_credit_receivables')) {
             unset($paymentMethods[Payment::METHOD_CREDIT_PENDING]);
+        }
+
+        if (! $washOrder->canRegisterCourtesyPayment()) {
+            unset($paymentMethods[Payment::METHOD_COURTESY]);
         }
 
         $washOrder = $washOrder->load([

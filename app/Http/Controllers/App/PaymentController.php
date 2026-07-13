@@ -32,6 +32,12 @@ class PaymentController extends Controller
             'notes' => ['nullable', 'string', 'max:1000'],
         ]);
 
+        if ($data['method'] === Payment::METHOD_COURTESY && ! $washOrder->canRegisterCourtesyPayment()) {
+            return back()
+                ->withErrors(['method' => 'Cortesia só pode ser usada quando a lavagem estiver quitada por um cupom de fidelidade.'])
+                ->withInput();
+        }
+
         if (! in_array($data['method'], [Payment::METHOD_COURTESY, Payment::METHOD_CREDIT_PENDING], true)) {
             $request->validate([
                 'amount' => ['required', 'numeric', 'min:0.01', 'max:'.$washOrder->payableAmount()],
@@ -39,7 +45,11 @@ class PaymentController extends Controller
             $data['amount'] = $request->input('amount');
         }
 
-        $registerPayment->handle($washOrder, $data, $request->user());
+        try {
+            $registerPayment->handle($washOrder, $data, $request->user());
+        } catch (DomainException $exception) {
+            return back()->withErrors(['method' => $exception->getMessage()])->withInput();
+        }
 
         return back()->with('status', 'Pagamento registrado com sucesso.');
     }
