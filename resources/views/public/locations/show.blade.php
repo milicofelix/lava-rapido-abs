@@ -5,10 +5,50 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{{ $location->name }} · AutoFlow</title>
     <meta name="description" content="{{ $location->name }} em {{ $location->fullAddress() }}. Consulte status, horário de funcionamento, serviços, contato e rota.">
+    <link rel="canonical" href="{{ route('public.locations.show', ['location' => $location->slug]) }}">
     <meta property="og:title" content="{{ $location->name }} · AutoFlow">
     <meta property="og:description" content="Veja status, serviços, horário e rota para {{ $location->name }}.">
+    <meta property="og:type" content="business.business">
+    <meta property="og:url" content="{{ route('public.locations.show', ['location' => $location->slug]) }}">
     @include('components.favicon')
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+    <script type="application/ld+json">
+        {!! json_encode([
+            '@context' => 'https://schema.org',
+            '@type' => 'AutoWash',
+            'name' => $location->name,
+            'url' => route('public.locations.show', ['location' => $location->slug]),
+            'telephone' => $location->phone,
+            'image' => $location->logoUrl(),
+            'address' => [
+                '@type' => 'PostalAddress',
+                'streetAddress' => trim(collect([$location->address, $location->address_number])->filter()->implode(', ')),
+                'addressLocality' => $location->city,
+                'addressRegion' => $location->state,
+                'addressCountry' => 'BR',
+            ],
+            'geo' => $location->hasCoordinates() ? [
+                '@type' => 'GeoCoordinates',
+                'latitude' => $location->mapLatitude(),
+                'longitude' => $location->mapLongitude(),
+            ] : null,
+            'openingHoursSpecification' => collect($businessHours)->map(fn ($day) => [
+                '@type' => 'OpeningHoursSpecification',
+                'dayOfWeek' => $day['day'],
+                'description' => $day['hours'],
+            ])->all(),
+            'makesOffer' => $services->map(fn ($service) => [
+                '@type' => 'Offer',
+                'itemOffered' => [
+                    '@type' => 'Service',
+                    'name' => $service->name,
+                    'description' => $service->description,
+                ],
+                'price' => (float) $service->base_price,
+                'priceCurrency' => 'BRL',
+            ])->all(),
+        ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) !!}
+    </script>
 </head>
 <body class="bg-slate-950 text-slate-950 antialiased">
     @php

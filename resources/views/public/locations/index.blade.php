@@ -4,9 +4,30 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Lava-rápidos próximos · AutoFlow</title>
+    <meta name="description" content="Encontre lava-rápidos próximos, veja status em tempo real, endereço, rota, WhatsApp e serviços disponíveis no AutoFlow.">
+    <link rel="canonical" href="{{ route('public.locations.index') }}">
+    <meta property="og:title" content="Lava-rápidos próximos · AutoFlow">
+    <meta property="og:description" content="Mapa público com lava-rápidos, status em tempo real, endereço, rota e contato direto.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="{{ route('public.locations.index') }}">
     @include('components.favicon')
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIINfQHrcNPTwTnoX9ODj1F2lQ8fVI0O56k=" crossorigin="">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+    <script type="application/ld+json">
+        {!! json_encode([
+            '@context' => 'https://schema.org',
+            '@type' => 'ItemList',
+            'name' => 'Lava-rápidos próximos',
+            'url' => route('public.locations.index'),
+            'numberOfItems' => $locations->count(),
+            'itemListElement' => $locations->values()->map(fn ($location, $index) => [
+                '@type' => 'ListItem',
+                'position' => $index + 1,
+                'url' => route('public.locations.show', ['location' => $location->slug]),
+                'name' => $location->name,
+            ])->all(),
+        ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) !!}
+    </script>
     <style>
         #autoflow-public-map {
             position: relative;
