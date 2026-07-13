@@ -65,7 +65,10 @@ class WashKanbanController extends Controller
             'periodOptions' => self::periodOptions(),
             'feedUrl' => route('kanban.feed', $queryFilters),
             'filterUrl' => route('kanban'),
-            'createUrl' => AccessControl::allows(TenantContext::user(), AccessControl::CREATE_WASH_ORDER) ? route('wash-orders.create') : null,
+            'createUrl' => AccessControl::allows(TenantContext::user(), AccessControl::CREATE_WASH_ORDER)
+                && ($currentLocation?->canOpenWashOrderAt() ?? true)
+                    ? route('wash-orders.create')
+                    : null,
             'logoutUrl' => route('logout'),
             'csrfToken' => csrf_token(),
             'dashboardUrl' => AccessControl::allows(TenantContext::user(), AccessControl::VIEW_DASHBOARD) ? route('dashboard') : null,

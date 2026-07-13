@@ -52,17 +52,22 @@ class WashOrderController extends Controller
             'search' => $search,
             'status' => $status,
             'statuses' => WashOrder::statuses(),
+            'canOpenWashOrderNow' => TenantContext::currentLocation()?->canOpenWashOrderAt() ?? true,
         ]);
     }
 
     public function create(): View
     {
+        $currentLocation = TenantContext::currentLocation();
+
         $customers = TenantContext::scopeCustomers(Customer::query())
             ->with(['vehicles' => fn ($query) => TenantContext::scopeVehicles($query)->orderBy('plate')])
             ->orderBy('name')
             ->get();
 
         return view('app.wash-orders.create', [
+            'currentLocation' => $currentLocation,
+            'canOpenWashOrderNow' => $currentLocation?->canOpenWashOrderAt() ?? true,
             'customers' => $customers,
             'customerVehicles' => $customers->mapWithKeys(fn (Customer $customer) => [
                 $customer->id => $customer->vehicles->map(fn (Vehicle $vehicle) => [
@@ -79,6 +84,7 @@ class WashOrderController extends Controller
     public function store(Request $request, CreateWashOrderService $creator): RedirectResponse
     {
         $data = $this->validated($request);
+        $currentLocation = TenantContext::currentLocation();
 
         $vehicle = TenantContext::scopeVehicles(Vehicle::query())->findOrFail($data['vehicle_id']);
 
@@ -92,6 +98,17 @@ class WashOrderController extends Controller
             && AppSetting::isModuleEnabled('module_schedule')
             ? Carbon::parse($data['scheduled_at'])
             : now();
+
+        if ($currentLocation && ! $currentLocation->canOpenWashOrderAt($scheduledAt)) {
+            $field = $scheduledAt->isFuture() ? 'scheduled_at' : 'wash_order';
+            $message = $scheduledAt->isFuture()
+                ? 'A unidade estará fechada no horário escolhido. Escolha um horário dentro do funcionamento.'
+                : 'A unidade está fechada agora. Abra lavagens somente dentro do horário de funcionamento.';
+
+            return back()
+                ->withErrors([$field => $message])
+                ->withInput();
+        }
 
         $washOrder = $creator->handle([
             'wash_location_id' => TenantContext::currentLocationId(),

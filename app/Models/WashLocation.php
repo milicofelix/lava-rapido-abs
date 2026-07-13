@@ -231,6 +231,15 @@ class WashLocation extends Model
         return self::statuses()[$this->publicStatus($moment)] ?? $this->publicStatus($moment);
     }
 
+    public function canOpenWashOrderAt(?Carbon $moment = null): bool
+    {
+        if (! is_array($this->business_hours) || $this->business_hours === []) {
+            return $this->status !== self::STATUS_CLOSED;
+        }
+
+        return in_array($this->publicStatus($moment), [self::STATUS_OPEN, self::STATUS_BUSY], true);
+    }
+
     public function openingHoursSummary(): string
     {
         $hours = $this->normalizedBusinessHours();

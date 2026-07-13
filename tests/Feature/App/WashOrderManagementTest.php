@@ -10,12 +10,20 @@ use App\Models\Vehicle;
 use App\Models\WashOrder;
 use App\Models\RolePermissionSetting;
 use App\Support\Access\AccessControl;
+use Illuminate\Support\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 class WashOrderManagementTest extends TestCase
 {
     use RefreshDatabase;
+
+    protected function tearDown(): void
+    {
+        Carbon::setTestNow();
+
+        parent::tearDown();
+    }
 
     public function test_create_form_embeds_customer_vehicle_mapping(): void
     {
@@ -91,6 +99,65 @@ class WashOrderManagementTest extends TestCase
             'from_status' => null,
             'to_status' => WashOrder::STATUS_AWAITING,
         ]);
+    }
+
+    public function test_wash_order_opening_is_blocked_when_location_is_closed_by_business_hours(): void
+    {
+        Carbon::setTestNow('2026-06-15 10:00:00');
+
+        $user = User::factory()->create();
+        $user->washLocation->forceFill([
+            'business_hours' => [
+                'monday' => ['is_open' => false, 'opens' => '08:00', 'closes' => '18:00'],
+            ],
+        ])->save();
+        $customer = Customer::factory()->create(['wash_location_id' => $user->wash_location_id]);
+        $vehicle = Vehicle::factory()->for($customer)->create(['wash_location_id' => $user->wash_location_id]);
+        $service = Service::factory()->create([
+            'wash_location_id' => $user->wash_location_id,
+            'active' => true,
+        ]);
+
+        $this->actingAs($user)
+            ->get(route('wash-orders.create'))
+            ->assertOk()
+            ->assertSee('Abertura imediata indisponível')
+            ->assertSee('fora do horário de funcionamento');
+
+        $this->actingAs($user)->post(route('wash-orders.store'), [
+            'customer_id' => $customer->id,
+            'vehicle_id' => $vehicle->id,
+            'service_ids' => [$service->id],
+        ])->assertSessionHasErrors('wash_order');
+
+        $this->assertDatabaseCount('wash_orders', 0);
+    }
+
+    public function test_scheduled_wash_order_is_blocked_outside_business_hours(): void
+    {
+        Carbon::setTestNow('2026-06-15 10:00:00');
+
+        $user = User::factory()->create();
+        $user->washLocation->forceFill([
+            'business_hours' => [
+                'monday' => ['is_open' => true, 'opens' => '08:00', 'closes' => '18:00'],
+            ],
+        ])->save();
+        $customer = Customer::factory()->create(['wash_location_id' => $user->wash_location_id]);
+        $vehicle = Vehicle::factory()->for($customer)->create(['wash_location_id' => $user->wash_location_id]);
+        $service = Service::factory()->create([
+            'wash_location_id' => $user->wash_location_id,
+            'active' => true,
+        ]);
+
+        $this->actingAs($user)->post(route('wash-orders.store'), [
+            'customer_id' => $customer->id,
+            'vehicle_id' => $vehicle->id,
+            'service_ids' => [$service->id],
+            'scheduled_at' => '2026-06-15T20:00',
+        ])->assertSessionHasErrors('scheduled_at');
+
+        $this->assertDatabaseCount('wash_orders', 0);
     }
 
     public function test_attendant_can_schedule_wash_order_for_future_date(): void

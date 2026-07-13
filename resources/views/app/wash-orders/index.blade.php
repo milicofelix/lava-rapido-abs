@@ -9,7 +9,11 @@
                 </div>
                 <div class="flex flex-wrap gap-2">
                     <a href="{{ route('kanban') }}" class="rounded-xl border border-slate-300 px-4 py-2.5 text-sm font-bold text-slate-700 hover:bg-slate-50">Kanban</a>
-                    <a href="{{ route('wash-orders.create') }}" class="rounded-xl bg-blue-700 px-4 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-blue-800">Nova lavagem</a>
+                    @if ($canOpenWashOrderNow)
+                        <a href="{{ route('wash-orders.create') }}" class="rounded-xl bg-blue-700 px-4 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-blue-800">Nova lavagem</a>
+                    @else
+                        <span title="Unidade fechada pelo horário de funcionamento" class="cursor-not-allowed rounded-xl bg-slate-200 px-4 py-2.5 text-sm font-bold text-slate-500">Nova lavagem</span>
+                    @endif
                 </div>
             </div>
 
@@ -91,7 +95,11 @@
                     <div class="px-5 py-12 text-center">
                         <p class="font-black text-slate-950">Nenhuma lavagem encontrada</p>
                         <p class="mt-1 text-sm text-slate-500">Abra uma nova lavagem ou ajuste os filtros atuais.</p>
-                        <a href="{{ route('wash-orders.create') }}" class="mt-4 inline-flex rounded-xl bg-blue-700 px-4 py-2.5 text-sm font-bold text-white">Nova lavagem</a>
+                        @if ($canOpenWashOrderNow)
+                            <a href="{{ route('wash-orders.create') }}" class="mt-4 inline-flex rounded-xl bg-blue-700 px-4 py-2.5 text-sm font-bold text-white">Nova lavagem</a>
+                        @else
+                            <p class="mt-4 inline-flex rounded-xl bg-slate-100 px-4 py-2.5 text-sm font-bold text-slate-500">Unidade fechada para novas lavagens</p>
+                        @endif
                     </div>
                 @endforelse
             </div>

@@ -13,6 +13,13 @@ class WashKanbanTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected function tearDown(): void
+    {
+        Carbon::setTestNow();
+
+        parent::tearDown();
+    }
+
     public function test_user_can_see_operational_kanban_columns_and_cards(): void
     {
         $user = User::factory()->create();
@@ -157,6 +164,25 @@ class WashKanbanTest extends TestCase
                 ->where('columns.0.orders.0.can_update_status', false)
                 ->where('createUrl', null)
                 ->where('logoutUrl', route('logout'))
+            );
+    }
+
+    public function test_kanban_hides_create_action_when_location_is_closed(): void
+    {
+        Carbon::setTestNow('2026-06-15 10:00:00');
+
+        $user = User::factory()->create(['role' => User::ROLE_ADMIN]);
+        $user->washLocation->forceFill([
+            'business_hours' => [
+                'monday' => ['is_open' => false, 'opens' => '08:00', 'closes' => '18:00'],
+            ],
+        ])->save();
+
+        $this->actingAs($user)->get(route('kanban'))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('Kanban')
+                ->where('createUrl', null)
             );
     }
 }
