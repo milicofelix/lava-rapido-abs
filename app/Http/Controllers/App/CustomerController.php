@@ -9,6 +9,7 @@ use App\Models\LoyaltyCoupon;
 use App\Models\LoyaltyProgram;
 use App\Models\Payment;
 use App\Models\WashOrder;
+use App\Services\Customers\ImportCustomersAndVehiclesService;
 use App\Support\AuditLogger;
 use App\Support\Loyalty\LoyaltyProgress;
 use App\Support\TenantContext;
@@ -70,6 +71,31 @@ class CustomerController extends Controller
         return redirect()->route('customers.index')->with('status', 'Cliente cadastrado com sucesso.');
     }
 
+    public function import(Request $request, ImportCustomersAndVehiclesService $importer): RedirectResponse
+    {
+        $data = $request->validate([
+            'customers_file' => ['required', 'file', 'mimes:csv,txt', 'max:2048'],
+        ], [
+            'customers_file.required' => 'Selecione um arquivo CSV para importar.',
+            'customers_file.mimes' => 'Envie um arquivo CSV válido.',
+            'customers_file.max' => 'O arquivo deve ter no máximo 2 MB.',
+        ]);
+
+        $summary = $importer->handle($data['customers_file'], TenantContext::currentLocationId());
+
+        AuditLogger::record(
+            AuditLog::ACTION_CUSTOMERS_IMPORTED,
+            auth()->user()->name.' importou clientes e veículos por CSV.',
+            null,
+            $summary,
+        );
+
+        return redirect()
+            ->route('customers.index')
+            ->with('status', $this->importStatusMessage($summary))
+            ->with('import_summary', $summary);
+    }
+
     public function edit(Customer $customer): View
     {
         TenantContext::abortUnlessModelBelongsToTenant($customer);
@@ -119,6 +145,23 @@ class CustomerController extends Controller
             'cpf' => ['nullable', 'string', 'max:20'],
             'notes' => ['nullable', 'string', 'max:2000'],
         ]);
+    }
+
+    /**
+     * @param  array<string, mixed>  $summary
+     */
+    private function importStatusMessage(array $summary): string
+    {
+        if (($summary['imported_rows'] ?? 0) === 0) {
+            return 'Nenhuma linha foi importada. Revise o arquivo e tente novamente.';
+        }
+
+        return sprintf(
+            'Importação concluída: %d linha(s), %d cliente(s) criado(s), %d veículo(s) criado(s).',
+            $summary['imported_rows'],
+            $summary['created_customers'],
+            $summary['created_vehicles'],
+        );
     }
 
     /**

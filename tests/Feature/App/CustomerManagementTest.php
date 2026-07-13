@@ -12,6 +12,7 @@ use App\Models\Vehicle;
 use App\Models\WashLocation;
 use App\Models\WashOrder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
 use Tests\TestCase;
 
 class CustomerManagementTest extends TestCase
@@ -44,6 +45,75 @@ class CustomerManagementTest extends TestCase
         $this->actingAs($user)->get(route('customers.index', ['search' => 'ABC1D23']))
             ->assertOk()
             ->assertSee($customer->name);
+    }
+
+    public function test_user_can_import_customers_and_vehicles_from_csv(): void
+    {
+        $user = User::factory()->create();
+        $csv = implode("\n", [
+            'nome,telefone,email,cpf,observacao,placa,marca,modelo,cor,observacao_veiculo',
+            'Maria Importada,(11) 99999-0000,maria.importada@example.com,123.456.789-00,Cliente antigo,abc-1d23,Hyundai,HB20,Prata,Sem adesivos',
+            'Jose Sem Carro,(11) 98888-0000,,,,,,,',
+        ]);
+
+        $this->actingAs($user)->post(route('customers.import'), [
+            'customers_file' => UploadedFile::fake()->createWithContent('clientes.csv', $csv),
+        ])->assertRedirect(route('customers.index'))
+            ->assertSessionHas('import_summary.imported_rows', 2)
+            ->assertSessionHas('import_summary.created_customers', 2)
+            ->assertSessionHas('import_summary.created_vehicles', 1);
+
+        $this->assertDatabaseHas('customers', [
+            'wash_location_id' => $user->wash_location_id,
+            'name' => 'Maria Importada',
+            'phone' => '(11) 99999-0000',
+        ]);
+        $this->assertDatabaseHas('customers', [
+            'wash_location_id' => $user->wash_location_id,
+            'name' => 'Jose Sem Carro',
+        ]);
+        $this->assertDatabaseHas('vehicles', [
+            'wash_location_id' => $user->wash_location_id,
+            'plate' => 'ABC1D23',
+            'brand' => 'Hyundai',
+            'model' => 'HB20',
+            'type' => 'carro',
+        ]);
+        $this->assertDatabaseHas('audit_logs', [
+            'wash_location_id' => $user->wash_location_id,
+            'action' => 'customers.imported',
+        ]);
+    }
+
+    public function test_customer_import_reports_invalid_rows_without_importing_them(): void
+    {
+        $user = User::factory()->create();
+        $csv = implode("\n", [
+            'nome;telefone;placa;marca;modelo;cor',
+            'Cliente Valido;(11) 97777-0000;def-2g34;Toyota;Corolla;Branco',
+            'Cliente Invalido;(11) 96666-0000;ghi-3h45;Fiat;HB20;Azul',
+        ]);
+
+        $this->actingAs($user)->post(route('customers.import'), [
+            'customers_file' => UploadedFile::fake()->createWithContent('clientes.csv', $csv),
+        ])->assertRedirect(route('customers.index'))
+            ->assertSessionHas('import_summary.imported_rows', 1)
+            ->assertSessionHas('import_summary.skipped_rows', 1);
+
+        $this->assertDatabaseHas('customers', [
+            'wash_location_id' => $user->wash_location_id,
+            'name' => 'Cliente Valido',
+        ]);
+        $this->assertDatabaseHas('vehicles', [
+            'wash_location_id' => $user->wash_location_id,
+            'plate' => 'DEF2G34',
+            'brand' => 'Toyota',
+            'model' => 'Corolla',
+        ]);
+        $this->assertDatabaseMissing('customers', [
+            'wash_location_id' => $user->wash_location_id,
+            'name' => 'Cliente Invalido',
+        ]);
     }
 
     public function test_customer_index_shows_loyalty_progress(): void

@@ -74,7 +74,7 @@ Documento de acompanhamento do que ja foi construido e do que ainda falta para d
 - [x] Marca e modelo de veiculo em combos dependentes.
 - [x] Factory/catalogo de veiculos com marcas e modelos coerentes.
 - [x] Seeder de clientes e lavagens em massa.
-- [ ] Melhorar importacao em lote de clientes/veiculos.
+- [x] Melhorar importacao em lote de clientes/veiculos.
 - [x] Historico consolidado por cliente com indicadores mais ricos.
 
 ## Lavagens e Kanban
@@ -241,7 +241,7 @@ Documento de acompanhamento do que ja foi construido e do que ainda falta para d
 - [x] Comando `app:readiness-check` para validacao operacional em runtime.
 - [x] Comando `app:backup-check` para validar requisitos de backup.
 - [x] Runbook de backup e restore documentado.
-- [x] Suite completa validada no pacote de hardening atual: 275 testes e 1409 assercoes.
+- [x] Suite completa validada no pacote de hardening atual: 277 testes e 1425 assercoes.
 - [ ] Rodar suite completa antes de release.
 - [x] Configurar CI/CD.
 - [x] GitHub Actions com validacao Composer, testes PHP e build Vite.

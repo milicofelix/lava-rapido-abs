@@ -16,6 +16,8 @@ class AuditLog extends Model
 
     public const ACTION_CUSTOMER_UPDATED = 'customer.updated';
 
+    public const ACTION_CUSTOMERS_IMPORTED = 'customers.imported';
+
     public const ACTION_WASH_ORDER_CREATED = 'wash_order.created';
 
     public const ACTION_WASH_ORDER_STATUS_CHANGED = 'wash_order.status_changed';
@@ -65,6 +67,7 @@ class AuditLog extends Model
         return [
             self::ACTION_CUSTOMER_CREATED => 'Cliente criado',
             self::ACTION_CUSTOMER_UPDATED => 'Cliente editado',
+            self::ACTION_CUSTOMERS_IMPORTED => 'Clientes importados',
             self::ACTION_WASH_ORDER_CREATED => 'Lavagem criada',
             self::ACTION_WASH_ORDER_STATUS_CHANGED => 'Status alterado',
             self::ACTION_PAYMENT_REGISTERED => 'Pagamento registrado',
