@@ -91,6 +91,7 @@ Documento de acompanhamento do que ja foi construido e do que ainda falta para d
 - [x] Operador so altera status se tiver permissao/equipe conforme regra.
 - [x] Restricao para mover para `Entregue` sem pagamento identificado.
 - [x] Bloqueio de abertura de lavagem fora do horario de funcionamento da unidade.
+- [x] Bloqueio de avanço de status fora do horario de funcionamento da unidade.
 - [x] Status incompatíveis com servicos removidos do fluxo, exemplo: cera sem servico de cera.
 - [x] Tela publica de acompanhamento do cliente.
 - [x] Link do cliente com compartilhamento por WhatsApp manual.
@@ -240,7 +241,7 @@ Documento de acompanhamento do que ja foi construido e do que ainda falta para d
 - [x] Comando `app:readiness-check` para validacao operacional em runtime.
 - [x] Comando `app:backup-check` para validar requisitos de backup.
 - [x] Runbook de backup e restore documentado.
-- [x] Suite completa validada no pacote de hardening atual: 273 testes e 1390 assercoes.
+- [x] Suite completa validada no pacote de hardening atual: 275 testes e 1409 assercoes.
 - [ ] Rodar suite completa antes de release.
 - [x] Configurar CI/CD.
 - [x] GitHub Actions com validacao Composer, testes PHP e build Vite.

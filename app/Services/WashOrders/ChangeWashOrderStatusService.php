@@ -33,10 +33,14 @@ class ChangeWashOrderStatusService
             throw new InvalidArgumentException('Transição de status não permitida.');
         }
 
-        $washOrder->load('services');
+        $washOrder->load('services', 'washLocation');
 
         if (! WashOrderStatusFlow::washOrderCanUseStatus($washOrder, $status)) {
             throw new InvalidArgumentException('Este status não se aplica aos serviços selecionados nesta lavagem.');
+        }
+
+        if ($status !== WashOrder::STATUS_CANCELED && ! ($washOrder->washLocation?->canOpenWashOrderAt() ?? true)) {
+            throw new InvalidArgumentException('A unidade está fechada agora. Avance etapas somente dentro do horário de funcionamento.');
         }
 
         if ($status === WashOrder::STATUS_DELIVERED && ! $washOrder->hasIdentifiedPayment()) {

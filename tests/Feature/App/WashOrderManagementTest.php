@@ -260,6 +260,39 @@ class WashOrderManagementTest extends TestCase
         ]);
     }
 
+    public function test_wash_order_status_cannot_advance_outside_business_hours(): void
+    {
+        Carbon::setTestNow('2026-06-15 20:00:00');
+
+        $admin = User::factory()->create(['role' => User::ROLE_ADMIN]);
+        $admin->washLocation->forceFill([
+            'business_hours' => [
+                'monday' => ['is_open' => true, 'opens' => '08:00', 'closes' => '18:00'],
+            ],
+        ])->save();
+        $washOrder = WashOrder::factory()->create([
+            'wash_location_id' => $admin->wash_location_id,
+            'status' => WashOrder::STATUS_AWAITING,
+            'entered_at' => now()->subHours(2),
+        ]);
+
+        $this->actingAs($admin)->get(route('wash-orders.show', $washOrder))
+            ->assertOk()
+            ->assertDontSee('Atualizar status')
+            ->assertSee('A unidade está fechada agora. Avance etapas somente dentro do horário de funcionamento.');
+
+        $this->actingAs($admin)->patch(route('wash-orders.update-status', $washOrder), [
+            'status' => WashOrder::STATUS_WASHING,
+        ])->assertSessionHasErrors('status');
+
+        $this->assertSame(WashOrder::STATUS_AWAITING, $washOrder->refresh()->status);
+        $this->assertDatabaseMissing('status_histories', [
+            'wash_order_id' => $washOrder->id,
+            'from_status' => WashOrder::STATUS_AWAITING,
+            'to_status' => WashOrder::STATUS_WASHING,
+        ]);
+    }
+
     public function test_operator_cannot_change_status_when_not_on_wash_order_team(): void
     {
         $operator = User::factory()->create(['role' => User::ROLE_OPERATOR]);

@@ -185,4 +185,29 @@ class WashKanbanTest extends TestCase
                 ->where('createUrl', null)
             );
     }
+
+    public function test_kanban_disables_status_actions_when_location_is_closed_by_business_hours(): void
+    {
+        Carbon::setTestNow('2026-06-15 20:00:00');
+
+        $user = User::factory()->create(['role' => User::ROLE_ADMIN]);
+        $user->washLocation->forceFill([
+            'business_hours' => [
+                'monday' => ['is_open' => true, 'opens' => '08:00', 'closes' => '18:00'],
+            ],
+        ])->save();
+        $washOrder = WashOrder::factory()->create([
+            'wash_location_id' => $user->wash_location_id,
+            'status' => WashOrder::STATUS_AWAITING,
+            'entered_at' => now()->subHours(2),
+        ]);
+
+        $this->actingAs($user)->get(route('kanban'))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('Kanban')
+                ->where('columns.0.orders.0.id', $washOrder->id)
+                ->where('columns.0.orders.0.can_update_status', false)
+            );
+    }
 }

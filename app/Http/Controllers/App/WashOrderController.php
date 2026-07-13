@@ -147,6 +147,7 @@ class WashOrderController extends Controller
             'assignedUser',
             'teamMembers',
             'services',
+            'washLocation',
             'loyaltyCoupon.loyaltyProgram',
             'loyaltyCoupon.rewardService',
             'loyaltyCoupon.usedByUser',
@@ -155,8 +156,16 @@ class WashOrderController extends Controller
             'customerNotifications.user',
         ]);
         $user = request()->user();
+        $canOperateByBusinessHours = $washOrder->washLocation?->canOpenWashOrderAt() ?? true;
         $canUpdateStatus = AccessControl::allows($user, AccessControl::UPDATE_WASH_ORDER_STATUS)
+            && $canOperateByBusinessHours
             && (! $user?->isOperator() || $washOrder->teamMembers->contains('id', $user->id));
+        $statusBlockedReason = match (true) {
+            ! $canOperateByBusinessHours => 'A unidade está fechada agora. Avance etapas somente dentro do horário de funcionamento.',
+            ! AccessControl::allows($user, AccessControl::UPDATE_WASH_ORDER_STATUS) => 'Status restrito ao perfil de usuário.',
+            $user?->isOperator() && ! $washOrder->teamMembers->contains('id', $user->id) => 'Status restrito a responsáveis da equipe desta lavagem.',
+            default => null,
+        };
         $loyaltyCouponEvaluations = $washOrder->customer->loyaltyCoupons
             ->mapWithKeys(fn ($coupon) => [$coupon->id => $couponApplicability->evaluate($washOrder, $coupon)]);
         $applicableLoyaltyCoupons = $washOrder->customer->loyaltyCoupons
@@ -176,6 +185,7 @@ class WashOrderController extends Controller
             'loyaltyCouponEvaluations' => $loyaltyCouponEvaluations,
             'applicableLoyaltyCoupons' => $applicableLoyaltyCoupons,
             'loyaltyCouponRemovalState' => $removeLoyaltyCoupon->removableState($washOrder),
+            'statusBlockedReason' => $statusBlockedReason,
         ]);
     }
 

@@ -22,7 +22,7 @@ export default defineConfig({
             port: 5179,
         },
         cors: {
-            origin: ['http://192.168.1.3:8089', 'http://127.0.0.1:8089'],
+            origin: ['http://localhost:8089', 'http://127.0.0.1:8089', 'http://192.168.1.3:8089'],
         },
         watch: {
             ignored: ['**/storage/framework/views/**'],

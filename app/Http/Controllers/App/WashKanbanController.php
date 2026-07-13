@@ -32,7 +32,7 @@ class WashKanbanController extends Controller
     {
         $filters = $this->filtersFromRequest($request);
         $washOrders = TenantContext::scopeWashOrders(WashOrder::query())
-            ->with(['customer', 'vehicle', 'assignedUser', 'teamMembers', 'services'])
+            ->with(['customer', 'vehicle', 'assignedUser', 'teamMembers', 'services', 'washLocation'])
             ->whereIn('status', collect(self::columns())->pluck('statuses')->flatten()->all())
             ->when($filters['start_at'], fn ($query, Carbon $startAt) => $query->where('entered_at', '>=', $startAt))
             ->when($filters['end_at'], fn ($query, Carbon $endAt) => $query->where('entered_at', '<=', $endAt))
@@ -125,6 +125,10 @@ class WashKanbanController extends Controller
     private function userCanUpdateOrderStatus(WashOrder $washOrder, ?User $user): bool
     {
         if (! AccessControl::allows($user, AccessControl::UPDATE_WASH_ORDER_STATUS)) {
+            return false;
+        }
+
+        if (! ($washOrder->washLocation?->canOpenWashOrderAt() ?? true)) {
             return false;
         }
 
