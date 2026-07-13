@@ -17,6 +17,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class CustomerController extends Controller
 {
@@ -94,6 +95,59 @@ class CustomerController extends Controller
             ->route('customers.index')
             ->with('status', $this->importStatusMessage($summary))
             ->with('import_summary', $summary);
+    }
+
+    public function importTemplate(): StreamedResponse
+    {
+        return response()->streamDownload(function (): void {
+            $output = fopen('php://output', 'w');
+
+            if (! $output) {
+                return;
+            }
+
+            fwrite($output, "\xEF\xBB\xBF");
+            fputcsv($output, [
+                'nome',
+                'telefone',
+                'email',
+                'cpf',
+                'observacao',
+                'placa',
+                'marca',
+                'modelo',
+                'cor',
+                'observacao_veiculo',
+            ]);
+            fputcsv($output, [
+                'Maria Silva',
+                '(11) 99999-0000',
+                'maria@email.com',
+                '123.456.789-00',
+                'Prefere contato por WhatsApp',
+                'ABC1D23',
+                'Hyundai',
+                'HB20',
+                'Prata',
+                'Sem adesivos',
+            ]);
+            fputcsv($output, [
+                'João Santos',
+                '(11) 98888-0000',
+                'joao@email.com',
+                '',
+                'Cliente sem veículo no primeiro cadastro',
+                '',
+                '',
+                '',
+                '',
+                '',
+            ]);
+
+            fclose($output);
+        }, 'modelo-clientes-veiculos.csv', [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+        ]);
     }
 
     public function edit(Customer $customer): View

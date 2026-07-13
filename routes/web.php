@@ -131,6 +131,7 @@ Route::middleware('auth')->group(function () {
             Route::get('fidelidade', [LoyaltyReportController::class, 'index'])->name('loyalty-reports.index');
             Route::get('fidelidade/exportar', [LoyaltyReportController::class, 'export'])->name('loyalty-reports.export');
             Route::post('fidelidade/processar-cupons', ProcessLoyaltyCouponsController::class)->name('loyalty-reports.process-coupons');
+            Route::get('clientes/importar/modelo', [CustomerController::class, 'importTemplate'])->name('customers.import-template');
             Route::post('clientes/importar', [CustomerController::class, 'import'])->name('customers.import');
             Route::resource('clientes', CustomerController::class)->parameters(['clientes' => 'customer'])->names('customers')->except(['show', 'destroy']);
             Route::get('cupons-fidelidade/{loyaltyCoupon}', LoyaltyCouponController::class)->name('loyalty-coupons.show');

@@ -82,6 +82,7 @@
                     <div class="mt-3 rounded-2xl bg-white p-3 text-xs font-bold text-slate-600">
                         Cabeçalho aceito: <span class="text-slate-950">nome,telefone,email,cpf,observacao,placa,marca,modelo,cor,observacao_veiculo</span>
                     </div>
+                    <a href="{{ route('customers.import-template') }}" class="mt-3 inline-flex rounded-xl border border-blue-200 bg-white px-4 py-2 text-sm font-black text-blue-700 hover:bg-blue-100">Baixar modelo CSV</a>
                 </div>
                 <form method="POST" action="{{ route('customers.import') }}" enctype="multipart/form-data" class="rounded-2xl bg-white p-4 shadow-sm">
                     @csrf

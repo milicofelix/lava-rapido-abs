@@ -116,6 +116,23 @@ class CustomerManagementTest extends TestCase
         ]);
     }
 
+    public function test_user_can_download_customer_import_template(): void
+    {
+        $user = User::factory()->create();
+
+        $response = $this->actingAs($user)
+            ->get(route('customers.import-template'))
+            ->assertOk()
+            ->assertHeader('content-type', 'text/csv; charset=UTF-8');
+
+        $content = $response->streamedContent();
+
+        $this->assertStringContainsString('nome,telefone,email,cpf,observacao,placa,marca,modelo,cor,observacao_veiculo', $content);
+        $this->assertStringContainsString('Maria Silva', $content);
+        $this->assertStringContainsString('Hyundai', $content);
+        $this->assertStringContainsString('HB20', $content);
+    }
+
     public function test_customer_index_shows_loyalty_progress(): void
     {
         $location = WashLocation::factory()->create();
