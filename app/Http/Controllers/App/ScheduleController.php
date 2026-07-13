@@ -21,6 +21,8 @@ class ScheduleController extends Controller
         $selectedDate = $this->selectedDate((string) $request->query('date', now()->toDateString()));
         $startOfDay = $selectedDate->copy()->startOfDay();
         $endOfDay = $selectedDate->copy()->endOfDay();
+        $currentLocation = TenantContext::currentLocation();
+        $businessDay = $this->businessDayFor($selectedDate);
 
         $washOrders = TenantContext::scopeWashOrders(WashOrder::query())
             ->with(['customer', 'vehicle', 'teamMembers', 'services'])
@@ -42,6 +44,10 @@ class ScheduleController extends Controller
             'previousDate' => $selectedDate->copy()->subDay()->toDateString(),
             'nextDate' => $selectedDate->copy()->addDay()->toDateString(),
             'washOrders' => $washOrders,
+            'businessDay' => $businessDay,
+            'suggestedScheduleAt' => $this->suggestedScheduleAt($selectedDate, $businessDay),
+            'canCreateOnSelectedDate' => $currentLocation?->canOpenWashOrderAt($this->suggestedScheduleAt($selectedDate, $businessDay)) ?? true,
+            'hourlySlots' => $this->hourlySlots($selectedDate, $businessDay, $washOrders),
             'summary' => [
                 'total' => $washOrders->count(),
                 'open' => $washOrders->whereIn('status', $activeStatuses)->count(),
@@ -58,5 +64,69 @@ class ScheduleController extends Controller
         } catch (\Throwable) {
             return now()->startOfDay();
         }
+    }
+
+    /**
+     * @return array{is_open: bool, opens: string, closes: string, label: string}
+     */
+    private function businessDayFor(Carbon $date): array
+    {
+        $location = TenantContext::currentLocation();
+        $hours = $location?->normalizedBusinessHours() ?? [];
+        $dayKey = strtolower($date->englishDayOfWeek);
+        $dayHours = $hours[$dayKey] ?? ['is_open' => true, 'opens' => '08:00', 'closes' => '18:00'];
+
+        return [
+            'is_open' => (bool) ($dayHours['is_open'] ?? false),
+            'opens' => (string) ($dayHours['opens'] ?? '08:00'),
+            'closes' => (string) ($dayHours['closes'] ?? '18:00'),
+            'label' => $dayHours['is_open'] ?? false
+                ? ($dayHours['opens'] ?? '08:00').' às '.($dayHours['closes'] ?? '18:00')
+                : 'Fechado',
+        ];
+    }
+
+    private function suggestedScheduleAt(Carbon $date, array $businessDay): Carbon
+    {
+        if (! $businessDay['is_open']) {
+            return $date->copy()->setTime(8, 0);
+        }
+
+        return $date->copy()->setTimeFromTimeString($businessDay['opens']);
+    }
+
+    /**
+     * @return array<int, array{label: string, count: int}>
+     */
+    private function hourlySlots(Carbon $date, array $businessDay, $washOrders): array
+    {
+        if (! $businessDay['is_open']) {
+            return [];
+        }
+
+        $cursor = $date->copy()->setTimeFromTimeString($businessDay['opens']);
+        $end = $date->copy()->setTimeFromTimeString($businessDay['closes']);
+
+        if ($end->lessThanOrEqualTo($cursor)) {
+            $end->addDay();
+        }
+
+        $slots = [];
+
+        while ($cursor->lessThan($end)) {
+            $slotStart = $cursor->copy();
+            $slotEnd = $cursor->copy()->addHour();
+
+            $slots[] = [
+                'label' => $slotStart->format('H:i'),
+                'count' => $washOrders->filter(fn (WashOrder $washOrder) => $washOrder->entered_at
+                    && $washOrder->entered_at->greaterThanOrEqualTo($slotStart)
+                    && $washOrder->entered_at->lessThan($slotEnd))->count(),
+            ];
+
+            $cursor->addHour();
+        }
+
+        return $slots;
     }
 }

@@ -54,7 +54,7 @@
                     @if ($scheduleEnabled)
                         <label class="block md:col-span-2">
                             <span class="text-sm font-bold text-slate-700">Agendar para</span>
-                            <input name="scheduled_at" type="datetime-local" value="{{ old('scheduled_at') }}" class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100">
+                            <input name="scheduled_at" type="datetime-local" value="{{ old('scheduled_at', $suggestedScheduledAt) }}" class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100">
                             <p class="mt-1 text-xs text-slate-500">Deixe em branco para abrir a lavagem agora. Informe uma data futura para aparecer na Agenda desse dia.</p>
                             @error('scheduled_at') <span class="text-sm text-red-600">{{ $message }}</span> @enderror
                         </label>

@@ -179,7 +179,7 @@ Documento de acompanhamento do que ja foi construido e do que ainda falta para d
 - [x] Agenda habilitavel por configuracao.
 - [x] Caixa habilitavel por configuracao.
 - [x] Fiado habilitavel por configuracao.
-- [ ] Melhorar fluxo de agendamento para unidades que usam horario marcado.
+- [x] Melhorar fluxo de agendamento para unidades que usam horario marcado.
 - [ ] Disponibilidade por funcionario/box.
 - [ ] Reagendamento e cancelamento formal.
 
@@ -240,7 +240,7 @@ Documento de acompanhamento do que ja foi construido e do que ainda falta para d
 - [x] Comando `app:readiness-check` para validacao operacional em runtime.
 - [x] Comando `app:backup-check` para validar requisitos de backup.
 - [x] Runbook de backup e restore documentado.
-- [x] Suite completa validada no pacote de hardening atual: 271 testes e 1378 assercoes.
+- [x] Suite completa validada no pacote de hardening atual: 273 testes e 1390 assercoes.
 - [ ] Rodar suite completa antes de release.
 - [x] Configurar CI/CD.
 - [x] GitHub Actions com validacao Composer, testes PHP e build Vite.

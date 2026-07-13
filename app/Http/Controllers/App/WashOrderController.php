@@ -78,6 +78,7 @@ class WashOrderController extends Controller
             'services' => TenantContext::scopeServices(Service::query())->where('active', true)->orderBy('category')->orderBy('name')->get(),
             'users' => TenantContext::scopeUsers(User::query())->orderBy('name')->get(),
             'scheduleEnabled' => AppSetting::isModuleEnabled('module_schedule'),
+            'suggestedScheduledAt' => $this->suggestedScheduledAt(request()),
         ]);
     }
 
@@ -243,5 +244,20 @@ class WashOrderController extends Controller
             'notes' => ['nullable', 'string', 'max:2000'],
             'scheduled_at' => ['nullable', 'date'],
         ]);
+    }
+
+    private function suggestedScheduledAt(Request $request): ?string
+    {
+        if (! AppSetting::isModuleEnabled('module_schedule')) {
+            return null;
+        }
+
+        try {
+            $scheduledAt = Carbon::parse((string) $request->query('scheduled_at'));
+        } catch (\Throwable) {
+            return null;
+        }
+
+        return $scheduledAt->format('Y-m-d\TH:i');
     }
 }
