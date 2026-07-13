@@ -108,7 +108,7 @@ Documento de acompanhamento do que ja foi construido e do que ainda falta para d
 - [x] Bloqueio de entrega sem pagamento identificado.
 - [x] Cupom de fidelidade impactando valor a receber.
 - [x] Relatorio executivo financeiro com comparativo por periodo.
-- [ ] Fechamento de caixa mais completo.
+- [x] Fechamento de caixa mais completo.
 - [x] Relatorios financeiros avancados.
 - [ ] Estorno e conciliacao mais robustos.
 
@@ -241,7 +241,7 @@ Documento de acompanhamento do que ja foi construido e do que ainda falta para d
 - [x] Comando `app:readiness-check` para validacao operacional em runtime.
 - [x] Comando `app:backup-check` para validar requisitos de backup.
 - [x] Runbook de backup e restore documentado.
-- [x] Suite completa validada no pacote de hardening atual: 277 testes e 1425 assercoes.
+- [x] Suite completa validada no pacote de hardening atual: 278 testes e 1437 assercoes.
 - [ ] Rodar suite completa antes de release.
 - [x] Configurar CI/CD.
 - [x] GitHub Actions com validacao Composer, testes PHP e build Vite.
