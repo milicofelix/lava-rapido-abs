@@ -105,6 +105,8 @@ class FinanceController extends Controller
 
     private function paymentsForPeriod(Carbon $start, Carbon $end): Builder
     {
-        return TenantContext::scopePayments(Payment::query())->whereBetween('paid_at', [$start, $end]);
+        return TenantContext::scopePayments(Payment::query())
+            ->effective()
+            ->whereBetween('paid_at', [$start, $end]);
     }
 }

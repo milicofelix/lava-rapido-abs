@@ -173,7 +173,10 @@ class ExecutiveReportController extends Controller
     {
         $rows = $this->ordersForPeriod($start, $end)
             ->join('customers', 'customers.id', '=', 'wash_orders.customer_id')
-            ->leftJoin('payments', 'payments.wash_order_id', '=', 'wash_orders.id')
+            ->leftJoin('payments', function ($join): void {
+                $join->on('payments.wash_order_id', '=', 'wash_orders.id')
+                    ->whereNull('payments.reversed_at');
+            })
             ->select('customers.name', 'customers.phone')
             ->selectRaw('COUNT(DISTINCT wash_orders.id) as orders_count')
             ->selectRaw('COALESCE(SUM(payments.amount), 0) as revenue')
@@ -284,6 +287,7 @@ class ExecutiveReportController extends Controller
     private function paymentsForPeriod(Carbon $start, Carbon $end): Builder
     {
         return TenantContext::scopePayments(Payment::query())
+            ->effective()
             ->whereBetween('paid_at', [$start, $end]);
     }
 }

@@ -80,6 +80,16 @@ class CashRegisterManagementTest extends TestCase
             'amount' => 80,
             'paid_at' => now()->subMinutes(20),
         ]);
+        Payment::factory()->create([
+            'wash_order_id' => $cashOrder->id,
+            'user_id' => $admin->id,
+            'method' => Payment::METHOD_CASH,
+            'amount' => 40,
+            'paid_at' => now()->subMinutes(10),
+            'reversed_at' => now()->subMinutes(5),
+            'reversed_by_user_id' => $admin->id,
+            'reversal_reason' => 'Pagamento duplicado.',
+        ]);
         CashMovement::factory()->create([
             'cash_register_id' => $cashRegister->id,
             'user_id' => $admin->id,

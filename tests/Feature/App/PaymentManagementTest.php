@@ -68,4 +68,68 @@ class PaymentManagementTest extends TestCase
         $this->assertSame(Payment::METHOD_CREDIT_PENDING, $payment->method);
         $this->assertSame('0.00', (string) $payment->amount);
     }
+
+    public function test_user_can_reverse_payment_and_wash_order_returns_to_pending(): void
+    {
+        $user = User::factory()->create();
+        $washOrder = WashOrder::factory()->create([
+            'wash_location_id' => $user->wash_location_id,
+            'payment_status' => WashOrder::PAYMENT_PAID,
+            'total_amount' => 80,
+        ]);
+        $payment = Payment::factory()->create([
+            'wash_order_id' => $washOrder->id,
+            'user_id' => $user->id,
+            'method' => Payment::METHOD_PIX,
+            'amount' => 80,
+        ]);
+
+        $this->actingAs($user)->patch(route('payments.reverse', [$washOrder, $payment]), [
+            'reversal_reason' => 'Pagamento lançado na lavagem errada.',
+        ])->assertRedirect();
+
+        $payment->refresh();
+        $washOrder->refresh();
+
+        $this->assertTrue($payment->isReversed());
+        $this->assertSame($user->id, $payment->reversed_by_user_id);
+        $this->assertSame('Pagamento lançado na lavagem errada.', $payment->reversal_reason);
+        $this->assertSame(WashOrder::PAYMENT_PENDING, $washOrder->payment_status);
+        $this->assertDatabaseHas('audit_logs', [
+            'wash_location_id' => $user->wash_location_id,
+            'action' => 'payment.reversed',
+            'subject_id' => $washOrder->id,
+        ]);
+
+        $this->actingAs($user)->get(route('wash-orders.show', $washOrder))
+            ->assertOk()
+            ->assertSee('Estornado')
+            ->assertSee('Pagamento lançado na lavagem errada.');
+    }
+
+    public function test_reversed_payment_is_not_counted_in_finance_report(): void
+    {
+        $user = User::factory()->create(['role' => User::ROLE_ADMIN]);
+        $washOrder = WashOrder::factory()->create([
+            'wash_location_id' => $user->wash_location_id,
+            'payment_status' => WashOrder::PAYMENT_PAID,
+            'total_amount' => 80,
+        ]);
+        $payment = Payment::factory()->create([
+            'wash_order_id' => $washOrder->id,
+            'user_id' => $user->id,
+            'method' => Payment::METHOD_PIX,
+            'amount' => 80,
+            'paid_at' => now(),
+            'reversed_at' => now(),
+            'reversed_by_user_id' => $user->id,
+            'reversal_reason' => 'Teste de conciliação.',
+        ]);
+
+        $this->actingAs($user)
+            ->get(route('finance.index'))
+            ->assertOk()
+            ->assertSee('R$ 0,00')
+            ->assertDontSee($payment->washOrder->code);
+    }
 }

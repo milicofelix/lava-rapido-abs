@@ -123,6 +123,7 @@ Route::middleware('auth')->group(function () {
 
         Route::middleware('permission:'.AccessControl::REGISTER_PAYMENT)->group(function () {
             Route::post('lavagens/{wash_order}/pagamentos', [PaymentController::class, 'store'])->name('payments.store');
+            Route::patch('lavagens/{wash_order}/pagamentos/{payment}/estornar', [PaymentController::class, 'reverse'])->name('payments.reverse');
             Route::post('lavagens/{wash_order}/cupom-fidelidade', ApplyLoyaltyCouponController::class)->name('wash-orders.loyalty-coupons.apply');
             Route::delete('lavagens/{wash_order}/cupom-fidelidade', RemoveLoyaltyCouponController::class)->name('wash-orders.loyalty-coupons.remove');
         });

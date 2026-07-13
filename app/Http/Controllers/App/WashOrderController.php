@@ -153,6 +153,7 @@ class WashOrderController extends Controller
             'loyaltyCoupon.usedByUser',
             'statusHistories.user',
             'payments.user',
+            'payments.reversedBy',
             'customerNotifications.user',
         ]);
         $user = request()->user();

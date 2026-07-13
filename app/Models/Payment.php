@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Database\Factories\PaymentFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -27,10 +28,13 @@ class Payment extends Model
     protected $fillable = [
         'wash_order_id',
         'user_id',
+        'reversed_by_user_id',
         'method',
         'amount',
         'paid_at',
+        'reversed_at',
         'notes',
+        'reversal_reason',
     ];
 
     protected function casts(): array
@@ -38,6 +42,7 @@ class Payment extends Model
         return [
             'amount' => 'decimal:2',
             'paid_at' => 'datetime',
+            'reversed_at' => 'datetime',
         ];
     }
 
@@ -58,6 +63,16 @@ class Payment extends Model
         return self::methods()[$this->method] ?? $this->method;
     }
 
+    public function scopeEffective(Builder $query): Builder
+    {
+        return $query->whereNull('reversed_at');
+    }
+
+    public function isReversed(): bool
+    {
+        return $this->reversed_at !== null;
+    }
+
     public function washOrder(): BelongsTo
     {
         return $this->belongsTo(WashOrder::class);
@@ -66,5 +81,10 @@ class Payment extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function reversedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'reversed_by_user_id');
     }
 }

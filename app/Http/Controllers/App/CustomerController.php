@@ -232,6 +232,7 @@ class CustomerController extends Controller
         $lastWashOrder = (clone $ordersQuery)->with(['vehicle', 'services'])->latest('entered_at')->first();
         $firstWashDate = (clone $ordersQuery)->oldest('entered_at')->value('entered_at');
         $totalRevenue = (float) Payment::query()
+            ->effective()
             ->whereHas('washOrder', fn ($query) => $query
                 ->where('wash_location_id', $customer->wash_location_id)
                 ->where('customer_id', $customer->id))

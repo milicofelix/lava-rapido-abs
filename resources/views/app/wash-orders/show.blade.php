@@ -165,15 +165,43 @@
                             <div class="px-5 py-4">
                                 <div class="flex flex-wrap items-start justify-between gap-3">
                                     <div>
-                                        <p class="font-black text-slate-950">{{ $payment->methodLabel() }}</p>
+                                        <div class="flex flex-wrap items-center gap-2">
+                                            <p class="font-black {{ $payment->isReversed() ? 'text-slate-500 line-through' : 'text-slate-950' }}">{{ $payment->methodLabel() }}</p>
+                                            @if ($payment->isReversed())
+                                                <span class="rounded-full bg-red-100 px-2.5 py-1 text-xs font-black text-red-700">Estornado</span>
+                                            @endif
+                                        </div>
                                         <p class="mt-1 text-sm text-slate-500">
                                             {{ $payment->paid_at?->format('d/m/Y H:i') ?? '-' }} · {{ $payment->user?->name ?? 'Sistema' }}
                                         </p>
+                                        @if ($payment->isReversed())
+                                            <p class="mt-1 text-xs font-bold text-red-700">
+                                                Estornado em {{ $payment->reversed_at?->format('d/m/Y H:i') }} por {{ $payment->reversedBy?->name ?? 'Sistema' }}
+                                            </p>
+                                        @endif
                                     </div>
-                                    <p class="font-black text-emerald-700">R$ {{ number_format((float) $payment->amount, 2, ',', '.') }}</p>
+                                    <p class="font-black {{ $payment->isReversed() ? 'text-slate-500 line-through' : 'text-emerald-700' }}">R$ {{ number_format((float) $payment->amount, 2, ',', '.') }}</p>
                                 </div>
                                 @if ($payment->notes)
                                     <p class="mt-3 rounded-2xl bg-slate-50 px-4 py-3 text-sm text-slate-700">{{ $payment->notes }}</p>
+                                @endif
+                                @if ($payment->isReversed())
+                                    <p class="mt-3 rounded-2xl bg-red-50 px-4 py-3 text-sm font-semibold text-red-800">{{ $payment->reversal_reason }}</p>
+                                @else
+                                    <details class="mt-3 rounded-2xl border border-red-100 bg-red-50 p-3">
+                                        <summary class="cursor-pointer text-sm font-black text-red-700">Estornar pagamento</summary>
+                                        <form method="POST" action="{{ route('payments.reverse', [$washOrder, $payment]) }}" class="mt-3 space-y-3">
+                                            @csrf
+                                            @method('PATCH')
+                                            <label class="block">
+                                                <span class="text-xs font-black uppercase tracking-[0.14em] text-red-700">Motivo do estorno</span>
+                                                <textarea name="reversal_reason" rows="2" class="mt-1 w-full rounded-xl border border-red-200 bg-white px-3 py-2.5 text-sm shadow-sm" required>{{ old('reversal_reason') }}</textarea>
+                                            </label>
+                                            @error('payment_reversal') <span class="text-sm font-bold text-red-700">{{ $message }}</span> @enderror
+                                            @error('reversal_reason') <span class="text-sm font-bold text-red-700">{{ $message }}</span> @enderror
+                                            <button class="rounded-xl bg-red-700 px-4 py-2 text-xs font-black text-white shadow-sm hover:bg-red-800">Confirmar estorno</button>
+                                        </form>
+                                    </details>
                                 @endif
                             </div>
                         @empty

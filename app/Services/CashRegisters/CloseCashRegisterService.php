@@ -63,6 +63,7 @@ class CloseCashRegisterService
         $closedAt = $cashRegister->closed_at ?? now();
 
         $paymentsByMethod = TenantContext::scopePayments(Payment::query())
+            ->effective()
             ->whereBetween('paid_at', [$openedAt, $closedAt])
             ->selectRaw('method, COUNT(*) as total_count, SUM(amount) as total_amount')
             ->groupBy('method')

@@ -7,7 +7,9 @@ use App\Models\AppSetting;
 use App\Models\Payment;
 use App\Models\WashOrder;
 use App\Services\Payments\RegisterPaymentService;
+use App\Services\Payments\ReversePaymentService;
 use App\Support\TenantContext;
+use DomainException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -40,5 +42,29 @@ class PaymentController extends Controller
         $registerPayment->handle($washOrder, $data, $request->user());
 
         return back()->with('status', 'Pagamento registrado com sucesso.');
+    }
+
+    public function reverse(
+        Request $request,
+        WashOrder $washOrder,
+        Payment $payment,
+        ReversePaymentService $reversePayment,
+    ): RedirectResponse {
+        TenantContext::abortUnlessModelBelongsToTenant($washOrder);
+
+        $data = $request->validate([
+            'reversal_reason' => ['required', 'string', 'min:5', 'max:1000'],
+        ], [
+            'reversal_reason.required' => 'Informe o motivo do estorno.',
+            'reversal_reason.min' => 'Informe um motivo de estorno com pelo menos 5 caracteres.',
+        ]);
+
+        try {
+            $reversePayment->handle($washOrder, $payment, $data, $request->user());
+        } catch (DomainException $exception) {
+            return back()->withErrors(['payment_reversal' => $exception->getMessage()])->withInput();
+        }
+
+        return back()->with('status', 'Pagamento estornado com sucesso.');
     }
 }
