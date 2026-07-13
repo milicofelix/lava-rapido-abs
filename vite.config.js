@@ -16,13 +16,13 @@ export default defineConfig({
         host: '0.0.0.0',
         port: 5179,
         strictPort: true,
-        origin: 'http://localhost:5179',
+        origin: 'http://192.168.1.69:5179',
         hmr: {
-            host: 'localhost',
+            host: '192.168.1.69',
             port: 5179,
         },
         cors: {
-            origin: ['http://localhost:8089', 'http://127.0.0.1:8089'],
+            origin: ['http://192.168.1.69:8089', 'http://127.0.0.1:8089'],
         },
         watch: {
             ignored: ['**/storage/framework/views/**'],

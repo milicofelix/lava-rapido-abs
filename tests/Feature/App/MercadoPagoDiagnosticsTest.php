@@ -3,19 +3,29 @@
 namespace Tests\Feature\App;
 
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\URL;
 use Tests\TestCase;
 
 class MercadoPagoDiagnosticsTest extends TestCase
 {
+    protected function tearDown(): void
+    {
+        URL::forceRootUrl(null);
+
+        parent::tearDown();
+    }
+
     public function test_diagnostico_alerta_quando_urls_ainda_nao_sao_https(): void
     {
         config([
+            'app.url' => 'http://localhost',
             'services.mercado_pago.access_token' => 'TEST-token',
             'services.mercado_pago.notification_url' => null,
             'services.mercado_pago.success_url' => null,
             'services.mercado_pago.failure_url' => null,
             'services.mercado_pago.pending_url' => null,
         ]);
+        URL::forceRootUrl('http://localhost');
 
         $this->artisan('mercado-pago:diagnose')
             ->expectsOutputToContain('[OK] Access token configurado.')

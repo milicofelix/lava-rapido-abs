@@ -94,7 +94,7 @@ Documento de acompanhamento do que ja foi construido e do que ainda falta para d
 - [x] Tela publica de acompanhamento do cliente.
 - [x] Link do cliente com compartilhamento por WhatsApp manual.
 - [ ] Melhorar notificacoes automaticas por evento.
-- [ ] Melhorar UX mobile do Kanban.
+- [x] Melhorar UX mobile do Kanban.
 
 ## Financeiro
 
