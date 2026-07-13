@@ -32,7 +32,21 @@
 
             <div class="flex flex-wrap items-center gap-2">
                 <a href="{{ route('public.locations.index') }}" class="rounded-xl border border-slate-200 px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50">Voltar para o mapa</a>
-                <a href="{{ route('login') }}" class="rounded-xl bg-slate-950 px-4 py-2 text-sm font-bold text-white">Entrar</a>
+                @auth
+                    @php
+                        $publicHeaderUser = auth()->user();
+                        $publicHeaderPanelUrl = match (true) {
+                            $publicHeaderUser?->hasRole(\App\Models\User::ROLE_SUPER_ADMIN) => route('super-admin.location-requests.index'),
+                            \App\Support\Access\AccessControl::allows($publicHeaderUser, \App\Support\Access\AccessControl::VIEW_DASHBOARD) => route('dashboard'),
+                            \App\Support\Access\AccessControl::allows($publicHeaderUser, \App\Support\Access\AccessControl::VIEW_KANBAN) => route('kanban'),
+                            default => route('public.locations.index'),
+                        };
+                    @endphp
+                    <span class="rounded-xl border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-black text-slate-700">{{ $publicHeaderUser->name }}</span>
+                    <a href="{{ $publicHeaderPanelUrl }}" class="rounded-xl bg-slate-950 px-4 py-2 text-sm font-bold text-white">Painel</a>
+                @else
+                    <a href="{{ route('login') }}" class="rounded-xl bg-slate-950 px-4 py-2 text-sm font-bold text-white">Entrar</a>
+                @endauth
             </div>
         </header>
 

@@ -66,6 +66,31 @@ class WashLocationMapTest extends TestCase
             ->assertSee('https://wa.me/5511988881101', false);
     }
 
+    public function test_authenticated_user_sees_panel_action_in_public_headers_instead_of_login(): void
+    {
+        $user = User::factory()->create(['name' => 'Adriano Logado']);
+        $location = WashLocation::factory()->create([
+            'name' => 'Lava Logado',
+            'status' => WashLocation::STATUS_OPEN,
+        ]);
+
+        $this->actingAs($user)
+            ->get(route('public.locations.index'))
+            ->assertOk()
+            ->assertSee('Adriano Logado')
+            ->assertSee('Painel')
+            ->assertSee(route('dashboard'), false)
+            ->assertDontSee('>Entrar<', false);
+
+        $this->actingAs($user)
+            ->get(route('public.locations.show', $location))
+            ->assertOk()
+            ->assertSee('Adriano Logado')
+            ->assertSee('Painel')
+            ->assertSee(route('dashboard'), false)
+            ->assertDontSee('>Entrar<', false);
+    }
+
     public function test_public_map_ignores_legacy_visible_location_without_slug(): void
     {
         $location = WashLocation::factory()->create([

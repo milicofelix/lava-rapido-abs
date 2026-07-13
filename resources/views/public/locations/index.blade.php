@@ -624,7 +624,21 @@
             </a>
 
             <div class="flex flex-wrap items-center gap-2">
-                <a href="{{ route('login') }}" class="rounded-xl border border-slate-200 px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50">Entrar</a>
+                @auth
+                    @php
+                        $publicHeaderUser = auth()->user();
+                        $publicHeaderPanelUrl = match (true) {
+                            $publicHeaderUser?->hasRole(\App\Models\User::ROLE_SUPER_ADMIN) => route('super-admin.location-requests.index'),
+                            \App\Support\Access\AccessControl::allows($publicHeaderUser, \App\Support\Access\AccessControl::VIEW_DASHBOARD) => route('dashboard'),
+                            \App\Support\Access\AccessControl::allows($publicHeaderUser, \App\Support\Access\AccessControl::VIEW_KANBAN) => route('kanban'),
+                            default => route('public.locations.index'),
+                        };
+                    @endphp
+                    <span class="rounded-xl border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-black text-slate-700">{{ $publicHeaderUser->name }}</span>
+                    <a href="{{ $publicHeaderPanelUrl }}" class="rounded-xl bg-slate-950 px-4 py-2 text-sm font-bold text-white">Painel</a>
+                @else
+                    <a href="{{ route('login') }}" class="rounded-xl border border-slate-200 px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50">Entrar</a>
+                @endauth
                 <a href="{{ route('public.location-requests.create') }}" class="rounded-xl border border-blue-200 bg-blue-50 px-4 py-2 text-sm font-bold text-blue-700 hover:bg-blue-100">Cadastrar lava-rápido</a>
                 <a href="#lista" class="rounded-xl bg-blue-600 px-4 py-2 text-sm font-bold text-white shadow-lg shadow-blue-900/20">Ver unidades</a>
             </div>
