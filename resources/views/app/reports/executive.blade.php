@@ -30,7 +30,7 @@
                     </p>
                 </div>
 
-                <form method="GET" action="{{ route('reports.executive') }}" class="grid gap-3 sm:grid-cols-[1fr_1fr_auto_auto] sm:items-end">
+                <form method="GET" action="{{ route('reports.executive') }}" class="grid gap-3 sm:grid-cols-[1fr_1fr_auto_auto_auto] sm:items-end">
                     <label class="block">
                         <span class="text-xs font-bold text-slate-500">Início</span>
                         <input type="date" name="start" value="{{ $start }}" max="{{ today()->toDateString() }}" class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100">
@@ -41,6 +41,7 @@
                     </label>
                     <button class="rounded-xl bg-blue-700 px-4 py-2.5 text-sm font-black text-white shadow-sm transition hover:bg-blue-800">Filtrar</button>
                     <a href="{{ route('reports.executive') }}" class="rounded-xl border border-slate-300 px-4 py-2.5 text-center text-sm font-bold text-slate-700 hover:bg-slate-50">Mês atual</a>
+                    <a href="{{ route('reports.executive.pdf', ['start' => $start, 'end' => $end]) }}" class="rounded-xl border border-blue-200 bg-blue-50 px-4 py-2.5 text-center text-sm font-bold text-blue-700 hover:bg-blue-100">Exportar PDF</a>
                 </form>
             </div>
 

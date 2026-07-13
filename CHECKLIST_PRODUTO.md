@@ -172,7 +172,7 @@ Documento de acompanhamento do que ja foi construido e do que ainda falta para d
 - [x] Relatorio executivo avancado.
 - [x] Graficos mais refinados para diretoria.
 - [x] Comparativos por periodo.
-- [ ] Exportacao PDF.
+- [x] Exportacao PDF.
 
 ## Agenda e modulos opcionais
 

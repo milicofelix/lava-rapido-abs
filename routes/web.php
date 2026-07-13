@@ -172,6 +172,7 @@ Route::middleware('auth')->group(function () {
             Route::get('financeiro', [FinanceController::class, 'index'])->name('finance.index');
             Route::get('financeiro/exportar', [FinanceController::class, 'export'])->name('finance.export');
             Route::get('relatorios/executivo', ExecutiveReportController::class)->name('reports.executive');
+            Route::get('relatorios/executivo/pdf', [ExecutiveReportController::class, 'exportPdf'])->name('reports.executive.pdf');
         });
 
         Route::middleware('permission:'.AccessControl::MANAGE_CASH_REGISTER)->group(function () {
