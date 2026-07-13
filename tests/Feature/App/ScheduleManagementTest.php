@@ -3,6 +3,7 @@
 namespace Tests\Feature\App;
 
 use App\Models\AppSetting;
+use App\Models\Payment;
 use App\Models\Service;
 use App\Models\User;
 use App\Models\WashOrder;
@@ -144,6 +145,128 @@ class ScheduleManagementTest extends TestCase
         } finally {
             Carbon::setTestNow();
         }
+    }
+
+    public function test_attendant_can_reschedule_awaiting_wash_order_inside_business_hours(): void
+    {
+        Carbon::setTestNow('2026-06-15 08:00:00');
+
+        $attendant = User::factory()->create(['role' => User::ROLE_ATTENDANT]);
+        $attendant->washLocation->forceFill([
+            'business_hours' => [
+                'monday' => ['is_open' => true, 'opens' => '08:00', 'closes' => '18:00'],
+            ],
+        ])->save();
+        $washOrder = WashOrder::factory()->create([
+            'wash_location_id' => $attendant->wash_location_id,
+            'status' => WashOrder::STATUS_AWAITING,
+            'payment_status' => WashOrder::PAYMENT_PENDING,
+            'entered_at' => '2026-06-15 09:00:00',
+            'estimated_completion_at' => '2026-06-15 10:00:00',
+        ]);
+
+        $this->actingAs($attendant)
+            ->patch(route('schedule.reschedule', $washOrder), [
+                'scheduled_at' => '2026-06-15T14:30',
+                'reschedule_reason' => 'Cliente pediu outro horario.',
+            ])
+            ->assertRedirect(route('schedule.index', ['date' => '2026-06-15']));
+
+        $washOrder->refresh();
+
+        $this->assertSame('2026-06-15 14:30', $washOrder->entered_at->format('Y-m-d H:i'));
+        $this->assertSame('2026-06-15 15:30', $washOrder->estimated_completion_at->format('Y-m-d H:i'));
+        $this->assertDatabaseHas('status_histories', [
+            'wash_order_id' => $washOrder->id,
+            'from_status' => WashOrder::STATUS_AWAITING,
+            'to_status' => WashOrder::STATUS_AWAITING,
+        ]);
+        $this->assertDatabaseHas('audit_logs', [
+            'wash_location_id' => $attendant->wash_location_id,
+            'action' => 'wash_order.rescheduled',
+            'subject_id' => $washOrder->id,
+        ]);
+    }
+
+    public function test_reschedule_is_blocked_outside_business_hours(): void
+    {
+        Carbon::setTestNow('2026-06-15 08:00:00');
+
+        $attendant = User::factory()->create(['role' => User::ROLE_ATTENDANT]);
+        $attendant->washLocation->forceFill([
+            'business_hours' => [
+                'monday' => ['is_open' => true, 'opens' => '08:00', 'closes' => '18:00'],
+            ],
+        ])->save();
+        $washOrder = WashOrder::factory()->create([
+            'wash_location_id' => $attendant->wash_location_id,
+            'status' => WashOrder::STATUS_AWAITING,
+            'payment_status' => WashOrder::PAYMENT_PENDING,
+            'entered_at' => '2026-06-15 09:00:00',
+            'estimated_completion_at' => '2026-06-15 10:00:00',
+        ]);
+
+        $this->actingAs($attendant)
+            ->from(route('schedule.index'))
+            ->patch(route('schedule.reschedule', $washOrder), [
+                'scheduled_at' => '2026-06-15T20:00',
+            ])
+            ->assertRedirect(route('schedule.index'))
+            ->assertSessionHasErrors('scheduled_at');
+
+        $this->assertSame('2026-06-15 09:00', $washOrder->refresh()->entered_at->format('Y-m-d H:i'));
+    }
+
+    public function test_attendant_can_cancel_awaiting_unpaid_schedule_item(): void
+    {
+        Carbon::setTestNow('2026-06-15 08:00:00');
+
+        $attendant = User::factory()->create(['role' => User::ROLE_ATTENDANT]);
+        $washOrder = WashOrder::factory()->create([
+            'wash_location_id' => $attendant->wash_location_id,
+            'status' => WashOrder::STATUS_AWAITING,
+            'payment_status' => WashOrder::PAYMENT_PENDING,
+            'entered_at' => '2026-06-15 09:00:00',
+        ]);
+
+        $this->actingAs($attendant)
+            ->patch(route('schedule.cancel', $washOrder), [
+                'cancel_reason' => 'Cliente desistiu do horario.',
+            ])
+            ->assertRedirect(route('schedule.index', ['date' => '2026-06-15']));
+
+        $this->assertSame(WashOrder::STATUS_CANCELED, $washOrder->refresh()->status);
+        $this->assertDatabaseHas('status_histories', [
+            'wash_order_id' => $washOrder->id,
+            'from_status' => WashOrder::STATUS_AWAITING,
+            'to_status' => WashOrder::STATUS_CANCELED,
+            'notes' => 'Cliente desistiu do horario.',
+        ]);
+    }
+
+    public function test_schedule_cancel_is_blocked_after_payment(): void
+    {
+        $attendant = User::factory()->create(['role' => User::ROLE_ATTENDANT]);
+        $washOrder = WashOrder::factory()->create([
+            'wash_location_id' => $attendant->wash_location_id,
+            'status' => WashOrder::STATUS_AWAITING,
+            'payment_status' => WashOrder::PAYMENT_PAID,
+        ]);
+        Payment::factory()->create([
+            'wash_order_id' => $washOrder->id,
+            'user_id' => $attendant->id,
+            'amount' => 80,
+        ]);
+
+        $this->actingAs($attendant)
+            ->from(route('schedule.index'))
+            ->patch(route('schedule.cancel', $washOrder), [
+                'cancel_reason' => 'Cliente desistiu.',
+            ])
+            ->assertRedirect(route('schedule.index'))
+            ->assertSessionHasErrors('schedule');
+
+        $this->assertSame(WashOrder::STATUS_AWAITING, $washOrder->refresh()->status);
     }
 
     public function test_operator_cannot_access_schedule(): void

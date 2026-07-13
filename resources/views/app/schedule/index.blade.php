@@ -1,5 +1,13 @@
 <x-app.layout heading="Agenda" title="Agenda · AutoFlow">
     <div class="space-y-5">
+        @include('app.components.errors')
+
+        @if (session('status'))
+            <div class="rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-4 text-sm font-bold text-emerald-800">
+                {{ session('status') }}
+            </div>
+        @endif
+
         <section class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
             <div class="flex flex-wrap items-center justify-between gap-3">
                 <div>
@@ -86,32 +94,61 @@
                     @php
                         $isTerminal = in_array($washOrder->status, [\App\Models\WashOrder::STATUS_DELIVERED, \App\Models\WashOrder::STATUS_CANCELED], true);
                         $isDelayed = ! $isTerminal && $washOrder->estimated_completion_at?->isPast();
+                        $canManageScheduleOrder = $washOrder->status === \App\Models\WashOrder::STATUS_AWAITING && ! $washOrder->hasIdentifiedPayment();
                     @endphp
 
-                    <a href="{{ route('wash-orders.show', $washOrder) }}" class="grid gap-3 rounded-2xl border {{ $isDelayed ? 'border-red-200 bg-red-50/70' : 'border-slate-200 bg-slate-50' }} p-4 transition hover:border-blue-200 hover:bg-blue-50/40 md:grid-cols-[120px_1fr_auto]">
-                        <div>
-                            <p class="text-xs font-black uppercase tracking-[0.16em] text-slate-500">Horario</p>
-                            <p class="mt-1 text-lg font-black text-slate-950">{{ $washOrder->estimated_completion_at?->format('H:i') ?? $washOrder->entered_at->format('H:i') }}</p>
-                            <p class="text-xs text-slate-500">Entrada {{ $washOrder->entered_at->format('H:i') }}</p>
-                        </div>
-                        <div class="min-w-0">
-                            <div class="flex flex-wrap items-center gap-2">
-                                <p class="font-black text-slate-950">{{ $washOrder->vehicle->plate }}</p>
-                                @include('app.wash-orders._status-badge', ['status' => $washOrder->status, 'label' => $washOrder->statusLabel()])
-                                @if ($isDelayed)
-                                    <span class="rounded-full bg-red-100 px-3 py-1 text-xs font-black text-red-700">Atrasada</span>
-                                @elseif ($washOrder->estimated_completion_at && ! $isTerminal)
-                                    <span class="rounded-full bg-blue-50 px-3 py-1 text-xs font-black text-blue-700">Previsão {{ $washOrder->estimated_completion_at->format('H:i') }}</span>
-                                @endif
+                    <article class="rounded-2xl border {{ $isDelayed ? 'border-red-200 bg-red-50/70' : 'border-slate-200 bg-slate-50' }} p-4 transition hover:border-blue-200 hover:bg-blue-50/40">
+                        <div class="grid gap-3 md:grid-cols-[120px_1fr_auto]">
+                            <div>
+                                <p class="text-xs font-black uppercase tracking-[0.16em] text-slate-500">Horario</p>
+                                <p class="mt-1 text-lg font-black text-slate-950">{{ $washOrder->estimated_completion_at?->format('H:i') ?? $washOrder->entered_at->format('H:i') }}</p>
+                                <p class="text-xs text-slate-500">Entrada {{ $washOrder->entered_at->format('H:i') }}</p>
                             </div>
-                            <p class="mt-1 truncate text-sm font-semibold text-slate-700">{{ $washOrder->customer->name }} · {{ $washOrder->vehicle->brand }} {{ $washOrder->vehicle->model }}</p>
-                            <p class="mt-2 text-sm text-slate-500">{{ $washOrder->services->pluck('pivot.service_name')->filter()->join(', ') ?: 'Serviço não informado' }}</p>
+                            <div class="min-w-0">
+                                <div class="flex flex-wrap items-center gap-2">
+                                    <p class="font-black text-slate-950">{{ $washOrder->vehicle->plate }}</p>
+                                    @include('app.wash-orders._status-badge', ['status' => $washOrder->status, 'label' => $washOrder->statusLabel()])
+                                    @if ($isDelayed)
+                                        <span class="rounded-full bg-red-100 px-3 py-1 text-xs font-black text-red-700">Atrasada</span>
+                                    @elseif ($washOrder->estimated_completion_at && ! $isTerminal)
+                                        <span class="rounded-full bg-blue-50 px-3 py-1 text-xs font-black text-blue-700">Previsão {{ $washOrder->estimated_completion_at->format('H:i') }}</span>
+                                    @endif
+                                </div>
+                                <p class="mt-1 truncate text-sm font-semibold text-slate-700">{{ $washOrder->customer->name }} · {{ $washOrder->vehicle->brand }} {{ $washOrder->vehicle->model }}</p>
+                                <p class="mt-2 text-sm text-slate-500">{{ $washOrder->services->pluck('pivot.service_name')->filter()->join(', ') ?: 'Serviço não informado' }}</p>
+                            </div>
+                            <div class="text-sm text-slate-600 md:text-right">
+                                <p class="font-bold text-slate-900">{{ $washOrder->teamMembers->isNotEmpty() ? $washOrder->teamMembers->pluck('name')->join(', ') : 'Sem equipe' }}</p>
+                                <p class="mt-1">R$ {{ number_format((float) $washOrder->total_amount, 2, ',', '.') }}</p>
+                                <a href="{{ route('wash-orders.show', $washOrder) }}" class="mt-3 inline-flex rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-black text-slate-700 hover:bg-blue-50">Abrir lavagem</a>
+                            </div>
                         </div>
-                        <div class="text-sm text-slate-600 md:text-right">
-                            <p class="font-bold text-slate-900">{{ $washOrder->teamMembers->isNotEmpty() ? $washOrder->teamMembers->pluck('name')->join(', ') : 'Sem equipe' }}</p>
-                            <p class="mt-1">R$ {{ number_format((float) $washOrder->total_amount, 2, ',', '.') }}</p>
-                        </div>
-                    </a>
+
+                        @if ($canManageScheduleOrder)
+                            <div class="mt-4 grid gap-3 border-t border-slate-200 pt-4 lg:grid-cols-2">
+                                <form method="POST" action="{{ route('schedule.reschedule', $washOrder) }}" class="rounded-2xl border border-blue-100 bg-white p-3">
+                                    @csrf
+                                    @method('PATCH')
+                                    <p class="text-xs font-black uppercase tracking-[0.14em] text-blue-700">Reagendar</p>
+                                    <div class="mt-3 grid gap-2 sm:grid-cols-[1fr_1fr_auto]">
+                                        <input name="scheduled_at" type="datetime-local" value="{{ $washOrder->entered_at->format('Y-m-d\TH:i') }}" class="rounded-xl border border-blue-100 px-3 py-2 text-sm shadow-sm">
+                                        <input name="reschedule_reason" value="{{ old('reschedule_reason') }}" placeholder="Motivo opcional" class="rounded-xl border border-blue-100 px-3 py-2 text-sm shadow-sm">
+                                        <button class="rounded-xl bg-blue-700 px-4 py-2 text-sm font-black text-white hover:bg-blue-800">Salvar</button>
+                                    </div>
+                                </form>
+
+                                <form method="POST" action="{{ route('schedule.cancel', $washOrder) }}" class="rounded-2xl border border-red-100 bg-white p-3">
+                                    @csrf
+                                    @method('PATCH')
+                                    <p class="text-xs font-black uppercase tracking-[0.14em] text-red-700">Cancelar agendamento</p>
+                                    <div class="mt-3 grid gap-2 sm:grid-cols-[1fr_auto]">
+                                        <input name="cancel_reason" value="{{ old('cancel_reason') }}" placeholder="Motivo obrigatório" class="rounded-xl border border-red-100 px-3 py-2 text-sm shadow-sm">
+                                        <button class="rounded-xl border border-red-200 bg-red-50 px-4 py-2 text-sm font-black text-red-700 hover:bg-red-100">Cancelar</button>
+                                    </div>
+                                </form>
+                            </div>
+                        @endif
+                    </article>
                 @empty
                     <div class="rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-4 py-10 text-center text-sm text-slate-500">
                         Nenhuma lavagem agendada para esta data.

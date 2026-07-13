@@ -22,6 +22,8 @@ class AuditLog extends Model
 
     public const ACTION_WASH_ORDER_STATUS_CHANGED = 'wash_order.status_changed';
 
+    public const ACTION_WASH_ORDER_RESCHEDULED = 'wash_order.rescheduled';
+
     public const ACTION_PAYMENT_REGISTERED = 'payment.registered';
 
     public const ACTION_PAYMENT_REVERSED = 'payment.reversed';
@@ -72,6 +74,7 @@ class AuditLog extends Model
             self::ACTION_CUSTOMERS_IMPORTED => 'Clientes importados',
             self::ACTION_WASH_ORDER_CREATED => 'Lavagem criada',
             self::ACTION_WASH_ORDER_STATUS_CHANGED => 'Status alterado',
+            self::ACTION_WASH_ORDER_RESCHEDULED => 'Lavagem reagendada',
             self::ACTION_PAYMENT_REGISTERED => 'Pagamento registrado',
             self::ACTION_PAYMENT_REVERSED => 'Pagamento estornado',
             self::ACTION_LOYALTY_COUPON_APPLIED => 'Cupom de fidelidade aplicado',

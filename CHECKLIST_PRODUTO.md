@@ -182,7 +182,7 @@ Documento de acompanhamento do que ja foi construido e do que ainda falta para d
 - [x] Fiado habilitavel por configuracao.
 - [x] Melhorar fluxo de agendamento para unidades que usam horario marcado.
 - [ ] Disponibilidade por funcionario/box.
-- [ ] Reagendamento e cancelamento formal.
+- [x] Reagendamento e cancelamento formal.
 
 ## Notificacoes e WhatsApp
 

@@ -115,6 +115,12 @@ Route::middleware('auth')->group(function () {
         Route::get('agenda', ScheduleController::class)
             ->middleware('permission:'.AccessControl::VIEW_SCHEDULE)
             ->name('schedule.index');
+        Route::patch('agenda/{wash_order}/reagendar', [ScheduleController::class, 'reschedule'])
+            ->middleware('permission:'.AccessControl::VIEW_SCHEDULE)
+            ->name('schedule.reschedule');
+        Route::patch('agenda/{wash_order}/cancelar', [ScheduleController::class, 'cancel'])
+            ->middleware('permission:'.AccessControl::VIEW_SCHEDULE)
+            ->name('schedule.cancel');
 
         Route::middleware('permission:'.AccessControl::CREATE_WASH_ORDER)->group(function () {
             Route::get('lavagens/create', [WashOrderController::class, 'create'])->name('wash-orders.create');
