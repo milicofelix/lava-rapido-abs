@@ -29,6 +29,10 @@ class ChangeWashOrderStatusService
             return $washOrder;
         }
 
+        if ($status === WashOrder::STATUS_CANCELED && ! WashOrderStatusFlow::canCancel($washOrder)) {
+            throw new InvalidArgumentException('A lavagem só pode ser cancelada enquanto estiver aguardando e sem pagamento registrado.');
+        }
+
         if (! WashOrderStatusFlow::canTransition($fromStatus, $status)) {
             throw new InvalidArgumentException('Transição de status não permitida.');
         }

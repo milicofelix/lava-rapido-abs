@@ -161,6 +161,39 @@ class PaymentManagementTest extends TestCase
             ->assertSee('Pagamento lançado na lavagem errada.');
     }
 
+    public function test_courtesy_payment_cannot_be_reversed(): void
+    {
+        $user = User::factory()->create();
+        $washOrder = WashOrder::factory()->create([
+            'wash_location_id' => $user->wash_location_id,
+            'payment_status' => WashOrder::PAYMENT_COURTESY,
+            'total_amount' => 80,
+        ]);
+        $payment = Payment::factory()->create([
+            'wash_order_id' => $washOrder->id,
+            'user_id' => $user->id,
+            'method' => Payment::METHOD_COURTESY,
+            'amount' => 0,
+        ]);
+
+        $this->actingAs($user)
+            ->get(route('wash-orders.show', $washOrder))
+            ->assertOk()
+            ->assertSee('Cortesia')
+            ->assertDontSee('Estornar pagamento');
+
+        $this->actingAs($user)
+            ->from(route('wash-orders.show', $washOrder))
+            ->patch(route('payments.reverse', [$washOrder, $payment]), [
+                'reversal_reason' => 'Tentativa de estorno de cortesia.',
+            ])
+            ->assertRedirect(route('wash-orders.show', $washOrder))
+            ->assertSessionHasErrors('payment_reversal');
+
+        $this->assertFalse($payment->fresh()->isReversed());
+        $this->assertSame(WashOrder::PAYMENT_COURTESY, $washOrder->refresh()->payment_status);
+    }
+
     public function test_reversed_payment_is_not_counted_in_finance_report(): void
     {
         $user = User::factory()->create(['role' => User::ROLE_ADMIN]);

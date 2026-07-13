@@ -25,6 +25,10 @@ class ReversePaymentService
             throw new DomainException('Este pagamento já foi estornado.');
         }
 
+        if (! $payment->canBeReversed()) {
+            throw new DomainException('Somente pagamentos com valor recebido podem ser estornados.');
+        }
+
         return DB::transaction(function () use ($washOrder, $payment, $data, $user): Payment {
             $payment->forceFill([
                 'reversed_at' => now(),

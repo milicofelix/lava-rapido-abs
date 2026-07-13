@@ -4,14 +4,15 @@ namespace Tests\Feature\App;
 
 use App\Models\AppSetting;
 use App\Models\Customer;
+use App\Models\Payment;
+use App\Models\RolePermissionSetting;
 use App\Models\Service;
 use App\Models\User;
 use App\Models\Vehicle;
 use App\Models\WashOrder;
-use App\Models\RolePermissionSetting;
 use App\Support\Access\AccessControl;
-use Illuminate\Support\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Carbon;
 use Tests\TestCase;
 
 class WashOrderManagementTest extends TestCase
@@ -99,6 +100,41 @@ class WashOrderManagementTest extends TestCase
             'from_status' => null,
             'to_status' => WashOrder::STATUS_AWAITING,
         ]);
+    }
+
+    public function test_canceled_status_is_hidden_after_payment_is_identified(): void
+    {
+        $user = User::factory()->create();
+        $washOrder = WashOrder::factory()->create([
+            'wash_location_id' => $user->wash_location_id,
+            'status' => WashOrder::STATUS_AWAITING,
+            'payment_status' => WashOrder::PAYMENT_PAID,
+        ]);
+        Payment::factory()->create([
+            'wash_order_id' => $washOrder->id,
+            'user_id' => $user->id,
+            'amount' => 80,
+        ]);
+
+        $this->actingAs($user)
+            ->get(route('wash-orders.show', $washOrder))
+            ->assertOk()
+            ->assertDontSee('<option value="'.WashOrder::STATUS_CANCELED.'"', false);
+    }
+
+    public function test_canceled_status_is_hidden_after_operation_started(): void
+    {
+        $user = User::factory()->create();
+        $washOrder = WashOrder::factory()->create([
+            'wash_location_id' => $user->wash_location_id,
+            'status' => WashOrder::STATUS_WASHING,
+            'payment_status' => WashOrder::PAYMENT_PENDING,
+        ]);
+
+        $this->actingAs($user)
+            ->get(route('wash-orders.show', $washOrder))
+            ->assertOk()
+            ->assertDontSee('<option value="'.WashOrder::STATUS_CANCELED.'"', false);
     }
 
     public function test_wash_order_opening_is_blocked_when_location_is_closed_by_business_hours(): void

@@ -57,8 +57,11 @@ class WashOrderStatusFlowTest extends TestCase
         $this->assertTrue(WashOrderStatusFlow::canTransition(WashOrder::STATUS_WASHING, WashOrder::STATUS_FINISHING));
         $this->assertTrue(WashOrderStatusFlow::canTransition(WashOrder::STATUS_FINISHING, WashOrder::STATUS_READY));
         $this->assertTrue(WashOrderStatusFlow::canTransition(WashOrder::STATUS_READY, WashOrder::STATUS_DELIVERED));
+        $this->assertTrue(WashOrderStatusFlow::canTransition(WashOrder::STATUS_AWAITING, WashOrder::STATUS_CANCELED));
 
         $this->assertFalse(WashOrderStatusFlow::canTransition(WashOrder::STATUS_AWAITING, WashOrder::STATUS_DELIVERED));
+        $this->assertFalse(WashOrderStatusFlow::canTransition(WashOrder::STATUS_WASHING, WashOrder::STATUS_CANCELED));
+        $this->assertFalse(WashOrderStatusFlow::canTransition(WashOrder::STATUS_READY, WashOrder::STATUS_CANCELED));
         $this->assertFalse(WashOrderStatusFlow::canTransition(WashOrder::STATUS_DELIVERED, WashOrder::STATUS_WASHING));
     }
 

@@ -87,33 +87,27 @@ class WashOrderStatusFlow
                 WashOrder::STATUS_VACUUMING,
                 WashOrder::STATUS_WAXING,
                 WashOrder::STATUS_FINISHING,
-                WashOrder::STATUS_CANCELED,
             ],
             WashOrder::STATUS_WASHING => [
                 WashOrder::STATUS_VACUUMING,
                 WashOrder::STATUS_WAXING,
                 WashOrder::STATUS_FINISHING,
                 WashOrder::STATUS_READY,
-                WashOrder::STATUS_CANCELED,
             ],
             WashOrder::STATUS_VACUUMING => [
                 WashOrder::STATUS_WAXING,
                 WashOrder::STATUS_FINISHING,
                 WashOrder::STATUS_READY,
-                WashOrder::STATUS_CANCELED,
             ],
             WashOrder::STATUS_WAXING => [
                 WashOrder::STATUS_FINISHING,
                 WashOrder::STATUS_READY,
-                WashOrder::STATUS_CANCELED,
             ],
             WashOrder::STATUS_FINISHING => [
                 WashOrder::STATUS_READY,
-                WashOrder::STATUS_CANCELED,
             ],
             WashOrder::STATUS_READY => [
                 WashOrder::STATUS_DELIVERED,
-                WashOrder::STATUS_CANCELED,
             ],
             WashOrder::STATUS_DELIVERED => [],
             WashOrder::STATUS_CANCELED => [],
@@ -158,11 +152,22 @@ class WashOrderStatusFlow
     {
         $allowed = self::allowedTransitions()[$washOrder->status] ?? [];
         $allowed = self::filterStatusesByServices($allowed, $washOrder);
+
+        if (! self::canCancel($washOrder)) {
+            $allowed = array_values(array_diff($allowed, [WashOrder::STATUS_CANCELED]));
+        }
+
         $labels = self::labels();
 
         return collect($allowed)
             ->mapWithKeys(fn (string $status) => [$status => $labels[$status] ?? $status])
             ->all();
+    }
+
+    public static function canCancel(WashOrder $washOrder): bool
+    {
+        return $washOrder->status === WashOrder::STATUS_AWAITING
+            && ! $washOrder->hasIdentifiedPayment();
     }
 
     /**

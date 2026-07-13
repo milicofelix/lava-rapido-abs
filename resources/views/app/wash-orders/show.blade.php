@@ -187,7 +187,7 @@
                                 @endif
                                 @if ($payment->isReversed())
                                     <p class="mt-3 rounded-2xl bg-red-50 px-4 py-3 text-sm font-semibold text-red-800">{{ $payment->reversal_reason }}</p>
-                                @else
+                                @elseif ($payment->canBeReversed())
                                     <details class="mt-3 rounded-2xl border border-red-100 bg-red-50 p-3">
                                         <summary class="cursor-pointer text-sm font-black text-red-700">Estornar pagamento</summary>
                                         <form method="POST" action="{{ route('payments.reverse', [$washOrder, $payment]) }}" class="mt-3 space-y-3">
