@@ -139,17 +139,20 @@ const inertiaRoot = document.getElementById('app');
 const inertiaPage = document.querySelector('script[data-page="app"][type="application/json"]');
 
 if (inertiaRoot && inertiaPage) {
-    const pages = import.meta.glob('./Pages/**/*.jsx');
+    const pages = {
+        Kanban: () => import('./Pages/Kanban.jsx'),
+        Tracking: () => import('./Pages/Tracking.jsx'),
+    };
 
     createInertiaApp({
         resolve: async (name) => {
-            const page = pages[`./Pages/${name}.jsx`];
+            const page = pages[name];
 
             if (!page) {
                 throw new Error(`Página Inertia não encontrada: ${name}`);
             }
 
-            const module = typeof page === 'function' ? await page() : page;
+            const module = await page();
 
             return module.default;
         },
