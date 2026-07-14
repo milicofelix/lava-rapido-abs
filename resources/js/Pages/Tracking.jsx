@@ -205,14 +205,15 @@ export default function Tracking({ washOrder: initialWashOrder, loyalty: initial
                                                 key={rating}
                                                 type="button"
                                                 onClick={() => reviewForm.setData('rating', rating)}
-                                                className={`rounded-xl border px-4 py-2 text-lg font-black ${
-                                                    Number(reviewForm.data.rating) === rating
-                                                        ? 'border-cyan-700 bg-cyan-50 text-cyan-800'
-                                                        : 'border-zinc-200 bg-white text-zinc-500'
+                                                className={`rounded-xl border px-3 py-2 text-2xl font-black transition ${
+                                                    Number(reviewForm.data.rating) >= rating
+                                                        ? 'border-amber-300 bg-amber-50 text-amber-500 shadow-sm'
+                                                        : 'border-zinc-200 bg-white text-zinc-300 hover:border-amber-200 hover:text-amber-300'
                                                 }`}
                                                 aria-label={`Nota ${rating}`}
+                                                aria-pressed={Number(reviewForm.data.rating) >= rating}
                                             >
-                                                {rating}★
+                                                ★
                                             </button>
                                         ))}
                                     </div>

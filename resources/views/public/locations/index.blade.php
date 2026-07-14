@@ -777,6 +777,7 @@
                                     default => 'bg-green-100 text-green-700',
                                 };
                                 $whatsapp = $location->whatsappUrl();
+                                $reviewSummary = $reviewSummaries[$location->id] ?? null;
                             @endphp
                             <article id="unidade-{{ $location->id }}" data-location-card data-location-id="{{ $location->id }}" data-latitude="{{ $location->mapLatitude() }}" data-longitude="{{ $location->mapLongitude() }}" class="autoflow-location-card rounded-2xl border border-slate-200 p-4 transition hover:border-blue-200 hover:shadow-sm">
                                 <div class="flex items-start justify-between gap-3">
@@ -785,6 +786,13 @@
                                         <p class="mt-1 text-sm leading-5 text-slate-500">{{ $location->fullAddress() }}</p>
                                         <div class="mt-3 flex flex-wrap items-center gap-2">
                                             <span data-distance-label class="autoflow-distance-pill">📍 Distância após localização</span>
+                                            @if ($reviewSummary)
+                                                <span class="rounded-full bg-amber-100 px-3 py-1 text-xs font-black text-amber-800">
+                                                    ★ {{ number_format((float) $reviewSummary['average'], 1, ',', '.') }} · {{ $reviewSummary['count'] }} {{ $reviewSummary['count'] === 1 ? 'avaliação' : 'avaliações' }}
+                                                </span>
+                                            @else
+                                                <span class="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-500">Sem avaliações</span>
+                                            @endif
                                             <span data-closest-badge class="autoflow-closest-badge hidden">Mais próximo</span>
                                             <span class="autoflow-favorite-badge">⭐ Favorito</span>
                                         </div>
@@ -1034,6 +1042,9 @@
                     : (location.status === 'busy' ? 'background:#ffedd5;color:#c2410c;' : 'background:#dcfce7;color:#15803d;');
                 const popupAddress = [location.address, location.city].filter(Boolean).join(' - ');
                 const popupPhone = location.phone || 'Não informado';
+                const ratingLabel = Number(location.rating_count || 0) > 0
+                    ? `★ ${Number(location.rating_average || 0).toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} · ${Number(location.rating_count || 0)} ${Number(location.rating_count || 0) === 1 ? 'avaliação' : 'avaliações'}`
+                    : 'Sem avaliações';
                 const whatsappUrl = buildWhatsappUrl(location.phone, location.name);
                 const directionsUrl = buildDirectionsUrl(location);
                 const whatsappButton = whatsappUrl
@@ -1058,6 +1069,10 @@
                             <div class="autoflow-popup-info">
                                 <span class="autoflow-popup-label">Em atendimento</span>
                                 <span class="autoflow-popup-value">${Number(location.active_orders_count || 0)}</span>
+                            </div>
+                            <div class="autoflow-popup-info">
+                                <span class="autoflow-popup-label">Avaliação</span>
+                                <span class="autoflow-popup-value">${escapeHtml(ratingLabel)}</span>
                             </div>
                             <div class="autoflow-popup-info">
                                 <span class="autoflow-popup-label">Contato</span>

@@ -366,6 +366,43 @@ class WashLocationMapTest extends TestCase
             ->assertDontSee('Depoimento de outra unidade');
     }
 
+    public function test_public_map_shows_location_review_summary_when_available(): void
+    {
+        $location = WashLocation::factory()->create(['name' => 'Lava Bem Avaliado']);
+        WashOrder::factory()->create([
+            'wash_location_id' => $location->id,
+            'status' => WashOrder::STATUS_DELIVERED,
+            'customer_review_rating' => 5,
+            'customer_review_comment' => 'Excelente atendimento.',
+            'customer_review_public' => true,
+            'customer_reviewed_at' => now(),
+        ]);
+        WashOrder::factory()->create([
+            'wash_location_id' => $location->id,
+            'status' => WashOrder::STATUS_DELIVERED,
+            'customer_review_rating' => 4,
+            'customer_review_comment' => 'Muito bom.',
+            'customer_review_public' => true,
+            'customer_reviewed_at' => now(),
+        ]);
+        WashOrder::factory()->create([
+            'wash_location_id' => $location->id,
+            'status' => WashOrder::STATUS_DELIVERED,
+            'customer_review_rating' => 1,
+            'customer_review_comment' => 'Nao deve entrar na media.',
+            'customer_review_public' => false,
+            'customer_reviewed_at' => now(),
+        ]);
+
+        $this->get(route('public.locations.index'))
+            ->assertOk()
+            ->assertSee('Lava Bem Avaliado')
+            ->assertSee('★ 4,5 · 2 avaliações', false)
+            ->assertSee('"rating_average":4.5', false)
+            ->assertSee('"rating_count":2', false)
+            ->assertDontSee('Nao deve entrar na media.');
+    }
+
     public function test_public_location_without_coordinates_uses_address_search_instead_of_fake_marker(): void
     {
         $location = WashLocation::query()->create([

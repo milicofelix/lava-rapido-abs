@@ -57,28 +57,36 @@ class PublicWashLocationMapController extends Controller
                 fn (WashLocation $location) => $location->name,
             ])
             ->values();
+        $reviewSummaries = $this->reviewSummariesFor($locations);
 
         return view('public.locations.index', [
             'locations' => $locations,
+            'reviewSummaries' => $reviewSummaries,
             'status' => $status,
             'search' => $search,
             'onlyOpen' => $onlyOpen,
             'statuses' => WashLocation::statuses(),
-            'mapLocations' => $locations->map(fn (WashLocation $location) => [
-                'id' => $location->id,
-                'name' => $location->name,
-                'detail_url' => route('public.locations.show', ['location' => $location->slug]),
-                'address' => $location->fullAddress(),
-                'district' => $location->district,
-                'city' => $location->city,
-                'status' => $location->publicStatus(),
-                'status_label' => $location->publicStatusLabel(),
-                'opening_hours' => $location->opening_hours ?: $location->openingHoursSummary(),
-                'phone' => $location->phone,
-                'active_orders_count' => $location->active_orders_count,
-                'latitude' => $location->mapLatitude(),
-                'longitude' => $location->mapLongitude(),
-            ])->values(),
+            'mapLocations' => $locations->map(function (WashLocation $location) use ($reviewSummaries) {
+                $summary = $reviewSummaries[$location->id] ?? null;
+
+                return [
+                    'id' => $location->id,
+                    'name' => $location->name,
+                    'detail_url' => route('public.locations.show', ['location' => $location->slug]),
+                    'address' => $location->fullAddress(),
+                    'district' => $location->district,
+                    'city' => $location->city,
+                    'status' => $location->publicStatus(),
+                    'status_label' => $location->publicStatusLabel(),
+                    'opening_hours' => $location->opening_hours ?: $location->openingHoursSummary(),
+                    'phone' => $location->phone,
+                    'active_orders_count' => $location->active_orders_count,
+                    'rating_average' => $summary['average'] ?? null,
+                    'rating_count' => $summary['count'] ?? 0,
+                    'latitude' => $location->mapLatitude(),
+                    'longitude' => $location->mapLongitude(),
+                ];
+            })->values(),
         ]);
     }
 
@@ -129,6 +137,33 @@ class PublicWashLocationMapController extends Controller
                 'reviewed_at' => $washOrder->customer_reviewed_at?->format('d/m/Y'),
                 'service' => $washOrder->services->pluck('pivot.service_name')->filter()->first(),
             ]);
+    }
+
+    private function reviewSummariesFor($locations): array
+    {
+        $locationIds = $locations->pluck('id')->all();
+
+        if ($locationIds === []) {
+            return [];
+        }
+
+        return WashOrder::query()
+            ->select('wash_location_id')
+            ->selectRaw('COUNT(*) as reviews_count')
+            ->selectRaw('AVG(customer_review_rating) as reviews_average')
+            ->whereIn('wash_location_id', $locationIds)
+            ->where('customer_review_public', true)
+            ->whereNotNull('customer_review_rating')
+            ->whereNotNull('customer_review_comment')
+            ->groupBy('wash_location_id')
+            ->get()
+            ->mapWithKeys(fn (WashOrder $summary) => [
+                $summary->wash_location_id => [
+                    'count' => (int) $summary->reviews_count,
+                    'average' => round((float) $summary->reviews_average, 1),
+                ],
+            ])
+            ->all();
     }
 
     private function publicCustomerName(string $name): string
