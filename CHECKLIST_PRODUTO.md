@@ -95,7 +95,7 @@ Documento de acompanhamento do que ja foi construido e do que ainda falta para d
 - [x] Status incompatíveis com servicos removidos do fluxo, exemplo: cera sem servico de cera.
 - [x] Tela publica de acompanhamento do cliente.
 - [x] Link do cliente com compartilhamento por WhatsApp manual.
-- [ ] Melhorar notificacoes automaticas por evento.
+- [x] Melhorar notificacoes automaticas por evento.
 - [x] Melhorar UX mobile do Kanban.
 
 ## Financeiro
@@ -199,7 +199,7 @@ Documento de acompanhamento do que ja foi construido e do que ainda falta para d
 - [ ] WhatsApp oficial/API.
 - [ ] Webhooks de entrega/leitura.
 - [ ] Opt-in do cliente.
-- [ ] Disparo automatico por evento.
+- [x] Preparacao automatica de mensagem por evento operacional.
 
 ## Portal publico e mapa
 

@@ -1,5 +1,5 @@
 <x-app.layout heading="Nova lavagem" title="Nova lavagem · AutoFlow">
-    <form method="POST" action="{{ route('wash-orders.store') }}" class="grid gap-5 xl:grid-cols-[1fr_360px]">
+    <form method="POST" action="{{ route('wash-orders.store') }}" class="grid gap-5 lg:grid-cols-[minmax(0,1fr)_320px] 2xl:grid-cols-[minmax(0,1fr)_360px]">
         @csrf
 
         <div class="space-y-5">
@@ -111,7 +111,7 @@
             </section>
         </div>
 
-        <aside class="h-fit rounded-2xl border border-slate-200 bg-white p-5 shadow-sm xl:sticky xl:top-24">
+        <aside class="h-fit rounded-2xl border border-slate-200 bg-white p-5 shadow-sm lg:sticky lg:top-24">
             <p class="text-xs font-black uppercase tracking-[0.18em] text-blue-700">Resumo</p>
             <h2 class="mt-1 text-xl font-black text-slate-950">Ordem de lavagem</h2>
             <dl class="mt-5 space-y-3 text-sm">

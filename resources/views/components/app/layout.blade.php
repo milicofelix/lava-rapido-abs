@@ -114,7 +114,7 @@
             </div>
         </aside>
 
-        <div data-content class="min-h-[calc(100vh-16px)] overflow-hidden rounded-2xl {{ $appTheme === 'dark' ? 'bg-slate-900 text-slate-100' : 'bg-slate-50' }} shadow-2xl shadow-black/30 transition-[margin] duration-200 lg:ml-[18rem]">
+        <div data-content class="min-h-[calc(100vh-16px)] overflow-visible rounded-2xl {{ $appTheme === 'dark' ? 'bg-slate-900 text-slate-100' : 'bg-slate-50' }} shadow-2xl shadow-black/30 transition-[margin] duration-200 lg:ml-[18rem]">
             <header class="sticky top-0 z-20 border-b {{ $appTheme === 'dark' ? 'border-slate-800 bg-slate-950/95' : 'border-slate-200 bg-white/95' }} px-3 py-3 backdrop-blur sm:px-6 lg:px-7">
                 <div class="flex flex-wrap items-center justify-between gap-2 sm:gap-3">
                     <div class="flex min-w-0 items-center gap-3">
