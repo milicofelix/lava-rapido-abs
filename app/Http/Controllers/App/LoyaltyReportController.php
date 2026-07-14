@@ -51,6 +51,7 @@ class LoyaltyReportController extends Controller
                 'expired_coupons' => $this->expiredCoupons($start, $end, $filters),
                 'discount_granted' => $this->discountGranted($start, $end, $filters),
             ],
+            'retentionReport' => $this->retentionReport($start, $end, $filters),
             'nearRewardCustomers' => $customerProgress
                 ->filter(fn (Customer $customer) => $customer->loyalty_progress['enabled']
                     && $customer->loyalty_progress['remaining'] > 0
@@ -224,6 +225,126 @@ class LoyaltyReportController extends Controller
             ->when($filters['customer_id'], fn (Builder $query, int $customerId) => $query->where('customer_id', $customerId))
             ->when($filters['search'] !== '', fn (Builder $query) => $this->applySearch($query, $filters['search']))
             ->count();
+    }
+
+    /**
+     * @param  array{customer_id: ?int, search: string}  $filters
+     * @return array{
+     *     served_customers: int,
+     *     returning_customers: int,
+     *     retained_from_before: int,
+     *     orders_count: int,
+     *     recurrence_rate: float,
+     *     average_orders_per_customer: float,
+     *     frequency_buckets: array<int, array{label: string, count: int, percent: float}>,
+     *     monthly_series: array<int, array{label: string, orders: int, customers: int, returning: int, recurrence_rate: float, percent: float}>
+     * }
+     */
+    private function retentionReport(Carbon $start, Carbon $end, array $filters): array
+    {
+        $customerOrderCounts = (clone $this->retentionOrdersQuery($start, $end, $filters))
+            ->select('customer_id')
+            ->selectRaw('COUNT(*) as orders_count')
+            ->whereNotNull('customer_id')
+            ->groupBy('customer_id')
+            ->get();
+
+        $ordersCount = (int) $customerOrderCounts->sum('orders_count');
+        $servedCustomers = $customerOrderCounts->count();
+        $returningCustomers = $customerOrderCounts
+            ->filter(fn ($row) => (int) $row->orders_count >= 2)
+            ->count();
+        $servedCustomerIds = $customerOrderCounts->pluck('customer_id')->filter()->values();
+        $retainedFromBefore = $servedCustomerIds->isEmpty()
+            ? 0
+            : (int) TenantContext::scopeWashOrders(WashOrder::query())
+                ->where('status', WashOrder::STATUS_DELIVERED)
+                ->whereIn('customer_id', $servedCustomerIds)
+                ->where('entered_at', '<', $start)
+                ->distinct('customer_id')
+                ->count('customer_id');
+
+        $frequencyBucketCounts = [
+            1 => $customerOrderCounts->filter(fn ($row) => (int) $row->orders_count === 1)->count(),
+            2 => $customerOrderCounts->filter(fn ($row) => (int) $row->orders_count === 2)->count(),
+            3 => $customerOrderCounts->filter(fn ($row) => (int) $row->orders_count >= 3)->count(),
+        ];
+
+        return [
+            'served_customers' => $servedCustomers,
+            'returning_customers' => $returningCustomers,
+            'retained_from_before' => $retainedFromBefore,
+            'orders_count' => $ordersCount,
+            'recurrence_rate' => $servedCustomers > 0 ? round(($returningCustomers / $servedCustomers) * 100, 1) : 0.0,
+            'average_orders_per_customer' => $servedCustomers > 0 ? round($ordersCount / $servedCustomers, 1) : 0.0,
+            'frequency_buckets' => collect([
+                ['label' => '1 lavagem', 'count' => $frequencyBucketCounts[1]],
+                ['label' => '2 lavagens', 'count' => $frequencyBucketCounts[2]],
+                ['label' => '3+ lavagens', 'count' => $frequencyBucketCounts[3]],
+            ])->map(fn (array $bucket): array => [
+                ...$bucket,
+                'percent' => $servedCustomers > 0 ? round(($bucket['count'] / $servedCustomers) * 100, 1) : 0.0,
+            ])->all(),
+            'monthly_series' => $this->monthlyRetentionSeries($start, $end, $filters),
+        ];
+    }
+
+    /**
+     * @param  array{customer_id: ?int, search: string}  $filters
+     */
+    private function retentionOrdersQuery(Carbon $start, Carbon $end, array $filters): Builder
+    {
+        return TenantContext::scopeWashOrders(WashOrder::query())
+            ->where('status', WashOrder::STATUS_DELIVERED)
+            ->whereBetween('entered_at', [$start, $end])
+            ->when($filters['customer_id'], fn (Builder $query, int $customerId) => $query->where('customer_id', $customerId))
+            ->when($filters['search'] !== '', function (Builder $query) use ($filters): void {
+                $query->whereHas('customer', fn (Builder $customerQuery) => $this->applyCustomerSearch($customerQuery, $filters['search']));
+            });
+    }
+
+    /**
+     * @param  array{customer_id: ?int, search: string}  $filters
+     * @return array<int, array{label: string, orders: int, customers: int, returning: int, recurrence_rate: float, percent: float}>
+     */
+    private function monthlyRetentionSeries(Carbon $start, Carbon $end, array $filters): array
+    {
+        $series = [];
+        $maxOrders = 0;
+
+        for ($cursor = $start->copy()->startOfMonth(); $cursor->lte($end); $cursor->addMonth()) {
+            $monthStart = $cursor->copy()->startOfMonth()->max($start->copy());
+            $monthEnd = $cursor->copy()->endOfMonth()->min($end->copy());
+            $customerOrderCounts = (clone $this->retentionOrdersQuery($monthStart, $monthEnd, $filters))
+                ->select('customer_id')
+                ->selectRaw('COUNT(*) as orders_count')
+                ->whereNotNull('customer_id')
+                ->groupBy('customer_id')
+                ->get();
+
+            $orders = (int) $customerOrderCounts->sum('orders_count');
+            $customers = $customerOrderCounts->count();
+            $returning = $customerOrderCounts
+                ->filter(fn ($row) => (int) $row->orders_count >= 2)
+                ->count();
+            $maxOrders = max($maxOrders, $orders);
+
+            $series[] = [
+                'label' => ucfirst($cursor->isoFormat('MMM/YY')),
+                'orders' => $orders,
+                'customers' => $customers,
+                'returning' => $returning,
+                'recurrence_rate' => $customers > 0 ? round(($returning / $customers) * 100, 1) : 0.0,
+                'percent' => 0.0,
+            ];
+        }
+
+        return collect($series)
+            ->map(fn (array $month): array => [
+                ...$month,
+                'percent' => $maxOrders > 0 ? round(($month['orders'] / $maxOrders) * 100, 1) : 0.0,
+            ])
+            ->all();
     }
 
     private function applyEffectiveStatus(Builder $query, string $status): void

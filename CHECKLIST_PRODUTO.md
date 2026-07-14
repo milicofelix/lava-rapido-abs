@@ -156,7 +156,7 @@ Documento de acompanhamento do que ja foi construido e do que ainda falta para d
 - [x] Status efetivo: cupom ativo vencido aparece como expirado.
 - [x] Tracking publico mostra progresso de fidelidade do cliente.
 - [x] Tela dedicada para campanhas/promocoes de fidelidade.
-- [ ] Relatorio grafico de retencao e recorrencia.
+- [x] Relatorio grafico de retencao e recorrencia.
 - [ ] Notificacao automatica de cupom gerado/vencendo.
 
 ## Dashboard e relatorios

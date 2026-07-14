@@ -388,6 +388,58 @@ class LoyaltyReportTest extends TestCase
             ->assertForbidden();
     }
 
+    public function test_owner_can_view_retention_and_recurrence_report(): void
+    {
+        $location = WashLocation::factory()->create();
+        $owner = User::factory()->create([
+            'role' => User::ROLE_OWNER,
+            'wash_location_id' => $location->id,
+        ]);
+        $service = Service::factory()->create(['wash_location_id' => $location->id]);
+        $this->program($location, $service);
+
+        $returningCustomer = Customer::factory()->create([
+            'wash_location_id' => $location->id,
+            'name' => 'Cliente Recorrente',
+        ]);
+        $returningVehicle = Vehicle::factory()->for($returningCustomer)->create(['wash_location_id' => $location->id]);
+        $singleVisitCustomer = Customer::factory()->create([
+            'wash_location_id' => $location->id,
+            'name' => 'Cliente Primeira Visita',
+        ]);
+        $singleVisitVehicle = Vehicle::factory()->for($singleVisitCustomer)->create(['wash_location_id' => $location->id]);
+
+        $this->deliveredOrder($location, $returningCustomer, $returningVehicle, $service, now()->subMonth()->startOfMonth());
+        $this->deliveredOrder($location, $returningCustomer, $returningVehicle, $service, now()->subDays(4));
+        $this->deliveredOrder($location, $returningCustomer, $returningVehicle, $service, now()->subDays(2));
+        $this->deliveredOrder($location, $singleVisitCustomer, $singleVisitVehicle, $service, now()->subDay());
+
+        $otherLocation = WashLocation::factory()->create();
+        $otherCustomer = Customer::factory()->create([
+            'wash_location_id' => $otherLocation->id,
+            'name' => 'Cliente Outra Unidade Retencao',
+        ]);
+        $otherVehicle = Vehicle::factory()->for($otherCustomer)->create(['wash_location_id' => $otherLocation->id]);
+        $otherService = Service::factory()->create(['wash_location_id' => $otherLocation->id]);
+        $this->deliveredOrder($otherLocation, $otherCustomer, $otherVehicle, $otherService, now()->subDay());
+
+        $this->actingAs($owner)
+            ->get(route('loyalty-reports.index', [
+                'start' => now()->startOfMonth()->toDateString(),
+                'end' => now()->toDateString(),
+            ]))
+            ->assertOk()
+            ->assertSee('Retenção e recorrência')
+            ->assertSee('Clientes atendidos')
+            ->assertSee('Clientes recorrentes')
+            ->assertSee('Taxa de recorrência')
+            ->assertSee('50,0%')
+            ->assertSee('1 cliente já tinha histórico anterior.')
+            ->assertSee('1 lavagem')
+            ->assertSee('2 lavagens')
+            ->assertDontSee('Cliente Outra Unidade Retencao');
+    }
+
     public function test_owner_can_view_loyalty_campaign_segments(): void
     {
         $location = WashLocation::factory()->create();
