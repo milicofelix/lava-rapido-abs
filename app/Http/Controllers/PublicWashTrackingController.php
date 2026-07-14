@@ -2,11 +2,13 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\WashOrder;
 use App\Models\LoyaltyCoupon;
 use App\Models\LoyaltyProgram;
+use App\Models\WashOrder;
 use App\Support\Loyalty\LoyaltyProgress;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -20,6 +22,47 @@ class PublicWashTrackingController extends Controller
     public function feed(string $code): JsonResponse
     {
         return response()->json($this->payload($code));
+    }
+
+    public function review(Request $request, string $code): RedirectResponse
+    {
+        $washOrder = WashOrder::query()
+            ->where('code', $code)
+            ->firstOrFail();
+
+        if ($washOrder->status !== WashOrder::STATUS_DELIVERED) {
+            return back()->withErrors([
+                'review' => 'A avaliação fica disponível somente após a entrega do veículo.',
+            ]);
+        }
+
+        if ($washOrder->customer_reviewed_at !== null) {
+            return back()->withErrors([
+                'review' => 'Esta lavagem já recebeu uma avaliação.',
+            ]);
+        }
+
+        $data = $request->validate([
+            'rating' => ['required', 'integer', 'between:1,5'],
+            'comment' => ['required', 'string', 'min:10', 'max:500'],
+            'publish_consent' => ['accepted'],
+        ], [
+            'rating.required' => 'Escolha uma nota de 1 a 5.',
+            'rating.between' => 'Escolha uma nota de 1 a 5.',
+            'comment.required' => 'Escreva um breve depoimento sobre o atendimento.',
+            'comment.min' => 'O depoimento precisa ter pelo menos 10 caracteres.',
+            'comment.max' => 'O depoimento pode ter no máximo 500 caracteres.',
+            'publish_consent.accepted' => 'Autorize a publicação para enviar o depoimento.',
+        ]);
+
+        $washOrder->forceFill([
+            'customer_review_rating' => (int) $data['rating'],
+            'customer_review_comment' => trim($data['comment']),
+            'customer_review_public' => true,
+            'customer_reviewed_at' => now(),
+        ])->save();
+
+        return back()->with('status', 'Obrigado! Seu depoimento foi registrado.');
     }
 
     /**
@@ -73,6 +116,13 @@ class PublicWashTrackingController extends Controller
                         'label' => WashOrder::statuses()[$history->to_status] ?? $history->to_status,
                         'created_at' => $history->created_at->format('d/m/Y H:i'),
                     ])->all(),
+                'review' => [
+                    'can_review' => $washOrder->status === WashOrder::STATUS_DELIVERED
+                        && $washOrder->customer_reviewed_at === null,
+                    'submitted' => $washOrder->customer_reviewed_at !== null,
+                    'rating' => $washOrder->customer_review_rating,
+                    'comment' => $washOrder->customer_review_comment,
+                ],
             ],
             'loyalty' => [
                 'enabled' => $loyaltyProgress['enabled'],
@@ -93,6 +143,7 @@ class PublicWashTrackingController extends Controller
             'statuses' => WashOrder::statuses(),
             'progressStatuses' => WashOrder::publicProgressStatuses(),
             'feedUrl' => route('tracking.feed', $code),
+            'reviewUrl' => route('tracking.review', $code),
         ];
     }
 }

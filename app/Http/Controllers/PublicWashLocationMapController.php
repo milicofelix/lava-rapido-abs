@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Service;
 use App\Models\WashLocation;
+use App\Models\WashOrder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\View\View;
@@ -91,15 +92,58 @@ class PublicWashLocationMapController extends Controller
             ->orderBy('category')
             ->orderBy('name')
             ->get();
+        $testimonials = $this->testimonialsFor($location);
 
         return view('public.locations.show', [
             'location' => $location,
             'services' => $services,
+            'testimonials' => $testimonials,
+            'testimonialsSummary' => [
+                'count' => $testimonials->count(),
+                'average' => $testimonials->count() > 0
+                    ? round((float) $testimonials->avg('rating'), 1)
+                    : null,
+            ],
             'whatsappUrl' => $location->whatsappUrl(),
             'directionsUrl' => $this->directionsUrl($location),
             'operatingSummary' => $this->operatingSummary($location),
             'businessHours' => $this->businessHoursForView($location),
         ]);
+    }
+
+    private function testimonialsFor(WashLocation $location)
+    {
+        return WashOrder::query()
+            ->with(['customer', 'services'])
+            ->where('wash_location_id', $location->id)
+            ->where('customer_review_public', true)
+            ->whereNotNull('customer_review_rating')
+            ->whereNotNull('customer_review_comment')
+            ->latest('customer_reviewed_at')
+            ->limit(6)
+            ->get()
+            ->map(fn (WashOrder $washOrder) => [
+                'author' => $this->publicCustomerName((string) $washOrder->customer?->name),
+                'rating' => (int) $washOrder->customer_review_rating,
+                'comment' => $washOrder->customer_review_comment,
+                'reviewed_at' => $washOrder->customer_reviewed_at?->format('d/m/Y'),
+                'service' => $washOrder->services->pluck('pivot.service_name')->filter()->first(),
+            ]);
+    }
+
+    private function publicCustomerName(string $name): string
+    {
+        $parts = collect(preg_split('/\s+/', trim($name)) ?: [])->filter()->values();
+
+        if ($parts->isEmpty()) {
+            return 'Cliente AutoFlow';
+        }
+
+        if ($parts->count() === 1) {
+            return $parts->first();
+        }
+
+        return $parts->first().' '.mb_substr((string) $parts->last(), 0, 1).'.';
     }
 
     /**

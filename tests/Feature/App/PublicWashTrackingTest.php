@@ -173,6 +173,67 @@ class PublicWashTrackingTest extends TestCase
             );
     }
 
+    public function test_customer_can_submit_public_review_after_delivery(): void
+    {
+        $washOrder = WashOrder::factory()->create([
+            'code' => 'ABS-REVIEW-1',
+            'status' => WashOrder::STATUS_DELIVERED,
+        ]);
+
+        $this->get(route('tracking.show', 'ABS-REVIEW-1'))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('Tracking')
+                ->where('washOrder.review.can_review', true)
+                ->where('washOrder.review.submitted', false)
+                ->where('reviewUrl', route('tracking.review', 'ABS-REVIEW-1'))
+            );
+
+        $this->post(route('tracking.review', 'ABS-REVIEW-1'), [
+            'rating' => 5,
+            'comment' => 'Atendimento excelente e carro entregue muito bem limpo.',
+            'publish_consent' => '1',
+        ])
+            ->assertRedirect()
+            ->assertSessionHasNoErrors();
+
+        $this->assertDatabaseHas('wash_orders', [
+            'id' => $washOrder->id,
+            'customer_review_rating' => 5,
+            'customer_review_comment' => 'Atendimento excelente e carro entregue muito bem limpo.',
+            'customer_review_public' => true,
+        ]);
+
+        $this->get(route('tracking.show', 'ABS-REVIEW-1'))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('washOrder.review.can_review', false)
+                ->where('washOrder.review.submitted', true)
+                ->where('washOrder.review.rating', 5)
+            );
+    }
+
+    public function test_customer_review_is_blocked_before_delivery(): void
+    {
+        $washOrder = WashOrder::factory()->create([
+            'code' => 'ABS-REVIEW-BLOCKED',
+            'status' => WashOrder::STATUS_WASHING,
+        ]);
+
+        $this->post(route('tracking.review', 'ABS-REVIEW-BLOCKED'), [
+            'rating' => 5,
+            'comment' => 'Ainda não deveria aceitar depoimento.',
+            'publish_consent' => '1',
+        ])
+            ->assertRedirect()
+            ->assertSessionHasErrors('review');
+
+        $this->assertDatabaseMissing('wash_orders', [
+            'id' => $washOrder->id,
+            'customer_review_rating' => 5,
+        ]);
+    }
+
     public function test_internal_wash_order_detail_shows_customer_tracking_link(): void
     {
         $user = User::factory()->create();

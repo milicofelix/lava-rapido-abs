@@ -32,6 +32,28 @@
                 'latitude' => $location->mapLatitude(),
                 'longitude' => $location->mapLongitude(),
             ] : null,
+            'aggregateRating' => $testimonialsSummary['count'] > 0 ? [
+                '@type' => 'AggregateRating',
+                'ratingValue' => $testimonialsSummary['average'],
+                'reviewCount' => $testimonialsSummary['count'],
+                'bestRating' => 5,
+                'worstRating' => 1,
+            ] : null,
+            'review' => $testimonials->map(fn ($testimonial) => [
+                '@type' => 'Review',
+                'reviewRating' => [
+                    '@type' => 'Rating',
+                    'ratingValue' => $testimonial['rating'],
+                    'bestRating' => 5,
+                    'worstRating' => 1,
+                ],
+                'author' => [
+                    '@type' => 'Person',
+                    'name' => $testimonial['author'],
+                ],
+                'reviewBody' => $testimonial['comment'],
+                'datePublished' => $testimonial['reviewed_at'],
+            ])->all(),
             'openingHoursSpecification' => collect($businessHours)->map(fn ($day) => [
                 '@type' => 'OpeningHoursSpecification',
                 'dayOfWeek' => $day['day'],
@@ -162,6 +184,44 @@
                                 <p class="mt-2 font-black {{ $day['is_today'] ? 'text-blue-950' : 'text-slate-950' }}">{{ $day['hours'] }}</p>
                             </div>
                         @endforeach
+                    </div>
+                </div>
+
+                <div class="border-t border-slate-200 p-6 sm:p-8">
+                    <div class="flex flex-wrap items-start justify-between gap-4">
+                        <div>
+                            <h2 class="text-xl font-black text-slate-950">Avaliações dos clientes</h2>
+                            <p class="mt-1 text-sm text-slate-500">Depoimentos enviados por clientes após a entrega do veículo.</p>
+                        </div>
+                        @if ($testimonialsSummary['count'] > 0)
+                            <div class="rounded-2xl bg-amber-50 px-4 py-3 text-right">
+                                <p class="text-xs font-black uppercase tracking-[0.14em] text-amber-700">Média</p>
+                                <p class="mt-1 text-2xl font-black text-amber-900">{{ number_format((float) $testimonialsSummary['average'], 1, ',', '.') }} ★</p>
+                                <p class="text-xs font-bold text-amber-800">{{ $testimonialsSummary['count'] }} depoimento{{ $testimonialsSummary['count'] === 1 ? '' : 's' }}</p>
+                            </div>
+                        @endif
+                    </div>
+
+                    <div class="mt-5 grid gap-3 sm:grid-cols-2">
+                        @forelse ($testimonials as $testimonial)
+                            <article class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                                <div class="flex items-start justify-between gap-3">
+                                    <div>
+                                        <p class="font-black text-slate-950">{{ $testimonial['author'] }}</p>
+                                        @if ($testimonial['service'])
+                                            <p class="mt-1 text-xs font-bold text-slate-500">{{ $testimonial['service'] }}</p>
+                                        @endif
+                                    </div>
+                                    <span class="shrink-0 rounded-full bg-amber-100 px-3 py-1 text-xs font-black text-amber-800">{{ str_repeat('★', $testimonial['rating']) }}</span>
+                                </div>
+                                <p class="mt-4 text-sm leading-6 text-slate-700">“{{ $testimonial['comment'] }}”</p>
+                                @if ($testimonial['reviewed_at'])
+                                    <p class="mt-3 text-xs font-bold text-slate-400">{{ $testimonial['reviewed_at'] }}</p>
+                                @endif
+                            </article>
+                        @empty
+                            <p class="rounded-2xl border border-dashed border-slate-200 px-4 py-8 text-center text-sm text-slate-500 sm:col-span-2">Esta unidade ainda não possui depoimentos publicados.</p>
+                        @endforelse
                     </div>
                 </div>
 

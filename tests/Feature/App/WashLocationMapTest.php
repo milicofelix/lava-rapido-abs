@@ -5,6 +5,7 @@ namespace Tests\Feature\App;
 use App\Models\Service;
 use App\Models\User;
 use App\Models\WashLocation;
+use App\Models\WashOrder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -312,6 +313,57 @@ class WashLocationMapTest extends TestCase
         } finally {
             Carbon::setTestNow();
         }
+    }
+
+    public function test_public_location_detail_shows_only_published_testimonials_from_location(): void
+    {
+        $location = WashLocation::factory()->create(['name' => 'Lava Depoimentos']);
+        $service = Service::factory()->create([
+            'wash_location_id' => $location->id,
+            'name' => 'Ducha completa',
+        ]);
+        $publishedOrder = WashOrder::factory()->create([
+            'wash_location_id' => $location->id,
+            'status' => WashOrder::STATUS_DELIVERED,
+            'customer_review_rating' => 5,
+            'customer_review_comment' => 'Atendimento muito cuidadoso e entrega rápida.',
+            'customer_review_public' => true,
+            'customer_reviewed_at' => now(),
+        ]);
+        $publishedOrder->customer->update(['name' => 'Maria Santos']);
+        $publishedOrder->services()->attach($service, [
+            'service_name' => $service->name,
+            'price' => $service->base_price,
+            'estimated_minutes' => $service->estimated_minutes,
+        ]);
+        WashOrder::factory()->create([
+            'wash_location_id' => $location->id,
+            'status' => WashOrder::STATUS_DELIVERED,
+            'customer_review_rating' => 2,
+            'customer_review_comment' => 'Depoimento sem autorização pública.',
+            'customer_review_public' => false,
+            'customer_reviewed_at' => now(),
+        ]);
+        $otherLocation = WashLocation::factory()->create(['name' => 'Outra Unidade Depoimento']);
+        WashOrder::factory()->create([
+            'wash_location_id' => $otherLocation->id,
+            'status' => WashOrder::STATUS_DELIVERED,
+            'customer_review_rating' => 5,
+            'customer_review_comment' => 'Depoimento de outra unidade.',
+            'customer_review_public' => true,
+            'customer_reviewed_at' => now(),
+        ]);
+
+        $this->get(route('public.locations.show', $location))
+            ->assertOk()
+            ->assertSee('Avaliações dos clientes')
+            ->assertSee('Maria S.')
+            ->assertSee('Ducha completa')
+            ->assertSee('Atendimento muito cuidadoso e entrega rápida.')
+            ->assertSee('5,0 ★')
+            ->assertSee('"@type":"AggregateRating"', false)
+            ->assertDontSee('Depoimento sem autorização pública')
+            ->assertDontSee('Depoimento de outra unidade');
     }
 
     public function test_public_location_without_coordinates_uses_address_search_instead_of_fake_marker(): void

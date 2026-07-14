@@ -211,7 +211,7 @@ Documento de acompanhamento do que ja foi construido e do que ainda falta para d
 - [x] Ajuste de rotas publicas por slug.
 - [x] SEO.
 - [x] Pagina publica mais completa da unidade.
-- [ ] Avaliacoes/depoimentos.
+- [x] Avaliacoes/depoimentos.
 - [x] Horarios em tempo real.
 
 ## Seeders e dados de teste

@@ -60,6 +60,7 @@ Route::get('/lava-rapidos/{location:slug}', [PublicWashLocationMapController::cl
 Route::redirect('/unidades', '/lava-rapidos');
 Route::get('/lavagens/acompanhamento/{code}', PublicWashTrackingController::class)->name('tracking.show');
 Route::get('/lavagens/acompanhamento/{code}/feed', [PublicWashTrackingController::class, 'feed'])->name('tracking.feed');
+Route::post('/lavagens/acompanhamento/{code}/avaliacao', [PublicWashTrackingController::class, 'review'])->name('tracking.review');
 Route::post('/webhooks/mercado-pago', MercadoPagoWebhookController::class)->name('webhooks.mercado-pago');
 
 Route::middleware('guest')->group(function () {

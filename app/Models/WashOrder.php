@@ -57,6 +57,10 @@ class WashOrder extends Model
         'estimated_completion_at',
         'completed_at',
         'notes',
+        'customer_review_rating',
+        'customer_review_comment',
+        'customer_review_public',
+        'customer_reviewed_at',
     ];
 
     protected function casts(): array
@@ -67,6 +71,8 @@ class WashOrder extends Model
             'completed_at' => 'datetime',
             'total_amount' => 'decimal:2',
             'loyalty_discount_amount' => 'decimal:2',
+            'customer_review_public' => 'boolean',
+            'customer_reviewed_at' => 'datetime',
         ];
     }
 

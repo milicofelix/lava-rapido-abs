@@ -1,4 +1,4 @@
-import { Head } from '@inertiajs/react';
+import { Head, useForm, usePage } from '@inertiajs/react';
 import { useEffect, useState } from 'react';
 
 function ProgressStep({ label, done, current }) {
@@ -16,10 +16,16 @@ function ProgressStep({ label, done, current }) {
     );
 }
 
-export default function Tracking({ washOrder: initialWashOrder, loyalty: initialLoyalty, statuses, progressStatuses, feedUrl, logoUrl }) {
+export default function Tracking({ washOrder: initialWashOrder, loyalty: initialLoyalty, statuses, progressStatuses, feedUrl, reviewUrl, logoUrl }) {
     const [washOrder, setWashOrder] = useState(initialWashOrder);
     const [loyalty, setLoyalty] = useState(initialLoyalty);
     const [realtimeUpdated, setRealtimeUpdated] = useState(false);
+    const { props } = usePage();
+    const reviewForm = useForm({
+        rating: '',
+        comment: '',
+        publish_consent: false,
+    });
 
     const refreshFeed = async () => {
         const { data } = await window.axios.get(feedUrl);
@@ -41,6 +47,19 @@ export default function Tracking({ washOrder: initialWashOrder, loyalty: initial
     }, [feedUrl, washOrder.id]);
 
     const currentIndex = progressStatuses.indexOf(washOrder.status);
+    const hasReviewErrors = Boolean(reviewForm.errors.review || reviewForm.errors.rating || reviewForm.errors.comment || reviewForm.errors.publish_consent);
+
+    const submitReview = (event) => {
+        event.preventDefault();
+
+        reviewForm.post(reviewUrl, {
+            preserveScroll: true,
+            onSuccess: () => {
+                reviewForm.reset();
+                refreshFeed();
+            },
+        });
+    };
 
     return (
         <>
@@ -145,6 +164,93 @@ export default function Tracking({ washOrder: initialWashOrder, loyalty: initial
                         <div className="mt-5 rounded-md border border-zinc-200 bg-zinc-50 px-4 py-3 text-sm text-zinc-700">Veículo entregue.</div>
                     )}
                 </section>
+
+                {props.flash?.status && (
+                    <div className="mt-5 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-800">
+                        {props.flash.status}
+                    </div>
+                )}
+
+                {(washOrder.review?.can_review || washOrder.review?.submitted) && (
+                    <section className="mt-5 rounded-lg border border-zinc-200 bg-white p-5">
+                        <div className="flex flex-wrap items-start justify-between gap-3">
+                            <div>
+                                <p className="text-xs font-black uppercase tracking-[0.18em] text-cyan-700">Avaliação</p>
+                                <h2 className="mt-1 text-lg font-semibold">Como foi sua experiência?</h2>
+                                <p className="mt-1 text-sm text-zinc-500">Seu depoimento ajuda outros clientes a escolherem o lava-rápido com mais confiança.</p>
+                            </div>
+                            {washOrder.review?.submitted && (
+                                <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-black text-emerald-700">Depoimento enviado</span>
+                            )}
+                        </div>
+
+                        {washOrder.review?.submitted ? (
+                            <div className="mt-4 rounded-2xl border border-emerald-100 bg-emerald-50 p-4">
+                                <p className="text-sm font-black text-emerald-900">{'★'.repeat(washOrder.review.rating || 0)}{'☆'.repeat(5 - (washOrder.review.rating || 0))}</p>
+                                <p className="mt-2 text-sm leading-6 text-emerald-900">{washOrder.review.comment}</p>
+                            </div>
+                        ) : (
+                            <form onSubmit={submitReview} className="mt-4 space-y-4">
+                                {hasReviewErrors && (
+                                    <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-800">
+                                        {reviewForm.errors.review || reviewForm.errors.rating || reviewForm.errors.comment || reviewForm.errors.publish_consent}
+                                    </div>
+                                )}
+
+                                <div>
+                                    <span className="text-sm font-bold text-zinc-700">Nota</span>
+                                    <div className="mt-2 flex flex-wrap gap-2">
+                                        {[1, 2, 3, 4, 5].map((rating) => (
+                                            <button
+                                                key={rating}
+                                                type="button"
+                                                onClick={() => reviewForm.setData('rating', rating)}
+                                                className={`rounded-xl border px-4 py-2 text-lg font-black ${
+                                                    Number(reviewForm.data.rating) === rating
+                                                        ? 'border-cyan-700 bg-cyan-50 text-cyan-800'
+                                                        : 'border-zinc-200 bg-white text-zinc-500'
+                                                }`}
+                                                aria-label={`Nota ${rating}`}
+                                            >
+                                                {rating}★
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                <label className="block">
+                                    <span className="text-sm font-bold text-zinc-700">Depoimento</span>
+                                    <textarea
+                                        value={reviewForm.data.comment}
+                                        onChange={(event) => reviewForm.setData('comment', event.target.value)}
+                                        rows="4"
+                                        maxLength="500"
+                                        className="mt-2 w-full rounded-xl border border-zinc-200 px-3 py-2 text-sm shadow-sm focus:border-cyan-600 focus:outline-none focus:ring-2 focus:ring-cyan-100"
+                                        placeholder="Conte rapidamente como foi o atendimento."
+                                    />
+                                </label>
+
+                                <label className="flex items-start gap-3 rounded-2xl border border-zinc-200 bg-zinc-50 p-4 text-sm text-zinc-700">
+                                    <input
+                                        type="checkbox"
+                                        checked={reviewForm.data.publish_consent}
+                                        onChange={(event) => reviewForm.setData('publish_consent', event.target.checked)}
+                                        className="mt-1 rounded border-zinc-300 text-cyan-700"
+                                    />
+                                    <span>Autorizo publicar meu depoimento na página pública desta unidade.</span>
+                                </label>
+
+                                <button
+                                    type="submit"
+                                    disabled={reviewForm.processing}
+                                    className="rounded-xl bg-cyan-700 px-5 py-3 text-sm font-black text-white shadow-lg shadow-cyan-900/20 hover:bg-cyan-800 disabled:cursor-not-allowed disabled:opacity-60"
+                                >
+                                    {reviewForm.processing ? 'Enviando...' : 'Enviar avaliação'}
+                                </button>
+                            </form>
+                        )}
+                    </section>
+                )}
 
                 <div className="mt-5 grid gap-5 lg:grid-cols-[1fr_380px]">
                     <section className="rounded-lg border border-zinc-200 bg-white p-5">
