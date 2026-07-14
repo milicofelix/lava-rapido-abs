@@ -1,15 +1,16 @@
 <?php
 
-use App\Http\Controllers\App\CashRegisterController;
+use App\Http\Controllers\App\ApplyLoyaltyCouponController;
+use App\Http\Controllers\App\AuditLogController;
 use App\Http\Controllers\App\CancelLoyaltyCouponController;
+use App\Http\Controllers\App\CashRegisterController;
 use App\Http\Controllers\App\CreditReceivableController;
 use App\Http\Controllers\App\CustomerController;
-use App\Http\Controllers\App\AuditLogController;
-use App\Http\Controllers\App\ApplyLoyaltyCouponController;
 use App\Http\Controllers\App\DashboardController;
 use App\Http\Controllers\App\EmployeeController;
 use App\Http\Controllers\App\ExecutiveReportController;
 use App\Http\Controllers\App\FinanceController;
+use App\Http\Controllers\App\LoyaltyCampaignController;
 use App\Http\Controllers\App\LoyaltyCouponController;
 use App\Http\Controllers\App\LoyaltyReportController;
 use App\Http\Controllers\App\OwnerSubscriptionController;
@@ -137,6 +138,7 @@ Route::middleware('auth')->group(function () {
 
         Route::middleware('permission:'.AccessControl::MANAGE_CUSTOMERS)->group(function () {
             Route::get('fidelidade', [LoyaltyReportController::class, 'index'])->name('loyalty-reports.index');
+            Route::get('fidelidade/campanhas', LoyaltyCampaignController::class)->name('loyalty-campaigns.index');
             Route::get('fidelidade/exportar', [LoyaltyReportController::class, 'export'])->name('loyalty-reports.export');
             Route::post('fidelidade/processar-cupons', ProcessLoyaltyCouponsController::class)->name('loyalty-reports.process-coupons');
             Route::get('clientes/importar/modelo', [CustomerController::class, 'importTemplate'])->name('customers.import-template');

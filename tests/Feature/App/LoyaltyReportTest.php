@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\App;
 
+use App\Models\AuditLog;
 use App\Models\Customer;
 use App\Models\LoyaltyCoupon;
 use App\Models\LoyaltyProgram;
@@ -358,7 +359,7 @@ class LoyaltyReportTest extends TestCase
             'status' => LoyaltyCoupon::STATUS_ACTIVE,
         ]);
         $this->assertDatabaseHas('audit_logs', [
-            'action' => \App\Models\AuditLog::ACTION_LOYALTY_COUPONS_PROCESSED,
+            'action' => AuditLog::ACTION_LOYALTY_COUPONS_PROCESSED,
             'wash_location_id' => $location->id,
         ]);
     }
@@ -384,6 +385,88 @@ class LoyaltyReportTest extends TestCase
 
         $this->actingAs($operator)
             ->get(route('loyalty-reports.index'))
+            ->assertForbidden();
+    }
+
+    public function test_owner_can_view_loyalty_campaign_segments(): void
+    {
+        $location = WashLocation::factory()->create();
+        $owner = User::factory()->create([
+            'role' => User::ROLE_OWNER,
+            'wash_location_id' => $location->id,
+        ]);
+        $service = Service::factory()->create([
+            'wash_location_id' => $location->id,
+            'name' => 'Ducha simples',
+        ]);
+        $program = $this->program($location, $service);
+
+        $nearCustomer = Customer::factory()->create([
+            'wash_location_id' => $location->id,
+            'name' => 'Cliente Quase Premio',
+            'phone' => '(11) 98888-0001',
+        ]);
+        $nearVehicle = Vehicle::factory()->for($nearCustomer)->create(['wash_location_id' => $location->id]);
+        $this->deliveredOrder($location, $nearCustomer, $nearVehicle, $service, now()->subDays(4));
+        $this->deliveredOrder($location, $nearCustomer, $nearVehicle, $service, now()->subDays(2));
+
+        $couponCustomer = Customer::factory()->create([
+            'wash_location_id' => $location->id,
+            'name' => 'Cliente Cupom Vencendo',
+            'phone' => '(11) 98888-0002',
+        ]);
+        $couponVehicle = Vehicle::factory()->for($couponCustomer)->create(['wash_location_id' => $location->id]);
+        $sourceOrder = $this->deliveredOrder($location, $couponCustomer, $couponVehicle, $service, now()->subDays(8));
+        LoyaltyCoupon::query()->create([
+            'wash_location_id' => $location->id,
+            'loyalty_program_id' => $program->id,
+            'customer_id' => $couponCustomer->id,
+            'source_wash_order_id' => $sourceOrder->id,
+            'reward_service_id' => $service->id,
+            'code' => 'FID-VENCE-001',
+            'status' => LoyaltyCoupon::STATUS_ACTIVE,
+            'earned_at' => now()->subDays(8),
+            'expires_at' => now()->addDays(3),
+        ]);
+
+        $inactiveCustomer = Customer::factory()->create([
+            'wash_location_id' => $location->id,
+            'name' => 'Cliente Sumido',
+            'phone' => '(11) 98888-0003',
+        ]);
+        $inactiveVehicle = Vehicle::factory()->for($inactiveCustomer)->create(['wash_location_id' => $location->id]);
+        $this->deliveredOrder($location, $inactiveCustomer, $inactiveVehicle, $service, now()->subDays(70));
+
+        $otherLocation = WashLocation::factory()->create();
+        $otherCustomer = Customer::factory()->create([
+            'wash_location_id' => $otherLocation->id,
+            'name' => 'Cliente Outra Unidade',
+        ]);
+        $otherVehicle = Vehicle::factory()->for($otherCustomer)->create(['wash_location_id' => $otherLocation->id]);
+        $otherService = Service::factory()->create(['wash_location_id' => $otherLocation->id]);
+        $this->program($otherLocation, $otherService);
+        $this->deliveredOrder($otherLocation, $otherCustomer, $otherVehicle, $otherService, now()->subDays(60));
+
+        $this->actingAs($owner)
+            ->get(route('loyalty-campaigns.index'))
+            ->assertOk()
+            ->assertSee('Campanhas e promoções')
+            ->assertSee('Perto de ganhar')
+            ->assertSee('Cliente Quase Premio')
+            ->assertSee('Cupom vencendo')
+            ->assertSee('FID-VENCE-001')
+            ->assertSee('Sem retorno recente')
+            ->assertSee('Cliente Sumido')
+            ->assertSee('https://wa.me/5511988880001', false)
+            ->assertDontSee('Cliente Outra Unidade');
+    }
+
+    public function test_operator_cannot_view_loyalty_campaigns(): void
+    {
+        $operator = User::factory()->create(['role' => User::ROLE_OPERATOR]);
+
+        $this->actingAs($operator)
+            ->get(route('loyalty-campaigns.index'))
             ->assertForbidden();
     }
 

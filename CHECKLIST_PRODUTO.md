@@ -155,7 +155,7 @@ Documento de acompanhamento do que ja foi construido e do que ainda falta para d
 - [x] Alerta de cupons vencendo e vencidos no sininho.
 - [x] Status efetivo: cupom ativo vencido aparece como expirado.
 - [x] Tracking publico mostra progresso de fidelidade do cliente.
-- [ ] Tela dedicada para campanhas/promocoes de fidelidade.
+- [x] Tela dedicada para campanhas/promocoes de fidelidade.
 - [ ] Relatorio grafico de retencao e recorrencia.
 - [ ] Notificacao automatica de cupom gerado/vencendo.
 

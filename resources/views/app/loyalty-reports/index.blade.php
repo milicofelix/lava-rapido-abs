@@ -8,6 +8,7 @@
                     <p class="mt-1 text-sm text-slate-500">Acompanhe cupons gerados, uso, descontos concedidos e clientes perto de ganhar beneficio.</p>
                 </div>
                 <div class="flex flex-wrap items-center gap-2">
+                    <a href="{{ route('loyalty-campaigns.index') }}" class="rounded-xl bg-fuchsia-50 px-4 py-2.5 text-sm font-bold text-fuchsia-700 ring-1 ring-fuchsia-200 hover:bg-fuchsia-100">Campanhas</a>
                     @if ($loyaltyProgram)
                         <form method="POST" action="{{ route('loyalty-reports.process-coupons') }}">
                             @csrf
