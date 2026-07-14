@@ -11,13 +11,19 @@ use App\Models\Service;
 use App\Models\User;
 use App\Models\Vehicle;
 use App\Models\WashOrder;
+use App\Services\Loyalty\LoyaltyCouponApplicabilityService;
+use App\Services\Loyalty\RemoveLoyaltyCouponService;
 use App\Services\WashOrders\ChangeWashOrderStatusService;
 use App\Services\WashOrders\CreateWashOrderService;
 use App\Support\TenantContext;
+use App\Support\Access\AccessControl;
+use App\Support\WashOrders\WashOrderStatusFlow;
+use Illuminate\Support\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
+use InvalidArgumentException;
 use Illuminate\View\View;
 
 class WashOrderController extends Controller
@@ -66,6 +72,7 @@ class WashOrderController extends Controller
             ]),
             'services' => TenantContext::scopeServices(Service::query())->where('active', true)->orderBy('category')->orderBy('name')->get(),
             'users' => TenantContext::scopeUsers(User::query())->orderBy('name')->get(),
+            'scheduleEnabled' => AppSetting::isModuleEnabled('module_schedule'),
         ]);
     }
 
@@ -81,11 +88,16 @@ class WashOrderController extends Controller
                 ->withInput();
         }
 
+        $scheduledAt = filled($data['scheduled_at'] ?? null)
+            && AppSetting::isModuleEnabled('module_schedule')
+            ? Carbon::parse($data['scheduled_at'])
+            : now();
+
         $washOrder = $creator->handle([
             'wash_location_id' => TenantContext::currentLocationId(),
             'customer_id' => $data['customer_id'],
             'vehicle_id' => $data['vehicle_id'],
-            'entered_at' => now(),
+            'entered_at' => $scheduledAt,
             'notes' => $data['notes'] ?? null,
         ], $data['service_ids'], array_values(array_unique($data['assigned_user_ids'] ?? [])));
 
@@ -94,8 +106,11 @@ class WashOrderController extends Controller
             ->with('status', 'Ordem de lavagem criada com sucesso.');
     }
 
-    public function show(WashOrder $washOrder): View
-    {
+    public function show(
+        WashOrder $washOrder,
+        LoyaltyCouponApplicabilityService $couponApplicability,
+        RemoveLoyaltyCouponService $removeLoyaltyCoupon,
+    ): View {
         TenantContext::abortUnlessModelBelongsToTenant($washOrder);
 
         $paymentMethods = Payment::methods();
@@ -104,11 +119,45 @@ class WashOrderController extends Controller
             unset($paymentMethods[Payment::METHOD_CREDIT_PENDING]);
         }
 
+        $washOrder = $washOrder->load([
+            'customer.loyaltyCoupons' => fn ($query) => $query
+                ->where('wash_location_id', $washOrder->wash_location_id)
+                ->activeAndValid()
+                ->with(['loyaltyProgram', 'rewardService', 'sourceWashOrder.services'])
+                ->latest('earned_at'),
+            'vehicle',
+            'assignedUser',
+            'teamMembers',
+            'services',
+            'loyaltyCoupon.loyaltyProgram',
+            'loyaltyCoupon.rewardService',
+            'loyaltyCoupon.usedByUser',
+            'statusHistories.user',
+            'payments.user',
+            'customerNotifications.user',
+        ]);
+        $user = request()->user();
+        $canUpdateStatus = AccessControl::allows($user, AccessControl::UPDATE_WASH_ORDER_STATUS)
+            && (! $user?->isOperator() || $washOrder->teamMembers->contains('id', $user->id));
+        $loyaltyCouponEvaluations = $washOrder->customer->loyaltyCoupons
+            ->mapWithKeys(fn ($coupon) => [$coupon->id => $couponApplicability->evaluate($washOrder, $coupon)]);
+        $applicableLoyaltyCoupons = $washOrder->customer->loyaltyCoupons
+            ->filter(fn ($coupon) => $loyaltyCouponEvaluations[$coupon->id]['applicable'] ?? false)
+            ->values();
+
         return view('app.wash-orders.show', [
-            'washOrder' => $washOrder->load(['customer', 'vehicle', 'assignedUser', 'teamMembers', 'services', 'statusHistories.user', 'payments.user', 'customerNotifications.user']),
+            'washOrder' => $washOrder,
             'statuses' => WashOrder::statuses(),
+            'statusOptions' => [
+                $washOrder->status => $washOrder->statusLabel(),
+                ...WashOrderStatusFlow::allowedStatusLabelsForWashOrder($washOrder),
+            ],
+            'canUpdateStatus' => $canUpdateStatus,
             'paymentMethods' => $paymentMethods,
             'notificationTemplates' => CustomerNotification::templates(),
+            'loyaltyCouponEvaluations' => $loyaltyCouponEvaluations,
+            'applicableLoyaltyCoupons' => $applicableLoyaltyCoupons,
+            'loyaltyCouponRemovalState' => $removeLoyaltyCoupon->removableState($washOrder),
         ]);
     }
 
@@ -121,7 +170,20 @@ class WashOrderController extends Controller
             'notes' => ['nullable', 'string', 'max:1000'],
         ]);
 
-        $washOrder = $changer->handle($washOrder, $data['status'], $request->user(), $data['notes'] ?? null);
+        try {
+            $washOrder = $changer->handle($washOrder, $data['status'], $request->user(), $data['notes'] ?? null);
+        } catch (InvalidArgumentException $exception) {
+            if ($request->wantsJson()) {
+                return response()->json([
+                    'message' => $exception->getMessage(),
+                    'errors' => ['status' => [$exception->getMessage()]],
+                ], 422);
+            }
+
+            return back()
+                ->withErrors(['status' => $exception->getMessage()])
+                ->withInput();
+        }
 
         if ($request->wantsJson()) {
             return response()->json([
@@ -136,18 +198,33 @@ class WashOrderController extends Controller
 
     private function validated(Request $request): array
     {
+        $locationId = TenantContext::currentLocationId();
+
         return $request->validate([
-            'customer_id' => ['required', 'exists:customers,id'],
-            'vehicle_id' => ['required', 'exists:vehicles,id'],
+            'customer_id' => [
+                'required',
+                Rule::exists('customers', 'id')->where('wash_location_id', $locationId),
+            ],
+            'vehicle_id' => [
+                'required',
+                Rule::exists('vehicles', 'id')->where('wash_location_id', $locationId),
+            ],
             'assigned_user_ids' => ['nullable', 'array'],
-            'assigned_user_ids.*' => ['integer', 'distinct', 'exists:users,id'],
+            'assigned_user_ids.*' => [
+                'integer',
+                'distinct',
+                Rule::exists('users', 'id')->where('wash_location_id', $locationId),
+            ],
             'service_ids' => ['required', 'array', 'min:1'],
             'service_ids.*' => [
                 'integer',
                 'distinct',
-                Rule::exists('services', 'id')->where('active', true),
+                Rule::exists('services', 'id')
+                    ->where('wash_location_id', $locationId)
+                    ->where('active', true),
             ],
             'notes' => ['nullable', 'string', 'max:2000'],
+            'scheduled_at' => ['nullable', 'date'],
         ]);
     }
 }

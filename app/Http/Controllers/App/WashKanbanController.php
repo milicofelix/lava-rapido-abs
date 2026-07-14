@@ -3,8 +3,10 @@
 namespace App\Http\Controllers\App;
 
 use App\Http\Controllers\Controller;
+use App\Models\User;
 use App\Models\WashOrder;
 use App\Support\TenantContext;
+use App\Support\Access\AccessControl;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -63,8 +65,10 @@ class WashKanbanController extends Controller
             'periodOptions' => self::periodOptions(),
             'feedUrl' => route('kanban.feed', $queryFilters),
             'filterUrl' => route('kanban'),
-            'createUrl' => route('wash-orders.create'),
-            'dashboardUrl' => route('dashboard'),
+            'createUrl' => AccessControl::allows(TenantContext::user(), AccessControl::CREATE_WASH_ORDER) ? route('wash-orders.create') : null,
+            'logoutUrl' => route('logout'),
+            'csrfToken' => csrf_token(),
+            'dashboardUrl' => AccessControl::allows(TenantContext::user(), AccessControl::VIEW_DASHBOARD) ? route('dashboard') : null,
             'logoUrl' => $currentLocation?->logoUrl() ?? asset('images/autoflow-logo.png'),
             'currentLocation' => $currentLocation ? [
                 'id' => $currentLocation->id,
@@ -79,6 +83,8 @@ class WashKanbanController extends Controller
      */
     private function serializeOrder(WashOrder $washOrder): array
     {
+        $canViewDetails = AccessControl::allows(TenantContext::user(), AccessControl::VIEW_WASH_ORDERS);
+
         return [
             'id' => $washOrder->id,
             'code' => $washOrder->code,
@@ -90,7 +96,7 @@ class WashKanbanController extends Controller
                 : $washOrder->entered_at->format('d/m/Y'),
             'is_outside_today' => ! $washOrder->entered_at->isToday(),
             'total_amount' => number_format((float) $washOrder->total_amount, 2, ',', '.'),
-            'show_url' => route('wash-orders.show', $washOrder),
+            'show_url' => $canViewDetails ? route('wash-orders.show', $washOrder) : null,
             'update_url' => route('wash-orders.update-status', $washOrder),
             'customer' => [
                 'name' => $washOrder->customer->name,
@@ -109,7 +115,21 @@ class WashKanbanController extends Controller
             'services' => $washOrder->services->map(fn ($service) => [
                 'name' => $service->pivot->service_name,
             ])->all(),
+            'can_update_status' => $this->userCanUpdateOrderStatus($washOrder, TenantContext::user()),
         ];
+    }
+
+    private function userCanUpdateOrderStatus(WashOrder $washOrder, ?User $user): bool
+    {
+        if (! AccessControl::allows($user, AccessControl::UPDATE_WASH_ORDER_STATUS)) {
+            return false;
+        }
+
+        if (! $user?->isOperator()) {
+            return true;
+        }
+
+        return $washOrder->teamMembers->contains('id', $user->id);
     }
 
     public static function columns(): array

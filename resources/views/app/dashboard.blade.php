@@ -1,4 +1,4 @@
-<x-app.layout heading="Bom dia, {{ auth()->user()->name }}!" title="Dashboard · AutoFlow">
+<x-app.layout heading="{{ $greeting }}, {{ auth()->user()->name }}!" title="Dashboard · AutoFlow">
     <div class="space-y-5">
         @if ($currentLocation)
             <section class="rounded-2xl border border-blue-100 bg-blue-50 p-4 text-sm text-blue-950 shadow-sm">
@@ -27,18 +27,25 @@
 
             <div class="mt-5 grid gap-4 lg:grid-cols-4">
                 @foreach ([
-                    ['label' => 'Lavagens do mes', 'value' => number_format($monthlyWashOrders, 0, ',', '.'), 'hint' => 'Volume acumulado', 'color' => 'bg-blue-50 text-blue-700', 'icon' => 'M'],
-                    ['label' => 'Receita do mes', 'value' => 'R$ '.number_format((float) $monthlyRevenue, 2, ',', '.'), 'hint' => 'Pagamentos recebidos', 'color' => 'bg-emerald-50 text-emerald-700', 'icon' => '$'],
-                    ['label' => 'Ticket medio', 'value' => 'R$ '.number_format((float) $monthlyTicketAverage, 2, ',', '.'), 'hint' => 'Media por pagamento', 'color' => 'bg-violet-50 text-violet-700', 'icon' => 'T'],
-                    ['label' => 'Clientes recorrentes', 'value' => count($monthlyRecurringCustomers), 'hint' => 'Com 2+ lavagens no mes', 'color' => 'bg-amber-50 text-amber-700', 'icon' => 'R'],
+                    ['label' => 'Lavagens do mes', 'value' => number_format($monthlyWashOrders, 0, ',', '.'), 'comparison' => $executiveComparisons['washOrders'], 'color' => 'bg-blue-50 text-blue-700', 'icon' => 'M'],
+                    ['label' => 'Receita do mes', 'value' => 'R$ '.number_format((float) $monthlyRevenue, 2, ',', '.'), 'comparison' => $executiveComparisons['revenue'], 'color' => 'bg-emerald-50 text-emerald-700', 'icon' => '$'],
+                    ['label' => 'Ticket medio', 'value' => 'R$ '.number_format((float) $monthlyTicketAverage, 2, ',', '.'), 'comparison' => $executiveComparisons['ticketAverage'], 'color' => 'bg-violet-50 text-violet-700', 'icon' => 'T'],
+                    ['label' => 'Clientes recorrentes', 'value' => count($monthlyRecurringCustomers), 'comparison' => $executiveComparisons['recurringCustomers'], 'color' => 'bg-amber-50 text-amber-700', 'icon' => 'R'],
                 ] as $metric)
+                    @php
+                        $comparisonClass = match ($metric['comparison']['tone']) {
+                            'positive' => 'text-emerald-600',
+                            'negative' => 'text-red-600',
+                            default => 'text-slate-500',
+                        };
+                    @endphp
                     <div class="rounded-xl border border-slate-200 bg-slate-50/60 p-4">
                         <div class="flex items-center gap-3">
                             <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl {{ $metric['color'] }} text-sm font-black">{{ $metric['icon'] }}</span>
                             <div class="min-w-0">
                                 <p class="truncate text-sm font-bold text-slate-700">{{ $metric['label'] }}</p>
                                 <p class="mt-1 text-2xl font-black text-slate-950">{{ $metric['value'] }}</p>
-                                <p class="mt-1 text-xs font-semibold text-slate-500">{{ $metric['hint'] }}</p>
+                                <p class="mt-1 text-xs font-semibold {{ $comparisonClass }}">{{ $metric['comparison']['label'] }}</p>
                             </div>
                         </div>
                     </div>
@@ -97,26 +104,34 @@
             </div>
         </section>
 
-        <section class="grid gap-4 md:grid-cols-2 2xl:grid-cols-4">
+        <section class="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
             @foreach ([
-                ['label' => 'Lavagens hoje', 'value' => $washOrdersToday, 'hint' => '14% vs ontem', 'color' => 'from-blue-500 to-blue-700', 'icon' => 'L'],
-                ['label' => 'Em andamento', 'value' => $activeWashOrders, 'hint' => 'Ver detalhes', 'color' => 'from-amber-400 to-orange-500', 'icon' => 'T'],
-                ['label' => 'Prontas', 'value' => $readyWashOrders, 'hint' => 'Ver detalhes', 'color' => 'from-emerald-400 to-green-600', 'icon' => 'P'],
-                ['label' => 'Faturamento hoje', 'value' => 'R$ '.number_format((float) $todayRevenue, 2, ',', '.'), 'hint' => '21% vs ontem', 'color' => 'from-violet-500 to-purple-700', 'icon' => '$'],
+                ['label' => 'Lavagens hoje', 'value' => $washOrdersToday, 'hint' => $todayComparisons['washOrders']['label'], 'tone' => $todayComparisons['washOrders']['tone'], 'color' => 'from-blue-500 to-blue-700', 'icon' => 'L'],
+                ['label' => 'Em andamento', 'value' => $activeWashOrders, 'hint' => 'Fluxo do dia', 'tone' => 'neutral', 'color' => 'from-amber-400 to-orange-500', 'icon' => 'T'],
+                ['label' => 'Prontas', 'value' => $readyWashOrders, 'hint' => 'Aguardando retirada', 'tone' => 'neutral', 'color' => 'from-emerald-400 to-green-600', 'icon' => 'P'],
+                ['label' => 'Entregues hoje', 'value' => $deliveredWashOrdersToday, 'hint' => 'Finalizadas hoje', 'tone' => 'neutral', 'color' => 'from-slate-600 to-slate-950', 'icon' => 'E'],
+                ['label' => 'Faturamento hoje', 'value' => 'R$ '.number_format((float) $todayRevenue, 2, ',', '.'), 'hint' => $todayComparisons['revenue']['label'], 'tone' => $todayComparisons['revenue']['tone'], 'color' => 'from-violet-500 to-purple-700', 'icon' => '$'],
             ] as $card)
-                <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-                    <div class="flex items-center justify-between gap-4">
-                        <div class="flex items-center gap-4">
-                            <span class="flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br {{ $card['color'] }} text-xl font-bold text-white shadow-lg">{{ $card['icon'] }}</span>
-                            <div>
-                                <p class="text-sm font-semibold text-slate-700">{{ $card['label'] }}</p>
-                                <p class="mt-2 text-2xl font-bold text-slate-950">{{ $card['value'] }}</p>
-                                <p class="mt-2 text-xs font-semibold text-green-600">{{ $card['hint'] }}</p>
+                @php
+                    $hintClass = match ($card['tone']) {
+                        'positive' => 'text-emerald-600',
+                        'negative' => 'text-red-600',
+                        default => 'text-slate-500',
+                    };
+                @endphp
+                <div class="min-w-0 rounded-xl border border-slate-200 bg-white p-4 shadow-sm" aria-label="{{ $card['label'] }}: {{ $card['value'] }}">
+                    <div class="flex items-center justify-between gap-3">
+                        <div class="flex min-w-0 items-center gap-3">
+                            <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-gradient-to-br {{ $card['color'] }} text-base font-bold text-white shadow-lg">{{ $card['icon'] }}</span>
+                            <div class="min-w-0">
+                                <p class="truncate text-xs font-semibold text-slate-700">{{ $card['label'] }}</p>
+                                <p class="mt-1 truncate text-xl font-bold text-slate-950">{{ $card['value'] }}</p>
+                                <p class="mt-1 truncate text-xs font-semibold {{ $hintClass }}">{{ $card['hint'] }}</p>
                             </div>
                         </div>
-                        <div class="hidden h-12 w-20 items-end gap-1 sm:flex">
+                        <div class="hidden h-10 w-14 shrink-0 items-end gap-1 2xl:flex">
                             @foreach ([20, 34, 26, 48, 42, 60] as $bar)
-                                <span class="w-2 rounded-full bg-gradient-to-t {{ $card['color'] }}" style="height: {{ $bar }}%"></span>
+                                <span class="w-1.5 rounded-full bg-gradient-to-t {{ $card['color'] }}" style="height: {{ $bar }}%"></span>
                             @endforeach
                         </div>
                     </div>
@@ -137,17 +152,18 @@
                     </div>
                 </div>
 
-                <div class="grid gap-3 xl:grid-cols-4">
+                <div class="grid gap-3 lg:grid-cols-3 xl:grid-cols-5">
                     @foreach ($kanbanColumns as $column)
                         @php
                             $columnColor = match ($column['key']) {
                                 'washing' => 'border-t-blue-600 text-blue-700 bg-blue-50',
                                 'finishing' => 'border-t-orange-500 text-orange-600 bg-orange-50',
                                 'ready' => 'border-t-green-600 text-green-700 bg-green-50',
+                                'delivered' => 'border-t-slate-700 text-slate-800 bg-slate-50',
                                 default => 'border-t-slate-400 text-slate-700 bg-slate-50',
                             };
                         @endphp
-                        <div class="min-h-[430px] rounded-xl border border-slate-200 border-t-4 {{ $columnColor }} p-2">
+                        <div class="min-h-[360px] rounded-xl border border-slate-200 border-t-4 {{ $columnColor }} p-2">
                             <div class="flex items-center justify-between px-2 py-2">
                                 <h3 class="font-bold">{{ $column['title'] }}</h3>
                                 <span class="rounded-full bg-white px-2 py-1 text-xs font-bold text-slate-700 shadow-sm">{{ $column['count'] }}</span>

@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\App;
 
+use App\Models\AuditLog;
 use App\Models\User;
 use App\Models\WashLocation;
 use App\Models\WashLocationRequest;
@@ -78,6 +79,13 @@ class SuperAdminWashLocationRequestApprovalTest extends TestCase
                 'active' => true,
             ]);
         }
+
+        $this->assertDatabaseHas('audit_logs', [
+            'wash_location_id' => $location->id,
+            'user_id' => $superAdmin->id,
+            'action' => AuditLog::ACTION_LOCATION_REQUEST_APPROVED,
+            'subject_label' => 'Lava Rapido Central',
+        ]);
     }
 
     public function test_approval_uses_requested_owner_password_for_first_access(): void
@@ -318,6 +326,13 @@ class SuperAdminWashLocationRequestApprovalTest extends TestCase
         $this->assertNull($request->wash_location_id);
         $this->assertDatabaseMissing('wash_locations', [
             'name' => 'Lava Rejeitado',
+        ]);
+
+        $this->assertDatabaseHas('audit_logs', [
+            'wash_location_id' => null,
+            'user_id' => $superAdmin->id,
+            'action' => AuditLog::ACTION_LOCATION_REQUEST_REJECTED,
+            'subject_label' => 'Lava Rejeitado',
         ]);
     }
 

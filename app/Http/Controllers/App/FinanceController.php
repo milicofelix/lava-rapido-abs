@@ -9,6 +9,7 @@ use App\Support\TenantContext;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
+use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
@@ -83,13 +84,21 @@ class FinanceController extends Controller
      */
     private function period(Request $request): array
     {
-        $request->validate([
-            'start' => ['nullable', 'date'],
-            'end' => ['nullable', 'date', 'after_or_equal:start'],
+        $today = today()->toDateString();
+
+        $validated = $request->validate([
+            'start' => ['nullable', 'date_format:Y-m-d', 'before_or_equal:'.$today],
+            'end' => ['nullable', 'date_format:Y-m-d', 'before_or_equal:'.$today, 'after_or_equal:start'],
         ]);
 
-        $start = Carbon::parse($request->query('start', today()->toDateString()))->startOfDay();
-        $end = Carbon::parse($request->query('end', today()->toDateString()))->endOfDay();
+        $start = Carbon::parse($validated['start'] ?? $today)->startOfDay();
+        $end = Carbon::parse($validated['end'] ?? $today)->endOfDay();
+
+        if ($start->isAfter($end)) {
+            throw ValidationException::withMessages([
+                'end' => 'A data final deve ser igual ou posterior a data inicial.',
+            ]);
+        }
 
         return [$start, $end];
     }

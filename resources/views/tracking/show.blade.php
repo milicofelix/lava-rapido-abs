@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta http-equiv="refresh" content="30">
     <title>Acompanhamento {{ $washOrder->code }} · AutoFlow</title>
+    @include('components.favicon')
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 <body class="bg-zinc-50 text-zinc-950 antialiased">

@@ -7,19 +7,36 @@ use App\Models\AuditLog;
 use App\Models\User;
 use App\Support\TenantContext;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\View\View;
 
 class AuditLogController extends Controller
 {
     public function index(Request $request): View
     {
+        $today = now()->toDateString();
+
+        $validated = $request->validate([
+            'action' => ['nullable', 'string'],
+            'user_id' => ['nullable', 'integer'],
+            'search' => ['nullable', 'string', 'max:255'],
+            'start' => ['nullable', 'date_format:Y-m-d', 'before_or_equal:'.$today],
+            'end' => ['nullable', 'date_format:Y-m-d', 'before_or_equal:'.$today, 'after_or_equal:start'],
+        ]);
+
         $filters = [
-            'action' => trim((string) $request->query('action')),
-            'user_id' => trim((string) $request->query('user_id')),
-            'search' => trim((string) $request->query('search')),
-            'start' => $request->query('start', now()->subDays(30)->toDateString()),
-            'end' => $request->query('end', now()->toDateString()),
+            'action' => trim((string) ($validated['action'] ?? '')),
+            'user_id' => trim((string) ($validated['user_id'] ?? '')),
+            'search' => trim((string) ($validated['search'] ?? '')),
+            'start' => $validated['start'] ?? $today,
+            'end' => $validated['end'] ?? $today,
         ];
+
+        if (Carbon::parse($filters['start'])->isAfter(Carbon::parse($filters['end']))) {
+            return back()
+                ->withErrors(['end' => 'A data final deve ser igual ou posterior a data inicial.'])
+                ->withInput();
+        }
 
         $logs = TenantContext::scopeByColumn(AuditLog::query())
             ->with(['user'])

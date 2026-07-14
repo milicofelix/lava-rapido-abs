@@ -26,6 +26,13 @@ class Subscription extends Model
         'status',
         'started_at',
         'ends_at',
+        'payment_provider',
+        'external_reference',
+        'provider_preference_id',
+        'provider_payment_id',
+        'checkout_url',
+        'paid_at',
+        'provider_payload',
     ];
 
     protected function casts(): array
@@ -33,6 +40,8 @@ class Subscription extends Model
         return [
             'started_at' => 'datetime',
             'ends_at' => 'datetime',
+            'paid_at' => 'datetime',
+            'provider_payload' => 'array',
         ];
     }
 

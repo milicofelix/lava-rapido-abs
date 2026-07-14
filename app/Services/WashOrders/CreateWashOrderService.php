@@ -7,6 +7,7 @@ use App\Models\Service;
 use App\Models\WashOrder;
 use App\Support\AuditLogger;
 use App\Support\TenantContext;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 
 class CreateWashOrderService
@@ -24,14 +25,18 @@ class CreateWashOrderService
     {
         return DB::transaction(function () use ($data, $serviceIds, $teamMemberIds) {
             $calculation = $this->calculator->handle($serviceIds);
+            $enteredAt = isset($data['entered_at'])
+                ? Carbon::parse($data['entered_at'])
+                : now();
 
             $washOrder = WashOrder::create([
                 ...$data,
                 'wash_location_id' => $data['wash_location_id'] ?? TenantContext::currentLocationId(),
+                'entered_at' => $enteredAt,
                 'assigned_user_id' => $teamMemberIds[0] ?? null,
                 'status' => WashOrder::STATUS_AWAITING,
                 'total_amount' => $calculation['total'],
-                'estimated_completion_at' => now()->addMinutes($calculation['estimated_minutes']),
+                'estimated_completion_at' => $enteredAt->copy()->addMinutes($calculation['estimated_minutes']),
             ]);
 
             $washOrder->services()->attach(
@@ -64,6 +69,7 @@ class CreateWashOrderService
                     'vehicle_id' => $washOrder->vehicle_id,
                     'team_member_ids' => $teamMemberIds,
                     'service_ids' => $serviceIds,
+                    'scheduled_for' => $washOrder->entered_at?->toDateTimeString(),
                 ],
             );
 

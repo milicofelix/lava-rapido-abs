@@ -6,11 +6,16 @@ use App\Models\AuditLog;
 use App\Models\Payment;
 use App\Models\User;
 use App\Models\WashOrder;
+use App\Services\Loyalty\EvaluateLoyaltyProgramService;
 use App\Support\AuditLogger;
 use Illuminate\Support\Facades\DB;
 
 class RegisterPaymentService
 {
+    public function __construct(
+        private readonly EvaluateLoyaltyProgramService $loyalty,
+    ) {}
+
     /**
      * @param  array<string, mixed>  $data
      */
@@ -49,6 +54,8 @@ class RegisterPaymentService
                 ],
                 $user,
             );
+
+            $this->loyalty->handle($washOrder->refresh());
 
             return $payment;
         });

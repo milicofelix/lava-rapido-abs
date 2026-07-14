@@ -4,6 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Recibo {{ $washOrder->code }} · AutoFlow</title>
+    @include('components.favicon')
     <style>
         * { box-sizing: border-box; }
         body {

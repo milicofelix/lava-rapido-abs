@@ -4,11 +4,13 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{{ $location->name }} · AutoFlow</title>
+    @include('components.favicon')
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 <body class="bg-slate-950 text-slate-950 antialiased">
     @php
-        $statusClass = match ($location->status) {
+        $publicStatus = $location->publicStatus();
+        $statusClass = match ($publicStatus) {
             \App\Models\WashLocation::STATUS_BUSY => 'bg-orange-100 text-orange-700 ring-orange-200',
             \App\Models\WashLocation::STATUS_CLOSED => 'bg-slate-100 text-slate-600 ring-slate-200',
             default => 'bg-green-100 text-green-700 ring-green-200',
@@ -40,14 +42,14 @@
                             <h1 class="text-3xl font-black text-slate-950 sm:text-4xl">{{ $location->name }}</h1>
                             <p class="mt-2 max-w-2xl text-sm leading-6 text-slate-500">{{ $location->fullAddress() }}</p>
                         </div>
-                        <span class="rounded-full px-3 py-1.5 text-xs font-black ring-1 {{ $statusClass }}">{{ $location->statusLabel() }}</span>
+                        <span class="rounded-full px-3 py-1.5 text-xs font-black ring-1 {{ $statusClass }}">{{ $location->publicStatusLabel() }}</span>
                     </div>
                 </div>
 
                 <div class="grid gap-4 p-6 sm:grid-cols-3 sm:p-8">
                     <div class="rounded-2xl bg-blue-50 p-4">
                         <p class="text-xs font-semibold text-slate-500">Status</p>
-                        <p class="mt-1 text-lg font-black text-blue-800">{{ $location->statusLabel() }}</p>
+                        <p class="mt-1 text-lg font-black text-blue-800">{{ $location->publicStatusLabel() }}</p>
                     </div>
                     <div class="rounded-2xl bg-emerald-50 p-4">
                         <p class="text-xs font-semibold text-slate-500">Em atendimento</p>
@@ -94,6 +96,11 @@
                         <a href="{{ $directionsUrl }}" target="_blank" rel="noopener" class="rounded-xl bg-blue-600 px-4 py-3 text-center text-sm font-black text-white shadow-lg shadow-blue-900/20 hover:bg-blue-700">Como chegar</a>
                         <a href="{{ route('public.locations.index') }}#unidade-{{ $location->id }}" class="rounded-xl border border-slate-200 px-4 py-3 text-center text-sm font-black text-slate-700 hover:bg-slate-50">Ver no mapa</a>
                     </div>
+                </section>
+
+                <section class="rounded-3xl border border-white/10 bg-white p-5 shadow-2xl shadow-black/20">
+                    <h2 class="text-lg font-black text-slate-950">Funcionamento</h2>
+                    <p class="mt-2 text-sm leading-6 text-slate-500">{{ $location->opening_hours ?: $location->openingHoursSummary() }}</p>
                 </section>
 
                 <section class="rounded-3xl border border-white/10 bg-white p-5 shadow-2xl shadow-black/20">

@@ -9,15 +9,16 @@ use App\Models\User;
 use App\Models\Vehicle;
 use App\Models\WashOrder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Carbon;
 use Tests\TestCase;
 
 class WashHistoryTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_operator_can_filter_operational_history(): void
+    public function test_attendant_can_filter_operational_history(): void
     {
-        $operator = User::factory()->create(['name' => 'Carlos Operador', 'role' => User::ROLE_OPERATOR]);
+        $attendant = User::factory()->create(['name' => 'Carlos Atendente', 'role' => User::ROLE_ATTENDANT]);
         $teammate = User::factory()->create(['name' => 'Ana Secagem', 'role' => User::ROLE_OPERATOR]);
         $customer = Customer::factory()->create(['name' => 'Joao Historico']);
         $vehicle = Vehicle::factory()->for($customer)->create([
@@ -31,7 +32,7 @@ class WashHistoryTest extends TestCase
             'estimated_minutes' => 90,
         ]);
 
-        $matchingOrder = WashOrder::factory()->for($customer)->for($vehicle)->for($operator, 'assignedUser')->create([
+        $matchingOrder = WashOrder::factory()->for($customer)->for($vehicle)->for($attendant, 'assignedUser')->create([
             'code' => 'ABS-HIST-001',
             'status' => WashOrder::STATUS_DELIVERED,
             'payment_status' => WashOrder::PAYMENT_PAID,
@@ -44,7 +45,7 @@ class WashHistoryTest extends TestCase
             'estimated_minutes' => 90,
         ]);
         $matchingOrder->teamMembers()->attach($teammate->id);
-        Payment::factory()->for($matchingOrder)->for($operator)->create([
+        Payment::factory()->for($matchingOrder)->for($attendant)->create([
             'method' => Payment::METHOD_PIX,
             'amount' => 120,
             'paid_at' => now()->subDay(),
@@ -56,7 +57,7 @@ class WashHistoryTest extends TestCase
             'entered_at' => now()->subDay(),
         ]);
 
-        $this->actingAs($operator)->get(route('history.index', [
+        $this->actingAs($attendant)->get(route('history.index', [
             'start' => now()->subDays(2)->toDateString(),
             'end' => today()->toDateString(),
             'customer_id' => $customer->id,
@@ -117,5 +118,45 @@ class WashHistoryTest extends TestCase
         $this->assertStringContainsString('Cliente Exportacao', $content);
         $this->assertStringContainsString('CSV2B34', $content);
         $this->assertStringContainsString('Dinheiro', $content);
+    }
+
+    public function test_operational_history_rejects_inverted_period(): void
+    {
+        Carbon::setTestNow('2026-06-26 12:00:00');
+
+        try {
+            $attendant = User::factory()->create(['role' => User::ROLE_ATTENDANT]);
+
+            $this->actingAs($attendant)
+                ->from(route('history.index'))
+                ->get(route('history.index', [
+                    'start' => '2026-06-26',
+                    'end' => '2026-06-25',
+                ]))
+                ->assertRedirect(route('history.index'))
+                ->assertSessionHasErrors('end');
+        } finally {
+            Carbon::setTestNow();
+        }
+    }
+
+    public function test_operational_history_rejects_future_period(): void
+    {
+        Carbon::setTestNow('2026-06-26 12:00:00');
+
+        try {
+            $attendant = User::factory()->create(['role' => User::ROLE_ATTENDANT]);
+
+            $this->actingAs($attendant)
+                ->from(route('history.index'))
+                ->get(route('history.index', [
+                    'start' => '2026-06-27',
+                    'end' => '2026-06-27',
+                ]))
+                ->assertRedirect(route('history.index'))
+                ->assertSessionHasErrors('start');
+        } finally {
+            Carbon::setTestNow();
+        }
     }
 }

@@ -24,8 +24,11 @@ class DashboardController extends Controller
         }
 
         $today = today();
+        $yesterday = $today->copy()->subDay();
         $monthStart = $today->copy()->startOfMonth();
         $monthEnd = $today->copy()->endOfMonth();
+        $previousMonthStart = $monthStart->copy()->subMonthNoOverflow()->startOfMonth();
+        $previousMonthEnd = $previousMonthStart->copy()->endOfMonth();
         $weekStart = $today->copy()->subDays(6)->startOfDay();
         $weekEnd = $today->copy()->endOfDay();
 
@@ -35,6 +38,10 @@ class DashboardController extends Controller
         );
         $todayRevenue = (clone $todayPayments)->sum('amount');
         $todayPaymentCount = (clone $todayPayments)->count();
+        $yesterdayPayments = TenantContext::scopePayments(
+            Payment::query()->whereBetween('paid_at', [$yesterday->copy()->startOfDay(), $yesterday->copy()->endOfDay()])
+        );
+        $yesterdayRevenue = (clone $yesterdayPayments)->sum('amount');
         $monthlyPayments = TenantContext::scopePayments(
             Payment::query()->whereBetween('paid_at', [$monthStart->copy()->startOfDay(), $monthEnd->copy()->endOfDay()])
         );
@@ -43,24 +50,60 @@ class DashboardController extends Controller
         $monthlyWashOrders = TenantContext::scopeWashOrders(WashOrder::query())
             ->whereBetween('entered_at', [$monthStart->copy()->startOfDay(), $monthEnd->copy()->endOfDay()])
             ->count();
+        $previousMonthlyPayments = TenantContext::scopePayments(
+            Payment::query()->whereBetween('paid_at', [$previousMonthStart->copy()->startOfDay(), $previousMonthEnd->copy()->endOfDay()])
+        );
+        $previousMonthlyRevenue = (clone $previousMonthlyPayments)->sum('amount');
+        $previousMonthlyPaymentCount = (clone $previousMonthlyPayments)->count();
+        $previousMonthlyWashOrders = TenantContext::scopeWashOrders(WashOrder::query())
+            ->whereBetween('entered_at', [$previousMonthStart->copy()->startOfDay(), $previousMonthEnd->copy()->endOfDay()])
+            ->count();
+        $monthlyTicketAverage = $monthlyPaymentCount > 0 ? $monthlyRevenue / $monthlyPaymentCount : 0;
+        $previousMonthlyTicketAverage = $previousMonthlyPaymentCount > 0 ? $previousMonthlyRevenue / $previousMonthlyPaymentCount : 0;
+        $monthlyRecurringCustomers = $this->monthlyRecurringCustomers($monthStart, $monthEnd);
+        $previousMonthlyRecurringCustomers = $this->monthlyRecurringCustomers($previousMonthStart, $previousMonthEnd);
+        $monthlyTopServices = $this->topServices($monthStart, $monthEnd);
+        $inProgressStatuses = [
+            WashOrder::STATUS_PREPARING,
+            WashOrder::STATUS_WASHING,
+            WashOrder::STATUS_VACUUMING,
+            WashOrder::STATUS_WAXING,
+            WashOrder::STATUS_FINISHING,
+        ];
 
         return view('app.dashboard', [
+            'greeting' => $this->greetingFor(now()),
             'currentLocation' => $currentLocation,
             'customerCount' => TenantContext::scopeCustomers(Customer::query())->count(),
             'vehicleCount' => TenantContext::scopeVehicles(Vehicle::query())->count(),
             'serviceCount' => TenantContext::scopeServices(Service::query())->count(),
             'activeServiceCount' => TenantContext::scopeServices(Service::query())->where('active', true)->count(),
             'washOrdersToday' => TenantContext::scopeWashOrders(WashOrder::query())->whereDate('entered_at', $today)->count(),
-            'activeWashOrders' => TenantContext::scopeWashOrders(WashOrder::query())->whereIn('status', WashOrder::activeStatuses())->count(),
-            'readyWashOrders' => TenantContext::scopeWashOrders(WashOrder::query())->where('status', WashOrder::STATUS_READY)->count(),
+            'activeWashOrders' => TenantContext::scopeWashOrders(WashOrder::query())->whereDate('entered_at', $today)->whereIn('status', $inProgressStatuses)->count(),
+            'readyWashOrders' => TenantContext::scopeWashOrders(WashOrder::query())->whereDate('entered_at', $today)->where('status', WashOrder::STATUS_READY)->count(),
+            'deliveredWashOrdersToday' => TenantContext::scopeWashOrders(WashOrder::query())->whereDate('entered_at', $today)->where('status', WashOrder::STATUS_DELIVERED)->count(),
             'todayRevenue' => $todayRevenue,
             'ticketAverage' => $todayPaymentCount > 0 ? $todayRevenue / $todayPaymentCount : 0,
+            'todayComparisons' => [
+                'washOrders' => $this->comparisonLabel(
+                    TenantContext::scopeWashOrders(WashOrder::query())->whereDate('entered_at', $today)->count(),
+                    TenantContext::scopeWashOrders(WashOrder::query())->whereDate('entered_at', $yesterday)->count(),
+                    'ontem',
+                ),
+                'revenue' => $this->comparisonLabel((float) $todayRevenue, (float) $yesterdayRevenue, 'ontem'),
+            ],
             'monthLabel' => $today->translatedFormat('F Y'),
             'monthlyWashOrders' => $monthlyWashOrders,
             'monthlyRevenue' => $monthlyRevenue,
-            'monthlyTicketAverage' => $monthlyPaymentCount > 0 ? $monthlyRevenue / $monthlyPaymentCount : 0,
-            'monthlyRecurringCustomers' => $this->monthlyRecurringCustomers($monthStart, $monthEnd),
-            'monthlyTopServices' => $this->topServices($monthStart, $monthEnd),
+            'monthlyTicketAverage' => $monthlyTicketAverage,
+            'monthlyRecurringCustomers' => $monthlyRecurringCustomers,
+            'monthlyTopServices' => $monthlyTopServices,
+            'executiveComparisons' => [
+                'washOrders' => $this->comparisonLabel($monthlyWashOrders, $previousMonthlyWashOrders, 'mes anterior'),
+                'revenue' => $this->comparisonLabel((float) $monthlyRevenue, (float) $previousMonthlyRevenue, 'mes anterior'),
+                'ticketAverage' => $this->comparisonLabel((float) $monthlyTicketAverage, (float) $previousMonthlyTicketAverage, 'mes anterior'),
+                'recurringCustomers' => $this->comparisonLabel(count($monthlyRecurringCustomers), count($previousMonthlyRecurringCustomers), 'mes anterior'),
+            ],
             'topService' => $this->topService($today),
             'averageWashMinutes' => $this->averageWashMinutes($today),
             'washOrdersByDay' => $this->washOrdersByDay($weekStart, $weekEnd),
@@ -234,7 +277,6 @@ class DashboardController extends Controller
             ->get();
 
         return collect(WashKanbanController::columns())
-            ->take(4)
             ->map(function (array $column) use ($washOrders) {
                 $orders = $washOrders->whereIn('status', $column['statuses'])->values();
 
@@ -308,5 +350,43 @@ class DashboardController extends Controller
     {
         return collect(range(0, (int) $start->diffInDays($end)))
             ->map(fn (int $offset) => $start->copy()->addDays($offset));
+    }
+
+    private function greetingFor(Carbon $date): string
+    {
+        $hour = (int) $date->format('H');
+
+        return match (true) {
+            $hour >= 5 && $hour < 12 => 'Bom dia',
+            $hour >= 12 && $hour < 18 => 'Boa tarde',
+            default => 'Boa noite',
+        };
+    }
+
+    /**
+     * @return array{label: string, tone: string}
+     */
+    private function comparisonLabel(float|int $current, float|int $previous, string $previousLabel): array
+    {
+        if ((float) $previous === 0.0) {
+            if ((float) $current === 0.0) {
+                return ['label' => 'Sem movimento vs '.$previousLabel, 'tone' => 'neutral'];
+            }
+
+            return ['label' => 'Novo movimento vs '.$previousLabel, 'tone' => 'positive'];
+        }
+
+        $change = (((float) $current - (float) $previous) / (float) $previous) * 100;
+        $formatted = number_format(abs($change), 0, ',', '.').'% vs '.$previousLabel;
+
+        if ($change > 0) {
+            return ['label' => '+'.$formatted, 'tone' => 'positive'];
+        }
+
+        if ($change < 0) {
+            return ['label' => '-'.$formatted, 'tone' => 'negative'];
+        }
+
+        return ['label' => 'Estavel vs '.$previousLabel, 'tone' => 'neutral'];
     }
 }

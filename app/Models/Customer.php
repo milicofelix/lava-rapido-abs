@@ -37,6 +37,11 @@ class Customer extends Model
         return $this->hasMany(WashOrder::class);
     }
 
+    public function loyaltyCoupons(): HasMany
+    {
+        return $this->hasMany(LoyaltyCoupon::class);
+    }
+
     public function whatsappNumber(): ?string
     {
         $digits = preg_replace('/\D+/', '', $this->phone);

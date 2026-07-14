@@ -22,6 +22,12 @@ class CustomerNotification extends Model
 
     public const TEMPLATE_READY_FOR_PICKUP = 'ready_for_pickup';
 
+    public const TEMPLATE_WASH_STARTED = 'wash_started';
+
+    public const TEMPLATE_WASH_COMPLETED = 'wash_completed';
+
+    public const TEMPLATE_PROMOTION = 'promotion';
+
     protected $fillable = [
         'wash_order_id',
         'customer_id',
@@ -51,6 +57,9 @@ class CustomerNotification extends Model
             self::TEMPLATE_TRACKING_LINK => 'Enviar link de acompanhamento',
             self::TEMPLATE_STATUS_UPDATE => 'Atualizar cliente sobre o status',
             self::TEMPLATE_READY_FOR_PICKUP => 'Avisar que esta pronto para retirada',
+            self::TEMPLATE_WASH_STARTED => 'Lavagem iniciada',
+            self::TEMPLATE_WASH_COMPLETED => 'Lavagem concluida',
+            self::TEMPLATE_PROMOTION => 'Promocao',
         ];
     }
 

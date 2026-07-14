@@ -3,6 +3,7 @@
 namespace App\Services\WashOrders;
 
 use App\Models\Service;
+use App\Support\TenantContext;
 use Illuminate\Support\Collection;
 
 class CalculateWashTotalService
@@ -13,6 +14,7 @@ class CalculateWashTotalService
     public function handle(array $serviceIds): array
     {
         $services = Service::query()
+            ->when(TenantContext::currentLocationId(), fn ($query, int $locationId) => $query->where('wash_location_id', $locationId))
             ->whereIn('id', $serviceIds)
             ->where('active', true)
             ->get()

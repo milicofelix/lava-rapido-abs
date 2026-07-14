@@ -5,6 +5,7 @@ namespace Database\Factories;
 use App\Models\Customer;
 use App\Models\Vehicle;
 use App\Models\WashLocation;
+use App\Support\Vehicles\VehicleCatalog;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /** @extends Factory<Vehicle> */
@@ -21,7 +22,7 @@ class VehicleFactory extends Factory
 
     public function definition(): array
     {
-        $vehicle = fake()->randomElement(self::catalog());
+        $vehicle = fake()->randomElement(VehicleCatalog::all());
 
         return [
             'wash_location_id' => WashLocation::query()->value('id') ?? WashLocation::factory(),
@@ -40,6 +41,8 @@ class VehicleFactory extends Factory
      */
     public static function catalog(): array
     {
+        return VehicleCatalog::all();
+
         return [
             ['brand' => 'Fiat', 'model' => 'Mobi', 'type' => 'carro'],
             ['brand' => 'Fiat', 'model' => 'Argo', 'type' => 'carro'],
