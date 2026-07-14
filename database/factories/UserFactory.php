@@ -3,6 +3,7 @@
 namespace Database\Factories;
 
 use App\Models\User;
+use App\Models\WashLocation;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
@@ -17,6 +18,15 @@ class UserFactory extends Factory
      */
     protected static ?string $password;
 
+    public function configure(): static
+    {
+        return $this->afterMaking(function (User $user): void {
+            if ($user->role === User::ROLE_SUPER_ADMIN) {
+                $user->wash_location_id = null;
+            }
+        });
+    }
+
     /**
      * Define the model's default state.
      *
@@ -27,7 +37,16 @@ class UserFactory extends Factory
         return [
             'name' => fake()->name(),
             'email' => fake()->unique()->safeEmail(),
-            'role' => 'attendant',
+            'role' => User::ROLE_ATTENDANT,
+            'wash_location_id' => function (array $attributes) {
+                if (($attributes['role'] ?? User::ROLE_ATTENDANT) === User::ROLE_SUPER_ADMIN) {
+                    return null;
+                }
+
+                return WashLocation::query()->value('id') ?? WashLocation::factory();
+            },
+            'phone' => fake()->phoneNumber(),
+            'is_active' => true,
             'email_verified_at' => now(),
             'password' => static::$password ??= Hash::make('password'),
             'remember_token' => Str::random(10),

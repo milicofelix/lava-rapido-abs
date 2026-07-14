@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\WashOrders\WashOrderStatusFlow;
 use Database\Factories\WashOrderFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -33,17 +34,33 @@ class WashOrder extends Model
 
     public const STATUS_CANCELED = 'cancelado';
 
+    public const PAYMENT_PENDING = 'pending';
+
+    public const PAYMENT_PAID = 'paid';
+
+    public const PAYMENT_COURTESY = 'courtesy';
+
+    public const PAYMENT_CREDIT_PENDING = 'credit_pending';
+
     protected $fillable = [
         'code',
+        'wash_location_id',
         'customer_id',
         'vehicle_id',
         'assigned_user_id',
         'total_amount',
+        'loyalty_discount_amount',
+        'loyalty_coupon_id',
         'status',
+        'payment_status',
         'entered_at',
         'estimated_completion_at',
         'completed_at',
         'notes',
+        'customer_review_rating',
+        'customer_review_comment',
+        'customer_review_public',
+        'customer_reviewed_at',
     ];
 
     protected function casts(): array
@@ -53,6 +70,9 @@ class WashOrder extends Model
             'estimated_completion_at' => 'datetime',
             'completed_at' => 'datetime',
             'total_amount' => 'decimal:2',
+            'loyalty_discount_amount' => 'decimal:2',
+            'customer_review_public' => 'boolean',
+            'customer_reviewed_at' => 'datetime',
         ];
     }
 
@@ -67,48 +87,71 @@ class WashOrder extends Model
 
     public static function statuses(): array
     {
-        return [
-            self::STATUS_AWAITING => 'Aguardando',
-            self::STATUS_PREPARING => 'Em preparacao',
-            self::STATUS_WASHING => 'Lavando',
-            self::STATUS_VACUUMING => 'Aspirando',
-            self::STATUS_WAXING => 'Aplicando cera',
-            self::STATUS_FINISHING => 'Finalizando',
-            self::STATUS_READY => 'Pronto para retirada',
-            self::STATUS_DELIVERED => 'Entregue',
-            self::STATUS_CANCELED => 'Cancelado',
-        ];
+        return WashOrderStatusFlow::labels();
     }
 
     public static function activeStatuses(): array
     {
-        return array_diff(array_keys(self::statuses()), [
-            self::STATUS_DELIVERED,
-            self::STATUS_CANCELED,
-        ]);
+        return WashOrderStatusFlow::activeStatuses();
     }
 
     public static function publicProgressStatuses(): array
     {
-        return [
-            self::STATUS_AWAITING,
-            self::STATUS_PREPARING,
-            self::STATUS_WASHING,
-            self::STATUS_VACUUMING,
-            self::STATUS_WAXING,
-            self::STATUS_FINISHING,
-            self::STATUS_READY,
-        ];
+        return WashOrderStatusFlow::publicProgressStatuses();
     }
 
     public function statusLabel(): string
     {
-        return self::statuses()[$this->status] ?? $this->status;
+        return WashOrderStatusFlow::labelFor($this->status);
+    }
+
+    public static function paymentStatuses(): array
+    {
+        return [
+            self::PAYMENT_PENDING => 'Pendente',
+            self::PAYMENT_PAID => 'Pago',
+            self::PAYMENT_COURTESY => 'Cortesia',
+            self::PAYMENT_CREDIT_PENDING => 'Fiado / pendente',
+        ];
+    }
+
+    public function paymentStatusLabel(): string
+    {
+        return self::paymentStatuses()[$this->payment_status] ?? $this->payment_status;
+    }
+
+    public function hasIdentifiedPayment(): bool
+    {
+        return in_array($this->payment_status, [
+            self::PAYMENT_PAID,
+            self::PAYMENT_COURTESY,
+            self::PAYMENT_CREDIT_PENDING,
+        ], true);
+    }
+
+    public function payableAmount(): float
+    {
+        return max(0, (float) $this->total_amount - (float) $this->loyalty_discount_amount);
+    }
+
+    public function hasLoyaltyDiscount(): bool
+    {
+        return (float) $this->loyalty_discount_amount > 0 && $this->loyalty_coupon_id !== null;
+    }
+
+    public function canRegisterCourtesyPayment(): bool
+    {
+        return $this->loyalty_coupon_id !== null && $this->payableAmount() <= 0.0;
     }
 
     public function trackingUrl(): string
     {
         return route('tracking.show', $this->code);
+    }
+
+    public function washLocation(): BelongsTo
+    {
+        return $this->belongsTo(WashLocation::class);
     }
 
     public function customer(): BelongsTo
@@ -126,6 +169,11 @@ class WashOrder extends Model
         return $this->belongsTo(User::class, 'assigned_user_id');
     }
 
+    public function teamMembers(): BelongsToMany
+    {
+        return $this->belongsToMany(User::class)->withTimestamps();
+    }
+
     public function services(): BelongsToMany
     {
         return $this->belongsToMany(Service::class)
@@ -136,6 +184,21 @@ class WashOrder extends Model
     public function statusHistories(): HasMany
     {
         return $this->hasMany(StatusHistory::class);
+    }
+
+    public function payments(): HasMany
+    {
+        return $this->hasMany(Payment::class);
+    }
+
+    public function loyaltyCoupon(): BelongsTo
+    {
+        return $this->belongsTo(LoyaltyCoupon::class);
+    }
+
+    public function customerNotifications(): HasMany
+    {
+        return $this->hasMany(CustomerNotification::class);
     }
 
     private static function generateCode(): string

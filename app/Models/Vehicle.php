@@ -14,6 +14,7 @@ class Vehicle extends Model
     use HasFactory;
 
     protected $fillable = [
+        'wash_location_id',
         'customer_id',
         'plate',
         'model',
@@ -22,6 +23,11 @@ class Vehicle extends Model
         'type',
         'notes',
     ];
+
+    public function washLocation(): BelongsTo
+    {
+        return $this->belongsTo(WashLocation::class);
+    }
 
     public function customer(): BelongsTo
     {

@@ -3,33 +3,47 @@
 namespace App\Http\Controllers\App;
 
 use App\Http\Controllers\Controller;
+use App\Models\User;
 use App\Models\WashOrder;
+use App\Support\TenantContext;
+use App\Support\Access\AccessControl;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class WashKanbanController extends Controller
 {
-    public function __invoke(): Response
+    public function __invoke(Request $request): Response
     {
-        return Inertia::render('Kanban', $this->payload());
+        return Inertia::render('Kanban', $this->payload($request));
     }
 
-    public function feed(): JsonResponse
+    public function feed(Request $request): JsonResponse
     {
-        return response()->json($this->payload());
+        return response()->json($this->payload($request));
     }
 
     /**
      * @return array<string, mixed>
      */
-    private function payload(): array
+    private function payload(Request $request): array
     {
-        $washOrders = WashOrder::query()
-            ->with(['customer', 'vehicle', 'assignedUser', 'services'])
+        $filters = $this->filtersFromRequest($request);
+        $washOrders = TenantContext::scopeWashOrders(WashOrder::query())
+            ->with(['customer', 'vehicle', 'assignedUser', 'teamMembers', 'services', 'washLocation'])
             ->whereIn('status', collect(self::columns())->pluck('statuses')->flatten()->all())
+            ->when($filters['start_at'], fn ($query, Carbon $startAt) => $query->where('entered_at', '>=', $startAt))
+            ->when($filters['end_at'], fn ($query, Carbon $endAt) => $query->where('entered_at', '<=', $endAt))
             ->oldest('entered_at')
             ->get();
+
+        $currentLocation = TenantContext::currentLocation();
+        $queryFilters = array_filter([
+            'period' => $filters['period'] === 'today' ? null : $filters['period'],
+            'date' => $filters['period'] === 'date' ? $filters['date'] : null,
+        ]);
 
         return [
             'columns' => collect(self::columns())->map(function (array $column) use ($washOrders) {
@@ -42,10 +56,28 @@ class WashKanbanController extends Controller
                 ];
             })->all(),
             'statuses' => WashOrder::statuses(),
-            'feedUrl' => route('kanban.feed'),
-            'createUrl' => route('wash-orders.create'),
-            'dashboardUrl' => route('dashboard'),
-            'logoUrl' => asset('images/autoflow-logo.png'),
+            'filters' => [
+                'period' => $filters['period'],
+                'date' => $filters['date'],
+                'label' => $filters['label'],
+                'show_outside_day_badge' => $filters['show_outside_day_badge'],
+            ],
+            'periodOptions' => self::periodOptions(),
+            'feedUrl' => route('kanban.feed', $queryFilters),
+            'filterUrl' => route('kanban'),
+            'createUrl' => AccessControl::allows(TenantContext::user(), AccessControl::CREATE_WASH_ORDER)
+                && ($currentLocation?->canOpenWashOrderAt() ?? true)
+                    ? route('wash-orders.create')
+                    : null,
+            'logoutUrl' => route('logout'),
+            'csrfToken' => csrf_token(),
+            'dashboardUrl' => AccessControl::allows(TenantContext::user(), AccessControl::VIEW_DASHBOARD) ? route('dashboard') : null,
+            'logoUrl' => $currentLocation?->logoUrl() ?? asset('images/autoflow-logo.png'),
+            'currentLocation' => $currentLocation ? [
+                'id' => $currentLocation->id,
+                'name' => $currentLocation->name,
+                'account_status' => $currentLocation->accountStatusLabel(),
+            ] : null,
         ];
     }
 
@@ -54,14 +86,20 @@ class WashKanbanController extends Controller
      */
     private function serializeOrder(WashOrder $washOrder): array
     {
+        $canViewDetails = AccessControl::allows(TenantContext::user(), AccessControl::VIEW_WASH_ORDERS);
+
         return [
             'id' => $washOrder->id,
             'code' => $washOrder->code,
             'status' => $washOrder->status,
             'status_label' => $washOrder->statusLabel(),
             'entered_at_for_humans' => $washOrder->entered_at->diffForHumans(null, true),
+            'entered_at_date_label' => $washOrder->entered_at->isToday()
+                ? 'Hoje'
+                : $washOrder->entered_at->format('d/m/Y'),
+            'is_outside_today' => ! $washOrder->entered_at->isToday(),
             'total_amount' => number_format((float) $washOrder->total_amount, 2, ',', '.'),
-            'show_url' => route('wash-orders.show', $washOrder),
+            'show_url' => $canViewDetails ? route('wash-orders.show', $washOrder) : null,
             'update_url' => route('wash-orders.update-status', $washOrder),
             'customer' => [
                 'name' => $washOrder->customer->name,
@@ -74,10 +112,31 @@ class WashKanbanController extends Controller
             'assigned_user' => $washOrder->assignedUser ? [
                 'name' => $washOrder->assignedUser->name,
             ] : null,
+            'team_members' => $washOrder->teamMembers->map(fn ($user) => [
+                'name' => $user->name,
+            ])->all(),
             'services' => $washOrder->services->map(fn ($service) => [
                 'name' => $service->pivot->service_name,
             ])->all(),
+            'can_update_status' => $this->userCanUpdateOrderStatus($washOrder, TenantContext::user()),
         ];
+    }
+
+    private function userCanUpdateOrderStatus(WashOrder $washOrder, ?User $user): bool
+    {
+        if (! AccessControl::allows($user, AccessControl::UPDATE_WASH_ORDER_STATUS)) {
+            return false;
+        }
+
+        if (! ($washOrder->washLocation?->canOpenWashOrderAt() ?? true)) {
+            return false;
+        }
+
+        if (! $user?->isOperator()) {
+            return true;
+        }
+
+        return $washOrder->teamMembers->contains('id', $user->id);
     }
 
     public static function columns(): array
@@ -118,6 +177,97 @@ class WashKanbanController extends Controller
                 'target_status' => WashOrder::STATUS_DELIVERED,
                 'statuses' => [WashOrder::STATUS_DELIVERED],
             ],
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function filtersFromRequest(Request $request): array
+    {
+        $period = (string) $request->query('period', 'today');
+        $period = array_key_exists($period, self::periodOptions()) ? $period : 'today';
+        $today = now()->startOfDay();
+        $date = (string) $request->query('date', now()->toDateString());
+
+        return match ($period) {
+            'yesterday' => [
+                'period' => $period,
+                'date' => now()->subDay()->toDateString(),
+                'label' => 'Ontem',
+                'start_at' => now()->subDay()->startOfDay(),
+                'end_at' => now()->subDay()->endOfDay(),
+                'show_outside_day_badge' => false,
+            ],
+            '7_days' => [
+                'period' => $period,
+                'date' => $date,
+                'label' => 'Ultimos 7 dias',
+                'start_at' => $today->copy()->subDays(6),
+                'end_at' => now()->endOfDay(),
+                'show_outside_day_badge' => true,
+            ],
+            '30_days' => [
+                'period' => $period,
+                'date' => $date,
+                'label' => 'Ultimos 30 dias',
+                'start_at' => $today->copy()->subDays(29),
+                'end_at' => now()->endOfDay(),
+                'show_outside_day_badge' => true,
+            ],
+            'all' => [
+                'period' => $period,
+                'date' => $date,
+                'label' => 'Todos',
+                'start_at' => null,
+                'end_at' => null,
+                'show_outside_day_badge' => true,
+            ],
+            'date' => $this->dateFilter($date),
+            default => [
+                'period' => 'today',
+                'date' => now()->toDateString(),
+                'label' => 'Hoje',
+                'start_at' => now()->startOfDay(),
+                'end_at' => now()->endOfDay(),
+                'show_outside_day_badge' => false,
+            ],
+        };
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function dateFilter(string $date): array
+    {
+        try {
+            $selectedDate = Carbon::parse($date)->startOfDay();
+        } catch (\Throwable) {
+            $selectedDate = now()->startOfDay();
+        }
+
+        return [
+            'period' => 'date',
+            'date' => $selectedDate->toDateString(),
+            'label' => $selectedDate->isToday() ? 'Hoje' : $selectedDate->format('d/m/Y'),
+            'start_at' => $selectedDate->copy()->startOfDay(),
+            'end_at' => $selectedDate->copy()->endOfDay(),
+            'show_outside_day_badge' => false,
+        ];
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    public static function periodOptions(): array
+    {
+        return [
+            'today' => 'Hoje',
+            'yesterday' => 'Ontem',
+            'date' => 'Data especifica',
+            '7_days' => 'Ultimos 7 dias',
+            '30_days' => 'Ultimos 30 dias',
+            'all' => 'Todos',
         ];
     }
 }

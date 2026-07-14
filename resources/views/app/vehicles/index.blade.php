@@ -1,36 +1,78 @@
-<x-app.layout heading="Veiculos" title="Veiculos · AutoFlow">
-    <div class="mb-5 flex flex-wrap items-center justify-between gap-3">
-        <form method="GET" class="flex w-full gap-2 sm:w-auto">
-            <input name="search" value="{{ $search }}" placeholder="Buscar por placa, modelo, marca ou cliente" class="w-full rounded-md border border-zinc-300 px-3 py-2 sm:w-96">
-            <button class="rounded-md border border-zinc-300 px-4 py-2 text-sm font-semibold">Buscar</button>
-        </form>
-        <a href="{{ route('vehicles.create') }}" class="rounded-md bg-cyan-700 px-4 py-2 text-sm font-semibold text-white">Novo veiculo</a>
-    </div>
+<x-app.layout heading="Veículos" title="Veículos · AutoFlow">
+    <div class="space-y-5">
+        <section class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+            <div class="flex flex-wrap items-start justify-between gap-4">
+                <div>
+                    <p class="text-xs font-black uppercase tracking-[0.18em] text-blue-700">Garagem dos clientes</p>
+                    <h2 class="mt-1 text-2xl font-black text-slate-950">Veículos cadastrados</h2>
+                    <p class="mt-1 text-sm text-slate-500">Busque por placa, modelo, marca ou cliente responsavel.</p>
+                </div>
+                <a href="{{ route('vehicles.create') }}" class="rounded-xl bg-blue-700 px-4 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-blue-800">Novo veiculo</a>
+            </div>
 
-    <div class="overflow-hidden rounded-lg border border-zinc-200 bg-white">
-        <table class="min-w-full divide-y divide-zinc-200">
-            <thead class="bg-zinc-100 text-left text-sm text-zinc-600">
-                <tr>
-                    <th class="px-4 py-3">Placa</th>
-                    <th class="px-4 py-3">Veiculo</th>
-                    <th class="px-4 py-3">Cliente</th>
-                    <th class="px-4 py-3"></th>
-                </tr>
-            </thead>
-            <tbody class="divide-y divide-zinc-100 text-sm">
+            <form method="GET" class="mt-5 grid gap-3 md:grid-cols-[1fr_auto]">
+                <label class="block">
+                    <span class="sr-only">Buscar veiculo</span>
+                    <input name="search" value="{{ $search }}" placeholder="Buscar por placa, modelo, marca ou cliente" class="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm uppercase shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100">
+                </label>
+                <div class="flex gap-2">
+                    <button class="rounded-xl border border-slate-300 px-4 py-2.5 text-sm font-bold text-slate-700 hover:bg-slate-50">Buscar</button>
+                    @if ($search !== '')
+                        <a href="{{ route('vehicles.index') }}" class="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-bold text-slate-500 hover:bg-slate-50">Limpar</a>
+                    @endif
+                </div>
+            </form>
+        </section>
+
+        <section class="grid gap-3 md:grid-cols-3">
+            <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                <p class="text-sm font-bold text-slate-500">Veículos na lista</p>
+                <p class="mt-2 text-3xl font-black text-slate-950">{{ $vehicles->total() }}</p>
+            </div>
+            <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                <p class="text-sm font-bold text-slate-500">Clientes nesta página</p>
+                <p class="mt-2 text-3xl font-black text-blue-700">{{ $vehicles->getCollection()->pluck('customer_id')->unique()->count() }}</p>
+            </div>
+            <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                <p class="text-sm font-bold text-slate-500">Página atual</p>
+                <p class="mt-2 text-3xl font-black text-emerald-700">{{ $vehicles->count() }}</p>
+            </div>
+        </section>
+
+        <section class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+            <div class="border-b border-slate-200 px-5 py-4">
+                <h2 class="font-black text-slate-950">Lista de veiculos</h2>
+            </div>
+
+            <div class="divide-y divide-slate-100">
                 @forelse ($vehicles as $vehicle)
-                    <tr>
-                        <td class="px-4 py-3 font-semibold">{{ $vehicle->plate }}</td>
-                        <td class="px-4 py-3">{{ $vehicle->brand }} {{ $vehicle->model }}<br><span class="text-zinc-500">{{ $vehicle->color }} · {{ ucfirst($vehicle->type) }}</span></td>
-                        <td class="px-4 py-3">{{ $vehicle->customer->name }}</td>
-                        <td class="px-4 py-3 text-right"><a href="{{ route('vehicles.edit', $vehicle) }}" class="font-semibold text-cyan-700">Editar</a></td>
-                    </tr>
+                    <article class="grid gap-4 px-5 py-4 md:grid-cols-[150px_1fr_220px_auto] md:items-center">
+                        <div>
+                            <p class="text-xs font-black uppercase tracking-[0.16em] text-slate-500">Placa</p>
+                            <p class="mt-1 text-lg font-black tracking-wide text-slate-950">{{ $vehicle->plate }}</p>
+                        </div>
+                        <div class="min-w-0">
+                            <p class="truncate font-black text-slate-950">{{ $vehicle->brand }} {{ $vehicle->model }}</p>
+                            <p class="mt-1 text-sm text-slate-500">{{ $vehicle->color }} · {{ ucfirst($vehicle->type) }}</p>
+                        </div>
+                        <div class="text-sm text-slate-600">
+                            <p class="text-xs font-black uppercase tracking-[0.16em] text-slate-500">Cliente</p>
+                            <p class="mt-1 truncate font-bold text-slate-900">{{ $vehicle->customer->name }}</p>
+                        </div>
+                        <div class="flex justify-start md:justify-end">
+                            <a href="{{ route('vehicles.edit', $vehicle) }}" class="rounded-xl border border-slate-200 px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50">Editar</a>
+                        </div>
+                    </article>
                 @empty
-                    <tr><td colspan="4" class="px-4 py-8 text-center text-zinc-500">Nenhum veiculo encontrado.</td></tr>
+                    <div class="px-5 py-12 text-center">
+                        <p class="font-black text-slate-950">Nenhum veiculo encontrado</p>
+                        <p class="mt-1 text-sm text-slate-500">Cadastre o primeiro veiculo ou ajuste a busca atual.</p>
+                        <a href="{{ route('vehicles.create') }}" class="mt-4 inline-flex rounded-xl bg-blue-700 px-4 py-2.5 text-sm font-bold text-white">Novo veiculo</a>
+                    </div>
                 @endforelse
-            </tbody>
-        </table>
-    </div>
+            </div>
+        </section>
 
-    <div class="mt-4">{{ $vehicles->links() }}</div>
+        <div>{{ $vehicles->links() }}</div>
+    </div>
 </x-app.layout>

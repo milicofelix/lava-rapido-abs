@@ -5,6 +5,7 @@ namespace App\Models;
 use Database\Factories\ServiceFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class Service extends Model
@@ -13,6 +14,7 @@ class Service extends Model
     use HasFactory;
 
     protected $fillable = [
+        'wash_location_id',
         'name',
         'description',
         'base_price',
@@ -28,6 +30,11 @@ class Service extends Model
             'base_price' => 'decimal:2',
             'estimated_minutes' => 'integer',
         ];
+    }
+
+    public function washLocation(): BelongsTo
+    {
+        return $this->belongsTo(WashLocation::class);
     }
 
     public function washOrders(): BelongsToMany
