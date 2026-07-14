@@ -16,8 +16,17 @@ class DashboardMetricsTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected function tearDown(): void
+    {
+        Carbon::setTestNow();
+
+        parent::tearDown();
+    }
+
     public function test_dashboard_shows_operational_and_financial_metrics(): void
     {
+        Carbon::setTestNow(Carbon::parse('2026-06-18 10:00:00'));
+
         $user = User::factory()->create();
         $customer = Customer::factory()->create(['name' => 'Cliente Recorrente']);
         $vehicle = Vehicle::factory()->for($customer)->create(['plate' => 'HOJ1A23']);
@@ -103,13 +112,13 @@ class DashboardMetricsTest extends TestCase
         $this->actingAs($user)->get(route('dashboard'))
             ->assertOk()
             ->assertSee('Dashboard executivo')
-            ->assertSee('Lavagens do mes')
-            ->assertSee('Receita do mes')
-            ->assertSee('Ticket medio')
+            ->assertSee('Lavagens do mês')
+            ->assertSee('Receita do mês')
+            ->assertSee('Ticket médio')
             ->assertSee('Clientes recorrentes')
-            ->assertSee('+300% vs mes anterior')
-            ->assertSee('+100% vs mes anterior')
-            ->assertSee('Top servicos do mes')
+            ->assertSee('+300% vs mês anterior')
+            ->assertSee('+100% vs mês anterior')
+            ->assertSee('Top serviços do mês')
             ->assertSee('Cliente Recorrente')
             ->assertSee('Faturamento hoje')
             ->assertSee('Entregues hoje')
@@ -124,9 +133,11 @@ class DashboardMetricsTest extends TestCase
             ->assertSee('ENT2A34')
             ->assertDontSee('OLD1A23')
             ->assertSee('Resumo Financeiro')
-            ->assertSee('Servicos mais realizados')
+            ->assertSee('Serviços mais realizados')
             ->assertSee('Lavagem premium')
             ->assertSee('Atividades recentes');
+
+        Carbon::setTestNow();
     }
 
     public function test_dashboard_greeting_follows_current_time(): void

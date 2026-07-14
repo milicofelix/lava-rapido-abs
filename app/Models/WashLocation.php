@@ -157,11 +157,11 @@ class WashLocation extends Model
     {
         return [
             'monday' => 'Segunda',
-            'tuesday' => 'Terca',
+            'tuesday' => 'Terça',
             'wednesday' => 'Quarta',
             'thursday' => 'Quinta',
             'friday' => 'Sexta',
-            'saturday' => 'Sabado',
+            'saturday' => 'Sábado',
             'sunday' => 'Domingo',
         ];
     }
@@ -229,6 +229,15 @@ class WashLocation extends Model
     public function publicStatusLabel(?Carbon $moment = null): string
     {
         return self::statuses()[$this->publicStatus($moment)] ?? $this->publicStatus($moment);
+    }
+
+    public function canOpenWashOrderAt(?Carbon $moment = null): bool
+    {
+        if (! is_array($this->business_hours) || $this->business_hours === []) {
+            return $this->status !== self::STATUS_CLOSED;
+        }
+
+        return in_array($this->publicStatus($moment), [self::STATUS_OPEN, self::STATUS_BUSY], true);
     }
 
     public function openingHoursSummary(): string

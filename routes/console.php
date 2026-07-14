@@ -21,7 +21,7 @@ Artisan::command('subscriptions:expire', function (SubscriptionExpirationService
     ));
 })->purpose('Expira trials e assinaturas vencidas');
 
-Artisan::command('mercado-pago:diagnose {--api : Testa autenticacao chamando a API do Mercado Pago}', function (MercadoPagoDiagnosticsService $diagnostics) {
+Artisan::command('mercado-pago:diagnose {--api : Testa autenticação chamando a API do Mercado Pago}', function (MercadoPagoDiagnosticsService $diagnostics) {
     $checks = $diagnostics->report((bool) $this->option('api'));
     $hasFailures = false;
 
@@ -32,7 +32,7 @@ Artisan::command('mercado-pago:diagnose {--api : Testa autenticacao chamando a A
         }
 
         $hasFailures = true;
-        $this->warn('[ATENCAO] '.$check['message']);
+        $this->warn('[ATENÇÃO] '.$check['message']);
     }
 
     if ($hasFailures) {

@@ -80,6 +80,16 @@ class CashRegisterManagementTest extends TestCase
             'amount' => 80,
             'paid_at' => now()->subMinutes(20),
         ]);
+        Payment::factory()->create([
+            'wash_order_id' => $cashOrder->id,
+            'user_id' => $admin->id,
+            'method' => Payment::METHOD_CASH,
+            'amount' => 40,
+            'paid_at' => now()->subMinutes(10),
+            'reversed_at' => now()->subMinutes(5),
+            'reversed_by_user_id' => $admin->id,
+            'reversal_reason' => 'Pagamento duplicado.',
+        ]);
         CashMovement::factory()->create([
             'cash_register_id' => $cashRegister->id,
             'user_id' => $admin->id,
@@ -104,5 +114,66 @@ class CashRegisterManagementTest extends TestCase
         $this->assertSame('170.00', (string) $cashRegister->expected_cash);
         $this->assertSame('175.00', (string) $cashRegister->counted_cash);
         $this->assertSame('5.00', (string) $cashRegister->cash_difference);
+    }
+
+    public function test_cash_register_screen_shows_closing_reconciliation_summary(): void
+    {
+        $admin = User::factory()->create(['role' => User::ROLE_ADMIN]);
+        $cashRegister = CashRegister::factory()->create([
+            'wash_location_id' => $admin->wash_location_id,
+            'opened_by_user_id' => $admin->id,
+            'opening_balance' => 100,
+            'opened_at' => now()->subHour(),
+        ]);
+        $cashOrder = WashOrder::factory()->create([
+            'wash_location_id' => $admin->wash_location_id,
+            'total_amount' => 80,
+        ]);
+        $pixOrder = WashOrder::factory()->create([
+            'wash_location_id' => $admin->wash_location_id,
+            'total_amount' => 45,
+        ]);
+
+        Payment::factory()->create([
+            'wash_order_id' => $cashOrder->id,
+            'user_id' => $admin->id,
+            'method' => Payment::METHOD_CASH,
+            'amount' => 80,
+            'paid_at' => now()->subMinutes(20),
+        ]);
+        Payment::factory()->create([
+            'wash_order_id' => $pixOrder->id,
+            'user_id' => $admin->id,
+            'method' => Payment::METHOD_PIX,
+            'amount' => 45,
+            'paid_at' => now()->subMinutes(10),
+        ]);
+        CashMovement::factory()->create([
+            'cash_register_id' => $cashRegister->id,
+            'user_id' => $admin->id,
+            'type' => CashMovement::TYPE_SUPPLY,
+            'amount' => 20,
+        ]);
+        CashMovement::factory()->create([
+            'cash_register_id' => $cashRegister->id,
+            'user_id' => $admin->id,
+            'type' => CashMovement::TYPE_WITHDRAWAL,
+            'amount' => 30,
+        ]);
+
+        $this->actingAs($admin)
+            ->get(route('finance.cash-registers.index'))
+            ->assertOk()
+            ->assertSee('Resumo para fechamento')
+            ->assertSee('Vendas totais')
+            ->assertSee('R$ 125,00')
+            ->assertSee('Previsto em dinheiro')
+            ->assertSee('R$ 170,00')
+            ->assertSee('Dinheiro')
+            ->assertSee('R$ 80,00')
+            ->assertSee('Pix')
+            ->assertSee('R$ 45,00')
+            ->assertSee('Suprimentos')
+            ->assertSee('Sangrias');
     }
 }

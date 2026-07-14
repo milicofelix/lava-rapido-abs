@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use App\Models\AppSetting;
 use App\Models\CashMovement;
 use App\Models\CashRegister;
-use App\Models\Payment;
 use App\Services\CashRegisters\CloseCashRegisterService;
 use App\Services\CashRegisters\OpenCashRegisterService;
 use App\Services\CashRegisters\RegisterCashMovementService;
@@ -22,22 +21,27 @@ class CashRegisterController extends Controller
     public function index(CloseCashRegisterService $closeCashRegister): View|\Illuminate\Http\RedirectResponse
     {
         if (! AppSetting::isModuleEnabled('module_cash_register')) {
-            return redirect()->route('settings.edit')->with('status', 'Modulo Caixa esta desabilitado. Habilite em Configuracoes para usar.');
+            return redirect()->route('settings.edit')->with('status', 'Módulo Caixa está desabilitado. Habilite em Configurações para usar.');
         }
 
         $openRegister = CashRegister::openRegister(TenantContext::currentLocationId())?->load(['openedBy', 'movements.user']);
 
+        $openRegisterSummary = $openRegister ? $closeCashRegister->summary($openRegister) : null;
+        $recentRegisters = TenantContext::scopeCashRegisters(CashRegister::query())
+            ->with(['openedBy', 'closedBy'])
+            ->latest('opened_at')
+            ->paginate(10);
+
+        $recentRegisters->getCollection()->each(function (CashRegister $register) use ($closeCashRegister): void {
+            $register->setAttribute('cash_summary', $closeCashRegister->summary($register));
+        });
+
         return view('app.finance.cash-registers.index', [
             'openRegister' => $openRegister,
-            'expectedCash' => $openRegister ? $closeCashRegister->expectedCash($openRegister) : 0,
-            'cashPaymentTotal' => $openRegister ? TenantContext::scopePayments(Payment::query())
-                ->where('method', Payment::METHOD_CASH)
-                ->where('paid_at', '>=', $openRegister->opened_at)
-                ->sum('amount') : 0,
-            'recentRegisters' => TenantContext::scopeCashRegisters(CashRegister::query())
-                ->with(['openedBy', 'closedBy'])
-                ->latest('opened_at')
-                ->paginate(10),
+            'cashRegisterSummary' => $openRegisterSummary,
+            'expectedCash' => $openRegisterSummary['expected_cash'] ?? 0,
+            'cashPaymentTotal' => $openRegisterSummary['cash_payment_total'] ?? 0,
+            'recentRegisters' => $recentRegisters,
             'movementTypes' => CashMovement::types(),
         ]);
     }

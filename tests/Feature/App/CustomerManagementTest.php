@@ -5,12 +5,14 @@ namespace Tests\Feature\App;
 use App\Models\Customer;
 use App\Models\LoyaltyCoupon;
 use App\Models\LoyaltyProgram;
+use App\Models\Payment;
 use App\Models\Service;
 use App\Models\User;
 use App\Models\Vehicle;
 use App\Models\WashLocation;
 use App\Models\WashOrder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
 use Tests\TestCase;
 
 class CustomerManagementTest extends TestCase
@@ -43,6 +45,92 @@ class CustomerManagementTest extends TestCase
         $this->actingAs($user)->get(route('customers.index', ['search' => 'ABC1D23']))
             ->assertOk()
             ->assertSee($customer->name);
+    }
+
+    public function test_user_can_import_customers_and_vehicles_from_csv(): void
+    {
+        $user = User::factory()->create();
+        $csv = implode("\n", [
+            'nome,telefone,email,cpf,observacao,placa,marca,modelo,cor,observacao_veiculo',
+            'Maria Importada,(11) 99999-0000,maria.importada@example.com,123.456.789-00,Cliente antigo,abc-1d23,Hyundai,HB20,Prata,Sem adesivos',
+            'Jose Sem Carro,(11) 98888-0000,,,,,,,',
+        ]);
+
+        $this->actingAs($user)->post(route('customers.import'), [
+            'customers_file' => UploadedFile::fake()->createWithContent('clientes.csv', $csv),
+        ])->assertRedirect(route('customers.index'))
+            ->assertSessionHas('import_summary.imported_rows', 2)
+            ->assertSessionHas('import_summary.created_customers', 2)
+            ->assertSessionHas('import_summary.created_vehicles', 1);
+
+        $this->assertDatabaseHas('customers', [
+            'wash_location_id' => $user->wash_location_id,
+            'name' => 'Maria Importada',
+            'phone' => '(11) 99999-0000',
+        ]);
+        $this->assertDatabaseHas('customers', [
+            'wash_location_id' => $user->wash_location_id,
+            'name' => 'Jose Sem Carro',
+        ]);
+        $this->assertDatabaseHas('vehicles', [
+            'wash_location_id' => $user->wash_location_id,
+            'plate' => 'ABC1D23',
+            'brand' => 'Hyundai',
+            'model' => 'HB20',
+            'type' => 'carro',
+        ]);
+        $this->assertDatabaseHas('audit_logs', [
+            'wash_location_id' => $user->wash_location_id,
+            'action' => 'customers.imported',
+        ]);
+    }
+
+    public function test_customer_import_reports_invalid_rows_without_importing_them(): void
+    {
+        $user = User::factory()->create();
+        $csv = implode("\n", [
+            'nome;telefone;placa;marca;modelo;cor',
+            'Cliente Valido;(11) 97777-0000;def-2g34;Toyota;Corolla;Branco',
+            'Cliente Invalido;(11) 96666-0000;ghi-3h45;Fiat;HB20;Azul',
+        ]);
+
+        $this->actingAs($user)->post(route('customers.import'), [
+            'customers_file' => UploadedFile::fake()->createWithContent('clientes.csv', $csv),
+        ])->assertRedirect(route('customers.index'))
+            ->assertSessionHas('import_summary.imported_rows', 1)
+            ->assertSessionHas('import_summary.skipped_rows', 1);
+
+        $this->assertDatabaseHas('customers', [
+            'wash_location_id' => $user->wash_location_id,
+            'name' => 'Cliente Valido',
+        ]);
+        $this->assertDatabaseHas('vehicles', [
+            'wash_location_id' => $user->wash_location_id,
+            'plate' => 'DEF2G34',
+            'brand' => 'Toyota',
+            'model' => 'Corolla',
+        ]);
+        $this->assertDatabaseMissing('customers', [
+            'wash_location_id' => $user->wash_location_id,
+            'name' => 'Cliente Invalido',
+        ]);
+    }
+
+    public function test_user_can_download_customer_import_template(): void
+    {
+        $user = User::factory()->create();
+
+        $response = $this->actingAs($user)
+            ->get(route('customers.import-template'))
+            ->assertOk()
+            ->assertHeader('content-type', 'text/csv; charset=UTF-8');
+
+        $content = $response->streamedContent();
+
+        $this->assertStringContainsString('nome,telefone,email,cpf,observacao,placa,marca,modelo,cor,observacao_veiculo', $content);
+        $this->assertStringContainsString('Maria Silva', $content);
+        $this->assertStringContainsString('Hyundai', $content);
+        $this->assertStringContainsString('HB20', $content);
     }
 
     public function test_customer_index_shows_loyalty_progress(): void
@@ -125,6 +213,67 @@ class CustomerManagementTest extends TestCase
             ->assertSee('Últimos cupons')
             ->assertSee('FID-CLI-123')
             ->assertSee('Ducha simples');
+    }
+
+    public function test_customer_edit_shows_consolidated_history_insights(): void
+    {
+        $location = WashLocation::factory()->create();
+        $user = User::factory()->create(['wash_location_id' => $location->id]);
+        $customer = Customer::factory()->create([
+            'wash_location_id' => $location->id,
+            'name' => 'Cliente Histórico',
+        ]);
+        $vehicle = Vehicle::factory()->for($customer)->create([
+            'wash_location_id' => $location->id,
+            'plate' => 'ABC1D23',
+            'brand' => 'Hyundai',
+            'model' => 'HB20',
+        ]);
+        $service = Service::factory()->create([
+            'wash_location_id' => $location->id,
+            'name' => 'Ducha premium',
+            'base_price' => 90,
+            'active' => true,
+        ]);
+        $firstOrder = $this->createDeliveredOrder($location, $customer, $vehicle, $service);
+        $firstOrder->forceFill([
+            'entered_at' => now()->subDays(8),
+            'total_amount' => 90,
+        ])->save();
+        $secondOrder = $this->createDeliveredOrder($location, $customer, $vehicle, $service);
+        $secondOrder->forceFill([
+            'entered_at' => now()->subDay(),
+            'total_amount' => 90,
+        ])->save();
+
+        Payment::factory()->for($firstOrder)->for($user)->create([
+            'amount' => 120,
+            'paid_at' => now()->subDays(8),
+        ]);
+        Payment::factory()->for($secondOrder)->for($user)->create([
+            'amount' => 60,
+            'paid_at' => now()->subDay(),
+        ]);
+
+        $this->actingAs($user)
+            ->get(route('customers.edit', $customer))
+            ->assertOk()
+            ->assertSee('Histórico consolidado')
+            ->assertSee('Resumo do relacionamento')
+            ->assertSee('Lavagens totais')
+            ->assertSee('Receita gerada')
+            ->assertSee('R$ 180,00')
+            ->assertSee('Ticket médio')
+            ->assertSee('R$ 90,00')
+            ->assertSee('Serviço favorito: Ducha premium')
+            ->assertSee('Veículos do cliente')
+            ->assertSee('ABC1D23')
+            ->assertSee('Hyundai HB20')
+            ->assertSee('2 lavagens')
+            ->assertSee('Serviços mais consumidos')
+            ->assertSee('Ducha premium')
+            ->assertSee('Últimas lavagens')
+            ->assertSee($secondOrder->code);
     }
 
     public function test_loyalty_coupon_page_shows_personalized_coupon_and_whatsapp_action(): void

@@ -118,9 +118,26 @@ class AccessControl
     public static function permissionLabels(): array
     {
         return [
+            self::ACCESS_PRODUCT_ADMIN => 'Acessar Admin Produto',
+            self::VIEW_DASHBOARD => 'Visualizar painel',
+            self::VIEW_KANBAN => 'Visualizar Kanban',
             self::VIEW_WASH_ORDERS => 'Visualizar detalhes da lavagem',
             self::CREATE_WASH_ORDER => 'Abrir e listar lavagens',
-            self::SEND_WASH_NOTIFICATIONS => 'Enviar notificacoes manuais ao cliente',
+            self::UPDATE_WASH_ORDER_STATUS => 'Avançar status da lavagem',
+            self::VIEW_OPERATIONAL_HISTORY => 'Visualizar histórico operacional',
+            self::VIEW_SCHEDULE => 'Visualizar agenda',
+            self::MANAGE_CUSTOMERS => 'Gerenciar clientes',
+            self::MANAGE_VEHICLES => 'Gerenciar veículos',
+            self::MANAGE_SERVICES => 'Gerenciar serviços',
+            self::MANAGE_EMPLOYEES => 'Gerenciar equipe',
+            self::VIEW_AUDIT_LOGS => 'Visualizar auditoria',
+            self::VIEW_FINANCE => 'Visualizar financeiro',
+            self::REGISTER_PAYMENT => 'Registrar pagamentos',
+            self::MANAGE_CASH_REGISTER => 'Gerenciar caixa',
+            self::MANAGE_CREDIT_RECEIVABLES => 'Gerenciar fiado',
+            self::MANAGE_SETTINGS => 'Gerenciar configurações',
+            self::MANAGE_SUBSCRIPTION => 'Gerenciar assinatura',
+            self::SEND_WASH_NOTIFICATIONS => 'Enviar notificações manuais ao cliente',
         ];
     }
 
@@ -130,8 +147,25 @@ class AccessControl
     public static function permissionDescriptions(): array
     {
         return [
+            self::ACCESS_PRODUCT_ADMIN => 'Permite acessar solicitações, unidades e planos do produto.',
+            self::VIEW_DASHBOARD => 'Permite enxergar indicadores operacionais e executivos.',
+            self::VIEW_KANBAN => 'Permite acompanhar o fluxo de lavagens no quadro.',
             self::VIEW_WASH_ORDERS => 'Permite entrar na tela da lavagem pelo Kanban ou link interno.',
             self::CREATE_WASH_ORDER => 'Permite acessar a listagem e cadastrar novas lavagens.',
+            self::UPDATE_WASH_ORDER_STATUS => 'Permite avançar etapas da lavagem conforme regras de equipe e pagamento.',
+            self::VIEW_OPERATIONAL_HISTORY => 'Permite consultar histórico operacional e exportações.',
+            self::VIEW_SCHEDULE => 'Permite visualizar lavagens agendadas quando o módulo Agenda está habilitado.',
+            self::MANAGE_CUSTOMERS => 'Permite criar e editar clientes e acessar fidelidade do cliente.',
+            self::MANAGE_VEHICLES => 'Permite criar e editar veículos vinculados aos clientes.',
+            self::MANAGE_SERVICES => 'Permite criar e editar serviços da unidade.',
+            self::MANAGE_EMPLOYEES => 'Permite criar, editar e desativar colaboradores.',
+            self::VIEW_AUDIT_LOGS => 'Permite consultar ações registradas pelos usuários da unidade.',
+            self::VIEW_FINANCE => 'Permite visualizar indicadores e relatórios financeiros.',
+            self::REGISTER_PAYMENT => 'Permite registrar recebimentos nas lavagens.',
+            self::MANAGE_CASH_REGISTER => 'Permite abrir, movimentar e fechar caixa.',
+            self::MANAGE_CREDIT_RECEIVABLES => 'Permite consultar e baixar contas em fiado.',
+            self::MANAGE_SETTINGS => 'Permite alterar perfil, módulos, tema, fidelidade e permissões da unidade.',
+            self::MANAGE_SUBSCRIPTION => 'Permite acessar assinatura e escolher plano.',
             self::SEND_WASH_NOTIFICATIONS => 'Permite usar os modelos de WhatsApp na tela da lavagem.',
         ];
     }
@@ -151,6 +185,60 @@ class AccessControl
         }
 
         return in_array($permission, self::rolePermissions()[$user->role] ?? [], true);
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    public static function effectivePermissionsFor(User $user): array
+    {
+        $permissions = self::basePermissionsForRole($user->role);
+
+        foreach (self::configurablePermissionsForRole($user->role) as $permission) {
+            if (self::allows($user, $permission)) {
+                $permissions[] = $permission;
+            }
+        }
+
+        return collect($permissions)->unique()->values()->all();
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    public static function basePermissionsForRole(string $role): array
+    {
+        return self::rolePermissions()[$role] ?? [];
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    public static function configurablePermissionsForRole(string $role): array
+    {
+        return self::configurableRolePermissions()[$role] ?? [];
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    public static function enabledConfigurablePermissionsFor(User $user): array
+    {
+        return collect(self::configurablePermissionsForRole($user->role))
+            ->filter(fn (string $permission): bool => self::allows($user, $permission))
+            ->values()
+            ->all();
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    public static function blockedConfigurablePermissionsFor(User $user): array
+    {
+        return collect(self::configurablePermissionsForRole($user->role))
+            ->reject(fn (string $permission): bool => self::allows($user, $permission))
+            ->values()
+            ->all();
     }
 
     /**

@@ -1,4 +1,4 @@
-<x-app.layout heading="Historico operacional" title="Historico operacional · AutoFlow">
+<x-app.layout heading="Histórico operacional" title="Histórico operacional · AutoFlow">
     <div class="space-y-5">
         @include('app.components.errors')
 
@@ -6,15 +6,15 @@
             <div class="mb-5 flex flex-wrap items-start justify-between gap-4 border-b border-slate-200 pb-4">
                 <div>
                     <p class="text-xs font-black uppercase tracking-[0.18em] text-blue-700">Consulta operacional</p>
-                    <h2 class="mt-1 text-2xl font-black text-slate-950">Historico operacional</h2>
-                    <p class="mt-1 text-sm text-slate-500">Audite lavagens por periodo, cliente, placa, servico, funcionario, status e pagamento.</p>
+                    <h2 class="mt-1 text-2xl font-black text-slate-950">Histórico operacional</h2>
+                    <p class="mt-1 text-sm text-slate-500">Audite lavagens por período, cliente, placa, serviço, funcionário, status e pagamento.</p>
                 </div>
                 <a href="{{ route('history.export', request()->query()) }}" class="rounded-xl border border-blue-200 bg-blue-50 px-4 py-2.5 text-sm font-bold text-blue-700 hover:bg-blue-100">Exportar CSV</a>
             </div>
 
             <form method="GET" action="{{ route('history.index') }}" class="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
                 <label class="block">
-                    <span class="text-sm font-bold text-slate-700">Inicio</span>
+                    <span class="text-sm font-bold text-slate-700">Início</span>
                     <input data-period-start name="start" type="date" value="{{ $filters['start'] }}" max="{{ today()->toDateString() }}" class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100">
                     @error('start') <span class="mt-1 block text-sm text-red-600">{{ $message }}</span> @enderror
                 </label>
@@ -41,7 +41,7 @@
                 </label>
 
                 <label class="block">
-                    <span class="text-sm font-bold text-slate-700">Servico</span>
+                    <span class="text-sm font-bold text-slate-700">Serviço</span>
                     <select name="service_id" class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100">
                         <option value="">Todos</option>
                         @foreach ($services as $service)
@@ -61,7 +61,7 @@
                 </label>
 
                 <label class="block">
-                    <span class="text-sm font-bold text-slate-700">Funcionario</span>
+                    <span class="text-sm font-bold text-slate-700">Funcionário</span>
                     <select name="employee_id" class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100">
                         <option value="">Todos</option>
                         @foreach ($employees as $employee)
@@ -127,7 +127,7 @@
                             <p class="text-xs text-slate-500">{{ $washOrder->vehicle->brand }} {{ $washOrder->vehicle->model }}</p>
                         </div>
                         <div class="min-w-0">
-                            <p class="text-xs font-black uppercase tracking-[0.16em] text-slate-500">Servicos</p>
+                            <p class="text-xs font-black uppercase tracking-[0.16em] text-slate-500">Serviços</p>
                             <p class="mt-1 text-sm text-slate-700">{{ $washOrder->services->pluck('pivot.service_name')->filter()->join(', ') ?: '-' }}</p>
                             <p class="mt-2 text-xs font-black uppercase tracking-[0.16em] text-slate-500">Equipe</p>
                             <p class="mt-1 text-sm text-slate-700">{{ $washOrder->teamMembers->isNotEmpty() ? $washOrder->teamMembers->pluck('name')->join(', ') : ($washOrder->assignedUser?->name ?? '-') }}</p>

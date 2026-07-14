@@ -113,15 +113,15 @@ class ManualWhatsappNotificationTest extends TestCase
         $this->actingAs($user)
             ->post(route('wash-orders.notifications.whatsapp-manual.store', $washOrder), [
                 'template_key' => CustomerNotification::TEMPLATE_PROMOTION,
-                'notes' => '10% de desconto na proxima lavagem completa.',
+                'notes' => '10% de desconto na próxima lavagem completa.',
             ])
             ->assertRedirect(route('wash-orders.show', $washOrder));
 
         $notification = CustomerNotification::first();
 
         $this->assertSame(CustomerNotification::TEMPLATE_PROMOTION, $notification->template_key);
-        $this->assertStringContainsString('condicao especial', $notification->message);
-        $this->assertStringContainsString('10% de desconto na proxima lavagem completa.', $notification->message);
+        $this->assertStringContainsString('condição especial', $notification->message);
+        $this->assertStringContainsString('10% de desconto na próxima lavagem completa.', $notification->message);
     }
 
     public function test_wash_order_detail_shows_manual_notification_area(): void
@@ -132,11 +132,75 @@ class ManualWhatsappNotificationTest extends TestCase
         $this->actingAs($user)
             ->get(route('wash-orders.show', $washOrder))
             ->assertOk()
-            ->assertSee('Notificacao manual')
+            ->assertSee('Notificação manual')
             ->assertSee('Prepare a mensagem e envie manualmente pelo WhatsApp')
             ->assertSee('Lavagem iniciada')
-            ->assertSee('Lavagem concluida')
+            ->assertSee('Lavagem concluída')
             ->assertSee('Promocao')
             ->assertSee('Preparar mensagem');
+    }
+
+    public function test_status_change_prepares_event_notification_for_customer(): void
+    {
+        $user = User::factory()->create(['role' => User::ROLE_ADMIN]);
+        $washOrder = WashOrder::factory()->create([
+            'wash_location_id' => $user->wash_location_id,
+            'status' => WashOrder::STATUS_AWAITING,
+        ]);
+        $washOrder->customer->update([
+            'name' => 'Cliente Evento',
+            'phone' => '(11) 95555-4444',
+        ]);
+
+        $this->actingAs($user)->patch(route('wash-orders.update-status', $washOrder), [
+            'status' => WashOrder::STATUS_WASHING,
+        ])->assertRedirect();
+
+        $this->assertDatabaseHas('customer_notifications', [
+            'wash_order_id' => $washOrder->id,
+            'customer_id' => $washOrder->customer_id,
+            'user_id' => $user->id,
+            'channel' => CustomerNotification::CHANNEL_WHATSAPP_MANUAL,
+            'template_key' => CustomerNotification::TEMPLATE_WASH_STARTED,
+            'target' => '5511955554444',
+            'status' => CustomerNotification::STATUS_PREPARED,
+            'notes' => 'Mensagem preparada automaticamente pela mudança de status.',
+        ]);
+
+        $notification = CustomerNotification::query()->firstOrFail();
+
+        $this->assertStringContainsString('iniciamos a lavagem', $notification->message);
+        $this->assertStringStartsWith('https://wa.me/5511955554444?text=', $notification->action_url);
+    }
+
+    public function test_event_notification_is_not_prepared_twice_for_same_template(): void
+    {
+        $user = User::factory()->create(['role' => User::ROLE_ADMIN]);
+        $washOrder = WashOrder::factory()->create([
+            'wash_location_id' => $user->wash_location_id,
+            'status' => WashOrder::STATUS_AWAITING,
+        ]);
+
+        CustomerNotification::query()->create([
+            'wash_order_id' => $washOrder->id,
+            'customer_id' => $washOrder->customer_id,
+            'user_id' => $user->id,
+            'channel' => CustomerNotification::CHANNEL_WHATSAPP_MANUAL,
+            'template_key' => CustomerNotification::TEMPLATE_WASH_STARTED,
+            'target' => '5511999999999',
+            'message' => 'Mensagem já preparada.',
+            'action_url' => 'https://wa.me/5511999999999?text=Mensagem',
+            'status' => CustomerNotification::STATUS_PREPARED,
+            'prepared_at' => now(),
+        ]);
+
+        $this->actingAs($user)->patch(route('wash-orders.update-status', $washOrder), [
+            'status' => WashOrder::STATUS_WASHING,
+        ])->assertRedirect();
+
+        $this->assertSame(1, CustomerNotification::query()
+            ->where('wash_order_id', $washOrder->id)
+            ->where('template_key', CustomerNotification::TEMPLATE_WASH_STARTED)
+            ->count());
     }
 }

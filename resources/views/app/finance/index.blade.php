@@ -26,7 +26,7 @@
 
             <form method="GET" action="{{ route('finance.index') }}" class="mt-5 grid gap-3 lg:grid-cols-[1fr_1fr_auto_auto] lg:items-end">
                 <label class="block">
-                    <span class="text-sm font-bold text-slate-700">Inicio</span>
+                    <span class="text-sm font-bold text-slate-700">Início</span>
                     <input data-period-start name="start" type="date" value="{{ $start }}" max="{{ today()->toDateString() }}" class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100">
                     @error('start') <span class="mt-1 block text-sm text-red-600">{{ $message }}</span> @enderror
                 </label>
@@ -93,20 +93,21 @@
                 </div>
                 <div class="divide-y divide-slate-100">
                     @forelse ($payments as $payment)
-                        <article class="grid gap-4 px-5 py-4 lg:grid-cols-[150px_1fr_120px_140px_160px] lg:items-center">
-                            <div>
+                        <article class="grid gap-4 px-5 py-4 xl:grid-cols-[145px_minmax(0,1.35fr)_minmax(0,150px)_120px_minmax(0,170px)] xl:items-center">
+                            <div class="min-w-0">
                                 <p class="text-xs font-black uppercase tracking-[0.16em] text-slate-500">Data</p>
                                 <p class="mt-1 text-sm font-bold text-slate-900">{{ $payment->paid_at?->format('d/m/Y H:i') ?? '-' }}</p>
                             </div>
                             <div class="min-w-0">
-                                <a href="{{ route('wash-orders.show', $payment->washOrder) }}" class="truncate font-black text-blue-700 hover:text-blue-900">{{ $payment->washOrder->code }}</a>
-                                <p class="mt-1 truncate text-sm text-slate-500">{{ $payment->washOrder->customer->name }} · {{ $payment->washOrder->vehicle->plate }}</p>
+                                <p class="text-xs font-black uppercase tracking-[0.16em] text-slate-500">Lavagem</p>
+                                <a href="{{ route('wash-orders.show', $payment->washOrder) }}" class="mt-1 block max-w-full truncate font-black text-blue-700 hover:text-blue-900" title="{{ $payment->washOrder->code }}">{{ $payment->washOrder->code }}</a>
+                                <p class="mt-1 truncate text-sm text-slate-500" title="{{ $payment->washOrder->customer->name }} · {{ $payment->washOrder->vehicle->plate }}">{{ $payment->washOrder->customer->name }} · {{ $payment->washOrder->vehicle->plate }}</p>
                             </div>
-                            <div>
-                                <p class="text-xs font-black uppercase tracking-[0.16em] text-slate-500">Metodo</p>
+                            <div class="min-w-0">
+                                <p class="text-xs font-black uppercase tracking-[0.16em] text-slate-500">Método</p>
                                 <p class="mt-1 text-sm font-bold text-slate-900">{{ $payment->methodLabel() }}</p>
                             </div>
-                            <div>
+                            <div class="min-w-0">
                                 <p class="text-xs font-black uppercase tracking-[0.16em] text-slate-500">Valor</p>
                                 <p class="mt-1 font-black text-emerald-700">R$ {{ number_format((float) $payment->amount, 2, ',', '.') }}</p>
                             </div>

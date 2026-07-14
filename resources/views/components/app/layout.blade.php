@@ -31,6 +31,17 @@
 @php($homeRoute = $isSuperAdmin ? route('super-admin.location-requests.index') : ($canAccess(\App\Support\Access\AccessControl::VIEW_DASHBOARD) ? route('dashboard') : route('kanban')))
 @php($brandLogoUrl = $currentLocation?->logoUrl() ?? asset('images/autoflow-logo.png'))
 @php($brandLogoAlt = $currentLocation?->name ?? 'AutoFlow')
+@php($mobilePrimaryNav = $isSuperAdmin ? [
+    ['label' => 'Solicitações', 'icon' => 'S', 'href' => route('super-admin.location-requests.index'), 'active' => request()->routeIs('super-admin.location-requests.*')],
+    ['label' => 'Unidades', 'icon' => 'U', 'href' => route('super-admin.locations.index'), 'active' => request()->routeIs('super-admin.locations.*')],
+    ['label' => 'Planos', 'icon' => 'P', 'href' => route('super-admin.plans.index'), 'active' => request()->routeIs('super-admin.plans.*')],
+] : collect([
+    ['label' => 'Painel', 'icon' => 'P', 'href' => $canAccess(\App\Support\Access\AccessControl::VIEW_DASHBOARD) ? route('dashboard') : null, 'active' => request()->routeIs('dashboard')],
+    ['label' => 'Lavagens', 'icon' => 'L', 'href' => $canAccess(\App\Support\Access\AccessControl::CREATE_WASH_ORDER) ? route('wash-orders.index') : null, 'active' => request()->routeIs('wash-orders.*')],
+    ['label' => 'Kanban', 'icon' => 'K', 'href' => $canAccess(\App\Support\Access\AccessControl::VIEW_KANBAN) ? route('kanban') : null, 'active' => request()->routeIs('kanban')],
+    ['label' => 'Clientes', 'icon' => 'C', 'href' => $canAccess(\App\Support\Access\AccessControl::MANAGE_CUSTOMERS) ? route('customers.index') : null, 'active' => request()->routeIs('customers.*')],
+    ['label' => 'Financeiro', 'icon' => '$', 'href' => $canAccess(\App\Support\Access\AccessControl::VIEW_FINANCE) ? route('finance.index') : null, 'active' => request()->routeIs('finance.*')],
+])->filter(fn ($item) => filled($item['href']))->take(5)->values()->all())
 <body class="{{ $appTheme === 'dark' ? 'bg-slate-950' : 'bg-[#061832]' }} text-slate-950 antialiased" data-theme="{{ $appTheme }}" data-theme-effective="{{ $appTheme === 'system' ? 'light' : $appTheme }}">
     <div class="min-h-screen p-2 lg:p-3" data-app-shell>
         <aside data-sidebar class="fixed inset-y-3 left-3 z-30 hidden w-[17rem] flex-col rounded-2xl {{ $appTheme === 'dark' ? 'bg-slate-950' : 'bg-[#061b36]' }} px-3 py-3 text-white shadow-2xl shadow-black/30 transition-transform duration-200 lg:flex">
@@ -58,11 +69,11 @@
                         ['route' => 'wash-orders.index', 'label' => 'Lavagens', 'icon' => 'L', 'permission' => \App\Support\Access\AccessControl::CREATE_WASH_ORDER],
                         ['route' => 'kanban', 'label' => 'Kanban de Lavagens', 'icon' => 'K', 'permission' => \App\Support\Access\AccessControl::VIEW_KANBAN],
                         ['route' => 'schedule.index', 'label' => 'Agenda', 'icon' => 'AG', 'permission' => \App\Support\Access\AccessControl::VIEW_SCHEDULE, 'module' => 'module_schedule'],
-                        ['route' => 'history.index', 'label' => 'Historico', 'icon' => 'H', 'permission' => \App\Support\Access\AccessControl::VIEW_OPERATIONAL_HISTORY],
+                        ['route' => 'history.index', 'label' => 'Histórico', 'icon' => 'H', 'permission' => \App\Support\Access\AccessControl::VIEW_OPERATIONAL_HISTORY],
                         ['route' => 'customers.index', 'label' => 'Clientes', 'icon' => 'C', 'permission' => \App\Support\Access\AccessControl::MANAGE_CUSTOMERS],
                         ['route' => 'loyalty-reports.index', 'label' => 'Fidelidade', 'icon' => 'FID', 'permission' => \App\Support\Access\AccessControl::MANAGE_CUSTOMERS],
-                        ['route' => 'vehicles.index', 'label' => 'Veiculos', 'icon' => 'V', 'permission' => \App\Support\Access\AccessControl::MANAGE_VEHICLES],
-                        ['route' => 'services.index', 'label' => 'Servicos', 'icon' => 'S', 'permission' => \App\Support\Access\AccessControl::MANAGE_SERVICES],
+                        ['route' => 'vehicles.index', 'label' => 'Veículos', 'icon' => 'V', 'permission' => \App\Support\Access\AccessControl::MANAGE_VEHICLES],
+                        ['route' => 'services.index', 'label' => 'Serviços', 'icon' => 'S', 'permission' => \App\Support\Access\AccessControl::MANAGE_SERVICES],
                         ['route' => 'employees.index', 'label' => 'Equipe', 'icon' => 'E', 'permission' => \App\Support\Access\AccessControl::MANAGE_EMPLOYEES],
                         ['route' => 'audit-logs.index', 'label' => 'Auditoria', 'icon' => 'A', 'permission' => \App\Support\Access\AccessControl::VIEW_AUDIT_LOGS],
                         ['route' => 'finance.index', 'label' => 'Financeiro', 'icon' => '$', 'permission' => \App\Support\Access\AccessControl::VIEW_FINANCE],
@@ -80,7 +91,7 @@
                     @foreach ([
                         ['label' => 'Relatorios', 'icon' => 'R', 'href' => route('reports.executive'), 'permission' => \App\Support\Access\AccessControl::VIEW_FINANCE],
                         ['label' => 'Assinatura', 'icon' => 'A', 'href' => route('subscriptions.show'), 'permission' => \App\Support\Access\AccessControl::MANAGE_SUBSCRIPTION],
-                        ['label' => 'Configuracoes', 'icon' => 'G', 'href' => route('settings.edit'), 'permission' => \App\Support\Access\AccessControl::MANAGE_SETTINGS],
+                        ['label' => 'Configurações', 'icon' => 'G', 'href' => route('settings.edit'), 'permission' => \App\Support\Access\AccessControl::MANAGE_SETTINGS],
                     ] as $item)
                         @continue(! $canAccess($item['permission']))
                         <a href="{{ $item['href'] }}" class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-slate-200 transition hover:bg-white/10 hover:text-white">
@@ -103,9 +114,9 @@
             </div>
         </aside>
 
-        <div data-content class="min-h-[calc(100vh-16px)] overflow-hidden rounded-2xl {{ $appTheme === 'dark' ? 'bg-slate-900 text-slate-100' : 'bg-slate-50' }} shadow-2xl shadow-black/30 transition-[margin] duration-200 lg:ml-[18rem]">
-            <header class="sticky top-0 z-20 border-b {{ $appTheme === 'dark' ? 'border-slate-800 bg-slate-950/95' : 'border-slate-200 bg-white/95' }} px-4 py-3 backdrop-blur sm:px-6 lg:px-7">
-                <div class="flex flex-wrap items-center justify-between gap-3">
+        <div data-content class="min-h-[calc(100vh-16px)] overflow-visible rounded-2xl {{ $appTheme === 'dark' ? 'bg-slate-900 text-slate-100' : 'bg-slate-50' }} shadow-2xl shadow-black/30 transition-[margin] duration-200 lg:ml-[18rem]">
+            <header class="sticky top-0 z-20 border-b {{ $appTheme === 'dark' ? 'border-slate-800 bg-slate-950/95' : 'border-slate-200 bg-white/95' }} px-3 py-3 backdrop-blur sm:px-6 lg:px-7">
+                <div class="flex flex-wrap items-center justify-between gap-2 sm:gap-3">
                     <div class="flex min-w-0 items-center gap-3">
                         <button type="button" data-sidebar-toggle aria-label="Ocultar menu" title="Ocultar menu" aria-expanded="true" class="hidden h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700 shadow-sm transition hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-100 lg:inline-flex">
                             <svg data-sidebar-icon-open xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -132,7 +143,7 @@
                         </div>
                     </div>
 
-                    <div class="flex min-w-0 items-center gap-2">
+                    <div class="flex min-w-0 flex-1 items-center justify-end gap-2 sm:flex-none">
                         <div class="hidden h-12 max-w-[18rem] items-center gap-3 rounded-xl border {{ $appTheme === 'dark' ? 'border-slate-700 bg-slate-900' : 'border-slate-200 bg-white' }} px-3 shadow-sm md:flex">
                             <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg {{ $currentLocation ? 'bg-blue-50 text-blue-700' : 'bg-slate-100 text-slate-700' }} text-xs font-black">{{ $currentLocation ? strtoupper(substr($currentLocation->name, 0, 1)) : 'A' }}</span>
                             <div class="min-w-0">
@@ -187,7 +198,7 @@
                                 </div>
                             </div>
                         </details>
-                        <div class="flex h-12 items-center gap-2 rounded-xl border {{ $appTheme === 'dark' ? 'border-slate-700 bg-slate-900' : 'border-slate-200 bg-white' }} px-3 shadow-sm">
+                        <div class="hidden h-12 items-center gap-2 rounded-xl border {{ $appTheme === 'dark' ? 'border-slate-700 bg-slate-900' : 'border-slate-200 bg-white' }} px-3 shadow-sm sm:flex">
                             <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-cyan-400 text-xs font-bold text-white">{{ strtoupper(substr(auth()->user()->name, 0, 1)) }}</span>
                             <div class="hidden min-w-0 sm:block">
                                 <p class="max-w-32 truncate text-sm font-semibold">{{ auth()->user()->name }}</p>
@@ -207,7 +218,7 @@
                     </div>
                 </div>
 
-                <nav class="mt-3 flex gap-2 overflow-x-auto pb-0.5 lg:hidden">
+                <nav class="mt-3 flex gap-2 overflow-x-auto pb-0.5 lg:hidden" aria-label="Navegacao secundaria">
                     @if ($isSuperAdmin)
                         <a href="{{ route('super-admin.location-requests.index') }}" class="shrink-0 rounded-lg border border-slate-200 px-3 py-1.5 text-sm font-medium">Solicitações</a>
                         <a href="{{ route('super-admin.locations.index') }}" class="shrink-0 rounded-lg border border-slate-200 px-3 py-1.5 text-sm font-medium">Unidades</a>
@@ -226,14 +237,14 @@
                             <a href="{{ route('schedule.index') }}" class="shrink-0 rounded-lg border border-slate-200 px-3 py-1.5 text-sm font-medium">Agenda</a>
                         @endif
                         @if ($canAccess(\App\Support\Access\AccessControl::VIEW_OPERATIONAL_HISTORY))
-                            <a href="{{ route('history.index') }}" class="shrink-0 rounded-lg border border-slate-200 px-3 py-1.5 text-sm font-medium">Historico</a>
+                            <a href="{{ route('history.index') }}" class="shrink-0 rounded-lg border border-slate-200 px-3 py-1.5 text-sm font-medium">Histórico</a>
                         @endif
                         @if ($canAccess(\App\Support\Access\AccessControl::MANAGE_CUSTOMERS))
                             <a href="{{ route('customers.index') }}" class="shrink-0 rounded-lg border border-slate-200 px-3 py-1.5 text-sm font-medium">Clientes</a>
                             <a href="{{ route('loyalty-reports.index') }}" class="shrink-0 rounded-lg border border-slate-200 px-3 py-1.5 text-sm font-medium">Fidelidade</a>
                         @endif
                         @if ($canAccess(\App\Support\Access\AccessControl::MANAGE_VEHICLES))
-                            <a href="{{ route('vehicles.index') }}" class="shrink-0 rounded-lg border border-slate-200 px-3 py-1.5 text-sm font-medium">Veiculos</a>
+                            <a href="{{ route('vehicles.index') }}" class="shrink-0 rounded-lg border border-slate-200 px-3 py-1.5 text-sm font-medium">Veículos</a>
                         @endif
                         @if ($canAccess(\App\Support\Access\AccessControl::VIEW_FINANCE))
                             <a href="{{ route('finance.index') }}" class="shrink-0 rounded-lg border border-slate-200 px-3 py-1.5 text-sm font-medium">Financeiro</a>
@@ -259,13 +270,13 @@
                             <a href="{{ route('subscriptions.show') }}" class="shrink-0 rounded-lg border border-slate-200 px-3 py-1.5 text-sm font-medium">Assinatura</a>
                         @endif
                         @if ($canAccess(\App\Support\Access\AccessControl::MANAGE_SETTINGS))
-                            <a href="{{ route('settings.edit') }}" class="shrink-0 rounded-lg border border-slate-200 px-3 py-1.5 text-sm font-medium">Configuracoes</a>
+                            <a href="{{ route('settings.edit') }}" class="shrink-0 rounded-lg border border-slate-200 px-3 py-1.5 text-sm font-medium">Configurações</a>
                         @endif
                     @endif
                 </nav>
             </header>
 
-            <main class="px-4 py-5 sm:px-6 lg:px-8">
+            <main class="px-4 pb-24 pt-5 sm:px-6 lg:px-8 lg:pb-5">
                 @if (session('status'))
                     <div class="mb-5 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">{{ session('status') }}</div>
                 @endif
@@ -285,6 +296,15 @@
                 {{ $slot }}
             </main>
         </div>
+
+        <nav data-mobile-bottom-nav class="fixed inset-x-2 bottom-2 z-40 grid gap-1 rounded-2xl border border-slate-200 bg-white/95 p-1.5 shadow-2xl shadow-slate-950/20 backdrop-blur lg:hidden" style="grid-template-columns: repeat({{ max(1, count($mobilePrimaryNav)) }}, minmax(0, 1fr));" aria-label="Navegacao principal mobile">
+            @foreach ($mobilePrimaryNav as $item)
+                <a href="{{ $item['href'] }}" class="flex min-h-14 min-w-0 flex-col items-center justify-center rounded-xl px-1 py-1 text-center text-[11px] font-black transition {{ $item['active'] ? 'bg-blue-700 text-white shadow-sm' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-950' }}">
+                    <span class="flex h-6 w-6 items-center justify-center rounded-lg {{ $item['active'] ? 'bg-white/15 text-white' : 'bg-slate-100 text-slate-700' }} text-[10px]">{{ $item['icon'] }}</span>
+                    <span class="mt-0.5 max-w-full truncate">{{ $item['label'] }}</span>
+                </a>
+            @endforeach
+        </nav>
     </div>
 
     <script>

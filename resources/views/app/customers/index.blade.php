@@ -24,18 +24,75 @@
             </form>
         </section>
 
+        @if (session('import_summary'))
+            @php($importSummary = session('import_summary'))
+            <section class="rounded-2xl border border-emerald-200 bg-emerald-50 p-5 shadow-sm">
+                <div class="flex flex-wrap items-start justify-between gap-4">
+                    <div>
+                        <p class="text-xs font-black uppercase tracking-[0.18em] text-emerald-700">Importação</p>
+                        <h2 class="mt-1 font-black text-emerald-950">Resumo do arquivo</h2>
+                        <p class="mt-1 text-sm font-semibold text-emerald-800">
+                            {{ $importSummary['imported_rows'] }} linha(s) importada(s), {{ $importSummary['skipped_rows'] }} ignorada(s).
+                        </p>
+                    </div>
+                    <div class="grid grid-cols-2 gap-2 text-sm font-bold text-emerald-950 sm:grid-cols-4">
+                        <span class="rounded-xl bg-white px-3 py-2">{{ $importSummary['created_customers'] }} clientes novos</span>
+                        <span class="rounded-xl bg-white px-3 py-2">{{ $importSummary['updated_customers'] }} atualizados</span>
+                        <span class="rounded-xl bg-white px-3 py-2">{{ $importSummary['created_vehicles'] }} veículos novos</span>
+                        <span class="rounded-xl bg-white px-3 py-2">{{ $importSummary['updated_vehicles'] }} atualizados</span>
+                    </div>
+                </div>
+                @if (! empty($importSummary['errors']))
+                    <div class="mt-4 rounded-2xl border border-amber-200 bg-white p-4">
+                        <p class="text-sm font-black text-amber-800">Linhas não importadas</p>
+                        <ul class="mt-2 space-y-1 text-sm font-semibold text-amber-700">
+                            @foreach (array_slice($importSummary['errors'], 0, 5) as $error)
+                                <li>{{ $error }}</li>
+                            @endforeach
+                        </ul>
+                        @if (count($importSummary['errors']) > 5)
+                            <p class="mt-2 text-xs font-bold text-amber-700">Mais {{ count($importSummary['errors']) - 5 }} erro(s) oculto(s).</p>
+                        @endif
+                    </div>
+                @endif
+            </section>
+        @endif
+
         <section class="grid gap-3 md:grid-cols-3">
             <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
                 <p class="text-sm font-bold text-slate-500">Clientes na lista</p>
                 <p class="mt-2 text-3xl font-black text-slate-950">{{ $customers->total() }}</p>
             </div>
             <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-                <p class="text-sm font-bold text-slate-500">Veiculos nesta pagina</p>
+                <p class="text-sm font-bold text-slate-500">Veículos nesta página</p>
                 <p class="mt-2 text-3xl font-black text-blue-700">{{ $customers->getCollection()->sum('vehicles_count') }}</p>
             </div>
             <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-                <p class="text-sm font-bold text-slate-500">Pagina atual</p>
+                <p class="text-sm font-bold text-slate-500">Página atual</p>
                 <p class="mt-2 text-3xl font-black text-emerald-700">{{ $customers->count() }}</p>
+            </div>
+        </section>
+
+        <section class="rounded-2xl border border-blue-100 bg-blue-50 p-5 shadow-sm">
+            <div class="grid gap-5 lg:grid-cols-[1fr_420px] lg:items-start">
+                <div>
+                    <p class="text-xs font-black uppercase tracking-[0.18em] text-blue-700">Importação em lote</p>
+                    <h2 class="mt-1 font-black text-blue-950">Clientes e veículos por CSV</h2>
+                    <p class="mt-1 text-sm font-semibold text-blue-800">Use para cadastrar uma carteira antiga sem digitar cliente por cliente. A placa é opcional; quando informada, marca e modelo precisam existir no catálogo de veículos.</p>
+                    <div class="mt-3 rounded-2xl bg-white p-3 text-xs font-bold text-slate-600">
+                        Cabeçalho aceito: <span class="text-slate-950">nome,telefone,email,cpf,observacao,placa,marca,modelo,cor,observacao_veiculo</span>
+                    </div>
+                    <a href="{{ route('customers.import-template') }}" class="mt-3 inline-flex rounded-xl border border-blue-200 bg-white px-4 py-2 text-sm font-black text-blue-700 hover:bg-blue-100">Baixar modelo CSV</a>
+                </div>
+                <form method="POST" action="{{ route('customers.import') }}" enctype="multipart/form-data" class="rounded-2xl bg-white p-4 shadow-sm">
+                    @csrf
+                    <label class="block">
+                        <span class="text-sm font-black text-blue-950">Arquivo CSV</span>
+                        <input type="file" name="customers_file" accept=".csv,text/csv,text/plain" class="mt-2 w-full rounded-xl border border-blue-100 bg-blue-50 px-3 py-2.5 text-sm font-bold text-blue-950 file:mr-3 file:rounded-lg file:border-0 file:bg-blue-700 file:px-3 file:py-2 file:text-sm file:font-bold file:text-white">
+                        @error('customers_file') <span class="mt-1 block text-sm font-semibold text-red-600">{{ $message }}</span> @enderror
+                    </label>
+                    <button class="mt-4 w-full rounded-xl bg-blue-700 px-4 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-blue-800">Importar clientes</button>
+                </form>
             </div>
         </section>
 
@@ -55,7 +112,7 @@
                         </div>
                         <div class="text-sm text-slate-600">
                             <p class="font-bold text-slate-900">{{ $customer->phone }}</p>
-                            <p class="truncate">{{ $customer->email ?: 'E-mail nao informado' }}</p>
+                            <p class="truncate">{{ $customer->email ?: 'E-mail não informado' }}</p>
                         </div>
                         <div>
                             @php($progress = $customer->loyalty_progress)

@@ -5,6 +5,7 @@ namespace Tests\Feature\App;
 use App\Models\Service;
 use App\Models\User;
 use App\Models\WashLocation;
+use App\Models\WashOrder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -41,6 +42,9 @@ class WashLocationMapTest extends TestCase
             ->assertSee('Ver na lista')
             ->assertSee('Lava Rapido Central')
             ->assertSee('Ver detalhes')
+            ->assertSee('<link rel="canonical" href="'.route('public.locations.index').'">', false)
+            ->assertSee('"@type":"ItemList"', false)
+            ->assertSee('"numberOfItems":1', false)
             ->assertSee('/lava-rapidos/lava-rapido-central', false)
             ->assertSee('Av. das Nacoes, 1580')
             ->assertSee('-23.54891')
@@ -64,6 +68,31 @@ class WashLocationMapTest extends TestCase
             ->assertSee('data-map-geolocation', false)
             ->assertSee('data-map-reset', false)
             ->assertSee('https://wa.me/5511988881101', false);
+    }
+
+    public function test_authenticated_user_sees_panel_action_in_public_headers_instead_of_login(): void
+    {
+        $user = User::factory()->create(['name' => 'Adriano Logado']);
+        $location = WashLocation::factory()->create([
+            'name' => 'Lava Logado',
+            'status' => WashLocation::STATUS_OPEN,
+        ]);
+
+        $this->actingAs($user)
+            ->get(route('public.locations.index'))
+            ->assertOk()
+            ->assertSee('Adriano Logado')
+            ->assertSee('Painel')
+            ->assertSee(route('dashboard'), false)
+            ->assertDontSee('>Entrar<', false);
+
+        $this->actingAs($user)
+            ->get(route('public.locations.show', $location))
+            ->assertOk()
+            ->assertSee('Adriano Logado')
+            ->assertSee('Painel')
+            ->assertSee(route('dashboard'), false)
+            ->assertDontSee('>Entrar<', false);
     }
 
     public function test_public_map_ignores_legacy_visible_location_without_slug(): void
@@ -236,6 +265,9 @@ class WashLocationMapTest extends TestCase
             ->assertOk()
             ->assertSee('Detalhes da unidade')
             ->assertSee('Lava Rapido Central')
+            ->assertSee('<link rel="canonical" href="'.route('public.locations.show', ['location' => $location->slug]).'">', false)
+            ->assertSee('"@type":"AutoWash"', false)
+            ->assertSee('"priceCurrency":"BRL"', false)
             ->assertSee('storage/wash-location-logos/public-central.png', false)
             ->assertSee('Av. das Nacoes, 1580')
             ->assertSee('Serviços disponíveis')
@@ -244,6 +276,131 @@ class WashLocationMapTest extends TestCase
             ->assertSee('Chamar no WhatsApp')
             ->assertSee('Como chegar')
             ->assertSee('https://wa.me/5511988881101', false);
+    }
+
+    public function test_public_location_detail_shows_real_time_business_hours_summary(): void
+    {
+        Carbon::setTestNow('2026-06-22 10:00:00');
+
+        try {
+            $location = WashLocation::factory()->create([
+                'name' => 'Lava Horario Certo',
+                'address' => 'Av. Horario, 100',
+                'district' => 'Centro',
+                'city' => 'Sao Paulo',
+                'state' => 'SP',
+                'status' => WashLocation::STATUS_OPEN,
+                'business_hours' => [
+                    'monday' => ['is_open' => true, 'opens' => '08:00', 'closes' => '18:00'],
+                    'tuesday' => ['is_open' => true, 'opens' => '08:00', 'closes' => '18:00'],
+                    'wednesday' => ['is_open' => true, 'opens' => '08:00', 'closes' => '18:00'],
+                    'thursday' => ['is_open' => true, 'opens' => '08:00', 'closes' => '18:00'],
+                    'friday' => ['is_open' => true, 'opens' => '08:00', 'closes' => '18:00'],
+                    'saturday' => ['is_open' => false, 'opens' => '08:00', 'closes' => '18:00'],
+                    'sunday' => ['is_open' => false, 'opens' => '08:00', 'closes' => '18:00'],
+                ],
+            ]);
+
+            $this->get(route('public.locations.show', $location))
+                ->assertOk()
+                ->assertSee('Funcionamento hoje')
+                ->assertSee('Aberto até 18:00')
+                ->assertSee('Segunda')
+                ->assertSee('08:00 às 18:00')
+                ->assertSee('Sábado')
+                ->assertSee('Fechado')
+                ->assertSee('Horários de funcionamento');
+        } finally {
+            Carbon::setTestNow();
+        }
+    }
+
+    public function test_public_location_detail_shows_only_published_testimonials_from_location(): void
+    {
+        $location = WashLocation::factory()->create(['name' => 'Lava Depoimentos']);
+        $service = Service::factory()->create([
+            'wash_location_id' => $location->id,
+            'name' => 'Ducha completa',
+        ]);
+        $publishedOrder = WashOrder::factory()->create([
+            'wash_location_id' => $location->id,
+            'status' => WashOrder::STATUS_DELIVERED,
+            'customer_review_rating' => 5,
+            'customer_review_comment' => 'Atendimento muito cuidadoso e entrega rápida.',
+            'customer_review_public' => true,
+            'customer_reviewed_at' => now(),
+        ]);
+        $publishedOrder->customer->update(['name' => 'Maria Santos']);
+        $publishedOrder->services()->attach($service, [
+            'service_name' => $service->name,
+            'price' => $service->base_price,
+            'estimated_minutes' => $service->estimated_minutes,
+        ]);
+        WashOrder::factory()->create([
+            'wash_location_id' => $location->id,
+            'status' => WashOrder::STATUS_DELIVERED,
+            'customer_review_rating' => 2,
+            'customer_review_comment' => 'Depoimento sem autorização pública.',
+            'customer_review_public' => false,
+            'customer_reviewed_at' => now(),
+        ]);
+        $otherLocation = WashLocation::factory()->create(['name' => 'Outra Unidade Depoimento']);
+        WashOrder::factory()->create([
+            'wash_location_id' => $otherLocation->id,
+            'status' => WashOrder::STATUS_DELIVERED,
+            'customer_review_rating' => 5,
+            'customer_review_comment' => 'Depoimento de outra unidade.',
+            'customer_review_public' => true,
+            'customer_reviewed_at' => now(),
+        ]);
+
+        $this->get(route('public.locations.show', $location))
+            ->assertOk()
+            ->assertSee('Avaliações dos clientes')
+            ->assertSee('Maria S.')
+            ->assertSee('Ducha completa')
+            ->assertSee('Atendimento muito cuidadoso e entrega rápida.')
+            ->assertSee('5,0 ★')
+            ->assertSee('"@type":"AggregateRating"', false)
+            ->assertDontSee('Depoimento sem autorização pública')
+            ->assertDontSee('Depoimento de outra unidade');
+    }
+
+    public function test_public_map_shows_location_review_summary_when_available(): void
+    {
+        $location = WashLocation::factory()->create(['name' => 'Lava Bem Avaliado']);
+        WashOrder::factory()->create([
+            'wash_location_id' => $location->id,
+            'status' => WashOrder::STATUS_DELIVERED,
+            'customer_review_rating' => 5,
+            'customer_review_comment' => 'Excelente atendimento.',
+            'customer_review_public' => true,
+            'customer_reviewed_at' => now(),
+        ]);
+        WashOrder::factory()->create([
+            'wash_location_id' => $location->id,
+            'status' => WashOrder::STATUS_DELIVERED,
+            'customer_review_rating' => 4,
+            'customer_review_comment' => 'Muito bom.',
+            'customer_review_public' => true,
+            'customer_reviewed_at' => now(),
+        ]);
+        WashOrder::factory()->create([
+            'wash_location_id' => $location->id,
+            'status' => WashOrder::STATUS_DELIVERED,
+            'customer_review_rating' => 1,
+            'customer_review_comment' => 'Nao deve entrar na media.',
+            'customer_review_public' => false,
+            'customer_reviewed_at' => now(),
+        ]);
+
+        $this->get(route('public.locations.index'))
+            ->assertOk()
+            ->assertSee('Lava Bem Avaliado')
+            ->assertSee('★ 4,5 · 2 avaliações', false)
+            ->assertSee('"rating_average":4.5', false)
+            ->assertSee('"rating_count":2', false)
+            ->assertDontSee('Nao deve entrar na media.');
     }
 
     public function test_public_location_without_coordinates_uses_address_search_instead_of_fake_marker(): void

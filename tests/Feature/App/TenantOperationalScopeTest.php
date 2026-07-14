@@ -75,7 +75,7 @@ class TenantOperationalScopeTest extends TestCase
             ->assertSee('Unidade atual')
             ->assertSee('Lava Rápido do Owner')
             ->assertDontSee('Lava Rápido de Outro Cliente')
-            ->assertSee('Os indicadores desta tela estao filtrados por este lava-rapido.');
+            ->assertSee('Os indicadores desta tela estão filtrados por este lava-rápido.');
     }
 
     private function createLocation(string $name): WashLocation

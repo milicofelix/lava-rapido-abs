@@ -19,7 +19,7 @@ class CreditReceivableController extends Controller
     public function index(): View|\Illuminate\Http\RedirectResponse
     {
         if (! AppSetting::isModuleEnabled('module_credit_receivables')) {
-            return redirect()->route('settings.edit')->with('status', 'Modulo Fiado esta desabilitado. Habilite em Configuracoes para usar.');
+            return redirect()->route('settings.edit')->with('status', 'Módulo Fiado está desabilitado. Habilite em Configurações para usar.');
         }
 
         $creditQuery = TenantContext::scopeWashOrders(WashOrder::query())

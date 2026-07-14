@@ -41,7 +41,7 @@ class ServiceController extends Controller
 
         Service::create($data);
 
-        return redirect()->route('services.index')->with('status', 'Servico cadastrado com sucesso.');
+        return redirect()->route('services.index')->with('status', 'Serviço cadastrado com sucesso.');
     }
 
     public function edit(Service $service): View
@@ -57,7 +57,7 @@ class ServiceController extends Controller
 
         $service->update($this->validated($request));
 
-        return redirect()->route('services.index')->with('status', 'Servico atualizado com sucesso.');
+        return redirect()->route('services.index')->with('status', 'Serviço atualizado com sucesso.');
     }
 
     private function validated(Request $request): array

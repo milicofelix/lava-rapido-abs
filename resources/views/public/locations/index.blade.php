@@ -4,9 +4,30 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Lava-rápidos próximos · AutoFlow</title>
+    <meta name="description" content="Encontre lava-rápidos próximos, veja status em tempo real, endereço, rota, WhatsApp e serviços disponíveis no AutoFlow.">
+    <link rel="canonical" href="{{ route('public.locations.index') }}">
+    <meta property="og:title" content="Lava-rápidos próximos · AutoFlow">
+    <meta property="og:description" content="Mapa público com lava-rápidos, status em tempo real, endereço, rota e contato direto.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="{{ route('public.locations.index') }}">
     @include('components.favicon')
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIINfQHrcNPTwTnoX9ODj1F2lQ8fVI0O56k=" crossorigin="">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+    <script type="application/ld+json">
+        {!! json_encode([
+            '@context' => 'https://schema.org',
+            '@type' => 'ItemList',
+            'name' => 'Lava-rápidos próximos',
+            'url' => route('public.locations.index'),
+            'numberOfItems' => $locations->count(),
+            'itemListElement' => $locations->values()->map(fn ($location, $index) => [
+                '@type' => 'ListItem',
+                'position' => $index + 1,
+                'url' => route('public.locations.show', ['location' => $location->slug]),
+                'name' => $location->name,
+            ])->all(),
+        ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) !!}
+    </script>
     <style>
         #autoflow-public-map {
             position: relative;
@@ -624,7 +645,21 @@
             </a>
 
             <div class="flex flex-wrap items-center gap-2">
-                <a href="{{ route('login') }}" class="rounded-xl border border-slate-200 px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50">Entrar</a>
+                @auth
+                    @php
+                        $publicHeaderUser = auth()->user();
+                        $publicHeaderPanelUrl = match (true) {
+                            $publicHeaderUser?->hasRole(\App\Models\User::ROLE_SUPER_ADMIN) => route('super-admin.location-requests.index'),
+                            \App\Support\Access\AccessControl::allows($publicHeaderUser, \App\Support\Access\AccessControl::VIEW_DASHBOARD) => route('dashboard'),
+                            \App\Support\Access\AccessControl::allows($publicHeaderUser, \App\Support\Access\AccessControl::VIEW_KANBAN) => route('kanban'),
+                            default => route('public.locations.index'),
+                        };
+                    @endphp
+                    <span class="rounded-xl border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-black text-slate-700">{{ $publicHeaderUser->name }}</span>
+                    <a href="{{ $publicHeaderPanelUrl }}" class="rounded-xl bg-slate-950 px-4 py-2 text-sm font-bold text-white">Painel</a>
+                @else
+                    <a href="{{ route('login') }}" class="rounded-xl border border-slate-200 px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50">Entrar</a>
+                @endauth
                 <a href="{{ route('public.location-requests.create') }}" class="rounded-xl border border-blue-200 bg-blue-50 px-4 py-2 text-sm font-bold text-blue-700 hover:bg-blue-100">Cadastrar lava-rápido</a>
                 <a href="#lista" class="rounded-xl bg-blue-600 px-4 py-2 text-sm font-bold text-white shadow-lg shadow-blue-900/20">Ver unidades</a>
             </div>
@@ -742,6 +777,7 @@
                                     default => 'bg-green-100 text-green-700',
                                 };
                                 $whatsapp = $location->whatsappUrl();
+                                $reviewSummary = $reviewSummaries[$location->id] ?? null;
                             @endphp
                             <article id="unidade-{{ $location->id }}" data-location-card data-location-id="{{ $location->id }}" data-latitude="{{ $location->mapLatitude() }}" data-longitude="{{ $location->mapLongitude() }}" class="autoflow-location-card rounded-2xl border border-slate-200 p-4 transition hover:border-blue-200 hover:shadow-sm">
                                 <div class="flex items-start justify-between gap-3">
@@ -750,6 +786,13 @@
                                         <p class="mt-1 text-sm leading-5 text-slate-500">{{ $location->fullAddress() }}</p>
                                         <div class="mt-3 flex flex-wrap items-center gap-2">
                                             <span data-distance-label class="autoflow-distance-pill">📍 Distância após localização</span>
+                                            @if ($reviewSummary)
+                                                <span class="rounded-full bg-amber-100 px-3 py-1 text-xs font-black text-amber-800">
+                                                    ★ {{ number_format((float) $reviewSummary['average'], 1, ',', '.') }} · {{ $reviewSummary['count'] }} {{ $reviewSummary['count'] === 1 ? 'avaliação' : 'avaliações' }}
+                                                </span>
+                                            @else
+                                                <span class="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-500">Sem avaliações</span>
+                                            @endif
                                             <span data-closest-badge class="autoflow-closest-badge hidden">Mais próximo</span>
                                             <span class="autoflow-favorite-badge">⭐ Favorito</span>
                                         </div>
@@ -999,6 +1042,9 @@
                     : (location.status === 'busy' ? 'background:#ffedd5;color:#c2410c;' : 'background:#dcfce7;color:#15803d;');
                 const popupAddress = [location.address, location.city].filter(Boolean).join(' - ');
                 const popupPhone = location.phone || 'Não informado';
+                const ratingLabel = Number(location.rating_count || 0) > 0
+                    ? `★ ${Number(location.rating_average || 0).toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} · ${Number(location.rating_count || 0)} ${Number(location.rating_count || 0) === 1 ? 'avaliação' : 'avaliações'}`
+                    : 'Sem avaliações';
                 const whatsappUrl = buildWhatsappUrl(location.phone, location.name);
                 const directionsUrl = buildDirectionsUrl(location);
                 const whatsappButton = whatsappUrl
@@ -1025,12 +1071,16 @@
                                 <span class="autoflow-popup-value">${Number(location.active_orders_count || 0)}</span>
                             </div>
                             <div class="autoflow-popup-info">
+                                <span class="autoflow-popup-label">Avaliação</span>
+                                <span class="autoflow-popup-value">${escapeHtml(ratingLabel)}</span>
+                            </div>
+                            <div class="autoflow-popup-info">
                                 <span class="autoflow-popup-label">Contato</span>
                                 <span class="autoflow-popup-value">${escapeHtml(popupPhone)}</span>
                             </div>
                             <div class="autoflow-popup-info" style="grid-column:1 / -1;">
                                 <span class="autoflow-popup-label">Funcionamento</span>
-                                <span class="autoflow-popup-value" style="font-size:12px;line-height:1.45;">${escapeHtml(location.opening_hours || 'Nao informado')}</span>
+                                        <span class="autoflow-popup-value" style="font-size:12px;line-height:1.45;">${escapeHtml(location.opening_hours || 'Não informado')}</span>
                             </div>
                         </div>
                         <div class="autoflow-popup-actions">

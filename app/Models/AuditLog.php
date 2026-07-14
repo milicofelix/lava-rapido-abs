@@ -16,11 +16,17 @@ class AuditLog extends Model
 
     public const ACTION_CUSTOMER_UPDATED = 'customer.updated';
 
+    public const ACTION_CUSTOMERS_IMPORTED = 'customers.imported';
+
     public const ACTION_WASH_ORDER_CREATED = 'wash_order.created';
 
     public const ACTION_WASH_ORDER_STATUS_CHANGED = 'wash_order.status_changed';
 
+    public const ACTION_WASH_ORDER_RESCHEDULED = 'wash_order.rescheduled';
+
     public const ACTION_PAYMENT_REGISTERED = 'payment.registered';
+
+    public const ACTION_PAYMENT_REVERSED = 'payment.reversed';
 
     public const ACTION_LOYALTY_COUPON_APPLIED = 'loyalty_coupon.applied';
 
@@ -65,9 +71,12 @@ class AuditLog extends Model
         return [
             self::ACTION_CUSTOMER_CREATED => 'Cliente criado',
             self::ACTION_CUSTOMER_UPDATED => 'Cliente editado',
+            self::ACTION_CUSTOMERS_IMPORTED => 'Clientes importados',
             self::ACTION_WASH_ORDER_CREATED => 'Lavagem criada',
             self::ACTION_WASH_ORDER_STATUS_CHANGED => 'Status alterado',
+            self::ACTION_WASH_ORDER_RESCHEDULED => 'Lavagem reagendada',
             self::ACTION_PAYMENT_REGISTERED => 'Pagamento registrado',
+            self::ACTION_PAYMENT_REVERSED => 'Pagamento estornado',
             self::ACTION_LOYALTY_COUPON_APPLIED => 'Cupom de fidelidade aplicado',
             self::ACTION_LOYALTY_COUPON_REMOVED => 'Cupom de fidelidade removido',
             self::ACTION_LOYALTY_COUPON_EXPIRED => 'Cupom de fidelidade expirado',

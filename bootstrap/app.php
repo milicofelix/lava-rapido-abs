@@ -1,10 +1,15 @@
 <?php
 
 use App\Http\Middleware\EnsureActiveSubscription;
+use App\Http\Middleware\RequestId;
+use App\Http\Middleware\SecurityHeaders;
+use App\Console\Commands\BackupCheckCommand;
 use App\Http\Middleware\EnsureUserCanAccess;
 use App\Http\Middleware\EnsureUserHasRole;
 use App\Http\Middleware\HandleInertiaRequests;
 use App\Console\Commands\ExpireLoyaltyCouponsCommand;
+use App\Console\Commands\ProductionCheckCommand;
+use App\Console\Commands\ReadinessCheckCommand;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -18,13 +23,19 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withCommands([
+        BackupCheckCommand::class,
         ExpireLoyaltyCouponsCommand::class,
+        ProductionCheckCommand::class,
+        ReadinessCheckCommand::class,
     ])
     ->withSchedule(function (Schedule $schedule): void {
         $schedule->command('subscriptions:expire')->hourly();
         $schedule->command('loyalty:expire-coupons')->dailyAt('03:30');
     })
     ->withMiddleware(function (Middleware $middleware): void {
+        $middleware->append(RequestId::class);
+        $middleware->append(SecurityHeaders::class);
+
         $middleware->web(append: [
             HandleInertiaRequests::class,
         ]);

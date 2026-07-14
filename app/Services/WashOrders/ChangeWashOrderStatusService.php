@@ -7,6 +7,7 @@ use App\Models\AuditLog;
 use App\Models\User;
 use App\Models\WashOrder;
 use App\Services\Loyalty\EvaluateLoyaltyProgramService;
+use App\Services\Notifications\PrepareWashOrderEventNotificationService;
 use App\Support\AuditLogger;
 use App\Support\WashOrders\WashOrderStatusFlow;
 use InvalidArgumentException;
@@ -15,6 +16,7 @@ class ChangeWashOrderStatusService
 {
     public function __construct(
         private readonly EvaluateLoyaltyProgramService $loyalty,
+        private readonly PrepareWashOrderEventNotificationService $eventNotification,
     ) {}
 
     public function handle(WashOrder $washOrder, string $status, ?User $user = null, ?string $notes = null): WashOrder
@@ -29,14 +31,22 @@ class ChangeWashOrderStatusService
             return $washOrder;
         }
 
-        if (! WashOrderStatusFlow::canTransition($fromStatus, $status)) {
-            throw new InvalidArgumentException('Transicao de status nao permitida.');
+        if ($status === WashOrder::STATUS_CANCELED && ! WashOrderStatusFlow::canCancel($washOrder)) {
+            throw new InvalidArgumentException('A lavagem só pode ser cancelada enquanto estiver aguardando e sem pagamento registrado.');
         }
 
-        $washOrder->load('services');
+        if (! WashOrderStatusFlow::canTransition($fromStatus, $status)) {
+            throw new InvalidArgumentException('Transição de status não permitida.');
+        }
+
+        $washOrder->load('services', 'washLocation');
 
         if (! WashOrderStatusFlow::washOrderCanUseStatus($washOrder, $status)) {
-            throw new InvalidArgumentException('Este status nao se aplica aos servicos selecionados nesta lavagem.');
+            throw new InvalidArgumentException('Este status não se aplica aos serviços selecionados nesta lavagem.');
+        }
+
+        if ($status !== WashOrder::STATUS_CANCELED && ! ($washOrder->washLocation?->canOpenWashOrderAt() ?? true)) {
+            throw new InvalidArgumentException('A unidade está fechada agora. Avance etapas somente dentro do horário de funcionamento.');
         }
 
         if ($status === WashOrder::STATUS_DELIVERED && ! $washOrder->hasIdentifiedPayment()) {
@@ -44,7 +54,7 @@ class ChangeWashOrderStatusService
         }
 
         if ($user?->isOperator() && ! $washOrder->teamMembers()->whereKey($user->id)->exists()) {
-            throw new InvalidArgumentException('Operador nao faz parte da equipe desta lavagem.');
+            throw new InvalidArgumentException('Operador não faz parte da equipe desta lavagem.');
         }
 
         $washOrder->forceFill([
@@ -76,6 +86,7 @@ class ChangeWashOrderStatusService
         );
 
         event(new WashOrderStatusChanged($washOrder, $fromStatus));
+        $this->eventNotification->handle($washOrder, $user);
         $this->loyalty->handle($washOrder);
 
         return $washOrder;

@@ -6,9 +6,11 @@ use App\Http\Controllers\Controller;
 use App\Models\Customer;
 use App\Models\Payment;
 use App\Models\WashOrder;
+use App\Support\Pdf\SimplePdfDocument;
 use App\Support\TenantContext;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -18,13 +20,38 @@ class ExecutiveReportController extends Controller
 {
     public function __invoke(Request $request): View
     {
+        return $this->index($request);
+    }
+
+    public function index(Request $request): View
+    {
+        return view('app.reports.executive', $this->reportData($request));
+    }
+
+    public function exportPdf(Request $request): Response
+    {
+        $data = $this->reportData($request);
+        $pdf = $this->buildPdf($data);
+        $filename = 'relatorio-executivo-'.$data['start'].'-'.$data['end'].'.pdf';
+
+        return response($pdf, 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'attachment; filename="'.$filename.'"',
+        ]);
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function reportData(Request $request): array
+    {
         [$start, $end] = $this->period($request);
         [$previousStart, $previousEnd] = $this->previousPeriod($start, $end);
 
         $summary = $this->summary($start, $end);
         $previousSummary = $this->summary($previousStart, $previousEnd);
 
-        return view('app.reports.executive', [
+        return [
             'start' => $start->toDateString(),
             'end' => $end->toDateString(),
             'previousStart' => $previousStart->toDateString(),
@@ -44,7 +71,114 @@ class ExecutiveReportController extends Controller
             'dailyVolume' => $this->dailyVolume($start, $end),
             'statuses' => WashOrder::statuses(),
             'methods' => Payment::methods(),
-        ]);
+        ];
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     */
+    private function buildPdf(array $data): string
+    {
+        $pdf = new SimplePdfDocument;
+        $pdf->addPage();
+
+        $y = 805;
+        $this->pdfLine($pdf, 48, $y, 'AutoFlow - Relatório executivo', 18);
+        $y -= 24;
+        $this->pdfLine(
+            $pdf,
+            48,
+            $y,
+            'Período: '.$this->dateLabel($data['start']).' até '.$this->dateLabel($data['end'])
+            .' | Comparativo: '.$this->dateLabel($data['previousStart']).' até '.$this->dateLabel($data['previousEnd']),
+            10
+        );
+        $y -= 34;
+
+        $summary = $data['summary'];
+        $cards = [
+            'Receita do período' => $this->money($summary['revenue']),
+            'Lavagens no período' => $this->number($summary['orders_count']),
+            'Ticket médio' => $this->money($summary['ticket_average']),
+            'Clientes recorrentes' => $this->number($summary['recurring_customers_count']),
+            'Entregues' => $this->number($summary['delivered_count']),
+            'Canceladas' => $this->number($summary['canceled_count']),
+            'Clientes ativos' => $this->number($summary['active_customers_count']),
+            'Novos clientes' => $this->number($summary['new_customers_count']),
+        ];
+
+        foreach ($cards as $label => $value) {
+            $this->pdfLine($pdf, 48, $y, $label.': '.$value, 11);
+            $y -= 18;
+        }
+
+        $y -= 14;
+        $this->pdfSection($pdf, $y, 'Top serviços');
+        $y -= 20;
+
+        foreach (array_slice($data['topServices'], 0, 8) as $service) {
+            $this->pdfLine($pdf, 58, $y, $service['service_name'].' - '.$service['total'].' lavagens - '.$this->money($service['revenue']), 10);
+            $y -= 16;
+        }
+
+        if ($data['topServices'] === []) {
+            $this->pdfLine($pdf, 58, $y, 'Nenhum serviço no período.', 10);
+            $y -= 16;
+        }
+
+        $y -= 10;
+        $this->pdfSection($pdf, $y, 'Top clientes');
+        $y -= 20;
+
+        foreach (array_slice($data['topCustomers'], 0, 8) as $customer) {
+            $this->pdfLine($pdf, 58, $y, $customer['name'].' - '.$customer['orders_count'].' lavagens - '.$this->money($customer['revenue']), 10);
+            $y -= 16;
+        }
+
+        if ($data['topCustomers'] === []) {
+            $this->pdfLine($pdf, 58, $y, 'Nenhum cliente com lavagem no período.', 10);
+            $y -= 16;
+        }
+
+        $y -= 10;
+        $this->pdfSection($pdf, $y, 'Pagamentos por método');
+        $y -= 20;
+
+        foreach ($data['paymentMethods'] as $method) {
+            $this->pdfLine($pdf, 58, $y, $method['label'].' - '.$this->money($method['total']).' - '.$method['count'].' pagamento(s)', 10);
+            $y -= 16;
+        }
+
+        if ($data['paymentMethods'] === []) {
+            $this->pdfLine($pdf, 58, $y, 'Nenhum pagamento no período.', 10);
+        }
+
+        return $pdf->render();
+    }
+
+    private function pdfSection(SimplePdfDocument $pdf, int $y, string $title): void
+    {
+        $this->pdfLine($pdf, 48, $y, $title, 13);
+    }
+
+    private function pdfLine(SimplePdfDocument $pdf, int $x, int $y, string $text, int $size): void
+    {
+        $pdf->text($x, $y, mb_strimwidth($text, 0, 110, '...'), $size);
+    }
+
+    private function money(float|int $value): string
+    {
+        return 'R$ '.number_format((float) $value, 2, ',', '.');
+    }
+
+    private function number(float|int $value): string
+    {
+        return number_format((float) $value, 0, ',', '.');
+    }
+
+    private function dateLabel(string $date): string
+    {
+        return Carbon::parse($date)->format('d/m/Y');
     }
 
     /**
@@ -173,7 +307,10 @@ class ExecutiveReportController extends Controller
     {
         $rows = $this->ordersForPeriod($start, $end)
             ->join('customers', 'customers.id', '=', 'wash_orders.customer_id')
-            ->leftJoin('payments', 'payments.wash_order_id', '=', 'wash_orders.id')
+            ->leftJoin('payments', function ($join): void {
+                $join->on('payments.wash_order_id', '=', 'wash_orders.id')
+                    ->whereNull('payments.reversed_at');
+            })
             ->select('customers.name', 'customers.phone')
             ->selectRaw('COUNT(DISTINCT wash_orders.id) as orders_count')
             ->selectRaw('COALESCE(SUM(payments.amount), 0) as revenue')
@@ -284,6 +421,7 @@ class ExecutiveReportController extends Controller
     private function paymentsForPeriod(Carbon $start, Carbon $end): Builder
     {
         return TenantContext::scopePayments(Payment::query())
+            ->effective()
             ->whereBetween('paid_at', [$start, $end]);
     }
 }

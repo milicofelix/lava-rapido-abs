@@ -36,7 +36,7 @@ class PlanController extends Controller
     {
         $plan->update(['is_active' => false]);
 
-        return back()->with('success', 'Plano desativado. Ele nao aparecera para novas escolhas.');
+        return back()->with('success', 'Plano desativado. Ele não aparecerá para novas escolhas.');
     }
 
     /**

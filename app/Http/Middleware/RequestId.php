@@ -1,0 +1,42 @@
+<?php
+
+namespace App\Http\Middleware;
+
+use Closure;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
+use Symfony\Component\HttpFoundation\Response;
+
+class RequestId
+{
+    public function handle(Request $request, Closure $next): Response
+    {
+        $requestId = $this->requestId($request);
+
+        $request->attributes->set('request_id', $requestId);
+
+        Log::withContext([
+            'request_id' => $requestId,
+            'path' => $request->path(),
+            'method' => $request->method(),
+        ]);
+
+        /** @var Response $response */
+        $response = $next($request);
+        $response->headers->set('X-Request-Id', $requestId);
+
+        return $response;
+    }
+
+    private function requestId(Request $request): string
+    {
+        $header = trim((string) $request->headers->get('X-Request-Id'));
+
+        if (preg_match('/^[A-Za-z0-9._-]{8,100}$/', $header) === 1) {
+            return $header;
+        }
+
+        return (string) Str::uuid();
+    }
+}

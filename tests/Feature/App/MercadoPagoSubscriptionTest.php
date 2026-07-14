@@ -159,7 +159,7 @@ class MercadoPagoSubscriptionTest extends TestCase
             ->from(route('subscriptions.show'))
             ->post(route('subscriptions.choose'), ['plan_id' => $plan->id])
             ->assertRedirect(route('subscriptions.show'))
-            ->assertSessionHas('status', 'Nao foi possivel abrir o checkout do Mercado Pago agora. Verifique as credenciais e tente novamente.');
+            ->assertSessionHas('status', 'Não foi possível abrir o checkout do Mercado Pago agora. Verifique as credenciais e tente novamente.');
 
         $this->assertDatabaseHas('subscriptions', [
             'wash_location_id' => $location->id,
@@ -193,7 +193,7 @@ class MercadoPagoSubscriptionTest extends TestCase
             ->from(route('subscriptions.show'))
             ->post(route('subscriptions.choose'), ['plan_id' => $plan->id])
             ->assertRedirect(route('subscriptions.show'))
-            ->assertSessionHas('status', 'Checkout real bloqueado. Defina MERCADO_PAGO_LIVE_ENABLED=true para liberar cobrancas em producao.');
+            ->assertSessionHas('status', 'Checkout real bloqueado. Defina MERCADO_PAGO_LIVE_ENABLED=true para liberar cobranças em produção.');
 
         Http::assertNothingSent();
 
@@ -226,8 +226,8 @@ class MercadoPagoSubscriptionTest extends TestCase
         $this->actingAs($owner)
             ->get(route('subscriptions.show'))
             ->assertOk()
-            ->assertSee('Token de producao detectado, mas cobranca real bloqueada')
-            ->assertSee('Checkout bloqueado ate habilitar MERCADO_PAGO_LIVE_ENABLED=true.');
+            ->assertSee('Token de produção detectado, mas cobrança real bloqueada')
+            ->assertSee('Checkout bloqueado até habilitar MERCADO_PAGO_LIVE_ENABLED=true.');
     }
 
     public function test_credencial_app_usr_em_ambiente_sandbox_pode_abrir_checkout(): void
@@ -308,7 +308,7 @@ class MercadoPagoSubscriptionTest extends TestCase
             ->from(route('subscriptions.show'))
             ->patch(route('subscriptions.cancel-pending'))
             ->assertRedirect(route('subscriptions.show'))
-            ->assertSessionHas('status', 'Escolha de plano cancelada. Voce pode selecionar outro plano quando quiser.');
+            ->assertSessionHas('status', 'Escolha de plano cancelada. Você pode selecionar outro plano quando quiser.');
 
         $this->assertSame(Subscription::STATUS_CANCELED, $subscription->refresh()->status);
     }

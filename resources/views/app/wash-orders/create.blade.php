@@ -1,8 +1,26 @@
 <x-app.layout heading="Nova lavagem" title="Nova lavagem · AutoFlow">
-    <form method="POST" action="{{ route('wash-orders.store') }}" class="grid gap-5 xl:grid-cols-[1fr_360px]">
+    <form method="POST" action="{{ route('wash-orders.store') }}" class="grid gap-5 lg:grid-cols-[minmax(0,1fr)_320px] 2xl:grid-cols-[minmax(0,1fr)_360px]">
         @csrf
 
         <div class="space-y-5">
+            @unless ($canOpenWashOrderNow)
+                <section class="rounded-2xl border border-amber-200 bg-amber-50 p-5 text-amber-900 shadow-sm">
+                    <p class="text-xs font-black uppercase tracking-[0.18em] text-amber-700">Unidade fechada</p>
+                    <h2 class="mt-1 text-lg font-black">Abertura imediata indisponível</h2>
+                    <p class="mt-1 text-sm font-semibold">
+                        {{ $currentLocation?->name ?? 'A unidade' }} está fora do horário de funcionamento. Abra novas lavagens apenas quando a unidade estiver aberta
+                        @if ($scheduleEnabled)
+                            ou informe um horário futuro dentro do expediente.
+                        @else
+                            .
+                        @endif
+                    </p>
+                    @if ($currentLocation)
+                        <p class="mt-3 text-xs font-bold">Horários: {{ $currentLocation->openingHoursSummary() }}</p>
+                    @endif
+                </section>
+            @endunless
+
             <section class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
                 @include('app.components.errors')
 
@@ -25,7 +43,7 @@
                     </label>
 
                     <label class="block">
-                        <span class="text-sm font-bold text-slate-700">Veiculo</span>
+                        <span class="text-sm font-bold text-slate-700">Veículo</span>
                         <select name="vehicle_id" required data-vehicle-select data-old-vehicle="{{ old('vehicle_id') }}" class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100">
                             <option value="">Selecione um cliente primeiro</option>
                         </select>
@@ -36,7 +54,7 @@
                     @if ($scheduleEnabled)
                         <label class="block md:col-span-2">
                             <span class="text-sm font-bold text-slate-700">Agendar para</span>
-                            <input name="scheduled_at" type="datetime-local" value="{{ old('scheduled_at') }}" class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100">
+                            <input name="scheduled_at" type="datetime-local" value="{{ old('scheduled_at', $suggestedScheduledAt) }}" class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100">
                             <p class="mt-1 text-xs text-slate-500">Deixe em branco para abrir a lavagem agora. Informe uma data futura para aparecer na Agenda desse dia.</p>
                             @error('scheduled_at') <span class="text-sm text-red-600">{{ $message }}</span> @enderror
                         </label>
@@ -54,7 +72,7 @@
                 <div class="border-b border-slate-200 pb-4">
                     <p class="text-xs font-black uppercase tracking-[0.18em] text-blue-700">Equipe da lavagem</p>
                     <h2 class="mt-1 text-xl font-black text-slate-950">Responsaveis pela execucao</h2>
-                    <p class="mt-1 text-sm text-slate-500">Selecione todos que participam. O primeiro selecionado sera o responsavel principal.</p>
+                    <p class="mt-1 text-sm text-slate-500">Selecione todos que participam. O primeiro selecionado será o responsável principal.</p>
                 </div>
 
                 <div class="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -74,8 +92,8 @@
 
             <section class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
                 <div class="border-b border-slate-200 px-5 py-4">
-                    <p class="text-xs font-black uppercase tracking-[0.18em] text-blue-700">Catalogo</p>
-                    <h2 class="mt-1 text-xl font-black text-slate-950">Servicos</h2>
+                    <p class="text-xs font-black uppercase tracking-[0.18em] text-blue-700">Catálogo</p>
+                    <h2 class="mt-1 text-xl font-black text-slate-950">Serviços</h2>
                 </div>
                 <div class="grid gap-3 p-5 md:grid-cols-2">
                     @foreach ($services as $service)
@@ -93,7 +111,7 @@
             </section>
         </div>
 
-        <aside class="h-fit rounded-2xl border border-slate-200 bg-white p-5 shadow-sm xl:sticky xl:top-24">
+        <aside class="h-fit rounded-2xl border border-slate-200 bg-white p-5 shadow-sm lg:sticky lg:top-24">
             <p class="text-xs font-black uppercase tracking-[0.18em] text-blue-700">Resumo</p>
             <h2 class="mt-1 text-xl font-black text-slate-950">Ordem de lavagem</h2>
             <dl class="mt-5 space-y-3 text-sm">
@@ -106,7 +124,7 @@
                     <dd class="font-black text-slate-950" id="wash-minutes">0 min</dd>
                 </div>
             </dl>
-            <button class="mt-5 w-full rounded-xl bg-blue-700 px-4 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-blue-800">Abrir lavagem</button>
+            <button @disabled(! $canOpenWashOrderNow && ! $scheduleEnabled) class="mt-5 w-full rounded-xl px-4 py-2.5 text-sm font-bold shadow-sm {{ ! $canOpenWashOrderNow && ! $scheduleEnabled ? 'cursor-not-allowed bg-slate-200 text-slate-500' : 'bg-blue-700 text-white hover:bg-blue-800' }}">Abrir lavagem</button>
             <a href="{{ route('wash-orders.index') }}" class="mt-3 block rounded-xl border border-slate-300 px-4 py-2.5 text-center text-sm font-bold text-slate-700 hover:bg-slate-50">Cancelar</a>
         </aside>
     </form>
@@ -151,7 +169,7 @@
 
             if (vehicles.length === 1) {
                 vehicleSelect.value = vehicles[0].id;
-                vehicleHelp.textContent = 'Veiculo unico do cliente selecionado automaticamente.';
+                vehicleHelp.textContent = 'Veículo único do cliente selecionado automaticamente.';
             } else if (vehicles.some((vehicle) => String(vehicle.id) === String(selectedVehicle))) {
                 vehicleSelect.value = selectedVehicle;
                 vehicleHelp.textContent = 'Escolha um dos veiculos vinculados a este cliente.';

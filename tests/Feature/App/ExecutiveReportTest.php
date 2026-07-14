@@ -55,7 +55,7 @@ class ExecutiveReportTest extends TestCase
             $this->actingAs($admin)
                 ->get(route('reports.executive'))
                 ->assertOk()
-                ->assertSee('Relatorios executivos')
+                ->assertSee('Relatórios executivos')
                 ->assertSee('R$ 200,00')
                 ->assertSee('Ducha Premium')
                 ->assertSee('Carlos Recorrente')
@@ -75,6 +75,69 @@ class ExecutiveReportTest extends TestCase
 
         $this->actingAs($operator)
             ->get(route('reports.executive'))
+            ->assertForbidden();
+    }
+
+    public function test_admin_can_export_executive_report_as_pdf(): void
+    {
+        Carbon::setTestNow('2026-06-28 12:00:00');
+
+        try {
+            $location = WashLocation::factory()->create(['name' => 'Lava PDF']);
+            $otherLocation = WashLocation::factory()->create(['name' => 'Outra PDF']);
+            $admin = User::factory()->create([
+                'role' => User::ROLE_ADMIN,
+                'wash_location_id' => $location->id,
+            ]);
+            $customer = Customer::factory()->create([
+                'wash_location_id' => $location->id,
+                'name' => 'Cliente PDF',
+            ]);
+            $vehicle = Vehicle::factory()->for($customer)->create([
+                'wash_location_id' => $location->id,
+            ]);
+            $service = Service::factory()->create([
+                'wash_location_id' => $location->id,
+                'name' => 'Lavagem PDF',
+                'base_price' => 80,
+            ]);
+
+            $this->createPaidOrder($location, $customer, $vehicle, $service, $admin, '2026-06-22 10:00:00', 80, Payment::METHOD_PIX);
+
+            $otherCustomer = Customer::factory()->create(['wash_location_id' => $otherLocation->id, 'name' => 'Cliente Fora PDF']);
+            $otherVehicle = Vehicle::factory()->for($otherCustomer)->create(['wash_location_id' => $otherLocation->id]);
+            $otherService = Service::factory()->create(['wash_location_id' => $otherLocation->id, 'name' => 'Servico Fora PDF']);
+            $this->createPaidOrder($otherLocation, $otherCustomer, $otherVehicle, $otherService, $admin, '2026-06-22 10:00:00', 999, Payment::METHOD_PIX);
+
+            $response = $this->actingAs($admin)
+                ->get(route('reports.executive.pdf', [
+                    'start' => '2026-06-01',
+                    'end' => '2026-06-28',
+                ]));
+
+            $response->assertOk()
+                ->assertHeader('content-type', 'application/pdf');
+
+            $content = $response->getContent();
+
+            $this->assertStringStartsWith('%PDF-1.4', $content);
+            $this->assertStringContainsString('/WinAnsiEncoding', $content);
+            $this->assertStringContainsString('Relat', $content);
+            $this->assertStringContainsString('Lavagem PDF', $content);
+            $this->assertStringContainsString('Cliente PDF', $content);
+            $this->assertStringNotContainsString('Servico Fora PDF', $content);
+            $this->assertStringNotContainsString('999,00', $content);
+        } finally {
+            Carbon::setTestNow();
+        }
+    }
+
+    public function test_operator_cannot_export_executive_report_as_pdf(): void
+    {
+        $operator = User::factory()->create(['role' => User::ROLE_OPERATOR]);
+
+        $this->actingAs($operator)
+            ->get(route('reports.executive.pdf'))
             ->assertForbidden();
     }
 

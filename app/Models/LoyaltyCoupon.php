@@ -83,15 +83,15 @@ class LoyaltyCoupon extends Model
         }
 
         if (! $this->loyaltyProgram) {
-            return 'Beneficio configurado';
+            return 'Benefício configurado';
         }
 
         return match ($this->loyaltyProgram->reward_type) {
             LoyaltyProgram::REWARD_DISCOUNT_AMOUNT => 'Desconto de R$ '.number_format((float) $this->loyaltyProgram->discount_value, 2, ',', '.'),
             LoyaltyProgram::REWARD_DISCOUNT_PERCENT => 'Desconto de '.number_format((float) $this->loyaltyProgram->discount_value, 0, ',', '.').'%',
-            LoyaltyProgram::REWARD_SAME_SERVICE => $this->sourceWashOrder?->services?->first()?->name ?? 'Mesmo servico da contagem',
-            LoyaltyProgram::REWARD_FIXED_SERVICE => $this->sourceWashOrder?->services?->first()?->name ?? 'Servico da lavagem premiada',
-            default => 'Beneficio configurado',
+            LoyaltyProgram::REWARD_SAME_SERVICE => $this->sourceWashOrder?->services?->first()?->name ?? 'Mesmo serviço da contagem',
+            LoyaltyProgram::REWARD_FIXED_SERVICE => $this->sourceWashOrder?->services?->first()?->name ?? 'Serviço da lavagem premiada',
+            default => 'Benefício configurado',
         };
     }
 
@@ -101,11 +101,11 @@ class LoyaltyCoupon extends Model
         $locationName = $this->washLocation?->name ?? 'nosso lava-rapido';
         $expiresAt = $this->expires_at?->format('d/m/Y') ?? 'sem data de vencimento';
 
-        return "Ola {$customerName}! Voce ganhou um cupom de fidelidade no {$locationName}.\n\n".
-            "Codigo: {$this->code}\n".
-            "Beneficio: {$this->benefitLabel()}\n".
+        return "Olá {$customerName}! Você ganhou um cupom de fidelidade no {$locationName}.\n\n".
+            "Código: {$this->code}\n".
+            "Benefício: {$this->benefitLabel()}\n".
             "Validade: {$expiresAt}\n\n".
-            'Apresente este cupom na proxima visita.';
+            'Apresente este cupom na próxima visita.';
     }
 
     public function whatsappShareUrl(): ?string

@@ -1,4 +1,4 @@
-<x-app.layout heading="Configuracoes" title="Configuracoes · AutoFlow">
+<x-app.layout heading="Configurações" title="Configurações · AutoFlow">
     <div class="grid gap-5 xl:grid-cols-[1fr_360px]">
         <form method="POST" action="{{ route('settings.update') }}" enctype="multipart/form-data" class="space-y-5 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm" data-theme-settings-form>
             @csrf
@@ -23,7 +23,7 @@
                             </div>
                             <div class="min-w-0 flex-1">
                                 <input name="logo" type="file" accept="image/png,image/jpeg,image/webp" class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm shadow-sm file:mr-3 file:rounded-lg file:border-0 file:bg-blue-50 file:px-3 file:py-1.5 file:text-sm file:font-bold file:text-blue-700">
-                                <p class="mt-1 text-xs text-slate-500">PNG, JPG ou WEBP ate 5MB.</p>
+                                <p class="mt-1 text-xs text-slate-500">PNG, JPG ou WEBP até 5MB.</p>
                                 @error('logo') <span class="text-sm text-red-600">{{ $message }}</span> @enderror
                             </div>
                         </div>
@@ -183,7 +183,7 @@
             <section class="border-t border-slate-200 pt-5">
                 <p class="text-xs font-bold uppercase tracking-[0.2em] text-blue-700">Modulos opcionais</p>
                 <h2 class="mt-1 text-xl font-bold text-slate-950">Controle o que aparece no sistema</h2>
-                <p class="mt-1 text-sm text-slate-500">Ideal para lava-rapidos menores que nao precisam operar agenda, caixa completo ou fiado.</p>
+                <p class="mt-1 text-sm text-slate-500">Ideal para lava-rápidos menores que não precisam operar agenda, caixa completo ou fiado.</p>
 
                 <div class="mt-4 grid gap-3 md:grid-cols-3">
                     <label class="flex cursor-pointer items-start gap-3 rounded-2xl border border-slate-200 p-4 hover:bg-slate-50">
@@ -215,7 +215,7 @@
             <section class="border-t border-slate-200 pt-5">
                 <p class="text-xs font-bold uppercase tracking-[0.2em] text-blue-700">Programa de fidelidade</p>
                 <h2 class="mt-1 text-xl font-bold text-slate-950">Cupons para clientes recorrentes</h2>
-                <p class="mt-1 text-sm text-slate-500">Configure quando o cliente ganha um cupom e qual beneficio sera oferecido.</p>
+                <p class="mt-1 text-sm text-slate-500">Configure quando o cliente ganha um cupom e qual benefício será oferecido.</p>
 
                 <div class="mt-4 grid gap-4 md:grid-cols-2">
                     <label class="flex cursor-pointer items-start gap-3 rounded-2xl border border-slate-200 p-4 hover:bg-slate-50 md:col-span-2">
@@ -302,9 +302,70 @@
             </section>
 
             <section class="border-t border-slate-200 pt-5">
-                <p class="text-xs font-bold uppercase tracking-[0.2em] text-blue-700">Permissoes da equipe</p>
+                <p class="text-xs font-bold uppercase tracking-[0.2em] text-blue-700">Permissões da equipe</p>
+                <h2 class="mt-1 text-xl font-bold text-slate-950">Matriz de acesso por perfil</h2>
+                <p class="mt-1 text-sm text-slate-500">Veja o que cada perfil pode acessar hoje. Permissões padrão ficam fixas; exceções configuráveis aparecem destacadas.</p>
+
+                <div class="mt-4 grid gap-4 lg:grid-cols-2">
+                    @foreach ($permissionMatrix as $role => $matrix)
+                        @php
+                            $basePermissions = collect($matrix['base'])->reject(fn ($permission) => $permission === \App\Support\Access\AccessControl::ACCESS_PRODUCT_ADMIN)->values();
+                            $enabledOverrides = collect($matrix['enabled']);
+                            $blockedOverrides = collect($matrix['blocked']);
+                        @endphp
+                        <article class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                            <div class="flex items-start justify-between gap-3">
+                                <div>
+                                    <h3 class="font-black text-slate-950">{{ $roleLabels[$role] ?? $role }}</h3>
+                                    <p class="mt-1 text-sm text-slate-500">
+                                        {{ $basePermissions->count() }} permissões padrão
+                                        @if ($enabledOverrides->isNotEmpty())
+                                            · {{ $enabledOverrides->count() }} exceção{{ $enabledOverrides->count() === 1 ? '' : 'ões' }} liberada{{ $enabledOverrides->count() === 1 ? '' : 's' }}
+                                        @endif
+                                    </p>
+                                </div>
+                                <span class="rounded-full bg-white px-3 py-1 text-xs font-black text-slate-600 ring-1 ring-slate-200">{{ $role }}</span>
+                            </div>
+
+                            <div class="mt-4 flex flex-wrap gap-2">
+                                @foreach ($basePermissions as $permission)
+                                    <span title="{{ $permissionDescriptions[$permission] ?? '' }}" class="rounded-full bg-white px-3 py-1 text-xs font-bold text-slate-700 ring-1 ring-slate-200">
+                                        {{ $permissionLabels[$permission] ?? $permission }}
+                                    </span>
+                                @endforeach
+
+                                @foreach ($enabledOverrides as $permission)
+                                    <span title="{{ $permissionDescriptions[$permission] ?? '' }}" class="rounded-full bg-emerald-50 px-3 py-1 text-xs font-black text-emerald-700 ring-1 ring-emerald-200">
+                                        + {{ $permissionLabels[$permission] ?? $permission }}
+                                    </span>
+                                @endforeach
+
+                                @if ($basePermissions->isEmpty() && $enabledOverrides->isEmpty())
+                                    <span class="rounded-full bg-white px-3 py-1 text-xs font-bold text-slate-500 ring-1 ring-slate-200">Sem permissões operacionais</span>
+                                @endif
+                            </div>
+
+                            @if ($blockedOverrides->isNotEmpty())
+                                <div class="mt-4 border-t border-slate-200 pt-3">
+                                    <p class="text-xs font-black uppercase tracking-[0.16em] text-slate-400">Bloqueado por configuração</p>
+                                    <div class="mt-2 flex flex-wrap gap-2">
+                                        @foreach ($blockedOverrides as $permission)
+                                            <span title="{{ $permissionDescriptions[$permission] ?? '' }}" class="rounded-full bg-rose-50 px-3 py-1 text-xs font-bold text-rose-700 ring-1 ring-rose-100">
+                                                {{ $permissionLabels[$permission] ?? $permission }}
+                                            </span>
+                                        @endforeach
+                                    </div>
+                                </div>
+                            @endif
+                        </article>
+                    @endforeach
+                </div>
+            </section>
+
+            <section class="border-t border-slate-200 pt-5">
+                <p class="text-xs font-bold uppercase tracking-[0.2em] text-blue-700">Exceções configuráveis</p>
                 <h2 class="mt-1 text-xl font-bold text-slate-950">Privilégios operacionais</h2>
-                <p class="mt-1 text-sm text-slate-500">Ajuste excecoes por perfil sem liberar areas sensiveis como financeiro, assinatura ou administracao do produto.</p>
+                <p class="mt-1 text-sm text-slate-500">Ajuste exceções por perfil sem liberar áreas sensíveis como financeiro, assinatura ou administração do produto.</p>
 
                 <div class="mt-4 space-y-4">
                     @foreach ($rolePermissionGroups as $role => $permissions)
@@ -312,9 +373,9 @@
                             <div class="flex flex-wrap items-center justify-between gap-3">
                                 <div>
                                     <p class="font-black text-slate-950">{{ $roleLabels[$role] ?? $role }}</p>
-                                    <p class="mt-1 text-sm text-slate-500">Por padrao, este perfil continua restrito ao fluxo operacional.</p>
+                                    <p class="mt-1 text-sm text-slate-500">Por padrão, este perfil continua restrito ao fluxo operacional.</p>
                                 </div>
-                                <span class="rounded-full bg-white px-3 py-1 text-xs font-black text-slate-600">{{ count($permissions) }} opcoes</span>
+                                <span class="rounded-full bg-white px-3 py-1 text-xs font-black text-slate-600">{{ count($permissions) }} opções</span>
                             </div>
 
                             <div class="mt-4 grid gap-3 md:grid-cols-3">
@@ -330,7 +391,7 @@
                                         <input type="checkbox" name="role_permissions[{{ $role }}][{{ $permission }}]" value="1" @checked($isChecked) class="mt-1 h-4 w-4 rounded border-slate-300 text-blue-700">
                                         <span>
                                             <span class="block font-bold text-slate-900">{{ $permissionLabels[$permission] ?? $permission }}</span>
-                                            <span class="mt-1 block text-sm leading-5 text-slate-500">{{ $permissionDescriptions[$permission] ?? 'Permissao configuravel para este perfil.' }}</span>
+                                            <span class="mt-1 block text-sm leading-5 text-slate-500">{{ $permissionDescriptions[$permission] ?? 'Permissão configurável para este perfil.' }}</span>
                                         </span>
                                     </label>
                                 @endforeach

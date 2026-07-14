@@ -7,9 +7,9 @@ use App\Models\CashRegister;
 use App\Models\LoyaltyCoupon;
 use App\Models\Subscription;
 use App\Models\User;
-use App\Models\WashOrder;
 use App\Models\WashLocation;
 use App\Models\WashLocationRequest;
+use App\Models\WashOrder;
 use App\Support\Access\AccessControl;
 
 class AppNotificationCenter
@@ -111,7 +111,7 @@ class AppNotificationCenter
         if ($delayedCount > 0) {
             $notifications[] = [
                 'title' => $delayedCount.' lavagem'.($delayedCount === 1 ? '' : 's').' atrasada'.($delayedCount === 1 ? '' : 's'),
-                'body' => 'Existem lavagens abertas com previsao vencida hoje. Priorize a fila da operacao.',
+                'body' => 'Existem lavagens abertas com previsão vencida hoje. Priorize a fila da operação.',
                 'tone' => 'danger',
                 'url' => AppSetting::isModuleEnabled('module_schedule') ? route('schedule.index') : route('kanban'),
                 'action' => AppSetting::isModuleEnabled('module_schedule') ? 'Abrir Agenda' : 'Abrir Kanban',
@@ -143,6 +143,23 @@ class AppNotificationCenter
     {
         $notifications = [];
 
+        $recentCoupons = TenantContext::scopeByColumn(LoyaltyCoupon::query())
+            ->where('status', LoyaltyCoupon::STATUS_ACTIVE)
+            ->where('earned_at', '>=', now()->subDay())
+            ->count();
+
+        if ($recentCoupons > 0) {
+            $notifications[] = [
+                'title' => $recentCoupons.' cupom'.($recentCoupons === 1 ? '' : 's').' gerado'.($recentCoupons === 1 ? '' : 's'),
+                'body' => $recentCoupons === 1
+                    ? 'Há um cupom de fidelidade novo para comunicar ao cliente. Use o relatório para abrir o cupom ou compartilhar manualmente.'
+                    : 'Há cupons de fidelidade novos para comunicar aos clientes. Use o relatório para abrir os cupons ou compartilhar manualmente.',
+                'tone' => 'success',
+                'url' => route('loyalty-reports.index', ['status' => LoyaltyCoupon::STATUS_ACTIVE]),
+                'action' => 'Ver cupons',
+            ];
+        }
+
         $expiredActiveCoupons = TenantContext::scopeByColumn(LoyaltyCoupon::query())
             ->where('status', LoyaltyCoupon::STATUS_ACTIVE)
             ->whereNotNull('expires_at')
@@ -152,7 +169,7 @@ class AppNotificationCenter
         if ($expiredActiveCoupons > 0) {
             $notifications[] = [
                 'title' => $expiredActiveCoupons.' cupom'.($expiredActiveCoupons === 1 ? '' : 's').' vencido'.($expiredActiveCoupons === 1 ? '' : 's'),
-                'body' => 'Existem cupons ativos com validade vencida. A rotina diaria fara a expiracao automaticamente.',
+                'body' => 'Existem cupons ativos com validade vencida. A rotina diária fará a expiração automaticamente.',
                 'tone' => 'warning',
                 'url' => route('loyalty-reports.index', ['status' => LoyaltyCoupon::STATUS_EXPIRED]),
                 'action' => 'Ver fidelidade',
@@ -168,7 +185,7 @@ class AppNotificationCenter
         if ($expiringSoonCoupons > 0) {
             $notifications[] = [
                 'title' => $expiringSoonCoupons.' cupom'.($expiringSoonCoupons === 1 ? '' : 's').' vencendo',
-                'body' => 'Ha cupons de fidelidade vencendo nos proximos 3 dias. Vale acionar estes clientes antes da validade acabar.',
+                'body' => 'Há cupons de fidelidade vencendo nos próximos 3 dias. Vale acionar estes clientes antes da validade acabar.',
                 'tone' => 'info',
                 'url' => route('loyalty-reports.index', ['status' => LoyaltyCoupon::STATUS_ACTIVE]),
                 'action' => 'Ver cupons',
@@ -186,7 +203,7 @@ class AppNotificationCenter
         if ($location->isSubscriptionExpired()) {
             return [[
                 'title' => 'Assinatura expirada',
-                'body' => 'Escolha um plano e solicite a ativacao para liberar a operacao.',
+                'body' => 'Escolha um plano e solicite a ativação para liberar a operação.',
                 'tone' => 'danger',
                 'url' => route('subscriptions.show'),
                 'action' => 'Ver assinatura',
@@ -212,8 +229,8 @@ class AppNotificationCenter
             && $currentSubscription->updated_at->greaterThanOrEqualTo(now()->subDay())
         ) {
             $notifications[] = [
-                'title' => 'Pagamento nao aprovado',
-                'body' => 'O Mercado Pago recusou ou cancelou a ultima tentativa. Escolha um plano para tentar novamente.',
+                'title' => 'Pagamento não aprovado',
+                'body' => 'O Mercado Pago recusou ou cancelou a última tentativa. Escolha um plano para tentar novamente.',
                 'tone' => 'danger',
                 'url' => route('subscriptions.show'),
                 'action' => 'Tentar novamente',
@@ -227,7 +244,7 @@ class AppNotificationCenter
         ) {
             $notifications[] = [
                 'title' => 'Pagamento aprovado',
-                'body' => 'Assinatura '.($currentSubscription->plan?->name ?? '').' ativa ate '.($currentSubscription->ends_at?->format('d/m/Y') ?? 'a proxima cobranca').'.',
+                'body' => 'Assinatura '.($currentSubscription->plan?->name ?? '').' ativa até '.($currentSubscription->ends_at?->format('d/m/Y') ?? 'a próxima cobrança').'.',
                 'tone' => 'success',
                 'url' => route('subscriptions.show'),
                 'action' => 'Ver assinatura',

@@ -57,6 +57,10 @@ class WashOrder extends Model
         'estimated_completion_at',
         'completed_at',
         'notes',
+        'customer_review_rating',
+        'customer_review_comment',
+        'customer_review_public',
+        'customer_reviewed_at',
     ];
 
     protected function casts(): array
@@ -67,6 +71,8 @@ class WashOrder extends Model
             'completed_at' => 'datetime',
             'total_amount' => 'decimal:2',
             'loyalty_discount_amount' => 'decimal:2',
+            'customer_review_public' => 'boolean',
+            'customer_reviewed_at' => 'datetime',
         ];
     }
 
@@ -131,6 +137,11 @@ class WashOrder extends Model
     public function hasLoyaltyDiscount(): bool
     {
         return (float) $this->loyalty_discount_amount > 0 && $this->loyalty_coupon_id !== null;
+    }
+
+    public function canRegisterCourtesyPayment(): bool
+    {
+        return $this->loyalty_coupon_id !== null && $this->payableAmount() <= 0.0;
     }
 
     public function trackingUrl(): string

@@ -18,7 +18,7 @@ class LoyaltyCouponApplicabilityService
         $coupon->loadMissing(['loyaltyProgram', 'rewardService', 'sourceWashOrder.services']);
 
         if ($washOrder->loyalty_coupon_id !== null) {
-            return $this->blocked('Cupom ja aplicado nesta lavagem.', 'Já aplicado');
+            return $this->blocked('Cupom já aplicado nesta lavagem.', 'Já aplicado');
         }
 
         if ($washOrder->hasIdentifiedPayment()) {
@@ -34,7 +34,7 @@ class LoyaltyCouponApplicabilityService
         }
 
         if ($coupon->status !== LoyaltyCoupon::STATUS_ACTIVE) {
-            return $this->blocked('Cupom nao esta ativo.', 'Indisponível');
+            return $this->blocked('Cupom não está ativo.', 'Indisponível');
         }
 
         if ($coupon->isExpired()) {
@@ -48,12 +48,12 @@ class LoyaltyCouponApplicabilityService
         $discount = $this->discountAmountFor($washOrder, $coupon);
 
         if ($discount <= 0) {
-            return $this->blocked('Cupom nao gera abatimento para esta lavagem.', 'Sem abatimento');
+            return $this->blocked('Cupom não gera abatimento para esta lavagem.', 'Sem abatimento');
         }
 
         return [
             'applicable' => true,
-            'reason' => 'Aplicavel nesta lavagem.',
+            'reason' => 'Aplicável nesta lavagem.',
             'discount_amount' => min($discount, (float) $washOrder->total_amount),
             'badge' => 'Aplicável',
         ];
@@ -91,8 +91,8 @@ class LoyaltyCouponApplicabilityService
         $service = $this->rewardServiceFor($coupon);
 
         return $service
-            ? 'Este cupom vale para '.$service->name.', mas esta lavagem nao possui esse servico.'
-            : 'Nao foi possivel identificar o servico de premio deste cupom.';
+            ? 'Este cupom vale para '.$service->name.', mas esta lavagem não possui esse serviço.'
+            : 'Não foi possível identificar o serviço de prêmio deste cupom.';
     }
 
     private function rewardServiceFor(LoyaltyCoupon $coupon): ?Service

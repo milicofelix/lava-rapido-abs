@@ -8,6 +8,7 @@
                     <p class="mt-1 text-sm text-slate-500">Acompanhe cupons gerados, uso, descontos concedidos e clientes perto de ganhar beneficio.</p>
                 </div>
                 <div class="flex flex-wrap items-center gap-2">
+                    <a href="{{ route('loyalty-campaigns.index') }}" class="rounded-xl bg-fuchsia-50 px-4 py-2.5 text-sm font-bold text-fuchsia-700 ring-1 ring-fuchsia-200 hover:bg-fuchsia-100">Campanhas</a>
                     @if ($loyaltyProgram)
                         <form method="POST" action="{{ route('loyalty-reports.process-coupons') }}">
                             @csrf
@@ -37,7 +38,7 @@
 
             <form method="GET" class="mt-5 grid gap-3 lg:grid-cols-[160px_160px_1fr_1fr_190px_auto]">
                 <label class="block">
-                    <span class="mb-1 block text-xs font-bold text-slate-500">Inicio</span>
+                    <span class="mb-1 block text-xs font-bold text-slate-500">Início</span>
                     <input type="date" name="start" value="{{ $filters['start'] }}" class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100">
                     @error('start') <span class="mt-1 block text-xs font-bold text-red-600">{{ $message }}</span> @enderror
                 </label>
@@ -58,7 +59,7 @@
                 </label>
                 <label class="block">
                     <span class="mb-1 block text-xs font-bold text-slate-500">Busca</span>
-                    <input name="search" value="{{ $filters['search'] }}" placeholder="Codigo, nome, telefone ou CPF" class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100">
+                    <input name="search" value="{{ $filters['search'] }}" placeholder="Código, nome, telefone ou CPF" class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100">
                     @error('search') <span class="mt-1 block text-xs font-bold text-red-600">{{ $message }}</span> @enderror
                 </label>
                 <label class="block">
@@ -94,6 +95,77 @@
             <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
                 <p class="text-sm font-bold text-slate-500">Descontos concedidos</p>
                 <p class="mt-2 text-3xl font-black text-fuchsia-700">R$ {{ number_format($metrics['discount_granted'], 2, ',', '.') }}</p>
+            </div>
+        </section>
+
+        <section class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+            <div class="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                    <p class="text-xs font-black uppercase tracking-[0.18em] text-blue-700">Retenção e recorrência</p>
+                    <h2 class="mt-1 text-xl font-black text-slate-950">Clientes que voltam para lavar</h2>
+                    <p class="mt-1 text-sm text-slate-500">Indicadores calculados pelas lavagens entregues no período filtrado.</p>
+                </div>
+                <span class="rounded-full bg-blue-50 px-3 py-1 text-xs font-black text-blue-700 ring-1 ring-blue-100">{{ $retentionReport['orders_count'] }} lavagem{{ $retentionReport['orders_count'] === 1 ? '' : 's' }}</span>
+            </div>
+
+            <div class="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+                <div class="rounded-2xl bg-slate-50 p-4 ring-1 ring-slate-100">
+                    <p class="text-sm font-bold text-slate-500">Clientes atendidos</p>
+                    <p class="mt-2 text-3xl font-black text-slate-950">{{ $retentionReport['served_customers'] }}</p>
+                </div>
+                <div class="rounded-2xl bg-emerald-50 p-4 ring-1 ring-emerald-100">
+                    <p class="text-sm font-bold text-emerald-700">Clientes recorrentes</p>
+                    <p class="mt-2 text-3xl font-black text-emerald-800">{{ $retentionReport['returning_customers'] }}</p>
+                </div>
+                <div class="rounded-2xl bg-blue-50 p-4 ring-1 ring-blue-100">
+                    <p class="text-sm font-bold text-blue-700">Taxa de recorrência</p>
+                    <p class="mt-2 text-3xl font-black text-blue-800">{{ number_format($retentionReport['recurrence_rate'], 1, ',', '.') }}%</p>
+                </div>
+                <div class="rounded-2xl bg-fuchsia-50 p-4 ring-1 ring-fuchsia-100">
+                    <p class="text-sm font-bold text-fuchsia-700">Média por cliente</p>
+                    <p class="mt-2 text-3xl font-black text-fuchsia-800">{{ number_format($retentionReport['average_orders_per_customer'], 1, ',', '.') }}</p>
+                </div>
+            </div>
+
+            <div class="mt-5 grid gap-5 xl:grid-cols-[0.8fr_1.2fr]">
+                <div class="rounded-2xl border border-slate-100 p-4">
+                    <div class="flex items-center justify-between gap-3">
+                        <div>
+                            <h3 class="font-black text-slate-950">Frequência no período</h3>
+                            <p class="mt-1 text-sm text-slate-500">{{ $retentionReport['retained_from_before'] }} cliente{{ $retentionReport['retained_from_before'] === 1 ? '' : 's' }} já tinha{{ $retentionReport['retained_from_before'] === 1 ? '' : 'm' }} histórico anterior.</p>
+                        </div>
+                    </div>
+                    <div class="mt-4 space-y-3">
+                        @foreach ($retentionReport['frequency_buckets'] as $bucket)
+                            <div>
+                                <div class="mb-1 flex items-center justify-between gap-3 text-sm">
+                                    <span class="font-bold text-slate-700">{{ $bucket['label'] }}</span>
+                                    <span class="font-black text-slate-950">{{ $bucket['count'] }} cliente{{ $bucket['count'] === 1 ? '' : 's' }}</span>
+                                </div>
+                                <div class="h-3 overflow-hidden rounded-full bg-slate-100">
+                                    <div class="h-3 rounded-full bg-blue-700" style="width: {{ $bucket['percent'] > 0 ? max(4, $bucket['percent']) : 0 }}%"></div>
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+
+                <div class="rounded-2xl border border-slate-100 p-4">
+                    <h3 class="font-black text-slate-950">Evolução mensal</h3>
+                    <div class="mt-4 space-y-3">
+                        @forelse ($retentionReport['monthly_series'] as $month)
+                            <div class="grid gap-2 sm:grid-cols-[74px_1fr_auto] sm:items-center">
+                                <span class="text-sm font-black text-slate-700">{{ $month['label'] }}</span>
+                                <div class="h-3 overflow-hidden rounded-full bg-slate-100">
+                                    <div class="h-3 rounded-full bg-emerald-600" style="width: {{ $month['percent'] > 0 ? max(4, $month['percent']) : 0 }}%"></div>
+                                </div>
+                                <span class="text-sm font-bold text-slate-600">{{ $month['orders'] }} lav. · {{ $month['customers'] }} cli. · {{ number_format($month['recurrence_rate'], 1, ',', '.') }}%</span>
+                            </div>
+                        @empty
+                            <p class="rounded-2xl border border-dashed border-slate-200 px-4 py-8 text-center text-sm font-semibold text-slate-500">Nenhuma lavagem entregue no período.</p>
+                        @endforelse
+                    </div>
+                </div>
             </div>
         </section>
 
@@ -180,7 +252,7 @@
                         <article class="grid gap-3 px-5 py-4 md:grid-cols-[1fr_150px_120px_auto] md:items-center">
                             <div class="min-w-0">
                                 <a href="{{ route('loyalty-coupons.show', $coupon) }}" class="font-black text-slate-950 hover:text-blue-700">{{ $coupon->code }}</a>
-                                <p class="mt-1 truncate text-sm font-semibold text-slate-600">{{ $coupon->customer?->name ?? 'Cliente nao informado' }}</p>
+                                <p class="mt-1 truncate text-sm font-semibold text-slate-600">{{ $coupon->customer?->name ?? 'Cliente não informado' }}</p>
                                 <p class="mt-1 truncate text-xs text-slate-500">{{ $coupon->benefitLabel() }}</p>
                             </div>
                             <div class="text-sm text-slate-600">

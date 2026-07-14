@@ -53,7 +53,7 @@
 
                 <dl class="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
                     <div class="rounded-2xl bg-slate-50 p-4">
-                        <dt class="text-xs font-black uppercase tracking-[0.16em] text-slate-500">Veiculo</dt>
+                        <dt class="text-xs font-black uppercase tracking-[0.16em] text-slate-500">Veículo</dt>
                         <dd class="mt-1 font-black text-slate-950">{{ $washOrder->vehicle->plate }}</dd>
                         <dd class="mt-1 text-sm text-slate-500">{{ $washOrder->vehicle->brand }} {{ $washOrder->vehicle->model }}</dd>
                     </div>
@@ -62,7 +62,7 @@
                         <dd class="mt-1 font-black text-slate-950">{{ $washOrder->entered_at->format('d/m/Y H:i') }}</dd>
                     </div>
                     <div class="rounded-2xl bg-slate-50 p-4">
-                        <dt class="text-xs font-black uppercase tracking-[0.16em] text-slate-500">Previsao</dt>
+                        <dt class="text-xs font-black uppercase tracking-[0.16em] text-slate-500">Previsão</dt>
                         <dd class="mt-1 font-black text-slate-950">{{ $washOrder->estimated_completion_at?->format('d/m/Y H:i') ?? '-' }}</dd>
                     </div>
                     <div class="rounded-2xl bg-slate-50 p-4">
@@ -95,7 +95,7 @@
             <section class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
                 <div class="border-b border-slate-200 px-5 py-4">
                     <p class="text-xs font-black uppercase tracking-[0.18em] text-blue-700">Execucao</p>
-                    <h2 class="mt-1 font-black text-slate-950">Servicos selecionados</h2>
+                    <h2 class="mt-1 font-black text-slate-950">Serviços selecionados</h2>
                 </div>
                 <div class="divide-y divide-slate-100">
                     @foreach ($washOrder->services as $service)
@@ -165,15 +165,43 @@
                             <div class="px-5 py-4">
                                 <div class="flex flex-wrap items-start justify-between gap-3">
                                     <div>
-                                        <p class="font-black text-slate-950">{{ $payment->methodLabel() }}</p>
+                                        <div class="flex flex-wrap items-center gap-2">
+                                            <p class="font-black {{ $payment->isReversed() ? 'text-slate-500 line-through' : 'text-slate-950' }}">{{ $payment->methodLabel() }}</p>
+                                            @if ($payment->isReversed())
+                                                <span class="rounded-full bg-red-100 px-2.5 py-1 text-xs font-black text-red-700">Estornado</span>
+                                            @endif
+                                        </div>
                                         <p class="mt-1 text-sm text-slate-500">
                                             {{ $payment->paid_at?->format('d/m/Y H:i') ?? '-' }} · {{ $payment->user?->name ?? 'Sistema' }}
                                         </p>
+                                        @if ($payment->isReversed())
+                                            <p class="mt-1 text-xs font-bold text-red-700">
+                                                Estornado em {{ $payment->reversed_at?->format('d/m/Y H:i') }} por {{ $payment->reversedBy?->name ?? 'Sistema' }}
+                                            </p>
+                                        @endif
                                     </div>
-                                    <p class="font-black text-emerald-700">R$ {{ number_format((float) $payment->amount, 2, ',', '.') }}</p>
+                                    <p class="font-black {{ $payment->isReversed() ? 'text-slate-500 line-through' : 'text-emerald-700' }}">R$ {{ number_format((float) $payment->amount, 2, ',', '.') }}</p>
                                 </div>
                                 @if ($payment->notes)
                                     <p class="mt-3 rounded-2xl bg-slate-50 px-4 py-3 text-sm text-slate-700">{{ $payment->notes }}</p>
+                                @endif
+                                @if ($payment->isReversed())
+                                    <p class="mt-3 rounded-2xl bg-red-50 px-4 py-3 text-sm font-semibold text-red-800">{{ $payment->reversal_reason }}</p>
+                                @elseif ($payment->canBeReversed())
+                                    <details class="mt-3 rounded-2xl border border-red-100 bg-red-50 p-3">
+                                        <summary class="cursor-pointer text-sm font-black text-red-700">Estornar pagamento</summary>
+                                        <form method="POST" action="{{ route('payments.reverse', [$washOrder, $payment]) }}" class="mt-3 space-y-3">
+                                            @csrf
+                                            @method('PATCH')
+                                            <label class="block">
+                                                <span class="text-xs font-black uppercase tracking-[0.14em] text-red-700">Motivo do estorno</span>
+                                                <textarea name="reversal_reason" rows="2" class="mt-1 w-full rounded-xl border border-red-200 bg-white px-3 py-2.5 text-sm shadow-sm" required>{{ old('reversal_reason') }}</textarea>
+                                            </label>
+                                            @error('payment_reversal') <span class="text-sm font-bold text-red-700">{{ $message }}</span> @enderror
+                                            @error('reversal_reason') <span class="text-sm font-bold text-red-700">{{ $message }}</span> @enderror
+                                            <button class="rounded-xl bg-red-700 px-4 py-2 text-xs font-black text-white shadow-sm hover:bg-red-800">Confirmar estorno</button>
+                                        </form>
+                                    </details>
                                 @endif
                             </div>
                         @empty
@@ -186,7 +214,7 @@
             <section class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
                 <div class="border-b border-slate-200 px-5 py-4">
                     <p class="text-xs font-black uppercase tracking-[0.18em] text-blue-700">Linha do tempo</p>
-                    <h2 class="mt-1 font-black text-slate-950">Historico de status</h2>
+                    <h2 class="mt-1 font-black text-slate-950">Histórico de status</h2>
                 </div>
                 <div class="divide-y divide-slate-100">
                     @foreach ($washOrder->statusHistories->sortByDesc('created_at') as $history)
@@ -232,7 +260,7 @@
                 </section>
             @else
                 <section class="rounded-2xl border border-slate-200 bg-slate-50 p-5 text-sm text-slate-600">
-                    Status restrito a responsaveis da equipe desta lavagem.
+                    {{ $statusBlockedReason ?? 'Status restrito a responsáveis da equipe desta lavagem.' }}
                 </section>
             @endif
 
@@ -257,7 +285,7 @@
                                         </select>
                                         @error('loyalty_coupon_id') <span class="text-sm text-red-600">{{ $message }}</span> @enderror
                                     </label>
-                                    <p class="text-xs font-semibold text-fuchsia-800">O cupom sera baixado e o desconto entrara no valor a receber desta lavagem.</p>
+                                    <p class="text-xs font-semibold text-fuchsia-800">O cupom será baixado e o desconto entrará no valor a receber desta lavagem.</p>
                                     <button class="w-full rounded-xl bg-fuchsia-700 px-4 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-fuchsia-800">Aplicar cupom</button>
                                 </form>
                             @else
@@ -332,8 +360,8 @@
                     @endif
 
                     <div class="mt-5 border-t border-blue-200 pt-4">
-                        <h3 class="font-black text-blue-950">Notificacao manual</h3>
-                        <p class="mt-1 text-xs font-semibold text-blue-800">Prepare a mensagem e envie manualmente pelo WhatsApp. Nenhuma API paga e usada nesta fase.</p>
+                        <h3 class="font-black text-blue-950">Notificação manual</h3>
+                        <p class="mt-1 text-xs font-semibold text-blue-800">Prepare a mensagem e envie manualmente pelo WhatsApp. Nenhuma API paga é usada nesta fase.</p>
                     </div>
 
                     <form method="POST" action="{{ route('wash-orders.notifications.whatsapp-manual.store', $washOrder) }}" class="mt-4 space-y-3">
@@ -387,7 +415,7 @@
                     <h2 class="mt-1 font-black text-fuchsia-950">Cupons ativos do cliente</h2>
                     <div class="mt-4 space-y-3">
                         @foreach ($washOrder->customer->loyaltyCoupons->take(3) as $coupon)
-                            @php($couponEvaluation = $loyaltyCouponEvaluations[$coupon->id] ?? ['applicable' => false, 'badge' => 'Indisponível', 'reason' => 'Nao avaliado.', 'discount_amount' => 0])
+                            @php($couponEvaluation = $loyaltyCouponEvaluations[$coupon->id] ?? ['applicable' => false, 'badge' => 'Indisponível', 'reason' => 'Não avaliado.', 'discount_amount' => 0])
                             @php($couponTone = $couponEvaluation['applicable'] ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700')
                             @php($canOpenCoupon = auth()->user()->canAccess(\App\Support\Access\AccessControl::MANAGE_CUSTOMERS))
                             @if ($canOpenCoupon)

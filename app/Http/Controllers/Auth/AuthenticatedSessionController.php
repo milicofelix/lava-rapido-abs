@@ -26,7 +26,7 @@ class AuthenticatedSessionController extends Controller
 
         if (! Auth::attempt($credentials, $request->boolean('remember'))) {
             return back()
-                ->withErrors(['email' => 'As credenciais informadas nao conferem.'])
+                ->withErrors(['email' => 'As credenciais informadas não conferem.'])
                 ->onlyInput('email');
         }
 

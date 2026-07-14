@@ -1,5 +1,5 @@
 import { Head, router } from '@inertiajs/react';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 const nextStatusFor = {
     aguardando: 'lavando',
@@ -93,7 +93,7 @@ function OrderCard({ order, statuses, onMove, canUpdateStatus, columnKey, showOu
             <div className="mt-3 flex items-center justify-between gap-3 text-xs">
                 <div className="min-w-0">
                     <p className="truncate font-semibold text-slate-700">{order.vehicle.brand} {order.vehicle.model}</p>
-                    <p className="mt-1 truncate text-slate-500">{visibleServices[0]?.name ?? 'Sem servico'}</p>
+                    <p className="mt-1 truncate text-slate-500">{visibleServices[0]?.name ?? 'Sem serviço'}</p>
                 </div>
                 <div className="shrink-0 text-right">
                     <p className="font-black text-slate-900">R$ {order.total_amount}</p>
@@ -133,7 +133,7 @@ function OrderCard({ order, statuses, onMove, canUpdateStatus, columnKey, showOu
                     </button>
                 ) : (
                     <span className="rounded-lg bg-slate-100 px-2 py-1.5 text-center text-xs font-bold text-slate-500">
-                        {nextStatus ? 'Restrito' : 'Concluido'}
+                        {nextStatus ? 'Restrito' : 'Concluído'}
                     </span>
                 )}
             </div>
@@ -141,7 +141,7 @@ function OrderCard({ order, statuses, onMove, canUpdateStatus, columnKey, showOu
     );
 }
 
-function Column({ column, statuses, onMove, canUpdateStatus, showOutsideDayBadge }) {
+function Column({ column, statuses, onMove, canUpdateStatus, showOutsideDayBadge, isMobileActive }) {
     const [isDraggingOver, setIsDraggingOver] = useState(false);
     const style = columnStyles[column.key] ?? columnStyles.awaiting;
 
@@ -164,7 +164,8 @@ function Column({ column, statuses, onMove, canUpdateStatus, showOutsideDayBadge
 
     return (
         <section
-            className={`min-h-[560px] min-w-[260px] rounded-xl border border-t-4 ${style.container} ${isDraggingOver ? 'ring-2 ring-blue-300' : ''}`}
+            id={`kanban-column-${column.key}`}
+            className={`min-h-[520px] w-[min(86vw,22rem)] shrink-0 snap-center scroll-mt-28 rounded-xl border border-t-4 transition xl:min-h-[560px] xl:w-auto xl:min-w-0 ${style.container} ${isDraggingOver ? 'ring-2 ring-blue-300' : ''} ${isMobileActive ? 'ring-2 ring-blue-200 xl:ring-0' : ''}`}
             onDragOver={(event) => {
                 if (!canUpdateStatus) {
                     return;
@@ -224,9 +225,19 @@ export default function Kanban({
     const [selectedDate, setSelectedDate] = useState(filters?.date ?? '');
     const [realtimeUpdated, setRealtimeUpdated] = useState(false);
     const [statusError, setStatusError] = useState(null);
+    const [activeMobileColumn, setActiveMobileColumn] = useState(initialColumns[0]?.key ?? null);
+    const boardRef = useRef(null);
     const canUpdateStatus = ['owner', 'admin', 'operator'].includes(auth?.user?.role);
     const activePeriod = filters?.period ?? 'today';
     const showOutsideDayBadge = Boolean(filters?.show_outside_day_badge);
+    const totalOrders = useMemo(
+        () => columns.reduce((total, column) => total + column.orders.length, 0),
+        [columns],
+    );
+    const busiestColumn = useMemo(
+        () => columns.reduce((current, column) => (column.orders.length > current.orders.length ? column : current), columns[0] ?? { orders: [] }),
+        [columns],
+    );
 
     const applyFilters = (nextFilters = {}) => {
         const period = nextFilters.period ?? activePeriod;
@@ -259,14 +270,28 @@ export default function Kanban({
 
             await refreshFeed();
         } catch (error) {
-            setStatusError(error.response?.data?.message ?? 'Nao foi possivel atualizar o status.');
+            setStatusError(error.response?.data?.message ?? 'Não foi possível atualizar o status.');
         }
     };
 
     useEffect(() => {
         setColumns(initialColumns);
         setSelectedDate(filters?.date ?? '');
+        setActiveMobileColumn((current) => {
+            if (current && initialColumns.some((column) => column.key === current)) {
+                return current;
+            }
+
+            return initialColumns.find((column) => column.orders.length > 0)?.key ?? initialColumns[0]?.key ?? null;
+        });
     }, [initialColumns, filters?.date]);
+
+    const focusMobileColumn = (columnKey) => {
+        setActiveMobileColumn(columnKey);
+
+        const target = boardRef.current?.querySelector(`#kanban-column-${columnKey}`);
+        target?.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+    };
 
     useEffect(() => {
         if (!window.Echo) {
@@ -290,9 +315,9 @@ export default function Kanban({
     return (
         <>
             <Head title="Kanban · AutoFlow" />
-            <div className="min-h-screen bg-[#061832] p-2 lg:p-3">
-                <div className="min-h-[calc(100vh-16px)] overflow-hidden rounded-2xl bg-slate-50 shadow-2xl shadow-black/30">
-                <header className="sticky top-0 z-20 border-b border-slate-200 bg-white/95 px-4 py-4 backdrop-blur sm:px-6 lg:px-8">
+            <div className="min-h-screen bg-[#061832] p-1.5 sm:p-2 lg:p-3">
+                <div className="min-h-[calc(100vh-12px)] overflow-hidden rounded-2xl bg-slate-50 shadow-2xl shadow-black/30 sm:min-h-[calc(100vh-16px)]">
+                <header className="sticky top-0 z-20 border-b border-slate-200 bg-white/95 px-3 py-3 backdrop-blur sm:px-6 sm:py-4 lg:px-8">
                     <div className="flex flex-wrap items-center justify-between gap-4">
                         <div className="flex items-center gap-4">
                             {dashboardUrl ? (
@@ -306,9 +331,9 @@ export default function Kanban({
                             )}
                             <div>
                                 <div className="flex items-center gap-3">
-                                    <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-50 text-sm font-black text-blue-700">K</span>
+                                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-sm font-black text-blue-700">K</span>
                                     <div>
-                                        <h1 className="text-xl font-black text-slate-950 sm:text-2xl">Kanban operacional</h1>
+                                        <h1 className="text-lg font-black text-slate-950 sm:text-2xl">Kanban operacional</h1>
                                         {userLine && <p className="text-sm text-slate-500">{userLine}</p>}
                                     </div>
                                 </div>
@@ -338,7 +363,7 @@ export default function Kanban({
                     </div>
                 </header>
 
-                <main className="px-4 py-5 sm:px-6 lg:px-8">
+                <main className="px-3 py-4 sm:px-6 sm:py-5 lg:px-8">
                     {currentLocation && (
                         <section className="mb-5 rounded-2xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm text-blue-950 shadow-sm">
                             <div className="flex flex-wrap items-center justify-between gap-3">
@@ -351,24 +376,30 @@ export default function Kanban({
                         </section>
                     )}
 
-                    <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+                    <section className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm sm:p-4">
                         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
                             <div className="flex items-center gap-3">
                                 <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-50 text-sm font-black text-blue-700">F</span>
                                 <div>
-                                    <h2 className="text-xl font-black text-slate-950">Fluxo de Lavagens</h2>
+                                    <h2 className="text-lg font-black text-slate-950 sm:text-xl">Fluxo de Lavagens</h2>
                                     <p className="text-sm text-slate-500">Acompanhe, arraste e avance as lavagens abertas.</p>
                                 </div>
                             </div>
-                            <div className="flex gap-2">
-                                <span className="rounded-lg border border-slate-200 px-4 py-2 text-sm font-bold text-slate-700">Visualizacao: Kanban</span>
+                            <div className="hidden gap-2 sm:flex">
+                                <span className="rounded-lg border border-slate-200 px-4 py-2 text-sm font-bold text-slate-700">Visualização: Kanban</span>
                             </div>
                         </div>
 
-                        <div className="mb-4 flex flex-wrap items-end justify-between gap-3 rounded-xl border border-slate-200 bg-slate-50 p-3">
+                        <div className="mb-4 grid gap-3 rounded-xl border border-slate-200 bg-slate-50 p-3 lg:grid-cols-[1fr_auto] lg:items-end">
                             <div>
-                                <p className="text-xs font-black uppercase tracking-[0.16em] text-slate-500">Periodo operacional</p>
+                                <p className="text-xs font-black uppercase tracking-[0.16em] text-slate-500">Período operacional</p>
                                 <p className="mt-1 text-sm font-bold text-slate-900">{filters?.label ?? 'Hoje'}</p>
+                                <div className="mt-2 flex flex-wrap gap-2 text-xs font-black text-slate-600">
+                                    <span className="rounded-full bg-white px-3 py-1 ring-1 ring-slate-200">{totalOrders} lavagem{totalOrders === 1 ? '' : 'ns'}</span>
+                                    {busiestColumn?.title && (
+                                        <span className="rounded-full bg-white px-3 py-1 ring-1 ring-slate-200">Maior fila: {busiestColumn.title}</span>
+                                    )}
+                                </div>
                             </div>
                             <div className="flex flex-wrap items-end gap-2">
                                 <label className="text-xs font-bold text-slate-600">
@@ -406,9 +437,27 @@ export default function Kanban({
                             </div>
                         </div>
 
-                        <div className="grid gap-3 overflow-x-auto pb-4 xl:grid-cols-5">
+                        <div className="mb-3 flex gap-2 overflow-x-auto pb-1 xl:hidden" aria-label="Atalhos das colunas do Kanban">
+                            {columns.map((column) => {
+                                const style = columnStyles[column.key] ?? columnStyles.awaiting;
+                                const isActive = activeMobileColumn === column.key;
+
+                                return (
+                                    <button
+                                        key={column.key}
+                                        type="button"
+                                        onClick={() => focusMobileColumn(column.key)}
+                                        className={`shrink-0 rounded-full px-3 py-2 text-xs font-black ring-1 transition ${isActive ? `${style.count} ring-transparent` : 'bg-white text-slate-600 ring-slate-200'}`}
+                                    >
+                                        {column.title} · {column.orders.length}
+                                    </button>
+                                );
+                            })}
+                        </div>
+
+                        <div ref={boardRef} className="-mx-3 flex snap-x gap-3 overflow-x-auto px-3 pb-4 sm:-mx-4 sm:px-4 xl:mx-0 xl:grid xl:grid-cols-5 xl:px-0">
                             {statusError && (
-                                <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm font-bold text-red-800 xl:col-span-5">
+                                <div className="w-[min(86vw,22rem)] shrink-0 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm font-bold text-red-800 xl:col-span-5 xl:w-auto">
                                     {statusError}
                                 </div>
                             )}
@@ -420,6 +469,7 @@ export default function Kanban({
                                     onMove={moveOrder}
                                     canUpdateStatus={canUpdateStatus}
                                     showOutsideDayBadge={showOutsideDayBadge}
+                                    isMobileActive={activeMobileColumn === column.key}
                                 />
                             ))}
                         </div>

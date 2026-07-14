@@ -18,7 +18,7 @@ class RemoveLoyaltyCouponService
             $washOrder = $washOrder->fresh(['loyaltyCoupon', 'payments']);
 
             if (! $washOrder) {
-                throw new InvalidArgumentException('Lavagem nao encontrada.');
+                throw new InvalidArgumentException('Lavagem não encontrada.');
             }
 
             $state = $this->removableState($washOrder);
@@ -71,11 +71,11 @@ class RemoveLoyaltyCouponService
         $washOrder->loadMissing(['loyaltyCoupon', 'payments']);
 
         if (! $washOrder->loyaltyCoupon) {
-            return ['can_remove' => false, 'reason' => 'Esta lavagem nao possui cupom aplicado.'];
+            return ['can_remove' => false, 'reason' => 'Esta lavagem não possui cupom aplicado.'];
         }
 
         if (in_array($washOrder->status, [WashOrder::STATUS_DELIVERED, WashOrder::STATUS_CANCELED], true)) {
-            return ['can_remove' => false, 'reason' => 'Nao e possivel remover cupom de uma lavagem finalizada ou cancelada.'];
+            return ['can_remove' => false, 'reason' => 'Não é possível remover cupom de uma lavagem finalizada ou cancelada.'];
         }
 
         $payments = $washOrder->payments;

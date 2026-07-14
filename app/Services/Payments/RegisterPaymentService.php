@@ -8,6 +8,7 @@ use App\Models\User;
 use App\Models\WashOrder;
 use App\Services\Loyalty\EvaluateLoyaltyProgramService;
 use App\Support\AuditLogger;
+use DomainException;
 use Illuminate\Support\Facades\DB;
 
 class RegisterPaymentService
@@ -23,6 +24,11 @@ class RegisterPaymentService
     {
         return DB::transaction(function () use ($washOrder, $data, $user) {
             $method = $data['method'];
+
+            if ($method === Payment::METHOD_COURTESY && ! $washOrder->canRegisterCourtesyPayment()) {
+                throw new DomainException('Cortesia só pode ser registrada a partir de cupom de fidelidade aplicado.');
+            }
+
             $amount = in_array($method, [Payment::METHOD_COURTESY, Payment::METHOD_CREDIT_PENDING], true)
                 ? 0
                 : $data['amount'];

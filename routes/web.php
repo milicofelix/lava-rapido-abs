@@ -1,15 +1,16 @@
 <?php
 
-use App\Http\Controllers\App\CashRegisterController;
+use App\Http\Controllers\App\ApplyLoyaltyCouponController;
+use App\Http\Controllers\App\AuditLogController;
 use App\Http\Controllers\App\CancelLoyaltyCouponController;
+use App\Http\Controllers\App\CashRegisterController;
 use App\Http\Controllers\App\CreditReceivableController;
 use App\Http\Controllers\App\CustomerController;
-use App\Http\Controllers\App\AuditLogController;
-use App\Http\Controllers\App\ApplyLoyaltyCouponController;
 use App\Http\Controllers\App\DashboardController;
 use App\Http\Controllers\App\EmployeeController;
 use App\Http\Controllers\App\ExecutiveReportController;
 use App\Http\Controllers\App\FinanceController;
+use App\Http\Controllers\App\LoyaltyCampaignController;
 use App\Http\Controllers\App\LoyaltyCouponController;
 use App\Http\Controllers\App\LoyaltyReportController;
 use App\Http\Controllers\App\OwnerSubscriptionController;
@@ -34,10 +35,23 @@ use App\Http\Controllers\MercadoPagoWebhookController;
 use App\Http\Controllers\PublicWashLocationMapController;
 use App\Http\Controllers\PublicWashLocationRequestController;
 use App\Http\Controllers\PublicWashTrackingController;
+use App\Http\Controllers\ReadinessController;
 use App\Models\User;
 use App\Support\Access\AccessControl;
+use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
+use Illuminate\Foundation\Http\Middleware\ValidateCsrfToken;
+use Illuminate\Session\Middleware\StartSession;
 use Illuminate\Support\Facades\Route;
+use Illuminate\View\Middleware\ShareErrorsFromSession;
 
+Route::get('/ready', ReadinessController::class)
+    ->withoutMiddleware([
+        AddQueuedCookiesToResponse::class,
+        StartSession::class,
+        ShareErrorsFromSession::class,
+        ValidateCsrfToken::class,
+    ])
+    ->name('readiness.show');
 Route::redirect('/', '/lava-rapidos');
 Route::get('/quero-cadastrar-meu-lava-rapido', [PublicWashLocationRequestController::class, 'create'])->name('public.location-requests.create');
 Route::post('/quero-cadastrar-meu-lava-rapido', [PublicWashLocationRequestController::class, 'store'])->name('public.location-requests.store');
@@ -47,6 +61,7 @@ Route::get('/lava-rapidos/{location:slug}', [PublicWashLocationMapController::cl
 Route::redirect('/unidades', '/lava-rapidos');
 Route::get('/lavagens/acompanhamento/{code}', PublicWashTrackingController::class)->name('tracking.show');
 Route::get('/lavagens/acompanhamento/{code}/feed', [PublicWashTrackingController::class, 'feed'])->name('tracking.feed');
+Route::post('/lavagens/acompanhamento/{code}/avaliacao', [PublicWashTrackingController::class, 'review'])->name('tracking.review');
 Route::post('/webhooks/mercado-pago', MercadoPagoWebhookController::class)->name('webhooks.mercado-pago');
 
 Route::middleware('guest')->group(function () {
@@ -102,6 +117,12 @@ Route::middleware('auth')->group(function () {
         Route::get('agenda', ScheduleController::class)
             ->middleware('permission:'.AccessControl::VIEW_SCHEDULE)
             ->name('schedule.index');
+        Route::patch('agenda/{wash_order}/reagendar', [ScheduleController::class, 'reschedule'])
+            ->middleware('permission:'.AccessControl::VIEW_SCHEDULE)
+            ->name('schedule.reschedule');
+        Route::patch('agenda/{wash_order}/cancelar', [ScheduleController::class, 'cancel'])
+            ->middleware('permission:'.AccessControl::VIEW_SCHEDULE)
+            ->name('schedule.cancel');
 
         Route::middleware('permission:'.AccessControl::CREATE_WASH_ORDER)->group(function () {
             Route::get('lavagens/create', [WashOrderController::class, 'create'])->name('wash-orders.create');
@@ -110,14 +131,18 @@ Route::middleware('auth')->group(function () {
 
         Route::middleware('permission:'.AccessControl::REGISTER_PAYMENT)->group(function () {
             Route::post('lavagens/{wash_order}/pagamentos', [PaymentController::class, 'store'])->name('payments.store');
+            Route::patch('lavagens/{wash_order}/pagamentos/{payment}/estornar', [PaymentController::class, 'reverse'])->name('payments.reverse');
             Route::post('lavagens/{wash_order}/cupom-fidelidade', ApplyLoyaltyCouponController::class)->name('wash-orders.loyalty-coupons.apply');
             Route::delete('lavagens/{wash_order}/cupom-fidelidade', RemoveLoyaltyCouponController::class)->name('wash-orders.loyalty-coupons.remove');
         });
 
         Route::middleware('permission:'.AccessControl::MANAGE_CUSTOMERS)->group(function () {
             Route::get('fidelidade', [LoyaltyReportController::class, 'index'])->name('loyalty-reports.index');
+            Route::get('fidelidade/campanhas', LoyaltyCampaignController::class)->name('loyalty-campaigns.index');
             Route::get('fidelidade/exportar', [LoyaltyReportController::class, 'export'])->name('loyalty-reports.export');
             Route::post('fidelidade/processar-cupons', ProcessLoyaltyCouponsController::class)->name('loyalty-reports.process-coupons');
+            Route::get('clientes/importar/modelo', [CustomerController::class, 'importTemplate'])->name('customers.import-template');
+            Route::post('clientes/importar', [CustomerController::class, 'import'])->name('customers.import');
             Route::resource('clientes', CustomerController::class)->parameters(['clientes' => 'customer'])->names('customers')->except(['show', 'destroy']);
             Route::get('cupons-fidelidade/{loyaltyCoupon}', LoyaltyCouponController::class)->name('loyalty-coupons.show');
             Route::patch('cupons-fidelidade/{loyaltyCoupon}/cancelar', CancelLoyaltyCouponController::class)->name('loyalty-coupons.cancel');
@@ -156,6 +181,7 @@ Route::middleware('auth')->group(function () {
             Route::get('financeiro', [FinanceController::class, 'index'])->name('finance.index');
             Route::get('financeiro/exportar', [FinanceController::class, 'export'])->name('finance.export');
             Route::get('relatorios/executivo', ExecutiveReportController::class)->name('reports.executive');
+            Route::get('relatorios/executivo/pdf', [ExecutiveReportController::class, 'exportPdf'])->name('reports.executive.pdf');
         });
 
         Route::middleware('permission:'.AccessControl::MANAGE_CASH_REGISTER)->group(function () {

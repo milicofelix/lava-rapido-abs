@@ -29,8 +29,9 @@ Documento de acompanhamento do que ja foi construido e do que ainda falta para d
 - [x] Tela de login mais semantica e fundo claro.
 - [x] Tela publica de acompanhamento com visual claro.
 - [x] Substituicao de textos tecnicos como `Owner` por termos amigaveis.
-- [ ] Revisao visual final responsiva em todas as telas.
-- [ ] Padronizar todos os textos acentuados em pt-BR.
+- [x] Revisao visual final responsiva em todas as telas.
+- [x] Navegacao principal mobile fixa para rotas mais usadas.
+- [x] Padronizar todos os textos acentuados em pt-BR.
 
 ## Usuarios, ACL e permissoes
 
@@ -41,8 +42,8 @@ Documento de acompanhamento do que ja foi construido e do que ainda falta para d
 - [x] Permissoes configuraveis para operador em alguns acessos.
 - [x] Operador sem acesso a financeiro, assinatura e areas administrativas.
 - [x] Testes para bloqueios de acesso.
-- [ ] Tela mais completa para configurar permissoes por perfil.
-- [ ] Auditoria visual de permissoes por usuario.
+- [x] Tela mais completa para configurar permissoes por perfil.
+- [x] Auditoria visual de permissoes por usuario.
 
 ## Lava-rapidos e unidades
 
@@ -60,8 +61,8 @@ Documento de acompanhamento do que ja foi construido e do que ainda falta para d
 - [x] Mascara de CPF, CNPJ, CEP e telefone.
 - [x] Mapa publico com lava-rapidos.
 - [x] Seeder de lava-rapidos reais em Sao Paulo, com foco na Zona Leste.
-- [ ] Melhorar qualidade da geocodificacao em massa.
-- [ ] Criar rotina de reprocessamento de coordenadas pendentes.
+- [x] Melhorar qualidade da geocodificacao em massa.
+- [x] Criar rotina de reprocessamento de coordenadas pendentes.
 
 ## Clientes e veiculos
 
@@ -73,8 +74,8 @@ Documento de acompanhamento do que ja foi construido e do que ainda falta para d
 - [x] Marca e modelo de veiculo em combos dependentes.
 - [x] Factory/catalogo de veiculos com marcas e modelos coerentes.
 - [x] Seeder de clientes e lavagens em massa.
-- [ ] Melhorar importacao em lote de clientes/veiculos.
-- [ ] Historico consolidado por cliente com indicadores mais ricos.
+- [x] Melhorar importacao em lote de clientes/veiculos.
+- [x] Historico consolidado por cliente com indicadores mais ricos.
 
 ## Lavagens e Kanban
 
@@ -89,11 +90,13 @@ Documento de acompanhamento do que ja foi construido e do que ainda falta para d
 - [x] Cards do Kanban mais compactos.
 - [x] Operador so altera status se tiver permissao/equipe conforme regra.
 - [x] Restricao para mover para `Entregue` sem pagamento identificado.
+- [x] Bloqueio de abertura de lavagem fora do horario de funcionamento da unidade.
+- [x] Bloqueio de avanço de status fora do horario de funcionamento da unidade.
 - [x] Status incompatíveis com servicos removidos do fluxo, exemplo: cera sem servico de cera.
 - [x] Tela publica de acompanhamento do cliente.
 - [x] Link do cliente com compartilhamento por WhatsApp manual.
-- [ ] Melhorar notificacoes automaticas por evento.
-- [ ] Melhorar UX mobile do Kanban.
+- [x] Melhorar notificacoes automaticas por evento.
+- [x] Melhorar UX mobile do Kanban.
 
 ## Financeiro
 
@@ -105,9 +108,9 @@ Documento de acompanhamento do que ja foi construido e do que ainda falta para d
 - [x] Bloqueio de entrega sem pagamento identificado.
 - [x] Cupom de fidelidade impactando valor a receber.
 - [x] Relatorio executivo financeiro com comparativo por periodo.
-- [ ] Fechamento de caixa mais completo.
+- [x] Fechamento de caixa mais completo.
 - [x] Relatorios financeiros avancados.
-- [ ] Estorno e conciliacao mais robustos.
+- [x] Estorno e conciliacao mais robustos.
 
 ## Assinaturas, planos e Mercado Pago
 
@@ -152,9 +155,9 @@ Documento de acompanhamento do que ja foi construido e do que ainda falta para d
 - [x] Alerta de cupons vencendo e vencidos no sininho.
 - [x] Status efetivo: cupom ativo vencido aparece como expirado.
 - [x] Tracking publico mostra progresso de fidelidade do cliente.
-- [ ] Tela dedicada para campanhas/promocoes de fidelidade.
-- [ ] Relatorio grafico de retencao e recorrencia.
-- [ ] Notificacao automatica de cupom gerado/vencendo.
+- [x] Tela dedicada para campanhas/promocoes de fidelidade.
+- [x] Relatorio grafico de retencao e recorrencia.
+- [x] Notificacao automatica de cupom gerado/vencendo.
 
 ## Dashboard e relatorios
 
@@ -169,7 +172,7 @@ Documento de acompanhamento do que ja foi construido e do que ainda falta para d
 - [x] Relatorio executivo avancado.
 - [x] Graficos mais refinados para diretoria.
 - [x] Comparativos por periodo.
-- [ ] Exportacao PDF.
+- [x] Exportacao PDF.
 
 ## Agenda e modulos opcionais
 
@@ -177,9 +180,9 @@ Documento de acompanhamento do que ja foi construido e do que ainda falta para d
 - [x] Agenda habilitavel por configuracao.
 - [x] Caixa habilitavel por configuracao.
 - [x] Fiado habilitavel por configuracao.
-- [ ] Melhorar fluxo de agendamento para unidades que usam horario marcado.
-- [ ] Disponibilidade por funcionario/box.
-- [ ] Reagendamento e cancelamento formal.
+- [x] Melhorar fluxo de agendamento para unidades que usam horario marcado.
+- [x] Disponibilidade por funcionario/box.
+- [x] Reagendamento e cancelamento formal.
 
 ## Notificacoes e WhatsApp
 
@@ -196,7 +199,7 @@ Documento de acompanhamento do que ja foi construido e do que ainda falta para d
 - [ ] WhatsApp oficial/API.
 - [ ] Webhooks de entrega/leitura.
 - [ ] Opt-in do cliente.
-- [ ] Disparo automatico por evento.
+- [x] Preparacao automatica de mensagem por evento operacional.
 
 ## Portal publico e mapa
 
@@ -206,10 +209,10 @@ Documento de acompanhamento do que ja foi construido e do que ainda falta para d
 - [x] Filtros basicos.
 - [x] Cadastro publico de lava-rapido.
 - [x] Ajuste de rotas publicas por slug.
-- [ ] SEO.
-- [ ] Pagina publica mais completa da unidade.
-- [ ] Avaliacoes/depoimentos.
-- [ ] Horarios em tempo real.
+- [x] SEO.
+- [x] Pagina publica mais completa da unidade.
+- [x] Avaliacoes/depoimentos.
+- [x] Horarios em tempo real.
 
 ## Seeders e dados de teste
 
@@ -218,8 +221,8 @@ Documento de acompanhamento do que ja foi construido e do que ainda falta para d
 - [x] Seeder coerente de marcas/modelos de veiculos.
 - [x] Seeder para clientes e lavagens das unidades existentes.
 - [x] Seeder de lava-rapidos reais em Sao Paulo.
-- [ ] Seeder especifico para cenarios de assinatura.
-- [ ] Seeder especifico para cenarios de fidelidade completos.
+- [x] Seeder especifico para cenarios de assinatura.
+- [x] Seeder especifico para cenarios de fidelidade completos.
 
 ## Infraestrutura e qualidade
 
@@ -230,13 +233,24 @@ Documento de acompanhamento do que ja foi construido e do que ainda falta para d
 - [x] Testes de auditoria.
 - [x] Configuracao pt_BR.
 - [x] Comandos agendados: assinatura e expiracao de cupons.
-- [ ] Rodar suite completa antes de release.
-- [ ] Configurar CI/CD.
-- [ ] Configurar backup.
-- [ ] Revisar logs e monitoramento.
+- [x] Endpoint de saude `/up` validado por teste.
+- [x] Endpoint de readiness `/ready` para monitoramento de banco, cache e escrita.
+- [x] Headers basicos de seguranca aplicados por middleware.
+- [x] `X-Request-Id` em todas as respostas para rastreabilidade de logs.
+- [x] Comando `app:production-check` para validar configuracoes antes do deploy.
+- [x] Comando `app:readiness-check` para validacao operacional em runtime.
+- [x] Comando `app:backup-check` para validar requisitos de backup.
+- [x] Runbook de backup e restore documentado.
+- [x] Suite completa validada no pacote de hardening atual: 311 testes e 1669 assercoes.
+- [x] Rodar suite completa antes de release.
+- [x] Configurar CI/CD.
+- [x] GitHub Actions com validacao Composer, testes PHP e build Vite.
+- [x] Configurar backup.
+- [x] Revisar logs e monitoramento.
 - [x] Revisar seguranca de upload.
-- [ ] Revisar indices de banco para escala.
+- [x] Revisar indices de banco para escala.
 - [x] Checklist de deploy e homologacao documentado.
+- [x] Roteiro dedicado de homologacao manual com dados reais documentado.
 
 ## Antes de voltar para pagamento real e WhatsApp oficial
 
@@ -244,8 +258,8 @@ Documento de acompanhamento do que ja foi construido e do que ainda falta para d
 - [x] Garantir que operador nao veja financeiro.
 - [x] Garantir que cupom nao distorca financeiro.
 - [x] Garantir que vencidos nao aparecam como ativos.
-- [ ] Revisao geral de UX mobile.
-- [ ] Suite completa de testes.
+- [x] Revisao geral de UX mobile.
+- [x] Suite completa de testes.
 - [x] Checklist de deploy.
 - [ ] Homologacao manual com dados reais.
 

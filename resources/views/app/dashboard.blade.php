@@ -6,7 +6,7 @@
                     <div>
                         <p class="text-xs font-black uppercase tracking-[0.18em] text-blue-700">Unidade atual</p>
                         <h2 class="mt-1 text-lg font-black">{{ $currentLocation->name }}</h2>
-                        <p class="mt-1 text-blue-700">Os indicadores desta tela estao filtrados por este lava-rapido.</p>
+                        <p class="mt-1 text-blue-700">Os indicadores desta tela estão filtrados por este lava-rápido.</p>
                     </div>
                     <span class="rounded-full bg-white px-3 py-1 text-xs font-black text-blue-700">{{ $currentLocation->accountStatusLabel() }}</span>
                 </div>
@@ -17,7 +17,7 @@
             <div class="flex flex-wrap items-center justify-between gap-3">
                 <div>
                     <p class="text-xs font-black uppercase tracking-[0.18em] text-blue-700">Dashboard executivo</p>
-                    <h2 class="mt-1 text-xl font-black text-slate-950">Visao do mes</h2>
+                    <h2 class="mt-1 text-xl font-black text-slate-950">Visão do mês</h2>
                     <p class="mt-1 text-sm text-slate-500">{{ ucfirst($monthLabel) }}</p>
                 </div>
                 @if (auth()->user()->isTeamManager())
@@ -27,9 +27,9 @@
 
             <div class="mt-5 grid gap-4 lg:grid-cols-4">
                 @foreach ([
-                    ['label' => 'Lavagens do mes', 'value' => number_format($monthlyWashOrders, 0, ',', '.'), 'comparison' => $executiveComparisons['washOrders'], 'color' => 'bg-blue-50 text-blue-700', 'icon' => 'M'],
-                    ['label' => 'Receita do mes', 'value' => 'R$ '.number_format((float) $monthlyRevenue, 2, ',', '.'), 'comparison' => $executiveComparisons['revenue'], 'color' => 'bg-emerald-50 text-emerald-700', 'icon' => '$'],
-                    ['label' => 'Ticket medio', 'value' => 'R$ '.number_format((float) $monthlyTicketAverage, 2, ',', '.'), 'comparison' => $executiveComparisons['ticketAverage'], 'color' => 'bg-violet-50 text-violet-700', 'icon' => 'T'],
+                    ['label' => 'Lavagens do mês', 'value' => number_format($monthlyWashOrders, 0, ',', '.'), 'comparison' => $executiveComparisons['washOrders'], 'color' => 'bg-blue-50 text-blue-700', 'icon' => 'M'],
+                    ['label' => 'Receita do mês', 'value' => 'R$ '.number_format((float) $monthlyRevenue, 2, ',', '.'), 'comparison' => $executiveComparisons['revenue'], 'color' => 'bg-emerald-50 text-emerald-700', 'icon' => '$'],
+                    ['label' => 'Ticket médio', 'value' => 'R$ '.number_format((float) $monthlyTicketAverage, 2, ',', '.'), 'comparison' => $executiveComparisons['ticketAverage'], 'color' => 'bg-violet-50 text-violet-700', 'icon' => 'T'],
                     ['label' => 'Clientes recorrentes', 'value' => count($monthlyRecurringCustomers), 'comparison' => $executiveComparisons['recurringCustomers'], 'color' => 'bg-amber-50 text-amber-700', 'icon' => 'R'],
                 ] as $metric)
                     @php
@@ -55,8 +55,8 @@
             <div class="mt-5 grid gap-5 xl:grid-cols-2">
                 <div class="rounded-xl border border-slate-200 p-4">
                     <div class="flex items-center justify-between gap-3">
-                        <h3 class="font-black text-slate-950">Top servicos do mes</h3>
-                        <span class="rounded-lg bg-blue-50 px-3 py-1 text-xs font-bold text-blue-700">{{ count($monthlyTopServices) }} servicos</span>
+                        <h3 class="font-black text-slate-950">Top serviços do mês</h3>
+                        <span class="rounded-lg bg-blue-50 px-3 py-1 text-xs font-bold text-blue-700">{{ count($monthlyTopServices) }} serviços</span>
                     </div>
                     <div class="mt-4 space-y-3">
                         @forelse ($monthlyTopServices as $service)
@@ -72,7 +72,7 @@
                                 </div>
                             </div>
                         @empty
-                            <p class="text-sm text-slate-500">Nenhum servico vendido neste mes.</p>
+                            <p class="text-sm text-slate-500">Nenhum serviço vendido neste mês.</p>
                         @endforelse
                     </div>
                 </div>
@@ -97,7 +97,7 @@
                                 </div>
                             </div>
                         @empty
-                            <p class="text-sm text-slate-500">Nenhum cliente recorrente neste mes.</p>
+                            <p class="text-sm text-slate-500">Nenhum cliente recorrente neste mês.</p>
                         @endforelse
                     </div>
                 </div>
@@ -147,7 +147,7 @@
                         <h2 class="text-xl font-bold">Fluxo de Lavagens</h2>
                     </div>
                     <div class="flex gap-2">
-                        <a href="{{ route('kanban') }}" class="rounded-lg border border-slate-200 px-4 py-2 text-sm font-semibold">Visualizacao: Kanban</a>
+                        <a href="{{ route('kanban') }}" class="rounded-lg border border-slate-200 px-4 py-2 text-sm font-semibold">Visualização: Kanban</a>
                         <a href="{{ route('wash-orders.index') }}" class="rounded-lg border border-slate-200 px-4 py-2 text-sm font-semibold">Filtrar</a>
                     </div>
                 </div>
@@ -180,7 +180,7 @@
                                             <span class="text-xs font-bold text-slate-500">{{ $order['brand'] }}</span>
                                         </div>
                                         <p class="mt-3 text-xs font-semibold">{{ $order['service'] }}</p>
-                                        <p class="mt-3 text-xs text-slate-500">Inicio: {{ $order['time'] }}</p>
+                                        <p class="mt-3 text-xs text-slate-500">Início: {{ $order['time'] }}</p>
                                     </a>
                                 @empty
                                     <div class="rounded-lg border border-dashed border-slate-200 bg-white/50 px-3 py-8 text-center text-sm text-slate-500">Sem lavagens.</div>
@@ -205,7 +205,7 @@
                                 <div class="min-w-0 flex-1">
                                     <div class="flex justify-between gap-3">
                                         <p class="truncate text-sm font-bold">{{ $activity['title'] }}</p>
-                                        <span class="shrink-0 text-xs text-slate-500">Ha {{ $activity['time'] }}</span>
+                                        <span class="shrink-0 text-xs text-slate-500">Há {{ $activity['time'] }}</span>
                                     </div>
                                     <p class="text-xs text-slate-500">{{ $activity['subtitle'] }}</p>
                                 </div>
@@ -228,7 +228,7 @@
                     @endif
                 </div>
                 <p class="mt-5 text-2xl font-bold">R$ {{ number_format((float) $todayRevenue, 2, ',', '.') }}</p>
-                <p class="text-sm text-slate-500">Faturamento liquido</p>
+                <p class="text-sm text-slate-500">Faturamento líquido</p>
 
                 <div class="mt-5 grid gap-5 md:grid-cols-[180px_1fr]">
                     <div class="relative mx-auto h-36 w-36 rounded-full bg-[conic-gradient(#2563eb_0_35%,#10b981_35%_76%,#f59e0b_76%_95%,#8b5cf6_95%_100%)]">
@@ -247,13 +247,13 @@
                     </div>
                 </div>
                 @if (auth()->user()->isTeamManager())
-                    <a href="{{ route('finance.index') }}" class="mt-5 block border-t border-slate-200 pt-4 text-center text-sm font-bold text-blue-700">Ver relatorio completo</a>
+                    <a href="{{ route('finance.index') }}" class="mt-5 block border-t border-slate-200 pt-4 text-center text-sm font-bold text-blue-700">Ver relatório completo</a>
                 @endif
             </div>
 
             <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
                 <div class="flex items-center justify-between">
-                    <h2 class="font-bold">Servicos mais realizados</h2>
+                    <h2 class="font-bold">Serviços mais realizados</h2>
                     <span class="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-semibold">Hoje</span>
                 </div>
                 <div class="mt-6 space-y-4">
@@ -267,11 +267,11 @@
                             <span class="text-right text-slate-500">{{ number_format($service['percent'], 0) }}%</span>
                         </div>
                     @empty
-                        <p class="text-sm text-slate-500">Nenhum servico vendido nesta semana.</p>
+                        <p class="text-sm text-slate-500">Nenhum serviço vendido nesta semana.</p>
                     @endforelse
                 </div>
                 @if (auth()->user()->isTeamManager())
-                    <a href="{{ route('services.index') }}" class="mt-5 block border-t border-slate-200 pt-4 text-center text-sm font-bold text-blue-700">Ver todos os servicos</a>
+                    <a href="{{ route('services.index') }}" class="mt-5 block border-t border-slate-200 pt-4 text-center text-sm font-bold text-blue-700">Ver todos os serviços</a>
                 @endif
             </div>
         </section>

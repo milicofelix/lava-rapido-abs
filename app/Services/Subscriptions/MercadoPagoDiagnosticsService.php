@@ -60,11 +60,11 @@ class MercadoPagoDiagnosticsService
         }
 
         if (config('services.mercado_pago.environment') === 'production' && ! (bool) config('services.mercado_pago.live_enabled')) {
-            return 'Ambiente de producao configurado, mas checkout real esta bloqueado.';
+            return 'Ambiente de produção configurado, mas checkout real está bloqueado.';
         }
 
         if (config('services.mercado_pago.environment') === 'production') {
-            return 'Ambiente de producao com checkout real habilitado.';
+            return 'Ambiente de produção com checkout real habilitado.';
         }
 
         return 'Ambiente sandbox/teste.';
@@ -75,7 +75,7 @@ class MercadoPagoDiagnosticsService
         if ($accessToken === '') {
             return [
                 'ok' => false,
-                'message' => 'API nao testada porque o token nao esta configurado.',
+                'message' => 'API não testada porque o token não está configurado.',
             ];
         }
 

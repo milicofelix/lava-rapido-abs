@@ -4,6 +4,7 @@ namespace App\Http\Controllers\App;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Support\Access\AccessControl;
 use App\Support\TenantContext;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -30,10 +31,20 @@ class EmployeeController extends Controller
             ->paginate(10)
             ->withQueryString();
 
+        $employees->getCollection()->each(function (User $employee): void {
+            $employee->setAttribute('permission_audit', [
+                'effective' => AccessControl::effectivePermissionsFor($employee),
+                'enabled_overrides' => AccessControl::enabledConfigurablePermissionsFor($employee),
+                'blocked_overrides' => AccessControl::blockedConfigurablePermissionsFor($employee),
+            ]);
+        });
+
         return view('app.employees.index', [
             'employees' => $employees,
             'search' => $search,
             'roles' => self::rolesFor(auth()->user()),
+            'permissionLabels' => AccessControl::permissionLabels(),
+            'permissionDescriptions' => AccessControl::permissionDescriptions(),
         ]);
     }
 
@@ -80,11 +91,11 @@ class EmployeeController extends Controller
         $this->abortUnlessManageable($employee);
 
         if ($employee->is(auth()->user())) {
-            return back()->withErrors(['employee' => 'Voce nao pode desativar o proprio usuario.']);
+            return back()->withErrors(['employee' => 'Você não pode desativar o próprio usuário.']);
         }
 
         if ($employee->isOwner() && $this->activeOwnersCount() <= 1) {
-            return back()->withErrors(['employee' => 'Nao e possivel desativar o ultimo dono da unidade.']);
+            return back()->withErrors(['employee' => 'Não é possível desativar o último dono da unidade.']);
         }
 
         $employee->update(['is_active' => false]);
@@ -127,7 +138,7 @@ class EmployeeController extends Controller
         }
 
         if ($employee && $employee->isOwner() && ($data['role'] ?? $employee->role) !== User::ROLE_OWNER && $this->activeOwnersCount() <= 1) {
-            abort(422, 'Nao e possivel remover o ultimo dono da unidade.');
+            abort(422, 'Não é possível remover o último dono da unidade.');
         }
 
         if (($data['password'] ?? '') === '') {

@@ -5,6 +5,7 @@ Use este documento antes de colocar uma nova versao em homologacao ou producao.
 ## 1. Antes do deploy
 
 - [ ] Confirmar branch/tag que sera publicada.
+- [ ] Confirmar pipeline CI verde na branch/tag que sera publicada.
 - [ ] Confirmar que nao existem migracoes pendentes sem revisao.
 - [ ] Confirmar que o `CHECKLIST_PRODUTO.md` foi atualizado.
 - [ ] Confirmar se a entrega mexe em pagamento, assinatura, WhatsApp, permissao ou dados financeiros.
@@ -45,6 +46,14 @@ Use este documento antes de colocar uma nova versao em homologacao ou producao.
 - [ ] `LOG_LEVEL=warning` ou superior em producao.
 - [ ] Rotacao de logs configurada.
 - [ ] Monitoramento de erro definido, se houver.
+
+### Backup
+
+- [ ] `BACKUP_STORAGE_PATH` definido quando houver destino local/volume dedicado.
+- [ ] `BACKUP_RETENTION_DAYS` definido, minimo recomendado de 30 dias.
+- [ ] Runbook [BACKUP_RUNBOOK.md](BACKUP_RUNBOOK.md) revisado.
+- [ ] `php artisan app:backup-check` executado.
+- [ ] Restore testado em homologacao antes da primeira producao.
 
 ### Mercado Pago
 
@@ -124,12 +133,12 @@ php artisan queue:restart
 - [ ] Migracoes executadas com sucesso.
 - [ ] Sem erro em `migrations`.
 - [ ] Indices revisados para tabelas grandes:
-  - [ ] `wash_orders`
-  - [ ] `payments`
-  - [ ] `loyalty_coupons`
-  - [ ] `audit_logs`
-  - [ ] `customers`
-  - [ ] `vehicles`
+  - [x] `wash_orders`
+  - [x] `payments`
+  - [x] `loyalty_coupons`
+  - [x] `audit_logs`
+  - [x] `customers`
+  - [x] `vehicles`
 - [ ] Rodar smoke test de leitura e escrita.
 
 ## 6. Smoke test tecnico
@@ -137,11 +146,37 @@ php artisan queue:restart
 Executar apos deploy:
 
 ```bash
+curl -I https://seudominio.com/up
+curl -I https://seudominio.com/ready
 php artisan about
+php artisan app:backup-check
+php artisan app:production-check
+php artisan app:readiness-check
 php artisan route:list
 php artisan schedule:list
 php artisan mercado-pago:diagnose
 ```
+
+Se houver unidades antigas sem latitude/longitude, simular antes de gravar:
+
+```bash
+php artisan app:reprocess-location-coordinates --dry-run --limit=20
+php artisan app:reprocess-location-coordinates --limit=20
+```
+
+Confirmar no retorno HTTP:
+
+- [ ] Status `200 OK` no endpoint `/up`.
+- [ ] Status `200 OK` no endpoint `/ready`.
+- [ ] Header `X-Frame-Options: SAMEORIGIN`.
+- [ ] Header `X-Request-Id` presente para rastrear logs por requisicao.
+- [ ] Header `X-Content-Type-Options: nosniff`.
+- [ ] Header `Referrer-Policy: strict-origin-when-cross-origin`.
+- [ ] Header `Strict-Transport-Security` quando estiver em HTTPS.
+- [ ] `php artisan app:backup-check` aprovado.
+- [ ] `php artisan app:production-check` sem falhas criticas.
+- [ ] `php artisan app:readiness-check` aprovado.
+- [ ] Coordenadas pendentes reprocessadas quando houver unidades com mapa pendente.
 
 Se estiver em homologacao sandbox com API liberada:
 
@@ -149,7 +184,15 @@ Se estiver em homologacao sandbox com API liberada:
 php artisan mercado-pago:diagnose --api
 ```
 
+Se o objetivo for bloquear qualquer aviso antes de producao real:
+
+```bash
+php artisan app:production-check --strict
+```
+
 ## 7. Homologacao manual obrigatoria
+
+Use o roteiro completo em [HOMOLOGACAO_MANUAL.md](HOMOLOGACAO_MANUAL.md) para registrar perfis, cenarios, evidencias e pendencias da rodada.
 
 ### Login e permissoes
 

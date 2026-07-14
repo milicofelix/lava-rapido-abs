@@ -38,6 +38,28 @@ class TenantHeaderBrandingTest extends TestCase
             ->assertDontSee('Lava Rapido Central');
     }
 
+    public function test_owner_sees_mobile_primary_navigation(): void
+    {
+        $location = WashLocation::factory()->create([
+            'account_status' => WashLocation::ACCOUNT_STATUS_TRIAL,
+            'trial_ends_at' => now()->addDays(12),
+        ]);
+
+        $owner = User::factory()->create([
+            'role' => User::ROLE_OWNER,
+            'wash_location_id' => $location->id,
+        ]);
+
+        $this->actingAs($owner)
+            ->get(route('dashboard'))
+            ->assertOk()
+            ->assertSee('data-mobile-bottom-nav', false)
+            ->assertSee('Navegacao principal mobile')
+            ->assertSee('href="'.route('dashboard').'"', false)
+            ->assertSee('href="'.route('kanban').'"', false)
+            ->assertSee('href="'.route('customers.index').'"', false);
+    }
+
     public function test_owner_sees_customer_and_vehicle_menu_links(): void
     {
         $location = WashLocation::factory()->create([
@@ -96,7 +118,10 @@ class TenantHeaderBrandingTest extends TestCase
         $this->actingAs($superAdmin)
             ->get(route('super-admin.location-requests.index'))
             ->assertOk()
+            ->assertSee('data-mobile-bottom-nav', false)
             ->assertSee('Administração do produto')
-            ->assertSee('AutoFlow Admin');
+            ->assertSee('AutoFlow Admin')
+            ->assertSee('href="'.route('super-admin.locations.index').'"', false)
+            ->assertSee('href="'.route('super-admin.plans.index').'"', false);
     }
 }

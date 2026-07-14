@@ -28,7 +28,7 @@ class WashNotificationController extends Controller
 
         $status = $notification->action_url
             ? 'Mensagem de WhatsApp preparada. Confira, copie ou abra o WhatsApp para enviar manualmente.'
-            : 'Mensagem preparada, mas o cliente nao possui telefone valido para abrir o WhatsApp.';
+            : 'Mensagem preparada, mas o cliente não possui telefone válido para abrir o WhatsApp.';
 
         return redirect()
             ->route('wash-orders.show', $washOrder)
@@ -46,6 +46,6 @@ class WashNotificationController extends Controller
 
         return redirect()
             ->route('wash-orders.show', $washOrder)
-            ->with('status', 'Notificacao marcada como enviada manualmente.');
+            ->with('status', 'Notificação marcada como enviada manualmente.');
     }
 }

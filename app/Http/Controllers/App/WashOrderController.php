@@ -3,8 +3,8 @@
 namespace App\Http\Controllers\App;
 
 use App\Http\Controllers\Controller;
-use App\Models\Customer;
 use App\Models\AppSetting;
+use App\Models\Customer;
 use App\Models\CustomerNotification;
 use App\Models\Payment;
 use App\Models\Service;
@@ -15,16 +15,16 @@ use App\Services\Loyalty\LoyaltyCouponApplicabilityService;
 use App\Services\Loyalty\RemoveLoyaltyCouponService;
 use App\Services\WashOrders\ChangeWashOrderStatusService;
 use App\Services\WashOrders\CreateWashOrderService;
-use App\Support\TenantContext;
 use App\Support\Access\AccessControl;
+use App\Support\TenantContext;
 use App\Support\WashOrders\WashOrderStatusFlow;
-use Illuminate\Support\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Validation\Rule;
-use InvalidArgumentException;
 use Illuminate\View\View;
+use InvalidArgumentException;
 
 class WashOrderController extends Controller
 {
@@ -52,17 +52,22 @@ class WashOrderController extends Controller
             'search' => $search,
             'status' => $status,
             'statuses' => WashOrder::statuses(),
+            'canOpenWashOrderNow' => TenantContext::currentLocation()?->canOpenWashOrderAt() ?? true,
         ]);
     }
 
     public function create(): View
     {
+        $currentLocation = TenantContext::currentLocation();
+
         $customers = TenantContext::scopeCustomers(Customer::query())
             ->with(['vehicles' => fn ($query) => TenantContext::scopeVehicles($query)->orderBy('plate')])
             ->orderBy('name')
             ->get();
 
         return view('app.wash-orders.create', [
+            'currentLocation' => $currentLocation,
+            'canOpenWashOrderNow' => $currentLocation?->canOpenWashOrderAt() ?? true,
             'customers' => $customers,
             'customerVehicles' => $customers->mapWithKeys(fn (Customer $customer) => [
                 $customer->id => $customer->vehicles->map(fn (Vehicle $vehicle) => [
@@ -73,18 +78,20 @@ class WashOrderController extends Controller
             'services' => TenantContext::scopeServices(Service::query())->where('active', true)->orderBy('category')->orderBy('name')->get(),
             'users' => TenantContext::scopeUsers(User::query())->orderBy('name')->get(),
             'scheduleEnabled' => AppSetting::isModuleEnabled('module_schedule'),
+            'suggestedScheduledAt' => $this->suggestedScheduledAt(request()),
         ]);
     }
 
     public function store(Request $request, CreateWashOrderService $creator): RedirectResponse
     {
         $data = $this->validated($request);
+        $currentLocation = TenantContext::currentLocation();
 
         $vehicle = TenantContext::scopeVehicles(Vehicle::query())->findOrFail($data['vehicle_id']);
 
         if ((int) $vehicle->customer_id !== (int) $data['customer_id']) {
             return back()
-                ->withErrors(['vehicle_id' => 'O veiculo selecionado nao pertence ao cliente informado.'])
+                ->withErrors(['vehicle_id' => 'O veículo selecionado não pertence ao cliente informado.'])
                 ->withInput();
         }
 
@@ -92,6 +99,17 @@ class WashOrderController extends Controller
             && AppSetting::isModuleEnabled('module_schedule')
             ? Carbon::parse($data['scheduled_at'])
             : now();
+
+        if ($currentLocation && ! $currentLocation->canOpenWashOrderAt($scheduledAt)) {
+            $field = $scheduledAt->isFuture() ? 'scheduled_at' : 'wash_order';
+            $message = $scheduledAt->isFuture()
+                ? 'A unidade estará fechada no horário escolhido. Escolha um horário dentro do funcionamento.'
+                : 'A unidade está fechada agora. Abra lavagens somente dentro do horário de funcionamento.';
+
+            return back()
+                ->withErrors([$field => $message])
+                ->withInput();
+        }
 
         $washOrder = $creator->handle([
             'wash_location_id' => TenantContext::currentLocationId(),
@@ -119,6 +137,10 @@ class WashOrderController extends Controller
             unset($paymentMethods[Payment::METHOD_CREDIT_PENDING]);
         }
 
+        if (! $washOrder->canRegisterCourtesyPayment()) {
+            unset($paymentMethods[Payment::METHOD_COURTESY]);
+        }
+
         $washOrder = $washOrder->load([
             'customer.loyaltyCoupons' => fn ($query) => $query
                 ->where('wash_location_id', $washOrder->wash_location_id)
@@ -129,16 +151,26 @@ class WashOrderController extends Controller
             'assignedUser',
             'teamMembers',
             'services',
+            'washLocation',
             'loyaltyCoupon.loyaltyProgram',
             'loyaltyCoupon.rewardService',
             'loyaltyCoupon.usedByUser',
             'statusHistories.user',
             'payments.user',
+            'payments.reversedBy',
             'customerNotifications.user',
         ]);
         $user = request()->user();
+        $canOperateByBusinessHours = $washOrder->washLocation?->canOpenWashOrderAt() ?? true;
         $canUpdateStatus = AccessControl::allows($user, AccessControl::UPDATE_WASH_ORDER_STATUS)
+            && $canOperateByBusinessHours
             && (! $user?->isOperator() || $washOrder->teamMembers->contains('id', $user->id));
+        $statusBlockedReason = match (true) {
+            ! $canOperateByBusinessHours => 'A unidade está fechada agora. Avance etapas somente dentro do horário de funcionamento.',
+            ! AccessControl::allows($user, AccessControl::UPDATE_WASH_ORDER_STATUS) => 'Status restrito ao perfil de usuário.',
+            $user?->isOperator() && ! $washOrder->teamMembers->contains('id', $user->id) => 'Status restrito a responsáveis da equipe desta lavagem.',
+            default => null,
+        };
         $loyaltyCouponEvaluations = $washOrder->customer->loyaltyCoupons
             ->mapWithKeys(fn ($coupon) => [$coupon->id => $couponApplicability->evaluate($washOrder, $coupon)]);
         $applicableLoyaltyCoupons = $washOrder->customer->loyaltyCoupons
@@ -158,6 +190,7 @@ class WashOrderController extends Controller
             'loyaltyCouponEvaluations' => $loyaltyCouponEvaluations,
             'applicableLoyaltyCoupons' => $applicableLoyaltyCoupons,
             'loyaltyCouponRemovalState' => $removeLoyaltyCoupon->removableState($washOrder),
+            'statusBlockedReason' => $statusBlockedReason,
         ]);
     }
 
@@ -226,5 +259,20 @@ class WashOrderController extends Controller
             'notes' => ['nullable', 'string', 'max:2000'],
             'scheduled_at' => ['nullable', 'date'],
         ]);
+    }
+
+    private function suggestedScheduledAt(Request $request): ?string
+    {
+        if (! AppSetting::isModuleEnabled('module_schedule')) {
+            return null;
+        }
+
+        try {
+            $scheduledAt = Carbon::parse((string) $request->query('scheduled_at'));
+        } catch (\Throwable) {
+            return null;
+        }
+
+        return $scheduledAt->format('Y-m-d\TH:i');
     }
 }
