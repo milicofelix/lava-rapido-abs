@@ -6,6 +6,7 @@ use App\Models\AppSetting;
 use App\Models\Payment;
 use App\Models\Service;
 use App\Models\User;
+use App\Models\WashLocation;
 use App\Models\WashOrder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
@@ -145,6 +146,58 @@ class ScheduleManagementTest extends TestCase
         } finally {
             Carbon::setTestNow();
         }
+    }
+
+    public function test_schedule_shows_employee_availability_for_selected_day(): void
+    {
+        Carbon::setTestNow('2026-06-15 08:00:00');
+
+        $admin = User::factory()->create([
+            'name' => 'Ana Administradora',
+            'role' => User::ROLE_ADMIN,
+        ]);
+        $operator = User::factory()->create([
+            'name' => 'Bruno Lavador',
+            'role' => User::ROLE_OPERATOR,
+            'wash_location_id' => $admin->wash_location_id,
+        ]);
+        User::factory()->create([
+            'name' => 'Carla Livre',
+            'role' => User::ROLE_OPERATOR,
+            'wash_location_id' => $admin->wash_location_id,
+        ]);
+        $otherLocation = WashLocation::factory()->create();
+        User::factory()->create([
+            'name' => 'Outra Unidade',
+            'role' => User::ROLE_OPERATOR,
+            'wash_location_id' => $otherLocation->id,
+        ]);
+        $assignedOrder = WashOrder::factory()->create([
+            'wash_location_id' => $admin->wash_location_id,
+            'assigned_user_id' => $operator->id,
+            'entered_at' => now()->setTime(9, 0),
+            'estimated_completion_at' => now()->setTime(10, 0),
+            'status' => WashOrder::STATUS_WASHING,
+        ]);
+        $assignedOrder->teamMembers()->attach($operator->id);
+        WashOrder::factory()->create([
+            'wash_location_id' => $admin->wash_location_id,
+            'assigned_user_id' => null,
+            'entered_at' => now()->setTime(11, 0),
+            'estimated_completion_at' => now()->setTime(11, 40),
+            'status' => WashOrder::STATUS_AWAITING,
+        ]);
+
+        $this->actingAs($admin)
+            ->get(route('schedule.index'))
+            ->assertOk()
+            ->assertSee('Disponibilidade da equipe')
+            ->assertSee('Bruno Lavador')
+            ->assertSee('Ocupado')
+            ->assertSee('Carla Livre')
+            ->assertSee('Livre')
+            ->assertSee('1 lavagem sem equipe definida')
+            ->assertDontSee('Outra Unidade');
     }
 
     public function test_attendant_can_reschedule_awaiting_wash_order_inside_business_hours(): void

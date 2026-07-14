@@ -5,6 +5,7 @@ namespace App\Http\Controllers\App;
 use App\Http\Controllers\Controller;
 use App\Models\AppSetting;
 use App\Models\AuditLog;
+use App\Models\User;
 use App\Models\WashOrder;
 use App\Services\WashOrders\ChangeWashOrderStatusService;
 use App\Support\AuditLogger;
@@ -51,6 +52,8 @@ class ScheduleController extends Controller
             'suggestedScheduleAt' => $this->suggestedScheduleAt($selectedDate, $businessDay),
             'canCreateOnSelectedDate' => $currentLocation?->canOpenWashOrderAt($this->suggestedScheduleAt($selectedDate, $businessDay)) ?? true,
             'hourlySlots' => $this->hourlySlots($selectedDate, $businessDay, $washOrders),
+            'employeeAvailability' => $this->employeeAvailability($washOrders, $this->scheduleEmployees()),
+            'unassignedScheduleCount' => $this->unassignedScheduleCount($washOrders),
             'summary' => [
                 'total' => $washOrders->count(),
                 'open' => $washOrders->whereIn('status', $activeStatuses)->count(),
@@ -253,5 +256,73 @@ class ScheduleController extends Controller
         }
 
         return $slots;
+    }
+
+    private function scheduleEmployees()
+    {
+        return TenantContext::scopeUsers(User::query())
+            ->where('is_active', true)
+            ->whereIn('role', [
+                User::ROLE_OWNER,
+                User::ROLE_ADMIN,
+                User::ROLE_ATTENDANT,
+                User::ROLE_OPERATOR,
+            ])
+            ->orderBy('name')
+            ->get(['id', 'name', 'role']);
+    }
+
+    /**
+     * @return array<int, array{name: string, role_label: string, status_key: string, status_label: string, active: int, total: int, delayed: int, next_time: string|null}>
+     */
+    private function employeeAvailability($washOrders, $employees): array
+    {
+        $terminalStatuses = [
+            WashOrder::STATUS_DELIVERED,
+            WashOrder::STATUS_CANCELED,
+        ];
+
+        return $employees
+            ->map(function (User $employee) use ($washOrders, $terminalStatuses) {
+                $assignedOrders = $washOrders->filter(fn (WashOrder $washOrder) => (int) $washOrder->assigned_user_id === (int) $employee->id
+                    || $washOrder->teamMembers->contains('id', $employee->id));
+
+                $activeOrders = $assignedOrders->reject(fn (WashOrder $washOrder) => in_array($washOrder->status, $terminalStatuses, true));
+                $delayedCount = $activeOrders->filter(fn (WashOrder $washOrder) => $washOrder->estimated_completion_at?->isPast())->count();
+                $nextOrder = $activeOrders
+                    ->sortBy(fn (WashOrder $washOrder) => $washOrder->entered_at?->timestamp ?? PHP_INT_MAX)
+                    ->first();
+
+                $statusKey = match (true) {
+                    $delayedCount > 0 => 'delayed',
+                    $activeOrders->count() >= 2 => 'busy',
+                    $activeOrders->count() === 1 => 'occupied',
+                    default => 'free',
+                };
+
+                return [
+                    'name' => $employee->name,
+                    'role_label' => $employee->roleLabel(),
+                    'status_key' => $statusKey,
+                    'status_label' => match ($statusKey) {
+                        'delayed' => 'Atenção',
+                        'busy' => 'Alta carga',
+                        'occupied' => 'Ocupado',
+                        default => 'Livre',
+                    },
+                    'active' => $activeOrders->count(),
+                    'total' => $assignedOrders->count(),
+                    'delayed' => $delayedCount,
+                    'next_time' => $nextOrder?->entered_at?->format('H:i'),
+                ];
+            })
+            ->values()
+            ->all();
+    }
+
+    private function unassignedScheduleCount($washOrders): int
+    {
+        return $washOrders->filter(fn (WashOrder $washOrder) => $washOrder->assigned_user_id === null
+            && $washOrder->teamMembers->isEmpty())->count();
     }
 }
