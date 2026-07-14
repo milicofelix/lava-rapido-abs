@@ -7,9 +7,9 @@ use App\Models\CashRegister;
 use App\Models\LoyaltyCoupon;
 use App\Models\Subscription;
 use App\Models\User;
-use App\Models\WashOrder;
 use App\Models\WashLocation;
 use App\Models\WashLocationRequest;
+use App\Models\WashOrder;
 use App\Support\Access\AccessControl;
 
 class AppNotificationCenter
@@ -142,6 +142,23 @@ class AppNotificationCenter
     private static function loyaltyNotifications(): array
     {
         $notifications = [];
+
+        $recentCoupons = TenantContext::scopeByColumn(LoyaltyCoupon::query())
+            ->where('status', LoyaltyCoupon::STATUS_ACTIVE)
+            ->where('earned_at', '>=', now()->subDay())
+            ->count();
+
+        if ($recentCoupons > 0) {
+            $notifications[] = [
+                'title' => $recentCoupons.' cupom'.($recentCoupons === 1 ? '' : 's').' gerado'.($recentCoupons === 1 ? '' : 's'),
+                'body' => $recentCoupons === 1
+                    ? 'Há um cupom de fidelidade novo para comunicar ao cliente. Use o relatório para abrir o cupom ou compartilhar manualmente.'
+                    : 'Há cupons de fidelidade novos para comunicar aos clientes. Use o relatório para abrir os cupons ou compartilhar manualmente.',
+                'tone' => 'success',
+                'url' => route('loyalty-reports.index', ['status' => LoyaltyCoupon::STATUS_ACTIVE]),
+                'action' => 'Ver cupons',
+            ];
+        }
 
         $expiredActiveCoupons = TenantContext::scopeByColumn(LoyaltyCoupon::query())
             ->where('status', LoyaltyCoupon::STATUS_ACTIVE)
