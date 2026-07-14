@@ -222,7 +222,7 @@ Documento de acompanhamento do que ja foi construido e do que ainda falta para d
 - [x] Seeder para clientes e lavagens das unidades existentes.
 - [x] Seeder de lava-rapidos reais em Sao Paulo.
 - [ ] Seeder especifico para cenarios de assinatura.
-- [ ] Seeder especifico para cenarios de fidelidade completos.
+- [x] Seeder especifico para cenarios de fidelidade completos.
 
 ## Infraestrutura e qualidade
 
