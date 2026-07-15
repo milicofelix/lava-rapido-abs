@@ -2,7 +2,7 @@
     <div class="space-y-5">
         @include('app.components.errors')
 
-        <section class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+        <section class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm" data-tour="cash-register-intro">
             <div class="flex flex-wrap items-start justify-between gap-4">
                 <div>
                     <p class="text-xs font-black uppercase tracking-[0.18em] text-emerald-700">Controle de turno</p>
@@ -19,14 +19,14 @@
         </section>
 
         @if (! $openRegister)
-            <section class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+            <section class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm" data-tour="cash-register-open-form">
                 <div class="border-b border-slate-200 pb-4">
                     <p class="text-xs font-black uppercase tracking-[0.18em] text-blue-700">Início do turno</p>
                     <h2 class="mt-1 text-xl font-black text-slate-950">Abrir caixa</h2>
                     <p class="mt-1 text-sm text-slate-500">Informe o saldo inicial em dinheiro para iniciar o controle do turno.</p>
                 </div>
 
-                <form method="POST" action="{{ route('finance.cash-registers.store') }}" class="mt-5 grid gap-4 lg:grid-cols-[220px_1fr_auto] lg:items-end">
+                <form method="POST" action="{{ route('finance.cash-registers.store') }}" class="mt-5 grid gap-4 lg:grid-cols-[220px_1fr_auto] lg:items-end" data-tour="cash-register-opening-fields">
                     @csrf
                     <label class="block">
                         <span class="text-sm font-bold text-slate-700">Saldo inicial</span>
@@ -40,7 +40,7 @@
                 </form>
             </section>
         @else
-            <section class="grid gap-3 md:grid-cols-4">
+            <section class="grid gap-3 md:grid-cols-4" data-tour="cash-register-status">
                 <div class="rounded-2xl border border-emerald-200 bg-emerald-50 p-4 shadow-sm">
                     <p class="text-sm font-bold text-emerald-700">Status</p>
                     <p class="mt-2 text-3xl font-black text-emerald-950">{{ $openRegister->statusLabel() }}</p>
@@ -59,7 +59,7 @@
                 </div>
             </section>
 
-            <section class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+            <section class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm" data-tour="cash-register-reconciliation">
                 <div class="flex flex-wrap items-start justify-between gap-4 border-b border-slate-200 pb-4">
                     <div>
                         <p class="text-xs font-black uppercase tracking-[0.18em] text-slate-500">Conferência do turno</p>
@@ -72,7 +72,7 @@
                     </div>
                 </div>
 
-                <div class="mt-4 grid gap-3 md:grid-cols-4">
+                <div class="mt-4 grid gap-3 md:grid-cols-4" data-tour="cash-register-closing-summary">
                     <div class="rounded-2xl border border-slate-100 bg-slate-50 p-4">
                         <p class="text-sm font-bold text-slate-500">Vendas totais</p>
                         <p class="mt-2 text-2xl font-black text-slate-950">R$ {{ number_format((float) $cashRegisterSummary['payment_total'], 2, ',', '.') }}</p>
@@ -91,7 +91,7 @@
                     </div>
                 </div>
 
-                <div class="mt-4 grid gap-3 md:grid-cols-3 xl:grid-cols-6">
+                <div class="mt-4 grid gap-3 md:grid-cols-3 xl:grid-cols-6" data-tour="cash-register-payment-methods">
                     @foreach ($cashRegisterSummary['payments_by_method'] as $methodSummary)
                         <div class="rounded-2xl border border-slate-100 p-3">
                             <p class="text-xs font-black uppercase tracking-[0.12em] text-slate-500">{{ $methodSummary['label'] }}</p>
@@ -103,7 +103,7 @@
             </section>
 
             <section class="grid gap-5 xl:grid-cols-2">
-                <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm" data-tour="cash-register-manual-movement">
                     <div class="border-b border-slate-200 pb-4">
                         <p class="text-xs font-black uppercase tracking-[0.18em] text-blue-700">Movimento manual</p>
                         <h2 class="mt-1 text-xl font-black text-slate-950">Registrar sangria ou suprimento</h2>
@@ -130,7 +130,7 @@
                     </form>
                 </div>
 
-                <div class="rounded-2xl border border-emerald-200 bg-emerald-50 p-5 shadow-sm">
+                <div class="rounded-2xl border border-emerald-200 bg-emerald-50 p-5 shadow-sm" data-tour="cash-register-close-form">
                     <div class="border-b border-emerald-200 pb-4">
                         <p class="text-xs font-black uppercase tracking-[0.18em] text-emerald-700">Encerramento</p>
                         <h2 class="mt-1 text-xl font-black text-emerald-950">Fechar caixa</h2>
@@ -152,7 +152,7 @@
                 </div>
             </section>
 
-            <section class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+            <section class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm" data-tour="cash-register-current-movements">
                 <div class="border-b border-slate-200 px-5 py-4">
                     <p class="text-xs font-black uppercase tracking-[0.18em] text-blue-700">Caixa atual</p>
                     <h2 class="mt-1 font-black text-slate-950">Movimentacoes deste caixa</h2>
@@ -179,16 +179,18 @@
             </section>
         @endif
 
-        <section class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+        <section class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm" data-tour="cash-register-history">
             <div class="border-b border-slate-200 px-5 py-4">
                 <p class="text-xs font-black uppercase tracking-[0.18em] text-slate-500">Histórico</p>
                 <h2 class="mt-1 font-black text-slate-950">Histórico de caixas</h2>
             </div>
             <div class="divide-y divide-slate-100">
                 @forelse ($recentRegisters as $register)
-                    @php($summary = $register->cash_summary)
-                    @php($difference = $summary['cash_difference'])
-                    @php($differenceTone = $difference === null || abs($difference) < 0.01 ? 'text-emerald-700' : ($difference > 0 ? 'text-blue-700' : 'text-red-700'))
+                    @php
+                        $summary = $register->cash_summary;
+                        $difference = $summary['cash_difference'];
+                        $differenceTone = $difference === null || abs($difference) < 0.01 ? 'text-emerald-700' : ($difference > 0 ? 'text-blue-700' : 'text-red-700');
+                    @endphp
                     <article class="grid gap-4 px-5 py-4 xl:grid-cols-[160px_160px_130px_1fr_160px] xl:items-center">
                         <div>
                             <p class="text-xs font-black uppercase tracking-[0.16em] text-slate-500">Abertura</p>
@@ -234,4 +236,67 @@
             </div>
         </section>
     </div>
+
+    @php
+        $cashRegisterTour = [
+            'key' => 'finance.cash-registers.index.v1',
+            'title' => 'Controle de caixa',
+            'steps' => [
+                [
+                    'target' => '[data-tour="cash-register-intro"]',
+                    'title' => 'Controle do turno',
+                    'body' => 'Use esta tela para abrir o caixa, registrar sangrias e suprimentos, conferir dinheiro físico e fechar o turno.',
+                ],
+                [
+                    'target' => '[data-tour="cash-register-open-form"]',
+                    'title' => 'Abrir caixa',
+                    'body' => 'Quando não existe caixa aberto, informe o saldo inicial em dinheiro para iniciar a conferência do turno.',
+                ],
+                [
+                    'target' => '[data-tour="cash-register-opening-fields"]',
+                    'title' => 'Saldo inicial',
+                    'body' => 'Preencha o troco inicial e uma observação curta para deixar claro como o caixa começou.',
+                ],
+                [
+                    'target' => '[data-tour="cash-register-status"]',
+                    'title' => 'Caixa aberto',
+                    'body' => 'Com o caixa aberto, estes cards mostram status, saldo inicial, dinheiro recebido e valor esperado em caixa.',
+                ],
+                [
+                    'target' => '[data-tour="cash-register-reconciliation"]',
+                    'title' => 'Resumo para fechamento',
+                    'body' => 'Confira vendas por método, suprimentos e sangrias antes de encerrar o turno.',
+                ],
+                [
+                    'target' => '[data-tour="cash-register-payment-methods"]',
+                    'title' => 'Pagamentos por método',
+                    'body' => 'Pix, cartão e outros métodos ajudam a conferir o financeiro, mas o fechamento do caixa considera dinheiro físico.',
+                ],
+                [
+                    'target' => '[data-tour="cash-register-manual-movement"]',
+                    'title' => 'Sangria e suprimento',
+                    'body' => 'Registre retiradas para cofre ou entradas manuais para que o valor esperado fique correto.',
+                ],
+                [
+                    'target' => '[data-tour="cash-register-close-form"]',
+                    'title' => 'Fechar caixa',
+                    'body' => 'No fechamento, conte apenas o dinheiro físico e informe observações caso exista diferença.',
+                ],
+                [
+                    'target' => '[data-tour="cash-register-current-movements"]',
+                    'title' => 'Movimentações do caixa',
+                    'body' => 'Aqui ficam as sangrias e suprimentos registrados durante o caixa atual.',
+                ],
+                [
+                    'target' => '[data-tour="cash-register-history"]',
+                    'title' => 'Histórico de caixas',
+                    'body' => 'Consulte caixas anteriores, diferenças, valores esperados e quem abriu cada turno.',
+                ],
+            ],
+        ];
+    @endphp
+
+    <script type="application/json" data-onboarding-tour>
+        {!! json_encode($cashRegisterTour, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) !!}
+    </script>
 </x-app.layout>

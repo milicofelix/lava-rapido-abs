@@ -14,6 +14,21 @@ class CashRegisterManagementTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_cash_register_screen_exposes_guided_tour_when_register_is_closed(): void
+    {
+        $admin = User::factory()->create(['role' => User::ROLE_ADMIN]);
+
+        $this->actingAs($admin)
+            ->get(route('finance.cash-registers.index'))
+            ->assertOk()
+            ->assertSee('data-onboarding-tour', false)
+            ->assertSee('finance.cash-registers.index.v1')
+            ->assertSee('data-tour="cash-register-intro"', false)
+            ->assertSee('data-tour="cash-register-open-form"', false)
+            ->assertSee('data-tour="cash-register-opening-fields"', false)
+            ->assertSee('data-tour="cash-register-history"', false);
+    }
+
     public function test_admin_can_open_cash_register(): void
     {
         $admin = User::factory()->create(['role' => User::ROLE_ADMIN]);
@@ -174,6 +189,15 @@ class CashRegisterManagementTest extends TestCase
             ->assertSee('Pix')
             ->assertSee('R$ 45,00')
             ->assertSee('Suprimentos')
-            ->assertSee('Sangrias');
+            ->assertSee('Sangrias')
+            ->assertSee('data-onboarding-tour', false)
+            ->assertSee('finance.cash-registers.index.v1')
+            ->assertSee('data-tour="cash-register-status"', false)
+            ->assertSee('data-tour="cash-register-reconciliation"', false)
+            ->assertSee('data-tour="cash-register-payment-methods"', false)
+            ->assertSee('data-tour="cash-register-manual-movement"', false)
+            ->assertSee('data-tour="cash-register-close-form"', false)
+            ->assertSee('data-tour="cash-register-current-movements"', false)
+            ->assertSee('data-tour="cash-register-history"', false);
     }
 }
