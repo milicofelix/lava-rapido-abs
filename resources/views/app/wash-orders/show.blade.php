@@ -479,76 +479,84 @@
     </div>
 
     @php
+        $washOrderDetailTourSteps = [
+            [
+                'target' => '[data-tour="wash-detail-summary"]',
+                'title' => 'Resumo da ordem',
+                'body' => 'Aqui você confirma cliente, telefone, código da lavagem e os status operacional e financeiro.',
+            ],
+            [
+                'target' => '[data-tour="wash-detail-financial-status"]',
+                'title' => 'Status financeiro',
+                'body' => 'Este aviso deixa claro se a lavagem ainda precisa receber pagamento, se está paga, em cortesia ou fiado.',
+            ],
+            [
+                'target' => '[data-tour="wash-detail-info"]',
+                'title' => 'Dados principais',
+                'body' => 'Confira veículo, entrada, previsão, equipe, total e conclusão antes de atualizar qualquer informação.',
+            ],
+            [
+                'target' => '[data-tour="wash-detail-services"]',
+                'title' => 'Serviços selecionados',
+                'body' => 'Veja exatamente o que foi contratado nesta lavagem, com tempo estimado, valores e desconto de fidelidade quando houver.',
+            ],
+            [
+                'target' => '[data-tour="wash-detail-payments"]',
+                'title' => 'Pagamentos registrados',
+                'body' => 'Esta área mostra cupons aplicados, pagamentos, estornos e observações. Use para conferir o histórico financeiro da ordem.',
+            ],
+            [
+                'target' => '[data-tour="wash-detail-history"]',
+                'title' => 'Histórico operacional',
+                'body' => 'Cada mudança de status fica registrada aqui com data, usuário e observação, ajudando na auditoria da operação.',
+            ],
+        ];
+
+        if ($canUpdateStatus) {
+            $washOrderDetailTourSteps[] = [
+                'target' => '[data-tour="wash-detail-status-update"]',
+                'title' => 'Atualizar status',
+                'body' => 'Use este bloco para avançar a lavagem. O sistema respeita equipe, horário de funcionamento e regras de pagamento.',
+            ];
+        }
+
+        $washOrderDetailTourSteps = array_merge($washOrderDetailTourSteps, [
+            [
+                'target' => '[data-tour="wash-detail-loyalty-apply"]',
+                'title' => 'Aplicar cupom',
+                'body' => 'Quando houver cupom compatível, aplique antes de registrar pagamento. Assim o desconto entra corretamente no financeiro.',
+            ],
+            [
+                'target' => '[data-tour="wash-detail-loyalty-used"]',
+                'title' => 'Cupom utilizado',
+                'body' => 'Quando a lavagem já usou um cupom, o código fica destacado aqui para consulta e comprovação.',
+            ],
+            [
+                'target' => '[data-tour="wash-detail-payment-register"]',
+                'title' => 'Registrar pagamento',
+                'body' => 'Registre o método e o valor recebido. Depois disso, opções incompatíveis como aplicar cupom deixam de fazer sentido.',
+            ],
+            [
+                'target' => '[data-tour="wash-detail-client-link"]',
+                'title' => 'Link do cliente',
+                'body' => 'Compartilhe este link para o cliente acompanhar a lavagem. Também é possível preparar uma mensagem manual de WhatsApp.',
+            ],
+            [
+                'target' => '[data-tour="wash-detail-active-coupons"]',
+                'title' => 'Cupons ativos',
+                'body' => 'Quando o cliente tiver cupons disponíveis, eles aparecem aqui com indicação de compatibilidade com esta lavagem.',
+            ],
+            [
+                'target' => '[data-tour="wash-detail-receipt"]',
+                'title' => 'Recibo',
+                'body' => 'Gere um comprovante simples da lavagem para imprimir ou salvar como PDF pelo navegador.',
+            ],
+        ]);
+
         $washOrderDetailTour = [
             'key' => 'wash-orders.show.v1',
             'title' => 'Detalhes da lavagem',
-            'steps' => [
-                [
-                    'target' => '[data-tour="wash-detail-summary"]',
-                    'title' => 'Resumo da ordem',
-                    'body' => 'Aqui você confirma cliente, telefone, código da lavagem e os status operacional e financeiro.',
-                ],
-                [
-                    'target' => '[data-tour="wash-detail-financial-status"]',
-                    'title' => 'Status financeiro',
-                    'body' => 'Este aviso deixa claro se a lavagem ainda precisa receber pagamento, se está paga, em cortesia ou fiado.',
-                ],
-                [
-                    'target' => '[data-tour="wash-detail-info"]',
-                    'title' => 'Dados principais',
-                    'body' => 'Confira veículo, entrada, previsão, equipe, total e conclusão antes de atualizar qualquer informação.',
-                ],
-                [
-                    'target' => '[data-tour="wash-detail-services"]',
-                    'title' => 'Serviços selecionados',
-                    'body' => 'Veja exatamente o que foi contratado nesta lavagem, com tempo estimado, valores e desconto de fidelidade quando houver.',
-                ],
-                [
-                    'target' => '[data-tour="wash-detail-payments"]',
-                    'title' => 'Pagamentos registrados',
-                    'body' => 'Esta área mostra cupons aplicados, pagamentos, estornos e observações. Use para conferir o histórico financeiro da ordem.',
-                ],
-                [
-                    'target' => '[data-tour="wash-detail-history"]',
-                    'title' => 'Histórico operacional',
-                    'body' => 'Cada mudança de status fica registrada aqui com data, usuário e observação, ajudando na auditoria da operação.',
-                ],
-                [
-                    'target' => '[data-tour="wash-detail-status-update"]',
-                    'title' => 'Atualizar status',
-                    'body' => 'Use este bloco para avançar a lavagem. O sistema respeita equipe, horário de funcionamento e regras de pagamento.',
-                ],
-                [
-                    'target' => '[data-tour="wash-detail-loyalty-apply"]',
-                    'title' => 'Aplicar cupom',
-                    'body' => 'Quando houver cupom compatível, aplique antes de registrar pagamento. Assim o desconto entra corretamente no financeiro.',
-                ],
-                [
-                    'target' => '[data-tour="wash-detail-loyalty-used"]',
-                    'title' => 'Cupom utilizado',
-                    'body' => 'Quando a lavagem já usou um cupom, o código fica destacado aqui para consulta e comprovação.',
-                ],
-                [
-                    'target' => '[data-tour="wash-detail-payment-register"]',
-                    'title' => 'Registrar pagamento',
-                    'body' => 'Registre o método e o valor recebido. Depois disso, opções incompatíveis como aplicar cupom deixam de fazer sentido.',
-                ],
-                [
-                    'target' => '[data-tour="wash-detail-client-link"]',
-                    'title' => 'Link do cliente',
-                    'body' => 'Compartilhe este link para o cliente acompanhar a lavagem. Também é possível preparar uma mensagem manual de WhatsApp.',
-                ],
-                [
-                    'target' => '[data-tour="wash-detail-active-coupons"]',
-                    'title' => 'Cupons ativos',
-                    'body' => 'Quando o cliente tiver cupons disponíveis, eles aparecem aqui com indicação de compatibilidade com esta lavagem.',
-                ],
-                [
-                    'target' => '[data-tour="wash-detail-receipt"]',
-                    'title' => 'Recibo',
-                    'body' => 'Gere um comprovante simples da lavagem para imprimir ou salvar como PDF pelo navegador.',
-                ],
-            ],
+            'steps' => $washOrderDetailTourSteps,
         ];
     @endphp
     <script type="application/json" data-onboarding-tour>

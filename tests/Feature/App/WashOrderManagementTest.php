@@ -26,6 +26,26 @@ class WashOrderManagementTest extends TestCase
         parent::tearDown();
     }
 
+    public function test_wash_orders_index_exposes_guided_tour(): void
+    {
+        $user = User::factory()->create();
+        $washOrder = WashOrder::factory()->create([
+            'wash_location_id' => $user->wash_location_id,
+        ]);
+        $washOrder->teamMembers()->attach($user->id);
+
+        $this->actingAs($user)
+            ->get(route('wash-orders.index'))
+            ->assertOk()
+            ->assertSee('data-onboarding-tour', false)
+            ->assertSee('wash-orders.index.v1')
+            ->assertSee('data-tour="wash-orders-actions"', false)
+            ->assertSee('data-tour="wash-orders-filters"', false)
+            ->assertSee('data-tour="wash-orders-indicators"', false)
+            ->assertSee('data-tour="wash-orders-list"', false)
+            ->assertSee('data-tour="wash-orders-row"', false);
+    }
+
     public function test_create_form_embeds_customer_vehicle_mapping(): void
     {
         $user = User::factory()->create();
