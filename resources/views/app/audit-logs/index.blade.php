@@ -2,14 +2,14 @@
     <div class="space-y-5">
         @include('app.components.errors')
 
-        <section class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+        <section class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm" data-tour="audit-header">
             <div class="mb-5 border-b border-slate-200 pb-4">
                 <p class="text-xs font-black uppercase tracking-[0.18em] text-blue-700">Rastreabilidade</p>
                 <h2 class="mt-1 text-2xl font-black text-slate-950">Auditoria</h2>
                 <p class="mt-1 text-sm text-slate-500">Consulte ações realizadas por usuários da unidade e encontre mudanças sensíveis rapidamente.</p>
             </div>
 
-            <form method="GET" action="{{ route('audit-logs.index') }}" class="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
+            <form method="GET" action="{{ route('audit-logs.index') }}" class="grid gap-4 md:grid-cols-2 xl:grid-cols-5" data-tour="audit-filters">
                 <label class="block">
                     <span class="text-sm font-bold text-slate-700">Início</span>
                     <input data-audit-start name="start" type="date" value="{{ $filters['start'] }}" max="{{ now()->toDateString() }}" class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100">
@@ -47,14 +47,14 @@
                     <input name="search" value="{{ $filters['search'] }}" placeholder="Cliente, lavagem, detalhe" class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100">
                 </label>
 
-                <div class="flex flex-wrap gap-3 md:col-span-2 xl:col-span-5">
+                <div class="flex flex-wrap gap-3 md:col-span-2 xl:col-span-5" data-tour="audit-filter-actions">
                     <button class="rounded-xl bg-blue-700 px-4 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-blue-800">Filtrar</button>
                     <a href="{{ route('audit-logs.index') }}" class="rounded-xl border border-slate-300 px-4 py-2.5 text-sm font-bold text-slate-700 hover:bg-slate-50">Limpar</a>
                 </div>
             </form>
         </section>
 
-        <section class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+        <section class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm" data-tour="audit-list">
             <div class="border-b border-slate-200 px-5 py-4">
                 <p class="text-xs font-black uppercase tracking-[0.18em] text-blue-700">Eventos</p>
                 <h2 class="mt-1 font-black text-slate-950">Registro de acoes</h2>
@@ -62,7 +62,7 @@
 
             <div class="divide-y divide-slate-100">
                 @forelse ($logs as $log)
-                    <article class="grid gap-4 px-5 py-5 xl:grid-cols-[170px_220px_170px_1fr_140px] xl:items-start">
+                    <article class="grid gap-4 px-5 py-5 xl:grid-cols-[170px_220px_170px_1fr_140px] xl:items-start" @if ($loop->first) data-tour="audit-log-row" @endif>
                         <div>
                             <p class="text-xs font-black uppercase tracking-[0.16em] text-slate-500">Quando</p>
                             <p class="mt-1 text-sm font-bold text-slate-900">{{ $log->created_at->format('d/m/Y H:i') }}</p>
@@ -114,5 +114,41 @@
                 }
             });
         });
+    </script>
+    @php
+        $auditTour = [
+            'key' => 'audit-logs.index.v1',
+            'title' => 'Entendendo a Auditoria',
+            'steps' => [
+                [
+                    'target' => '[data-tour="audit-header"]',
+                    'title' => 'Rastreabilidade',
+                    'body' => 'A auditoria mostra ações importantes realizadas na unidade, como alterações de cliente, lavagem, status, permissões e cupons.',
+                ],
+                [
+                    'target' => '[data-tour="audit-filters"]',
+                    'title' => 'Filtros de investigação',
+                    'body' => 'Use período, ação, usuário e busca para encontrar rapidamente quem fez uma alteração e em qual registro.',
+                ],
+                [
+                    'target' => '[data-tour="audit-filter-actions"]',
+                    'title' => 'Aplicar consulta',
+                    'body' => 'Clique em Filtrar para atualizar a lista ou Limpar para voltar ao dia atual sem filtros adicionais.',
+                ],
+                [
+                    'target' => '[data-tour="audit-list"]',
+                    'title' => 'Registro de ações',
+                    'body' => 'A lista apresenta os eventos encontrados conforme os filtros selecionados.',
+                ],
+                [
+                    'target' => '[data-tour="audit-log-row"]',
+                    'title' => 'Evento auditado',
+                    'body' => 'Cada evento mostra data, usuário, perfil, tipo de ação, registro afetado, descrição e origem do acesso.',
+                ],
+            ],
+        ];
+    @endphp
+    <script type="application/json" data-onboarding-tour>
+        {!! json_encode($auditTour, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) !!}
     </script>
 </x-app.layout>

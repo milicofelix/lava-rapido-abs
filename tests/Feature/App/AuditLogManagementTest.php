@@ -32,7 +32,13 @@ class AuditLogManagementTest extends TestCase
             ->assertOk()
             ->assertSee('Auditoria')
             ->assertSee('Cliente editado')
-            ->assertSee('Maria Cliente');
+            ->assertSee('Maria Cliente')
+            ->assertSee('data-onboarding-tour', false)
+            ->assertSee('audit-logs.index.v1')
+            ->assertSee('data-tour="audit-filters"', false)
+            ->assertSee('data-tour="audit-list"', false)
+            ->assertSee('data-tour="audit-log-row"', false)
+            ->assertSee('Entendendo a Auditoria');
     }
 
     public function test_audit_log_page_defaults_to_current_day(): void
