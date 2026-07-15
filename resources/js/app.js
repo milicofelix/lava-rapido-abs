@@ -217,10 +217,16 @@ const setupGuidedTours = () => {
         };
 
         const ensureVisible = (element) => {
-            element.scrollIntoView({
+            const rect = element.getBoundingClientRect();
+            const absoluteTop = rect.top + window.scrollY;
+            const targetTop = Math.max(
+                0,
+                absoluteTop - Math.max(80, (window.innerHeight - Math.min(rect.height, window.innerHeight * 0.72)) / 2),
+            );
+
+            window.scrollTo({
                 behavior: 'smooth',
-                block: 'center',
-                inline: 'center',
+                top: targetTop,
             });
         };
 
@@ -231,8 +237,16 @@ const setupGuidedTours = () => {
 
             const step = steps[currentIndex];
             const rect = step.element.getBoundingClientRect();
+            const sidebar = document.querySelector('[data-sidebar]');
+            const sidebarRect = sidebar?.getBoundingClientRect();
+            const sidebarVisible = sidebar
+                && window.innerWidth >= 1024
+                && window.getComputedStyle(sidebar).display !== 'none'
+                && sidebarRect.width > 0
+                && sidebarRect.right > 0;
+            const safeLeft = sidebarVisible ? Math.min(window.innerWidth - 32, sidebarRect.right + 12) : 12;
             const padding = 10;
-            const left = Math.max(12, rect.left - padding);
+            const left = Math.max(safeLeft, rect.left - padding);
             const top = Math.max(12, rect.top - padding);
             const width = Math.min(window.innerWidth - left - 12, rect.width + padding * 2);
             const height = Math.min(window.innerHeight - top - 12, rect.height + padding * 2);
@@ -249,7 +263,7 @@ const setupGuidedTours = () => {
                 ? preferredTop
                 : Math.max(16, fallbackTop);
             const tooltipLeft = Math.min(
-                Math.max(16, rect.left),
+                Math.max(safeLeft, rect.left),
                 window.innerWidth - tooltipRect.width - 16,
             );
 
