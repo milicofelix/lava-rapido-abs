@@ -341,6 +341,9 @@ class CustomerManagementTest extends TestCase
             ->assertSee('Cliente Cupom')
             ->assertSee('Lava Rapido Central')
             ->assertSee('Ducha simples')
+            ->assertSee('Código do cupom')
+            ->assertSee('Status do cupom')
+            ->assertSee('Agradecemos sua preferência')
             ->assertSee('Compartilhar via WhatsApp')
             ->assertSee('https://wa.me/5511999990000', false)
             ->assertSee('data-onboarding-tour', false)
@@ -350,6 +353,7 @@ class CustomerManagementTest extends TestCase
             ->assertSee('data-tour="loyalty-coupon-main"', false)
             ->assertSee('data-tour="loyalty-coupon-code"', false)
             ->assertSee('data-tour="loyalty-coupon-details"', false)
+            ->assertSee('data-tour="loyalty-coupon-status"', false)
             ->assertSee('data-tour="loyalty-coupon-message"', false)
             ->assertSee('data-tour="loyalty-coupon-internal-control"', false);
     }

@@ -3,6 +3,37 @@
         $location = $coupon->washLocation;
         $customer = $coupon->customer;
         $benefit = $coupon->benefitLabel();
+        $effectiveStatus = $coupon->effectiveStatus();
+        $statusTone = match ($effectiveStatus) {
+            \App\Models\LoyaltyCoupon::STATUS_ACTIVE => [
+                'pill' => 'from-emerald-500 to-green-700 text-white',
+                'text' => 'text-emerald-600',
+                'bg' => 'bg-emerald-50',
+                'border' => 'border-emerald-200',
+                'icon' => '✓',
+            ],
+            \App\Models\LoyaltyCoupon::STATUS_USED => [
+                'pill' => 'from-blue-500 to-blue-800 text-white',
+                'text' => 'text-blue-700',
+                'bg' => 'bg-blue-50',
+                'border' => 'border-blue-200',
+                'icon' => '✓',
+            ],
+            \App\Models\LoyaltyCoupon::STATUS_EXPIRED => [
+                'pill' => 'from-amber-500 to-orange-700 text-white',
+                'text' => 'text-amber-700',
+                'bg' => 'bg-amber-50',
+                'border' => 'border-amber-200',
+                'icon' => '!',
+            ],
+            default => [
+                'pill' => 'from-slate-500 to-slate-800 text-white',
+                'text' => 'text-slate-700',
+                'bg' => 'bg-slate-50',
+                'border' => 'border-slate-200',
+                'icon' => '×',
+            ],
+        };
     @endphp
 
     <style>
@@ -54,65 +85,113 @@
         @enderror
 
         <section class="overflow-hidden rounded-[2rem] border border-blue-100 bg-white shadow-xl shadow-slate-200/80" data-tour="loyalty-coupon-card">
-            <div class="grid gap-0 lg:grid-cols-[1fr_320px]">
-                <div class="relative overflow-hidden bg-gradient-to-br from-blue-700 via-cyan-600 to-emerald-500 p-8 text-white sm:p-10" data-tour="loyalty-coupon-main">
-                    <div class="absolute -right-16 -top-16 h-48 w-48 rounded-full bg-white/15"></div>
-                    <div class="absolute -bottom-20 -left-16 h-56 w-56 rounded-full bg-white/10"></div>
+            <div class="grid lg:grid-cols-[1fr_360px]">
+                <div class="relative min-h-[560px] overflow-hidden bg-slate-950" data-tour="loyalty-coupon-main">
+                    <div class="absolute inset-0 bg-[radial-gradient(circle_at_12%_12%,rgba(14,165,233,0.55),transparent_24%),linear-gradient(135deg,#031b4e,#063c8e_48%,#0b63ce)]"></div>
+                    <div class="absolute -left-24 top-0 h-56 w-[560px] rounded-br-[80%] bg-white shadow-2xl shadow-blue-950/30"></div>
+                    <div class="absolute left-0 top-0 h-48 w-64 bg-[radial-gradient(circle,rgba(255,255,255,0.2)_1px,transparent_2px)] [background-size:18px_18px] opacity-40"></div>
+                    <div class="absolute right-0 top-0 h-full w-[54%] bg-[linear-gradient(115deg,transparent_0%,transparent_18%,rgba(255,255,255,0.92)_18%,rgba(255,255,255,0.92)_100%)]"></div>
+                    <div class="absolute right-0 top-0 h-full w-[55%] bg-[radial-gradient(circle_at_70%_28%,rgba(14,165,233,0.22),transparent_34%),linear-gradient(135deg,rgba(255,255,255,0.28),rgba(255,255,255,0.82))]"></div>
+                    <div class="absolute bottom-0 right-0 h-28 w-[58%] bg-gradient-to-r from-blue-950/70 via-blue-700 to-cyan-500"></div>
+                    <div class="absolute bottom-0 right-0 h-28 w-[58%] bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.14))]"></div>
 
-                    <div class="relative">
-                        <div class="flex flex-wrap items-center justify-between gap-4">
-                            <div class="rounded-2xl bg-white/95 p-3 shadow-lg shadow-blue-950/20">
-                                <img src="{{ $location?->logoUrl() ?? asset('images/autoflow-logo.png') }}" alt="{{ $location?->name ?? 'AutoFlow' }}" class="h-16 w-32 object-contain">
+                    <div class="relative z-10 flex min-h-[560px] flex-col justify-between p-6 sm:p-9">
+                        <div class="flex flex-wrap items-start justify-between gap-4">
+                            <div class="rounded-br-[3.5rem] rounded-tl-[1.5rem] bg-white px-8 py-7 shadow-xl shadow-blue-950/20">
+                                <img src="{{ $location?->logoUrl() ?? asset('images/autoflow-logo.png') }}" alt="{{ $location?->name ?? 'AutoFlow' }}" class="h-24 w-56 object-contain">
                             </div>
-                            <span class="rounded-full bg-white/20 px-4 py-2 text-sm font-black uppercase tracking-[0.16em] ring-1 ring-white/30">{{ $coupon->statusLabel() }}</span>
+                            <span class="inline-flex items-center gap-2 rounded-full bg-gradient-to-r {{ $statusTone['pill'] }} px-5 py-3 text-sm font-black uppercase tracking-[0.16em] shadow-lg shadow-slate-950/20">
+                                <span class="flex h-7 w-7 items-center justify-center rounded-full bg-white/20 text-lg">{{ $statusTone['icon'] }}</span>
+                                {{ $coupon->statusLabel() }}
+                            </span>
                         </div>
 
-                        <p class="mt-10 text-sm font-black uppercase tracking-[0.22em] text-blue-50">Cupom de fidelidade</p>
-                        <h2 class="mt-3 text-4xl font-black tracking-tight sm:text-5xl">{{ $benefit }}</h2>
-                        <p class="mt-4 max-w-2xl text-base font-semibold leading-7 text-blue-50">Benefício exclusivo para {{ $customer?->name }} utilizar na próxima visita à unidade {{ $location?->name }}.</p>
+                        <div class="grid gap-8 lg:grid-cols-[0.75fr_1fr] lg:items-end">
+                            <div class="text-white">
+                                <div class="mb-10 flex items-center gap-4">
+                                    <span class="flex h-20 w-20 items-center justify-center rounded-full border border-white/25 bg-white/10 text-4xl shadow-lg shadow-blue-950/20">%</span>
+                                    <span class="h-px flex-1 border-t border-dotted border-cyan-300/70"></span>
+                                </div>
+                                <p class="text-sm font-black uppercase tracking-[0.28em] text-blue-100">Cupom de</p>
+                                <h2 class="mt-3 text-5xl font-black uppercase leading-none tracking-wide text-white sm:text-6xl">Fidelidade</h2>
+                                <div class="mt-8 h-1.5 w-20 rounded-full bg-cyan-300"></div>
+                                <p class="mt-8 max-w-sm text-base font-semibold leading-8 text-blue-50">
+                                    Benefício exclusivo para o cliente <strong class="text-cyan-200">{{ $customer?->name }}</strong> utilizar na próxima visita à unidade <strong class="text-cyan-200">{{ $location?->name }}</strong>.
+                                </p>
+                            </div>
 
-                        <div class="mt-8 inline-flex rounded-2xl bg-white px-5 py-4 shadow-lg shadow-blue-950/20" data-tour="loyalty-coupon-code">
+                            <div class="relative mx-auto w-full max-w-md rounded-[2rem] bg-white p-5 shadow-2xl shadow-blue-950/25" data-tour="loyalty-coupon-code">
+                                <span class="absolute -left-4 top-1/2 h-9 w-9 -translate-y-1/2 rounded-full bg-blue-900"></span>
+                                <span class="absolute -right-4 top-1/2 h-9 w-9 -translate-y-1/2 rounded-full bg-white"></span>
+                                <div class="rounded-[1.5rem] border border-dashed border-slate-300 px-5 py-7 text-center">
+                                    <p class="text-xs font-black uppercase tracking-[0.28em] text-blue-700">Código do cupom</p>
+                                    <div class="my-4 flex items-center justify-center gap-3 text-cyan-400">
+                                        <span class="h-px w-20 bg-cyan-200"></span>
+                                        <span>★ ★ ★</span>
+                                        <span class="h-px w-20 bg-cyan-200"></span>
+                                    </div>
+                                    <p class="break-words text-4xl font-black uppercase leading-tight tracking-[0.12em] text-slate-950 sm:text-5xl">{{ $coupon->code }}</p>
+                                    <div class="mt-5 flex items-center justify-center gap-3 text-blue-700">
+                                        <span class="h-px w-20 bg-slate-300"></span>
+                                        <span class="text-2xl">▣</span>
+                                        <span class="h-px w-20 bg-slate-300"></span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mt-8 flex flex-wrap items-center justify-end gap-4 text-white">
+                            <div class="flex h-14 w-14 items-center justify-center rounded-full bg-white/10 text-sm font-black uppercase tracking-[0.16em]">FID</div>
                             <div>
-                                <p class="text-xs font-black uppercase tracking-[0.22em] text-blue-700">Código</p>
-                                <p class="mt-1 text-3xl font-black tracking-widest text-slate-950">{{ $coupon->code }}</p>
+                                <p class="font-black text-cyan-200">Agradecemos sua preferência!</p>
+                                <p class="text-sm font-semibold text-blue-50">Continue cuidando do seu carro com quem entende do assunto.</p>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <aside class="border-t border-slate-200 bg-slate-50 p-6 lg:border-l lg:border-t-0" data-tour="loyalty-coupon-details">
+                <aside class="border-t border-slate-200 bg-white p-6 lg:border-l lg:border-t-0" data-tour="loyalty-coupon-details">
                     <dl class="space-y-4">
-                        <div class="rounded-2xl bg-white p-4 shadow-sm">
-                            <dt class="text-xs font-black uppercase tracking-[0.14em] text-slate-500">Cliente</dt>
-                            <dd class="mt-1 font-black text-slate-950">{{ $customer?->name }}</dd>
+                        <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                            <dt class="flex items-center gap-3 text-xs font-black uppercase tracking-[0.14em] text-blue-700">
+                                <span class="flex h-12 w-12 items-center justify-center rounded-full bg-blue-700 text-xl text-white">●</span>
+                                Cliente
+                            </dt>
+                            <dd class="mt-3 text-lg font-black text-slate-950">{{ $customer?->name }}</dd>
                             <dd class="mt-1 text-sm font-semibold text-slate-500">{{ $customer?->phone }}</dd>
                         </div>
-                        <div class="rounded-2xl bg-white p-4 shadow-sm">
-                            <dt class="text-xs font-black uppercase tracking-[0.14em] text-slate-500">Unidade</dt>
-                            <dd class="mt-1 font-black text-slate-950">{{ $location?->name }}</dd>
-                            <dd class="mt-1 text-sm font-semibold text-slate-500">{{ $location?->fullAddress() }}</dd>
+                        <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                            <dt class="flex items-center gap-3 text-xs font-black uppercase tracking-[0.14em] text-blue-700">
+                                <span class="flex h-12 w-12 items-center justify-center rounded-full bg-blue-700 text-xl text-white">⌖</span>
+                                Unidade
+                            </dt>
+                            <dd class="mt-3 text-lg font-black text-slate-950">{{ $location?->name }}</dd>
+                            <dd class="mt-1 text-sm font-semibold leading-6 text-slate-500">{{ $location?->fullAddress() }}</dd>
                         </div>
                         <div class="grid grid-cols-2 gap-3">
-                            <div class="rounded-2xl bg-white p-4 shadow-sm">
-                                <dt class="text-xs font-black uppercase tracking-[0.14em] text-slate-500">Emissão</dt>
-                                <dd class="mt-1 font-black text-slate-950">{{ $coupon->earned_at?->format('d/m/Y') ?? '-' }}</dd>
+                            <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                                <dt class="text-xs font-black uppercase tracking-[0.14em] text-blue-700">Emissão</dt>
+                                <dd class="mt-2 font-black text-slate-950">{{ $coupon->earned_at?->format('d/m/Y') ?? '-' }}</dd>
                             </div>
-                            <div class="rounded-2xl bg-white p-4 shadow-sm">
-                                <dt class="text-xs font-black uppercase tracking-[0.14em] text-slate-500">Validade</dt>
-                                <dd class="mt-1 font-black text-slate-950">{{ $coupon->expires_at?->format('d/m/Y') ?? '-' }}</dd>
+                            <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                                <dt class="text-xs font-black uppercase tracking-[0.14em] text-blue-700">Validade</dt>
+                                <dd class="mt-2 font-black text-slate-950">{{ $coupon->expires_at?->format('d/m/Y') ?? '-' }}</dd>
                             </div>
                         </div>
-                        <div class="rounded-2xl bg-white p-4 shadow-sm">
-                            <dt class="text-xs font-black uppercase tracking-[0.14em] text-slate-500">Lavagem que gerou</dt>
-                            <dd class="mt-1 font-black text-slate-950">{{ $coupon->sourceWashOrder?->code ?? '-' }}</dd>
+                        <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                            <dt class="flex items-center gap-3 text-xs font-black uppercase tracking-[0.14em] text-blue-700">
+                                <span class="flex h-12 w-12 items-center justify-center rounded-full bg-blue-50 text-xl text-blue-700">▣</span>
+                                Lavagem que gerou
+                            </dt>
+                            <dd class="mt-3 text-lg font-black text-slate-950">{{ $coupon->sourceWashOrder?->code ?? '-' }}</dd>
                             @if ($coupon->sourceWashOrder?->entered_at)
                                 <dd class="mt-1 text-sm font-semibold text-slate-500">{{ $coupon->sourceWashOrder->entered_at->format('d/m/Y H:i') }}</dd>
                             @endif
                         </div>
                         @if ($coupon->usedWashOrder)
-                            <div class="rounded-2xl bg-white p-4 shadow-sm">
-                                <dt class="text-xs font-black uppercase tracking-[0.14em] text-slate-500">Usado na lavagem</dt>
-                                <dd class="mt-1 font-black text-slate-950">{{ $coupon->usedWashOrder->code }}</dd>
+                            <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                                <dt class="text-xs font-black uppercase tracking-[0.14em] text-blue-700">Usado na lavagem</dt>
+                                <dd class="mt-2 text-lg font-black text-slate-950">{{ $coupon->usedWashOrder->code }}</dd>
                                 <dd class="mt-1 text-sm font-semibold text-slate-500">
                                     {{ $coupon->used_at?->format('d/m/Y H:i') ?? '-' }}
                                     @if ($coupon->usedByUser)
@@ -125,12 +204,15 @@
                 </aside>
             </div>
 
-            <div class="border-t border-dashed border-slate-200 bg-white px-6 py-5 sm:px-10">
-                <div class="grid gap-4 lg:grid-cols-[1fr_auto] lg:items-center">
-                    <p class="text-sm font-semibold leading-6 text-slate-500">Cupom pessoal e vinculado ao cliente informado. A validade e o status devem ser conferidos antes de aplicar o benefício no atendimento.</p>
-                    <div class="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-right">
-                        <p class="text-xs font-black uppercase tracking-[0.14em] text-slate-500">Status</p>
-                        <p class="mt-1 text-lg font-black text-slate-950">{{ $coupon->statusLabel() }}</p>
+            <div class="border-t border-dashed border-slate-200 bg-white px-6 py-5 sm:px-10" data-tour="loyalty-coupon-status">
+                <div class="grid gap-4 lg:grid-cols-[1fr_280px] lg:items-center">
+                    <div class="flex items-center gap-4 rounded-2xl border border-slate-100 bg-slate-50 px-5 py-4">
+                        <span class="flex h-16 w-16 shrink-0 items-center justify-center rounded-full border border-blue-100 bg-white text-3xl text-blue-700">◇</span>
+                        <p class="text-sm font-semibold leading-6 text-slate-600">Cupom pessoal e vinculado ao cliente informado. A validade e o status devem ser conferidos antes de aplicar o benefício no atendimento.</p>
+                    </div>
+                    <div class="rounded-2xl border {{ $statusTone['border'] }} {{ $statusTone['bg'] }} px-5 py-4 text-center">
+                        <p class="text-xs font-black uppercase tracking-[0.16em] text-blue-700">Status do cupom</p>
+                        <p class="mt-1 text-4xl font-black uppercase {{ $statusTone['text'] }}">{{ $coupon->statusLabel() }}</p>
                     </div>
                 </div>
             </div>
@@ -212,6 +294,11 @@
                     'target' => '[data-tour="loyalty-coupon-details"]',
                     'title' => 'Dados vinculados',
                     'body' => 'Aqui ficam cliente, unidade, emissão, validade e a lavagem que gerou ou utilizou o cupom.',
+                ],
+                [
+                    'target' => '[data-tour="loyalty-coupon-status"]',
+                    'title' => 'Status do cupom',
+                    'body' => 'Confira se o cupom está ativo, usado, expirado ou cancelado antes de aplicar o benefício.',
                 ],
                 [
                     'target' => '[data-tour="loyalty-coupon-message"]',
