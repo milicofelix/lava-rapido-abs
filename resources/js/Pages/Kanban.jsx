@@ -67,6 +67,7 @@ function OrderCard({ order, statuses, onMove, canUpdateStatus, columnKey, showOu
 
     return (
         <article
+            data-tour="kanban-card"
             className="group rounded-lg border border-slate-200 bg-white p-3 text-slate-950 shadow-sm transition hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-md"
             draggable={canMoveOrder}
             onDragStart={handleDragStart}
@@ -119,7 +120,7 @@ function OrderCard({ order, statuses, onMove, canUpdateStatus, columnKey, showOu
                 <span className={`h-2 w-2 shrink-0 rounded-full ${style.accent}`}></span>
             </div>
 
-            <div className="mt-3 grid grid-cols-2 gap-1.5">
+            <div data-tour="kanban-actions" className="mt-3 grid grid-cols-2 gap-1.5">
                 {order.show_url ? (
                     <a href={order.show_url} className="rounded-lg border border-slate-200 px-2 py-1.5 text-center text-xs font-bold text-slate-700 hover:bg-slate-50">Detalhes</a>
                 ) : null}
@@ -220,6 +221,7 @@ export default function Kanban({
     logoUrl,
     auth,
     currentLocation,
+    onboardingTour,
 }) {
     const [columns, setColumns] = useState(initialColumns);
     const [selectedDate, setSelectedDate] = useState(filters?.date ?? '');
@@ -312,12 +314,31 @@ export default function Kanban({
         return `${auth.user.name} · ${auth.user.role_label ?? auth.user.role}`;
     }, [auth]);
 
+    useEffect(() => {
+        if (!onboardingTour?.key) {
+            return undefined;
+        }
+
+        const script = document.createElement('script');
+        script.type = 'application/json';
+        script.dataset.onboardingTour = 'true';
+        script.dataset.dynamicTour = onboardingTour.key;
+        script.textContent = JSON.stringify(onboardingTour);
+        document.body.appendChild(script);
+        window.dispatchEvent(new Event('autoflow:tours-ready'));
+
+        return () => {
+            script.remove();
+            document.querySelector(`[data-onboarding-tour-launch="${onboardingTour.key}"]`)?.remove();
+        };
+    }, [onboardingTour]);
+
     return (
         <>
             <Head title="Kanban · AutoFlow" />
             <div className="min-h-screen bg-[#061832] p-1.5 sm:p-2 lg:p-3">
                 <div className="min-h-[calc(100vh-12px)] overflow-hidden rounded-2xl bg-slate-50 shadow-2xl shadow-black/30 sm:min-h-[calc(100vh-16px)]">
-                <header className="sticky top-0 z-20 border-b border-slate-200 bg-white/95 px-3 py-3 backdrop-blur sm:px-6 sm:py-4 lg:px-8">
+                <header data-tour="kanban-header" className="sticky top-0 z-20 border-b border-slate-200 bg-white/95 px-3 py-3 backdrop-blur sm:px-6 sm:py-4 lg:px-8">
                     <div className="flex flex-wrap items-center justify-between gap-4">
                         <div className="flex items-center gap-4">
                             {dashboardUrl ? (
@@ -365,7 +386,7 @@ export default function Kanban({
 
                 <main className="px-3 py-4 sm:px-6 sm:py-5 lg:px-8">
                     {currentLocation && (
-                        <section className="mb-5 rounded-2xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm text-blue-950 shadow-sm">
+                        <section data-tour="kanban-location" className="mb-5 rounded-2xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm text-blue-950 shadow-sm">
                             <div className="flex flex-wrap items-center justify-between gap-3">
                                 <div>
                                     <p className="text-xs font-black uppercase tracking-[0.18em] text-blue-700">Unidade atual</p>
@@ -390,7 +411,7 @@ export default function Kanban({
                             </div>
                         </div>
 
-                        <div className="mb-4 grid gap-3 rounded-xl border border-slate-200 bg-slate-50 p-3 lg:grid-cols-[1fr_auto] lg:items-end">
+                        <div data-tour="kanban-filters" className="mb-4 grid gap-3 rounded-xl border border-slate-200 bg-slate-50 p-3 lg:grid-cols-[1fr_auto] lg:items-end">
                             <div>
                                 <p className="text-xs font-black uppercase tracking-[0.16em] text-slate-500">Período operacional</p>
                                 <p className="mt-1 text-sm font-bold text-slate-900">{filters?.label ?? 'Hoje'}</p>
@@ -437,7 +458,7 @@ export default function Kanban({
                             </div>
                         </div>
 
-                        <div className="mb-3 flex gap-2 overflow-x-auto pb-1 xl:hidden" aria-label="Atalhos das colunas do Kanban">
+                        <div data-tour="kanban-mobile-tabs" className="mb-3 flex gap-2 overflow-x-auto pb-1 xl:hidden" aria-label="Atalhos das colunas do Kanban">
                             {columns.map((column) => {
                                 const style = columnStyles[column.key] ?? columnStyles.awaiting;
                                 const isActive = activeMobileColumn === column.key;
@@ -455,7 +476,7 @@ export default function Kanban({
                             })}
                         </div>
 
-                        <div ref={boardRef} className="-mx-3 flex snap-x gap-3 overflow-x-auto px-3 pb-4 sm:-mx-4 sm:px-4 xl:mx-0 xl:grid xl:grid-cols-5 xl:px-0">
+                        <div ref={boardRef} data-tour="kanban-board" className="-mx-3 flex snap-x gap-3 overflow-x-auto px-3 pb-4 sm:-mx-4 sm:px-4 xl:mx-0 xl:grid xl:grid-cols-5 xl:px-0">
                             {statusError && (
                                 <div className="w-[min(86vw,22rem)] shrink-0 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm font-bold text-red-800 xl:col-span-5 xl:w-auto">
                                     {statusError}

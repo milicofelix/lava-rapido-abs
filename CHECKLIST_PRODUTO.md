@@ -34,6 +34,7 @@ Documento de acompanhamento do que ja foi construido e do que ainda falta para d
 - [x] Padronizar todos os textos acentuados em pt-BR.
 - [x] Base reutilizavel de tour guiado para onboarding de novas funcionalidades.
 - [x] Primeiro tour aplicado na abertura de lavagem.
+- [x] Tour guiado aplicado no Kanban operacional.
 
 ## Usuarios, ACL e permissoes
 

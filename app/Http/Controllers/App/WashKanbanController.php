@@ -5,8 +5,8 @@ namespace App\Http\Controllers\App;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Models\WashOrder;
-use App\Support\TenantContext;
 use App\Support\Access\AccessControl;
+use App\Support\TenantContext;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -78,6 +78,7 @@ class WashKanbanController extends Controller
                 'name' => $currentLocation->name,
                 'account_status' => $currentLocation->accountStatusLabel(),
             ] : null,
+            'onboardingTour' => $this->onboardingTour(),
         ];
     }
 
@@ -137,6 +138,54 @@ class WashKanbanController extends Controller
         }
 
         return $washOrder->teamMembers->contains('id', $user->id);
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function onboardingTour(): array
+    {
+        return [
+            'key' => 'kanban.operational.v1',
+            'title' => 'Usando o Kanban',
+            'steps' => [
+                [
+                    'target' => '[data-tour="kanban-header"]',
+                    'title' => 'Painel operacional',
+                    'body' => 'Aqui ficam os atalhos principais: voltar ao Dashboard, abrir uma nova lavagem quando permitido e sair do sistema.',
+                ],
+                [
+                    'target' => '[data-tour="kanban-location"]',
+                    'title' => 'Unidade atual',
+                    'body' => 'Confirme em qual lava-rápido você está operando antes de movimentar as lavagens.',
+                ],
+                [
+                    'target' => '[data-tour="kanban-filters"]',
+                    'title' => 'Período do fluxo',
+                    'body' => 'Por padrão o Kanban abre em Hoje. Use os filtros para consultar datas anteriores sem misturar a operação do dia.',
+                ],
+                [
+                    'target' => '[data-tour="kanban-mobile-tabs"]',
+                    'title' => 'Atalhos no celular',
+                    'body' => 'Em telas menores, toque nestes atalhos para ir direto para a coluna desejada.',
+                ],
+                [
+                    'target' => '[data-tour="kanban-board"]',
+                    'title' => 'Colunas de status',
+                    'body' => 'Cada coluna representa uma etapa: aguardando, em lavagem, finalizando, pronto e entregue.',
+                ],
+                [
+                    'target' => '[data-tour="kanban-card"]',
+                    'title' => 'Cartão da lavagem',
+                    'body' => 'O cartão mostra placa, cliente, serviços, equipe, valor e tempo desde a entrada.',
+                ],
+                [
+                    'target' => '[data-tour="kanban-actions"]',
+                    'title' => 'Avançar a lavagem',
+                    'body' => 'Use o botão do próximo status ou arraste o cartão quando tiver permissão. O sistema respeita equipe, pagamento e horário de funcionamento.',
+                ],
+            ],
+        ];
     }
 
     public static function columns(): array

@@ -175,7 +175,7 @@ const setupGuidedTours = () => {
                 ...step,
                 element: document.querySelector(step.target),
             }))
-            .filter((step) => step.element);
+            .filter((step) => step.element && step.element.getClientRects().length > 0);
 
         if (steps.length === 0) {
             return;
@@ -330,6 +330,12 @@ const setupGuidedTours = () => {
     };
 
     tourScripts.forEach((script) => {
+        if (script.dataset.tourInitialized === '1') {
+            return;
+        }
+
+        script.dataset.tourInitialized = '1';
+
         try {
             setupTour(JSON.parse(script.textContent));
         } catch (error) {
@@ -345,6 +351,8 @@ document.addEventListener('DOMContentLoaded', () => {
     setupViaCep();
     setupGuidedTours();
 });
+
+window.addEventListener('autoflow:tours-ready', setupGuidedTours);
 
 const inertiaRoot = document.getElementById('app');
 const inertiaPage = document.querySelector('script[data-page="app"][type="application/json"]');

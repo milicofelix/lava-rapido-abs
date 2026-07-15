@@ -38,6 +38,9 @@ class WashKanbanTest extends TestCase
                 ->where('columns.1.orders.0.customer.name', $washOrder->customer->name)
                 ->where('columns.1.orders.0.can_update_status', false)
                 ->where('logoutUrl', route('logout'))
+                ->where('onboardingTour.key', 'kanban.operational.v1')
+                ->where('onboardingTour.steps.0.title', 'Painel operacional')
+                ->where('onboardingTour.steps.4.target', '[data-tour="kanban-board"]')
                 ->has('csrfToken')
             );
     }
