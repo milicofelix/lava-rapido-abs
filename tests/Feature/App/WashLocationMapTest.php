@@ -67,7 +67,18 @@ class WashLocationMapTest extends TestCase
             ->assertSee('Não foi possível acessar sua localização')
             ->assertSee('data-map-geolocation', false)
             ->assertSee('data-map-reset', false)
-            ->assertSee('https://wa.me/5511988881101', false);
+            ->assertSee('https://wa.me/5511988881101', false)
+            ->assertSee('data-onboarding-tour', false)
+            ->assertSee('public.locations.index.v1')
+            ->assertSee('data-tour="public-map-header"', false)
+            ->assertSee('data-tour="public-map-search"', false)
+            ->assertSee('data-tour="public-map-filters"', false)
+            ->assertSee('data-tour="public-map-canvas"', false)
+            ->assertSee('data-tour="public-map-actions"', false)
+            ->assertSee('data-tour="public-map-summary"', false)
+            ->assertSee('data-tour="public-map-favorites"', false)
+            ->assertSee('data-tour="public-map-location-card"', false)
+            ->assertSee('data-tour="public-map-location-actions"', false);
     }
 
     public function test_authenticated_user_sees_panel_action_in_public_headers_instead_of_login(): void
