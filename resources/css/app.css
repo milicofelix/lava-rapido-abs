@@ -107,3 +107,127 @@ body[data-theme-effective="dark"] .shadow-lg {
     justify-content: center;
     width: 34px;
 }
+
+.af-tour-launcher {
+    align-items: center;
+    background: #0f172a;
+    border: 1px solid rgb(255 255 255 / 0.16);
+    border-radius: 9999px;
+    bottom: 1.25rem;
+    box-shadow: 0 16px 36px rgb(15 23 42 / 0.28);
+    color: #fff;
+    display: inline-flex;
+    font-size: 0.78rem;
+    font-weight: 900;
+    gap: 0.35rem;
+    justify-content: center;
+    letter-spacing: 0;
+    min-height: 2.5rem;
+    padding: 0 1rem;
+    position: fixed;
+    right: 1.25rem;
+    z-index: 1200;
+}
+
+.af-tour-launcher:hover {
+    background: #1d4ed8;
+}
+
+.af-tour-spotlight {
+    border: 3px solid #60a5fa;
+    border-radius: 1.1rem;
+    box-shadow: 0 0 0 9999px rgb(15 23 42 / 0.68), 0 18px 55px rgb(15 23 42 / 0.35);
+    pointer-events: none;
+    position: fixed;
+    transition: all 180ms ease;
+    z-index: 10000;
+}
+
+.af-tour-tooltip {
+    background: #0f172a;
+    border: 1px solid rgb(255 255 255 / 0.14);
+    border-radius: 0.9rem;
+    box-shadow: 0 20px 50px rgb(15 23 42 / 0.38);
+    color: #fff;
+    max-width: min(22rem, calc(100vw - 2rem));
+    padding: 1rem;
+    position: fixed;
+    transition: left 180ms ease, top 180ms ease;
+    width: 22rem;
+    z-index: 10001;
+}
+
+.af-tour-tooltip h2 {
+    color: #fff;
+    font-size: 1rem;
+    font-weight: 900;
+    line-height: 1.25;
+    margin: 0.35rem 0 0;
+}
+
+.af-tour-tooltip p {
+    color: rgb(226 232 240 / 0.92);
+    font-size: 0.9rem;
+    line-height: 1.45;
+    margin: 0.55rem 0 0;
+}
+
+.af-tour-progress {
+    color: #93c5fd;
+    font-size: 0.72rem;
+    font-weight: 900;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.af-tour-actions {
+    align-items: center;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 1rem;
+}
+
+.af-tour-actions button {
+    border-radius: 0.55rem;
+    font-size: 0.8rem;
+    font-weight: 900;
+    padding: 0.55rem 0.75rem;
+}
+
+.af-tour-actions [data-tour-next] {
+    background: #2563eb;
+    color: #fff;
+}
+
+.af-tour-actions [data-tour-next]:hover {
+    background: #1d4ed8;
+}
+
+.af-tour-actions [data-tour-prev] {
+    background: rgb(255 255 255 / 0.1);
+    color: #fff;
+}
+
+.af-tour-actions [data-tour-prev]:disabled {
+    cursor: not-allowed;
+    opacity: 0.4;
+}
+
+.af-tour-actions [data-tour-skip] {
+    background: #fff;
+    color: #0f172a;
+    margin-left: auto;
+}
+
+@media (max-width: 640px) {
+    .af-tour-launcher {
+        bottom: 5.25rem;
+        right: 1rem;
+    }
+
+    .af-tour-tooltip {
+        left: 1rem !important;
+        width: calc(100vw - 2rem);
+    }
+}

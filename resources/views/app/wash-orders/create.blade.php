@@ -31,7 +31,7 @@
                 </div>
 
                 <div class="mt-5 grid gap-4 md:grid-cols-2">
-                    <label class="block">
+                    <label class="block" data-tour="wash-customer">
                         <span class="text-sm font-bold text-slate-700">Cliente</span>
                         <select name="customer_id" required data-customer-select class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100">
                             <option value="">Selecione</option>
@@ -42,7 +42,7 @@
                         @error('customer_id') <span class="text-sm text-red-600">{{ $message }}</span> @enderror
                     </label>
 
-                    <label class="block">
+                    <label class="block" data-tour="wash-vehicle">
                         <span class="text-sm font-bold text-slate-700">Veículo</span>
                         <select name="vehicle_id" required data-vehicle-select data-old-vehicle="{{ old('vehicle_id') }}" class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100">
                             <option value="">Selecione um cliente primeiro</option>
@@ -52,7 +52,7 @@
                     </label>
 
                     @if ($scheduleEnabled)
-                        <label class="block md:col-span-2">
+                        <label class="block md:col-span-2" data-tour="wash-scheduled-at">
                             <span class="text-sm font-bold text-slate-700">Agendar para</span>
                             <input name="scheduled_at" type="datetime-local" value="{{ old('scheduled_at', $suggestedScheduledAt) }}" class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100">
                             <p class="mt-1 text-xs text-slate-500">Deixe em branco para abrir a lavagem agora. Informe uma data futura para aparecer na Agenda desse dia.</p>
@@ -68,7 +68,7 @@
                 </label>
             </section>
 
-            <section class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+            <section class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm" data-tour="wash-team">
                 <div class="border-b border-slate-200 pb-4">
                     <p class="text-xs font-black uppercase tracking-[0.18em] text-blue-700">Equipe da lavagem</p>
                     <h2 class="mt-1 text-xl font-black text-slate-950">Responsaveis pela execucao</h2>
@@ -90,7 +90,7 @@
                 @error('assigned_user_ids.*') <span class="mt-3 block text-sm text-red-600">{{ $message }}</span> @enderror
             </section>
 
-            <section class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+            <section class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm" data-tour="wash-services">
                 <div class="border-b border-slate-200 px-5 py-4">
                     <p class="text-xs font-black uppercase tracking-[0.18em] text-blue-700">Catálogo</p>
                     <h2 class="mt-1 text-xl font-black text-slate-950">Serviços</h2>
@@ -111,7 +111,7 @@
             </section>
         </div>
 
-        <aside class="h-fit rounded-2xl border border-slate-200 bg-white p-5 shadow-sm lg:sticky lg:top-24">
+        <aside class="h-fit rounded-2xl border border-slate-200 bg-white p-5 shadow-sm lg:sticky lg:top-24" data-tour="wash-summary">
             <p class="text-xs font-black uppercase tracking-[0.18em] text-blue-700">Resumo</p>
             <h2 class="mt-1 text-xl font-black text-slate-950">Ordem de lavagem</h2>
             <dl class="mt-5 space-y-3 text-sm">
@@ -131,6 +131,47 @@
 
     <script type="application/json" data-customer-vehicles>
         @json($customerVehicles)
+    </script>
+    @php
+        $washOrderCreateTour = [
+            'key' => 'wash-orders.create.v1',
+            'title' => 'Abrindo uma lavagem',
+            'steps' => [
+                [
+                    'target' => '[data-tour="wash-customer"]',
+                    'title' => 'Comece pelo cliente',
+                    'body' => 'Selecione quem está trazendo o veículo. Isso evita escolher um carro que pertence a outro cliente.',
+                ],
+                [
+                    'target' => '[data-tour="wash-vehicle"]',
+                    'title' => 'Escolha o veículo correto',
+                    'body' => 'Depois do cliente, aparecem somente os veículos vinculados a ele. Quando houver apenas um, o sistema seleciona automaticamente.',
+                ],
+                [
+                    'target' => '[data-tour="wash-scheduled-at"]',
+                    'title' => 'Use agenda quando precisar',
+                    'body' => 'Deixe em branco para abrir agora ou informe data e horário futuro para a lavagem entrar na Agenda.',
+                ],
+                [
+                    'target' => '[data-tour="wash-team"]',
+                    'title' => 'Monte a equipe',
+                    'body' => 'Marque todos que participam da lavagem. O primeiro selecionado fica como responsável principal.',
+                ],
+                [
+                    'target' => '[data-tour="wash-services"]',
+                    'title' => 'Selecione os serviços',
+                    'body' => 'Escolha um ou mais serviços. O total e o tempo estimado são recalculados automaticamente.',
+                ],
+                [
+                    'target' => '[data-tour="wash-summary"]',
+                    'title' => 'Confira e abra a ordem',
+                    'body' => 'Revise valor, tempo estimado e finalize em Abrir lavagem. O botão Ajuda permite rever este passo a passo depois.',
+                ],
+            ],
+        ];
+    @endphp
+    <script type="application/json" data-onboarding-tour>
+        {!! json_encode($washOrderCreateTour, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) !!}
     </script>
     <script>
         const customerSelect = document.querySelector('[data-customer-select]');

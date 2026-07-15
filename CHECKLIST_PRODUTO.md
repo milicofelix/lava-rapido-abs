@@ -32,6 +32,8 @@ Documento de acompanhamento do que ja foi construido e do que ainda falta para d
 - [x] Revisao visual final responsiva em todas as telas.
 - [x] Navegacao principal mobile fixa para rotas mais usadas.
 - [x] Padronizar todos os textos acentuados em pt-BR.
+- [x] Base reutilizavel de tour guiado para onboarding de novas funcionalidades.
+- [x] Primeiro tour aplicado na abertura de lavagem.
 
 ## Usuarios, ACL e permissoes
 

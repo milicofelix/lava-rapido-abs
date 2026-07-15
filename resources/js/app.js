@@ -128,11 +128,222 @@ const setupViaCep = () => {
     });
 };
 
+const setupGuidedTours = () => {
+    const tourScripts = [...document.querySelectorAll('script[data-onboarding-tour]')];
+
+    if (tourScripts.length === 0) {
+        return;
+    }
+
+    const readCompleted = (key) => {
+        try {
+            return window.localStorage.getItem(`autoflow.tour.${key}.completed`) === '1';
+        } catch (error) {
+            return false;
+        }
+    };
+
+    const markCompleted = (key) => {
+        try {
+            window.localStorage.setItem(`autoflow.tour.${key}.completed`, '1');
+        } catch (error) {
+            // Tours remain usable even when localStorage is unavailable.
+        }
+    };
+
+    const createButton = (tour, start) => {
+        if (tour.launcher === false || document.querySelector(`[data-onboarding-tour-launch="${tour.key}"]`)) {
+            return;
+        }
+
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'af-tour-launcher';
+        button.dataset.onboardingTourLaunch = tour.key;
+        button.textContent = 'Ajuda';
+        button.addEventListener('click', start);
+        document.body.appendChild(button);
+    };
+
+    const setupTour = (tour) => {
+        if (!tour.key || !Array.isArray(tour.steps)) {
+            return;
+        }
+
+        const steps = tour.steps
+            .map((step) => ({
+                ...step,
+                element: document.querySelector(step.target),
+            }))
+            .filter((step) => step.element);
+
+        if (steps.length === 0) {
+            return;
+        }
+
+        let currentIndex = 0;
+        let spotlight = null;
+        let tooltip = null;
+
+        const cleanup = () => {
+            spotlight?.remove();
+            tooltip?.remove();
+            spotlight = null;
+            tooltip = null;
+            document.body.classList.remove('af-tour-active');
+            window.removeEventListener('resize', positionCurrentStep);
+            window.removeEventListener('scroll', positionCurrentStep, true);
+            document.removeEventListener('keydown', handleKeydown);
+        };
+
+        const finish = () => {
+            markCompleted(tour.key);
+            cleanup();
+        };
+
+        const handleKeydown = (event) => {
+            if (event.key === 'Escape') {
+                cleanup();
+            }
+
+            if (event.key === 'ArrowRight') {
+                event.preventDefault();
+                goTo(currentIndex + 1);
+            }
+
+            if (event.key === 'ArrowLeft') {
+                event.preventDefault();
+                goTo(currentIndex - 1);
+            }
+        };
+
+        const ensureVisible = (element) => {
+            element.scrollIntoView({
+                behavior: 'smooth',
+                block: 'center',
+                inline: 'center',
+            });
+        };
+
+        const positionCurrentStep = () => {
+            if (!spotlight || !tooltip) {
+                return;
+            }
+
+            const step = steps[currentIndex];
+            const rect = step.element.getBoundingClientRect();
+            const padding = 10;
+            const left = Math.max(12, rect.left - padding);
+            const top = Math.max(12, rect.top - padding);
+            const width = Math.min(window.innerWidth - left - 12, rect.width + padding * 2);
+            const height = Math.min(window.innerHeight - top - 12, rect.height + padding * 2);
+
+            spotlight.style.left = `${left}px`;
+            spotlight.style.top = `${top}px`;
+            spotlight.style.width = `${width}px`;
+            spotlight.style.height = `${height}px`;
+
+            const tooltipRect = tooltip.getBoundingClientRect();
+            const preferredTop = rect.bottom + 18;
+            const fallbackTop = rect.top - tooltipRect.height - 18;
+            const tooltipTop = preferredTop + tooltipRect.height + 16 < window.innerHeight
+                ? preferredTop
+                : Math.max(16, fallbackTop);
+            const tooltipLeft = Math.min(
+                Math.max(16, rect.left),
+                window.innerWidth - tooltipRect.width - 16,
+            );
+
+            tooltip.style.left = `${tooltipLeft}px`;
+            tooltip.style.top = `${tooltipTop}px`;
+        };
+
+        const render = () => {
+            const step = steps[currentIndex];
+            ensureVisible(step.element);
+
+            if (!spotlight) {
+                spotlight = document.createElement('div');
+                spotlight.className = 'af-tour-spotlight';
+                document.body.appendChild(spotlight);
+            }
+
+            if (!tooltip) {
+                tooltip = document.createElement('div');
+                tooltip.className = 'af-tour-tooltip';
+                tooltip.setAttribute('role', 'dialog');
+                tooltip.setAttribute('aria-live', 'polite');
+                document.body.appendChild(tooltip);
+            }
+
+            const isLast = currentIndex === steps.length - 1;
+
+            tooltip.innerHTML = `
+                <div class="af-tour-progress">Passo ${currentIndex + 1} de ${steps.length}</div>
+                <h2>${step.title || tour.title || 'Conheça esta tela'}</h2>
+                <p>${step.body || ''}</p>
+                <div class="af-tour-actions">
+                    <button type="button" data-tour-prev ${currentIndex === 0 ? 'disabled' : ''}>Anterior</button>
+                    <button type="button" data-tour-next>${isLast ? 'Concluir' : 'Próximo'}</button>
+                    <button type="button" data-tour-skip>Pular</button>
+                </div>
+            `;
+
+            tooltip.querySelector('[data-tour-prev]').addEventListener('click', () => goTo(currentIndex - 1));
+            tooltip.querySelector('[data-tour-next]').addEventListener('click', () => {
+                if (isLast) {
+                    finish();
+                    return;
+                }
+
+                goTo(currentIndex + 1);
+            });
+            tooltip.querySelector('[data-tour-skip]').addEventListener('click', finish);
+
+            window.setTimeout(positionCurrentStep, 220);
+        };
+
+        const goTo = (nextIndex) => {
+            if (nextIndex < 0 || nextIndex >= steps.length) {
+                return;
+            }
+
+            currentIndex = nextIndex;
+            render();
+        };
+
+        const start = () => {
+            cleanup();
+            currentIndex = 0;
+            document.body.classList.add('af-tour-active');
+            window.addEventListener('resize', positionCurrentStep);
+            window.addEventListener('scroll', positionCurrentStep, true);
+            document.addEventListener('keydown', handleKeydown);
+            render();
+        };
+
+        createButton(tour, start);
+
+        if (!readCompleted(tour.key) && tour.autoStart !== false) {
+            window.setTimeout(start, 650);
+        }
+    };
+
+    tourScripts.forEach((script) => {
+        try {
+            setupTour(JSON.parse(script.textContent));
+        } catch (error) {
+            // Invalid tour definitions should never break the page itself.
+        }
+    });
+};
+
 document.addEventListener('DOMContentLoaded', () => {
     setupRealtimeKanban();
     setupRealtimeTracking();
     setupInputMasks();
     setupViaCep();
+    setupGuidedTours();
 });
 
 const inertiaRoot = document.getElementById('app');
