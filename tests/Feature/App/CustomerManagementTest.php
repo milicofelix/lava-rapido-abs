@@ -342,7 +342,16 @@ class CustomerManagementTest extends TestCase
             ->assertSee('Lava Rapido Central')
             ->assertSee('Ducha simples')
             ->assertSee('Compartilhar via WhatsApp')
-            ->assertSee('https://wa.me/5511999990000', false);
+            ->assertSee('https://wa.me/5511999990000', false)
+            ->assertSee('data-onboarding-tour', false)
+            ->assertSee('loyalty-coupons.show.v1')
+            ->assertSee('data-tour="loyalty-coupon-actions"', false)
+            ->assertSee('data-tour="loyalty-coupon-card"', false)
+            ->assertSee('data-tour="loyalty-coupon-main"', false)
+            ->assertSee('data-tour="loyalty-coupon-code"', false)
+            ->assertSee('data-tour="loyalty-coupon-details"', false)
+            ->assertSee('data-tour="loyalty-coupon-message"', false)
+            ->assertSee('data-tour="loyalty-coupon-internal-control"', false);
     }
 
     public function test_user_cannot_open_loyalty_coupon_from_another_location(): void

@@ -1,7 +1,9 @@
 <x-app.layout heading="Cupom {{ $coupon->code }}" title="Cupom {{ $coupon->code }} · AutoFlow">
-    @php($location = $coupon->washLocation)
-    @php($customer = $coupon->customer)
-    @php($benefit = $coupon->benefitLabel())
+    @php
+        $location = $coupon->washLocation;
+        $customer = $coupon->customer;
+        $benefit = $coupon->benefitLabel();
+    @endphp
 
     <style>
         @media print {
@@ -26,7 +28,7 @@
     </style>
 
     <div class="mx-auto max-w-5xl space-y-5">
-        <div data-coupon-actions class="flex flex-wrap items-center justify-between gap-3">
+        <div data-coupon-actions class="flex flex-wrap items-center justify-between gap-3" data-tour="loyalty-coupon-actions">
             <a href="{{ route('customers.edit', $customer) }}" class="rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-bold text-slate-700 shadow-sm hover:bg-slate-50">Voltar ao cliente</a>
 
             <div class="flex flex-wrap gap-2">
@@ -51,9 +53,9 @@
             </div>
         @enderror
 
-        <section class="overflow-hidden rounded-[2rem] border border-blue-100 bg-white shadow-xl shadow-slate-200/80">
+        <section class="overflow-hidden rounded-[2rem] border border-blue-100 bg-white shadow-xl shadow-slate-200/80" data-tour="loyalty-coupon-card">
             <div class="grid gap-0 lg:grid-cols-[1fr_320px]">
-                <div class="relative overflow-hidden bg-gradient-to-br from-blue-700 via-cyan-600 to-emerald-500 p-8 text-white sm:p-10">
+                <div class="relative overflow-hidden bg-gradient-to-br from-blue-700 via-cyan-600 to-emerald-500 p-8 text-white sm:p-10" data-tour="loyalty-coupon-main">
                     <div class="absolute -right-16 -top-16 h-48 w-48 rounded-full bg-white/15"></div>
                     <div class="absolute -bottom-20 -left-16 h-56 w-56 rounded-full bg-white/10"></div>
 
@@ -69,7 +71,7 @@
                         <h2 class="mt-3 text-4xl font-black tracking-tight sm:text-5xl">{{ $benefit }}</h2>
                         <p class="mt-4 max-w-2xl text-base font-semibold leading-7 text-blue-50">Benefício exclusivo para {{ $customer?->name }} utilizar na próxima visita à unidade {{ $location?->name }}.</p>
 
-                        <div class="mt-8 inline-flex rounded-2xl bg-white px-5 py-4 shadow-lg shadow-blue-950/20">
+                        <div class="mt-8 inline-flex rounded-2xl bg-white px-5 py-4 shadow-lg shadow-blue-950/20" data-tour="loyalty-coupon-code">
                             <div>
                                 <p class="text-xs font-black uppercase tracking-[0.22em] text-blue-700">Código</p>
                                 <p class="mt-1 text-3xl font-black tracking-widest text-slate-950">{{ $coupon->code }}</p>
@@ -78,7 +80,7 @@
                     </div>
                 </div>
 
-                <aside class="border-t border-slate-200 bg-slate-50 p-6 lg:border-l lg:border-t-0">
+                <aside class="border-t border-slate-200 bg-slate-50 p-6 lg:border-l lg:border-t-0" data-tour="loyalty-coupon-details">
                     <dl class="space-y-4">
                         <div class="rounded-2xl bg-white p-4 shadow-sm">
                             <dt class="text-xs font-black uppercase tracking-[0.14em] text-slate-500">Cliente</dt>
@@ -134,12 +136,12 @@
             </div>
         </section>
 
-        <section data-coupon-actions class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+        <section data-coupon-actions class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm" data-tour="loyalty-coupon-message">
             <p class="text-sm font-black text-slate-950">Mensagem que será enviada</p>
             <textarea readonly rows="6" class="mt-3 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm leading-6 text-slate-700">{{ $coupon->whatsappShareMessage() }}</textarea>
         </section>
 
-        <section data-coupon-actions class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+        <section data-coupon-actions class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm" data-tour="loyalty-coupon-internal-control">
             <div class="flex flex-wrap items-start justify-between gap-3">
                 <div>
                     <p class="text-sm font-black text-slate-950">Controle interno</p>
@@ -180,4 +182,52 @@
             @endif
         </section>
     </div>
+
+    @php
+        $loyaltyCouponTour = [
+            'key' => 'loyalty-coupons.show.v1',
+            'title' => 'Cupom de fidelidade',
+            'steps' => [
+                [
+                    'target' => '[data-tour="loyalty-coupon-actions"]',
+                    'title' => 'Ações rápidas',
+                    'body' => 'Use estes botões para voltar ao cliente, compartilhar o cupom pelo WhatsApp ou imprimir.',
+                ],
+                [
+                    'target' => '[data-tour="loyalty-coupon-card"]',
+                    'title' => 'Cupom personalizado',
+                    'body' => 'Este é o cupom em formato apresentável, com benefício, cliente, unidade, validade e status.',
+                ],
+                [
+                    'target' => '[data-tour="loyalty-coupon-main"]',
+                    'title' => 'Benefício',
+                    'body' => 'Confira qual recompensa foi gerada antes de enviar ou aceitar o cupom no atendimento.',
+                ],
+                [
+                    'target' => '[data-tour="loyalty-coupon-code"]',
+                    'title' => 'Código do cupom',
+                    'body' => 'O código identifica o benefício e deve ser conferido ao aplicar o cupom em uma lavagem.',
+                ],
+                [
+                    'target' => '[data-tour="loyalty-coupon-details"]',
+                    'title' => 'Dados vinculados',
+                    'body' => 'Aqui ficam cliente, unidade, emissão, validade e a lavagem que gerou ou utilizou o cupom.',
+                ],
+                [
+                    'target' => '[data-tour="loyalty-coupon-message"]',
+                    'title' => 'Mensagem de envio',
+                    'body' => 'Esta é a mensagem pronta para compartilhar com o cliente, mantendo benefício e validade claros.',
+                ],
+                [
+                    'target' => '[data-tour="loyalty-coupon-internal-control"]',
+                    'title' => 'Controle interno',
+                    'body' => 'Use esta área para cancelar um cupom ativo quando ele não deve mais ser aceito.',
+                ],
+            ],
+        ];
+    @endphp
+
+    <script type="application/json" data-onboarding-tour>
+        {!! json_encode($loyaltyCouponTour, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) !!}
+    </script>
 </x-app.layout>
