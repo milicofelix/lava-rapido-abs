@@ -24,7 +24,14 @@ class CreditReceivableManagementTest extends TestCase
             ->get(route('finance.credit-receivables.index'))
             ->assertOk()
             ->assertSee('Fiado / Contas a receber')
-            ->assertSee('R$ 90,00');
+            ->assertSee('R$ 90,00')
+            ->assertSee('data-onboarding-tour', false)
+            ->assertSee('finance.credit-receivables.index.v1')
+            ->assertSee('data-tour="credit-receivables-intro"', false)
+            ->assertSee('data-tour="credit-receivables-summary"', false)
+            ->assertSee('data-tour="credit-receivables-list"', false)
+            ->assertSee('data-tour="credit-receivables-order"', false)
+            ->assertSee('data-tour="credit-receivables-receive-form"', false);
     }
 
     public function test_admin_can_receive_a_credit_pending_wash_order(): void
