@@ -2,17 +2,17 @@
     <div class="space-y-5">
         @include('app.components.errors')
 
-        <section class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+        <section class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm" data-tour="history-header">
             <div class="mb-5 flex flex-wrap items-start justify-between gap-4 border-b border-slate-200 pb-4">
                 <div>
                     <p class="text-xs font-black uppercase tracking-[0.18em] text-blue-700">Consulta operacional</p>
                     <h2 class="mt-1 text-2xl font-black text-slate-950">Histórico operacional</h2>
                     <p class="mt-1 text-sm text-slate-500">Audite lavagens por período, cliente, placa, serviço, funcionário, status e pagamento.</p>
                 </div>
-                <a href="{{ route('history.export', request()->query()) }}" class="rounded-xl border border-blue-200 bg-blue-50 px-4 py-2.5 text-sm font-bold text-blue-700 hover:bg-blue-100">Exportar CSV</a>
+                <a href="{{ route('history.export', request()->query()) }}" class="rounded-xl border border-blue-200 bg-blue-50 px-4 py-2.5 text-sm font-bold text-blue-700 hover:bg-blue-100" data-tour="history-export">Exportar CSV</a>
             </div>
 
-            <form method="GET" action="{{ route('history.index') }}" class="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+            <form method="GET" action="{{ route('history.index') }}" class="grid gap-4 md:grid-cols-2 xl:grid-cols-4" data-tour="history-filters">
                 <label class="block">
                     <span class="text-sm font-bold text-slate-700">Início</span>
                     <input data-period-start name="start" type="date" value="{{ $filters['start'] }}" max="{{ today()->toDateString() }}" class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100">
@@ -80,14 +80,14 @@
                     </select>
                 </label>
 
-                <div class="flex flex-wrap gap-3 md:col-span-2 xl:col-span-4">
+                <div class="flex flex-wrap gap-3 md:col-span-2 xl:col-span-4" data-tour="history-filter-actions">
                     <button class="rounded-xl bg-blue-700 px-4 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-blue-800">Filtrar</button>
                     <a href="{{ route('history.index') }}" class="rounded-xl border border-slate-300 px-4 py-2.5 text-sm font-bold text-slate-700 hover:bg-slate-50">Limpar</a>
                 </div>
             </form>
         </section>
 
-        <section class="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+        <section class="grid gap-3 md:grid-cols-2 xl:grid-cols-4" data-tour="history-summary">
             <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
                 <p class="text-sm font-bold text-slate-500">Lavagens no filtro</p>
                 <p class="mt-2 text-3xl font-black text-slate-950">{{ $summary['count'] }}</p>
@@ -106,7 +106,7 @@
             </div>
         </section>
 
-        <section class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+        <section class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm" data-tour="history-results">
             <div class="border-b border-slate-200 px-5 py-4">
                 <p class="text-xs font-black uppercase tracking-[0.18em] text-blue-700">Resultado</p>
                 <h2 class="mt-1 font-black text-slate-950">Registros operacionais</h2>
@@ -114,7 +114,7 @@
 
             <div class="divide-y divide-slate-100">
                 @forelse ($washOrders as $washOrder)
-                    <article class="grid gap-4 px-5 py-5 xl:grid-cols-[170px_1fr_1fr_180px_140px_auto] xl:items-center">
+                    <article class="grid gap-4 px-5 py-5 xl:grid-cols-[170px_1fr_1fr_180px_140px_auto] xl:items-center" @if ($loop->first) data-tour="history-row" @endif>
                         <div>
                             <p class="text-xs font-black uppercase tracking-[0.16em] text-slate-500">Entrada</p>
                             <p class="mt-1 text-sm font-bold text-slate-900">{{ $washOrder->entered_at?->format('d/m/Y H:i') ?? '-' }}</p>
@@ -178,5 +178,51 @@
                 }
             });
         });
+    </script>
+    @php
+        $historyTour = [
+            'key' => 'history.index.v1',
+            'title' => 'Entendendo o Histórico',
+            'steps' => [
+                [
+                    'target' => '[data-tour="history-header"]',
+                    'title' => 'Consulta operacional',
+                    'body' => 'O histórico reúne lavagens já registradas para conferência por período, cliente, veículo, serviço, equipe, status e pagamento.',
+                ],
+                [
+                    'target' => '[data-tour="history-export"]',
+                    'title' => 'Exportação',
+                    'body' => 'Exporte CSV para conferir dados fora do sistema. O arquivo respeita os filtros aplicados na tela.',
+                ],
+                [
+                    'target' => '[data-tour="history-filters"]',
+                    'title' => 'Filtros detalhados',
+                    'body' => 'Combine datas, cliente, placa, serviço, status, funcionário e pagamento para localizar lavagens específicas.',
+                ],
+                [
+                    'target' => '[data-tour="history-filter-actions"]',
+                    'title' => 'Aplicar filtros',
+                    'body' => 'Clique em Filtrar para atualizar a consulta ou Limpar para voltar ao histórico padrão.',
+                ],
+                [
+                    'target' => '[data-tour="history-summary"]',
+                    'title' => 'Resumo do filtro',
+                    'body' => 'Estes cards mostram volume, total operacional, entregues e pagas conforme a consulta atual.',
+                ],
+                [
+                    'target' => '[data-tour="history-results"]',
+                    'title' => 'Registros operacionais',
+                    'body' => 'A lista mostra as lavagens encontradas com cliente, placa, serviços, equipe, status, pagamento e valor.',
+                ],
+                [
+                    'target' => '[data-tour="history-row"]',
+                    'title' => 'Lavagem encontrada',
+                    'body' => 'Abra uma lavagem para ver detalhes, pagamentos, cupons, histórico e link de acompanhamento do cliente.',
+                ],
+            ],
+        ];
+    @endphp
+    <script type="application/json" data-onboarding-tour>
+        {!! json_encode($historyTour, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) !!}
     </script>
 </x-app.layout>
