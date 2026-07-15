@@ -1,7 +1,7 @@
 <x-app.layout heading="{{ $greeting }}, {{ auth()->user()->name }}!" title="Dashboard · AutoFlow">
     <div class="space-y-5">
         @if ($currentLocation)
-            <section class="rounded-2xl border border-blue-100 bg-blue-50 p-4 text-sm text-blue-950 shadow-sm">
+            <section class="rounded-2xl border border-blue-100 bg-blue-50 p-4 text-sm text-blue-950 shadow-sm" data-tour="dashboard-location">
                 <div class="flex flex-wrap items-center justify-between gap-3">
                     <div>
                         <p class="text-xs font-black uppercase tracking-[0.18em] text-blue-700">Unidade atual</p>
@@ -13,7 +13,7 @@
             </section>
         @endif
 
-        <section class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+        <section class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm" data-tour="dashboard-executive">
             <div class="flex flex-wrap items-center justify-between gap-3">
                 <div>
                     <p class="text-xs font-black uppercase tracking-[0.18em] text-blue-700">Dashboard executivo</p>
@@ -25,7 +25,7 @@
                 @endif
             </div>
 
-            <div class="mt-5 grid gap-4 lg:grid-cols-4">
+            <div class="mt-5 grid gap-4 lg:grid-cols-4" data-tour="dashboard-monthly-metrics">
                 @foreach ([
                     ['label' => 'Lavagens do mês', 'value' => number_format($monthlyWashOrders, 0, ',', '.'), 'comparison' => $executiveComparisons['washOrders'], 'color' => 'bg-blue-50 text-blue-700', 'icon' => 'M'],
                     ['label' => 'Receita do mês', 'value' => 'R$ '.number_format((float) $monthlyRevenue, 2, ',', '.'), 'comparison' => $executiveComparisons['revenue'], 'color' => 'bg-emerald-50 text-emerald-700', 'icon' => '$'],
@@ -53,7 +53,7 @@
             </div>
 
             <div class="mt-5 grid gap-5 xl:grid-cols-2">
-                <div class="rounded-xl border border-slate-200 p-4">
+                <div class="rounded-xl border border-slate-200 p-4" data-tour="dashboard-top-services-month">
                     <div class="flex items-center justify-between gap-3">
                         <h3 class="font-black text-slate-950">Top serviços do mês</h3>
                         <span class="rounded-lg bg-blue-50 px-3 py-1 text-xs font-bold text-blue-700">{{ count($monthlyTopServices) }} serviços</span>
@@ -77,7 +77,7 @@
                     </div>
                 </div>
 
-                <div class="rounded-xl border border-slate-200 p-4">
+                <div class="rounded-xl border border-slate-200 p-4" data-tour="dashboard-recurring-customers">
                     <div class="flex items-center justify-between gap-3">
                         <h3 class="font-black text-slate-950">Clientes recorrentes</h3>
                         <span class="rounded-lg bg-amber-50 px-3 py-1 text-xs font-bold text-amber-700">2+ lavagens</span>
@@ -104,7 +104,7 @@
             </div>
         </section>
 
-        <section class="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+        <section class="grid gap-3 sm:grid-cols-2 xl:grid-cols-5" data-tour="dashboard-today-cards">
             @foreach ([
                 ['label' => 'Lavagens hoje', 'value' => $washOrdersToday, 'hint' => $todayComparisons['washOrders']['label'], 'tone' => $todayComparisons['washOrders']['tone'], 'color' => 'from-blue-500 to-blue-700', 'icon' => 'L'],
                 ['label' => 'Em andamento', 'value' => $activeWashOrders, 'hint' => 'Fluxo do dia', 'tone' => 'neutral', 'color' => 'from-amber-400 to-orange-500', 'icon' => 'T'],
@@ -140,7 +140,7 @@
         </section>
 
         <section class="grid gap-5 2xl:grid-cols-[1fr_420px]">
-            <div class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+            <div class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm" data-tour="dashboard-flow">
                 <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
                     <div class="flex items-center gap-3">
                         <span class="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-50 text-sm font-bold text-blue-700">K</span>
@@ -196,7 +196,7 @@
             </div>
 
             <aside class="space-y-4">
-                <section class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+                <section class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm" data-tour="dashboard-activities">
                     <h2 class="font-bold">Atividades recentes</h2>
                     <div class="mt-4 space-y-4">
                         @forelse ($recentActivities as $activity)
@@ -220,7 +220,7 @@
         </section>
 
         <section class="grid gap-5 xl:grid-cols-2">
-            <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+            <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm" data-tour="dashboard-finance-summary">
                 <div class="flex items-center justify-between">
                     <h2 class="font-bold">Resumo Financeiro</h2>
                     @if (auth()->user()->isTeamManager())
@@ -251,7 +251,7 @@
                 @endif
             </div>
 
-            <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+            <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm" data-tour="dashboard-top-services-today">
                 <div class="flex items-center justify-between">
                     <h2 class="font-bold">Serviços mais realizados</h2>
                     <span class="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-semibold">Hoje</span>
@@ -276,4 +276,66 @@
             </div>
         </section>
     </div>
+
+    @php
+        $dashboardTour = [
+            'key' => 'dashboard.overview.v1',
+            'title' => 'Conhecendo o Dashboard',
+            'steps' => [
+                [
+                    'target' => '[data-tour="dashboard-location"]',
+                    'title' => 'Unidade em análise',
+                    'body' => 'Confirme aqui qual lava-rápido está sendo analisado. Todos os indicadores respeitam esta unidade.',
+                ],
+                [
+                    'target' => '[data-tour="dashboard-executive"]',
+                    'title' => 'Visão executiva do mês',
+                    'body' => 'Este bloco mostra a saúde do negócio no mês: volume de lavagens, receita, ticket médio, recorrência e comparativos.',
+                ],
+                [
+                    'target' => '[data-tour="dashboard-monthly-metrics"]',
+                    'title' => 'Indicadores mensais',
+                    'body' => 'Use estes cards para entender rapidamente se o mês está melhor, pior ou estável em relação ao período anterior.',
+                ],
+                [
+                    'target' => '[data-tour="dashboard-top-services-month"]',
+                    'title' => 'Serviços mais vendidos',
+                    'body' => 'Aqui você identifica quais serviços puxam o faturamento do mês e quais podem merecer promoção ou destaque.',
+                ],
+                [
+                    'target' => '[data-tour="dashboard-recurring-customers"]',
+                    'title' => 'Clientes recorrentes',
+                    'body' => 'Acompanhe quem voltou mais vezes no mês. Isso ajuda em fidelização, atendimento e campanhas.',
+                ],
+                [
+                    'target' => '[data-tour="dashboard-today-cards"]',
+                    'title' => 'Resumo de hoje',
+                    'body' => 'Estes cards mostram a operação do dia: lavagens abertas, em andamento, prontas, entregues e faturamento.',
+                ],
+                [
+                    'target' => '[data-tour="dashboard-flow"]',
+                    'title' => 'Fluxo de lavagens',
+                    'body' => 'Este Kanban resumido mostra o estado atual do pátio. Para operar de verdade, abra a visualização completa do Kanban.',
+                ],
+                [
+                    'target' => '[data-tour="dashboard-activities"]',
+                    'title' => 'Atividades recentes',
+                    'body' => 'Veja os últimos eventos importantes, como lavagens iniciadas, finalizadas e pagamentos registrados.',
+                ],
+                [
+                    'target' => '[data-tour="dashboard-finance-summary"]',
+                    'title' => 'Resumo financeiro',
+                    'body' => 'Quando você tiver permissão, esta área mostra o faturamento do dia dividido por forma de pagamento.',
+                ],
+                [
+                    'target' => '[data-tour="dashboard-top-services-today"]',
+                    'title' => 'Serviços do dia',
+                    'body' => 'Use este ranking para entender quais serviços estão saindo mais hoje e ajustar a equipe ou o atendimento.',
+                ],
+            ],
+        ];
+    @endphp
+    <script type="application/json" data-onboarding-tour>
+        {!! json_encode($dashboardTour, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) !!}
+    </script>
 </x-app.layout>
