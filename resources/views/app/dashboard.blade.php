@@ -139,20 +139,21 @@
             @endforeach
         </section>
 
-        <section class="grid gap-5 2xl:grid-cols-[1fr_420px]">
-            <div class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm" data-tour="dashboard-flow">
+        <section class="grid min-w-0 gap-5 2xl:grid-cols-[minmax(0,1fr)_420px]">
+            <div class="min-w-0 overflow-hidden rounded-xl border border-slate-200 bg-white p-4 shadow-sm" data-tour="dashboard-flow">
                 <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
-                    <div class="flex items-center gap-3">
+                    <div class="flex min-w-0 items-center gap-3">
                         <span class="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-50 text-sm font-bold text-blue-700">K</span>
-                        <h2 class="text-xl font-bold">Fluxo de Lavagens</h2>
+                        <h2 class="min-w-0 text-xl font-bold">Fluxo de Lavagens</h2>
                     </div>
-                    <div class="flex gap-2">
-                        <a href="{{ route('kanban') }}" class="rounded-lg border border-slate-200 px-4 py-2 text-sm font-semibold">Visualização: Kanban</a>
-                        <a href="{{ route('wash-orders.index') }}" class="rounded-lg border border-slate-200 px-4 py-2 text-sm font-semibold">Filtrar</a>
+                    <div class="flex max-w-full gap-2 overflow-x-auto pb-1">
+                        <a href="{{ route('kanban') }}" class="shrink-0 rounded-lg border border-slate-200 px-4 py-2 text-sm font-semibold">Visualização: Kanban</a>
+                        <a href="{{ route('wash-orders.index') }}" class="shrink-0 rounded-lg border border-slate-200 px-4 py-2 text-sm font-semibold">Filtrar</a>
                     </div>
                 </div>
 
-                <div class="grid gap-3 lg:grid-cols-3 xl:grid-cols-5">
+                <div class="-mx-1 overflow-x-auto px-1 pb-2 lg:mx-0 lg:overflow-visible lg:px-0 lg:pb-0">
+                    <div class="grid auto-cols-[minmax(16rem,82vw)] grid-flow-col gap-3 lg:auto-cols-auto lg:grid-flow-row lg:grid-cols-3 xl:grid-cols-5">
                     @foreach ($kanbanColumns as $column)
                         @php
                             $columnColor = match ($column['key']) {
@@ -192,22 +193,23 @@
                             @endif
                         </div>
                     @endforeach
+                    </div>
                 </div>
             </div>
 
-            <aside class="space-y-4">
-                <section class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm" data-tour="dashboard-activities">
+            <aside class="min-w-0 space-y-4">
+                <section class="min-w-0 overflow-hidden rounded-xl border border-slate-200 bg-white p-5 shadow-sm" data-tour="dashboard-activities">
                     <h2 class="font-bold">Atividades recentes</h2>
                     <div class="mt-4 space-y-4">
                         @forelse ($recentActivities as $activity)
-                            <div class="flex gap-3">
+                            <div class="flex min-w-0 gap-3">
                                 <span class="mt-1 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg {{ $activity['color'] }} text-xs font-bold text-white">A</span>
                                 <div class="min-w-0 flex-1">
-                                    <div class="flex justify-between gap-3">
+                                    <div class="flex min-w-0 items-start justify-between gap-3">
                                         <p class="truncate text-sm font-bold">{{ $activity['title'] }}</p>
                                         <span class="shrink-0 text-xs text-slate-500">Há {{ $activity['time'] }}</span>
                                     </div>
-                                    <p class="text-xs text-slate-500">{{ $activity['subtitle'] }}</p>
+                                    <p class="break-words text-xs text-slate-500">{{ $activity['subtitle'] }}</p>
                                 </div>
                             </div>
                         @empty
