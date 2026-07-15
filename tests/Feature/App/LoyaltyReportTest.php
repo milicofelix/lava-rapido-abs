@@ -78,7 +78,12 @@ class LoyaltyReportTest extends TestCase
             ->assertSee('Cliente Relatorio')
             ->assertSee('FID-ATIVO-001')
             ->assertSee('FID-USADO-001')
-            ->assertSee('R$ 35,00');
+            ->assertSee('R$ 35,00')
+            ->assertSee('data-onboarding-tour', false)
+            ->assertSee('loyalty-reports.index.v1')
+            ->assertSee('data-tour="loyalty-filters"', false)
+            ->assertSee('data-tour="loyalty-coupons"', false)
+            ->assertSee('Entendendo a Fidelidade');
     }
 
     public function test_loyalty_report_filters_by_customer_and_status(): void
