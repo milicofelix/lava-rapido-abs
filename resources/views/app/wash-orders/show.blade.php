@@ -1,22 +1,24 @@
 <x-app.layout heading="Lavagem {{ $washOrder->code }}" title="Lavagem {{ $washOrder->code }} · AutoFlow">
-    @php($canSeeWashFinancial = auth()->user()->canAccess(\App\Support\Access\AccessControl::REGISTER_PAYMENT) || auth()->user()->canAccess(\App\Support\Access\AccessControl::VIEW_FINANCE))
-    @php($canSendWashNotifications = auth()->user()->canAccess(\App\Support\Access\AccessControl::SEND_WASH_NOTIFICATIONS))
-    @php($paymentTone = match ($washOrder->payment_status) {
-        \App\Models\WashOrder::PAYMENT_PAID => 'border-emerald-200 bg-emerald-50 text-emerald-800',
-        \App\Models\WashOrder::PAYMENT_COURTESY => 'border-fuchsia-200 bg-fuchsia-50 text-fuchsia-800',
-        \App\Models\WashOrder::PAYMENT_CREDIT_PENDING => 'border-amber-200 bg-amber-50 text-amber-800',
-        default => 'border-red-200 bg-red-50 text-red-800',
-    })
-    @php($paymentHeadline = match ($washOrder->payment_status) {
-        \App\Models\WashOrder::PAYMENT_PAID => 'Lavagem paga',
-        \App\Models\WashOrder::PAYMENT_COURTESY => 'Lavagem em cortesia',
-        \App\Models\WashOrder::PAYMENT_CREDIT_PENDING => 'Fiado pendente',
-        default => 'Pagamento pendente',
-    })
+    @php
+        $canSeeWashFinancial = auth()->user()->canAccess(\App\Support\Access\AccessControl::REGISTER_PAYMENT) || auth()->user()->canAccess(\App\Support\Access\AccessControl::VIEW_FINANCE);
+        $canSendWashNotifications = auth()->user()->canAccess(\App\Support\Access\AccessControl::SEND_WASH_NOTIFICATIONS);
+        $paymentTone = match ($washOrder->payment_status) {
+            \App\Models\WashOrder::PAYMENT_PAID => 'border-emerald-200 bg-emerald-50 text-emerald-800',
+            \App\Models\WashOrder::PAYMENT_COURTESY => 'border-fuchsia-200 bg-fuchsia-50 text-fuchsia-800',
+            \App\Models\WashOrder::PAYMENT_CREDIT_PENDING => 'border-amber-200 bg-amber-50 text-amber-800',
+            default => 'border-red-200 bg-red-50 text-red-800',
+        };
+        $paymentHeadline = match ($washOrder->payment_status) {
+            \App\Models\WashOrder::PAYMENT_PAID => 'Lavagem paga',
+            \App\Models\WashOrder::PAYMENT_COURTESY => 'Lavagem em cortesia',
+            \App\Models\WashOrder::PAYMENT_CREDIT_PENDING => 'Fiado pendente',
+            default => 'Pagamento pendente',
+        };
+    @endphp
 
     <div class="grid gap-5 xl:grid-cols-[1fr_380px]">
         <div class="space-y-5">
-            <section class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+            <section class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm" data-tour="wash-detail-summary">
                 <div class="flex flex-wrap items-start justify-between gap-4">
                     <div class="min-w-0">
                         <p class="text-xs font-black uppercase tracking-[0.18em] text-blue-700">Ordem {{ $washOrder->code }}</p>
@@ -32,7 +34,7 @@
                 </div>
 
                 @if ($canSeeWashFinancial)
-                    <div class="mt-5 rounded-2xl border px-4 py-3 {{ $paymentTone }}">
+                    <div class="mt-5 rounded-2xl border px-4 py-3 {{ $paymentTone }}" data-tour="wash-detail-financial-status">
                         <div class="flex flex-wrap items-center justify-between gap-3">
                             <div>
                                 <p class="text-xs font-black uppercase tracking-[0.16em]">Status financeiro</p>
@@ -51,7 +53,7 @@
                     </div>
                 @endif
 
-                <dl class="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+                <dl class="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-3" data-tour="wash-detail-info">
                     <div class="rounded-2xl bg-slate-50 p-4">
                         <dt class="text-xs font-black uppercase tracking-[0.16em] text-slate-500">Veículo</dt>
                         <dd class="mt-1 font-black text-slate-950">{{ $washOrder->vehicle->plate }}</dd>
@@ -92,7 +94,7 @@
                 @endif
             </section>
 
-            <section class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+            <section class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm" data-tour="wash-detail-services">
                 <div class="border-b border-slate-200 px-5 py-4">
                     <p class="text-xs font-black uppercase tracking-[0.18em] text-blue-700">Execucao</p>
                     <h2 class="mt-1 font-black text-slate-950">Serviços selecionados</h2>
@@ -131,7 +133,7 @@
             </section>
 
             @if ($canSeeWashFinancial)
-                <section class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+                <section class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm" data-tour="wash-detail-payments">
                     <div class="border-b border-slate-200 px-5 py-4">
                         <p class="text-xs font-black uppercase tracking-[0.18em] text-emerald-700">Financeiro</p>
                         <h2 class="mt-1 font-black text-slate-950">Pagamentos</h2>
@@ -211,7 +213,7 @@
                 </section>
             @endif
 
-            <section class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+            <section class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm" data-tour="wash-detail-history">
                 <div class="border-b border-slate-200 px-5 py-4">
                     <p class="text-xs font-black uppercase tracking-[0.18em] text-blue-700">Linha do tempo</p>
                     <h2 class="mt-1 font-black text-slate-950">Histórico de status</h2>
@@ -235,7 +237,7 @@
 
         <aside class="h-fit space-y-5 xl:sticky xl:top-24">
             @if ($canUpdateStatus)
-                <section class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                <section class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm" data-tour="wash-detail-status-update">
                     <p class="text-xs font-black uppercase tracking-[0.18em] text-blue-700">Operacao</p>
                     <h2 class="mt-1 font-black text-slate-950">Atualizar status</h2>
                     <form method="POST" action="{{ route('wash-orders.update-status', $washOrder) }}" class="mt-4 space-y-4">
@@ -266,7 +268,7 @@
 
             @if ($canSeeWashFinancial)
                 @if (! $washOrder->loyaltyCoupon && $washOrder->customer->loyaltyCoupons->isNotEmpty())
-                    <section class="rounded-2xl border border-fuchsia-200 bg-fuchsia-50 p-5 shadow-sm">
+                    <section class="rounded-2xl border border-fuchsia-200 bg-fuchsia-50 p-5 shadow-sm" data-tour="wash-detail-loyalty-apply">
                         <p class="text-xs font-black uppercase tracking-[0.18em] text-fuchsia-700">Fidelidade</p>
                         @if (! $washOrder->hasIdentifiedPayment())
                             <h2 class="mt-1 font-black text-fuchsia-950">Aplicar cupom</h2>
@@ -277,7 +279,9 @@
                                         <span class="text-sm font-bold text-fuchsia-950">Cupom aplicável nesta lavagem</span>
                                         <select name="loyalty_coupon_id" class="mt-1 w-full rounded-xl border border-fuchsia-200 bg-white px-3 py-2.5 text-sm shadow-sm">
                                             @foreach ($applicableLoyaltyCoupons as $coupon)
-                                                @php($couponEvaluation = $loyaltyCouponEvaluations[$coupon->id])
+                                                @php
+                                                    $couponEvaluation = $loyaltyCouponEvaluations[$coupon->id];
+                                                @endphp
                                                 <option value="{{ $coupon->id }}" @selected(old('loyalty_coupon_id') == $coupon->id)>
                                                     {{ $coupon->code }} · {{ $coupon->benefitLabel() }} · desconto R$ {{ number_format($couponEvaluation['discount_amount'], 2, ',', '.') }}
                                                 </option>
@@ -297,7 +301,7 @@
                         @endif
                     </section>
                 @elseif ($washOrder->loyaltyCoupon)
-                    <section class="rounded-2xl border border-fuchsia-200 bg-fuchsia-50 p-5 shadow-sm">
+                    <section class="rounded-2xl border border-fuchsia-200 bg-fuchsia-50 p-5 shadow-sm" data-tour="wash-detail-loyalty-used">
                         <p class="text-xs font-black uppercase tracking-[0.18em] text-fuchsia-700">Fidelidade</p>
                         <h2 class="mt-1 font-black text-fuchsia-950">Cupom utilizado</h2>
                         @if (auth()->user()->canAccess(\App\Support\Access\AccessControl::MANAGE_CUSTOMERS))
@@ -312,7 +316,7 @@
                     </section>
                 @endif
 
-                <section class="rounded-2xl border border-emerald-200 bg-emerald-50 p-5 shadow-sm">
+                <section class="rounded-2xl border border-emerald-200 bg-emerald-50 p-5 shadow-sm" data-tour="wash-detail-payment-register">
                     <p class="text-xs font-black uppercase tracking-[0.18em] text-emerald-700">Recebimento</p>
                     @if ($washOrder->hasIdentifiedPayment())
                         <h2 class="mt-1 font-black text-emerald-950">Pagamento já registrado</h2>
@@ -350,7 +354,7 @@
             @endif
 
             @if ($canSendWashNotifications)
-                <section class="rounded-2xl border border-blue-200 bg-blue-50 p-5 shadow-sm">
+                <section class="rounded-2xl border border-blue-200 bg-blue-50 p-5 shadow-sm" data-tour="wash-detail-client-link">
                     <p class="text-xs font-black uppercase tracking-[0.18em] text-blue-700">Cliente</p>
                     <h2 class="mt-1 font-black text-blue-950">Link do cliente</h2>
                     <p class="mt-1 text-xs font-semibold text-blue-800">Compartilhe este link para o cliente acompanhar a lavagem em tempo real.</p>
@@ -383,7 +387,9 @@
                         <button class="w-full rounded-xl bg-blue-700 px-4 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-blue-800">Preparar mensagem</button>
                     </form>
 
-                    @php($lastNotification = $washOrder->customerNotifications->sortByDesc('created_at')->first())
+                    @php
+                        $lastNotification = $washOrder->customerNotifications->sortByDesc('created_at')->first();
+                    @endphp
                     @if ($lastNotification)
                         <div class="mt-4 rounded-2xl border border-blue-200 bg-white p-3">
                             <div class="flex items-start justify-between gap-3">
@@ -410,14 +416,16 @@
             @endif
 
             @if ($washOrder->customer->loyaltyCoupons->isNotEmpty())
-                <section class="rounded-2xl border border-fuchsia-200 bg-fuchsia-50 p-5 shadow-sm">
+                <section class="rounded-2xl border border-fuchsia-200 bg-fuchsia-50 p-5 shadow-sm" data-tour="wash-detail-active-coupons">
                     <p class="text-xs font-black uppercase tracking-[0.18em] text-fuchsia-700">Fidelidade</p>
                     <h2 class="mt-1 font-black text-fuchsia-950">Cupons ativos do cliente</h2>
                     <div class="mt-4 space-y-3">
                         @foreach ($washOrder->customer->loyaltyCoupons->take(3) as $coupon)
-                            @php($couponEvaluation = $loyaltyCouponEvaluations[$coupon->id] ?? ['applicable' => false, 'badge' => 'Indisponível', 'reason' => 'Não avaliado.', 'discount_amount' => 0])
-                            @php($couponTone = $couponEvaluation['applicable'] ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700')
-                            @php($canOpenCoupon = auth()->user()->canAccess(\App\Support\Access\AccessControl::MANAGE_CUSTOMERS))
+                            @php
+                                $couponEvaluation = $loyaltyCouponEvaluations[$coupon->id] ?? ['applicable' => false, 'badge' => 'Indisponível', 'reason' => 'Não avaliado.', 'discount_amount' => 0];
+                                $couponTone = $couponEvaluation['applicable'] ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700';
+                                $canOpenCoupon = auth()->user()->canAccess(\App\Support\Access\AccessControl::MANAGE_CUSTOMERS);
+                            @endphp
                             @if ($canOpenCoupon)
                                 <a href="{{ route('loyalty-coupons.show', $coupon) }}" class="block rounded-2xl border border-fuchsia-200 bg-white p-3 transition hover:bg-fuchsia-50">
                                     <div class="flex items-start justify-between gap-3">
@@ -458,7 +466,7 @@
             @endif
 
             @if ($canSeeWashFinancial)
-                <section class="rounded-2xl border border-amber-200 bg-amber-50 p-5 shadow-sm">
+                <section class="rounded-2xl border border-amber-200 bg-amber-50 p-5 shadow-sm" data-tour="wash-detail-receipt">
                     <p class="text-xs font-black uppercase tracking-[0.18em] text-amber-700">Documento</p>
                     <h2 class="mt-1 font-black text-amber-950">Recibo</h2>
                     <p class="mt-1 text-xs font-semibold text-amber-800">Gere um comprovante simples da lavagem para imprimir ou salvar como PDF pelo navegador.</p>
@@ -469,4 +477,81 @@
             <a href="{{ auth()->user()->canAccess(\App\Support\Access\AccessControl::CREATE_WASH_ORDER) ? route('wash-orders.index') : route('kanban') }}" class="block rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-center text-sm font-bold text-slate-700 shadow-sm hover:bg-slate-50">Voltar</a>
         </aside>
     </div>
+
+    @php
+        $washOrderDetailTour = [
+            'key' => 'wash-orders.show.v1',
+            'title' => 'Detalhes da lavagem',
+            'steps' => [
+                [
+                    'target' => '[data-tour="wash-detail-summary"]',
+                    'title' => 'Resumo da ordem',
+                    'body' => 'Aqui você confirma cliente, telefone, código da lavagem e os status operacional e financeiro.',
+                ],
+                [
+                    'target' => '[data-tour="wash-detail-financial-status"]',
+                    'title' => 'Status financeiro',
+                    'body' => 'Este aviso deixa claro se a lavagem ainda precisa receber pagamento, se está paga, em cortesia ou fiado.',
+                ],
+                [
+                    'target' => '[data-tour="wash-detail-info"]',
+                    'title' => 'Dados principais',
+                    'body' => 'Confira veículo, entrada, previsão, equipe, total e conclusão antes de atualizar qualquer informação.',
+                ],
+                [
+                    'target' => '[data-tour="wash-detail-services"]',
+                    'title' => 'Serviços selecionados',
+                    'body' => 'Veja exatamente o que foi contratado nesta lavagem, com tempo estimado, valores e desconto de fidelidade quando houver.',
+                ],
+                [
+                    'target' => '[data-tour="wash-detail-payments"]',
+                    'title' => 'Pagamentos registrados',
+                    'body' => 'Esta área mostra cupons aplicados, pagamentos, estornos e observações. Use para conferir o histórico financeiro da ordem.',
+                ],
+                [
+                    'target' => '[data-tour="wash-detail-history"]',
+                    'title' => 'Histórico operacional',
+                    'body' => 'Cada mudança de status fica registrada aqui com data, usuário e observação, ajudando na auditoria da operação.',
+                ],
+                [
+                    'target' => '[data-tour="wash-detail-status-update"]',
+                    'title' => 'Atualizar status',
+                    'body' => 'Use este bloco para avançar a lavagem. O sistema respeita equipe, horário de funcionamento e regras de pagamento.',
+                ],
+                [
+                    'target' => '[data-tour="wash-detail-loyalty-apply"]',
+                    'title' => 'Aplicar cupom',
+                    'body' => 'Quando houver cupom compatível, aplique antes de registrar pagamento. Assim o desconto entra corretamente no financeiro.',
+                ],
+                [
+                    'target' => '[data-tour="wash-detail-loyalty-used"]',
+                    'title' => 'Cupom utilizado',
+                    'body' => 'Quando a lavagem já usou um cupom, o código fica destacado aqui para consulta e comprovação.',
+                ],
+                [
+                    'target' => '[data-tour="wash-detail-payment-register"]',
+                    'title' => 'Registrar pagamento',
+                    'body' => 'Registre o método e o valor recebido. Depois disso, opções incompatíveis como aplicar cupom deixam de fazer sentido.',
+                ],
+                [
+                    'target' => '[data-tour="wash-detail-client-link"]',
+                    'title' => 'Link do cliente',
+                    'body' => 'Compartilhe este link para o cliente acompanhar a lavagem. Também é possível preparar uma mensagem manual de WhatsApp.',
+                ],
+                [
+                    'target' => '[data-tour="wash-detail-active-coupons"]',
+                    'title' => 'Cupons ativos',
+                    'body' => 'Quando o cliente tiver cupons disponíveis, eles aparecem aqui com indicação de compatibilidade com esta lavagem.',
+                ],
+                [
+                    'target' => '[data-tour="wash-detail-receipt"]',
+                    'title' => 'Recibo',
+                    'body' => 'Gere um comprovante simples da lavagem para imprimir ou salvar como PDF pelo navegador.',
+                ],
+            ],
+        ];
+    @endphp
+    <script type="application/json" data-onboarding-tour>
+        {!! json_encode($washOrderDetailTour, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) !!}
+    </script>
 </x-app.layout>

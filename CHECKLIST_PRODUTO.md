@@ -37,6 +37,7 @@ Documento de acompanhamento do que ja foi construido e do que ainda falta para d
 - [x] Tour guiado aplicado no Kanban operacional.
 - [x] Tour guiado aplicado no Dashboard.
 - [x] Tour guiado aplicado no Financeiro.
+- [x] Tour guiado aplicado nos detalhes da lavagem.
 
 ## Usuarios, ACL e permissoes
 

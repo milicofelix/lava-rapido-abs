@@ -61,6 +61,11 @@ class WashOrderReceiptTest extends TestCase
             ->assertOk()
             ->assertSee('Recibo')
             ->assertSee('Imprimir recibo')
-            ->assertSee(route('wash-orders.receipt', $washOrder));
+            ->assertSee(route('wash-orders.receipt', $washOrder))
+            ->assertSee('data-onboarding-tour', false)
+            ->assertSee('wash-orders.show.v1')
+            ->assertSee('data-tour="wash-detail-summary"', false)
+            ->assertSee('data-tour="wash-detail-receipt"', false)
+            ->assertSee('Detalhes da lavagem');
     }
 }
