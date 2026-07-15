@@ -130,8 +130,6 @@ class ImportCustomersAndVehiclesService
             'phone' => 'phone',
             'e_mail' => 'email',
             'email' => 'email',
-            'cpf' => 'cpf',
-            'documento' => 'cpf',
             'observacao' => 'notes',
             'observacoes' => 'notes',
             'notes' => 'notes',
@@ -237,16 +235,16 @@ class ImportCustomersAndVehiclesService
     {
         $query = Customer::query()->where('wash_location_id', $washLocationId);
 
-        $customer = ($data['cpf'] ?? '') !== ''
-            ? (clone $query)->where('cpf', $data['cpf'])->first()
-            : (clone $query)->where('phone', $data['phone'])->where('name', $data['name'])->first();
+        $customer = (clone $query)
+            ->where('phone', $data['phone'])
+            ->where('name', $data['name'])
+            ->first();
 
         $attributes = [
             'wash_location_id' => $washLocationId,
             'name' => $data['name'],
             'phone' => $data['phone'],
             'email' => ($data['email'] ?? '') !== '' ? $data['email'] : null,
-            'cpf' => ($data['cpf'] ?? '') !== '' ? $data['cpf'] : null,
             'notes' => ($data['notes'] ?? '') !== '' ? $data['notes'] : null,
         ];
 

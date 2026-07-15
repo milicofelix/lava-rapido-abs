@@ -59,7 +59,7 @@
                 </label>
                 <label class="block">
                     <span class="mb-1 block text-xs font-bold text-slate-500">Busca</span>
-                    <input name="search" value="{{ $filters['search'] }}" placeholder="Código, nome, telefone ou CPF" class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100">
+                    <input name="search" value="{{ $filters['search'] }}" placeholder="Código, nome ou telefone" class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100">
                     @error('search') <span class="mt-1 block text-xs font-bold text-red-600">{{ $message }}</span> @enderror
                 </label>
                 <label class="block">

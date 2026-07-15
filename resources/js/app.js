@@ -35,7 +35,7 @@ const maskCep = (value) => onlyDigits(value)
     .slice(0, 8)
     .replace(/^(\d{5})(\d)/, '$1-$2');
 
-const maskCpf = (value) => onlyDigits(value)
+const maskIndividualDocument = (value) => onlyDigits(value)
     .slice(0, 11)
     .replace(/^(\d{3})(\d)/, '$1.$2')
     .replace(/^(\d{3})\.(\d{3})(\d)/, '$1.$2.$3')
@@ -65,9 +65,8 @@ const maskPhone = (value) => {
 const applyInputMask = (input) => {
     const masks = {
         cep: maskCep,
-        cpf: maskCpf,
         cnpj: maskCnpj,
-        document: (value) => (onlyDigits(value).length > 11 ? maskCnpj(value) : maskCpf(value)),
+        document: (value) => (onlyDigits(value).length > 11 ? maskCnpj(value) : maskIndividualDocument(value)),
         phone: maskPhone,
     };
     const mask = masks[input.dataset.mask];

@@ -381,8 +381,7 @@ class LoyaltyReportController extends Controller
     private function applyCustomerSearch(Builder $query, string $search): void
     {
         $query->where('name', 'like', '%'.$search.'%')
-            ->orWhere('phone', 'like', '%'.$search.'%')
-            ->orWhere('cpf', 'like', '%'.$search.'%');
+            ->orWhere('phone', 'like', '%'.$search.'%');
     }
 
     private function customerProgress(?LoyaltyProgram $loyaltyProgram, ?int $customerId)

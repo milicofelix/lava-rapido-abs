@@ -140,7 +140,6 @@ class ExistingLocationsMassDataSeeder extends Seeder
                 'name' => fake()->name(),
                 'phone' => '(11) 9'.fake()->numerify('####-####'),
                 'email' => fake()->optional(0.65)->safeEmail(),
-                'cpf' => fake()->optional(0.75)->numerify('###.###.###-##'),
                 'notes' => 'Cliente criado pelo seeder de massa.',
             ]);
         }

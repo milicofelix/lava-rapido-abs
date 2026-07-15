@@ -279,7 +279,6 @@ class LoyaltyReportTest extends TestCase
             'wash_location_id' => $location->id,
             'name' => 'Cliente Busca',
             'phone' => '(11) 98888-7777',
-            'cpf' => '111.222.333-44',
         ]);
         $otherCustomer = Customer::factory()->create([
             'wash_location_id' => $location->id,

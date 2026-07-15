@@ -82,7 +82,7 @@
                     <h2 class="mt-1 font-black text-blue-950">Clientes e veículos por CSV</h2>
                     <p class="mt-1 text-sm font-semibold text-blue-800">Use para cadastrar uma carteira antiga sem digitar cliente por cliente. A placa é opcional; quando informada, marca e modelo precisam existir no catálogo de veículos.</p>
                     <div class="mt-3 rounded-2xl bg-white p-3 text-xs font-bold text-slate-600">
-                        Cabeçalho aceito: <span class="text-slate-950">nome,telefone,email,cpf,observacao,placa,marca,modelo,cor,observacao_veiculo</span>
+                        Cabeçalho aceito: <span class="text-slate-950">nome,telefone,email,observacao,placa,marca,modelo,cor,observacao_veiculo</span>
                     </div>
                     <a href="{{ route('customers.import-template') }}" class="mt-3 inline-flex rounded-xl border border-blue-200 bg-white px-4 py-2 text-sm font-black text-blue-700 hover:bg-blue-100">Baixar modelo CSV</a>
                 </div>

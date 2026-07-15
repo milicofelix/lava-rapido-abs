@@ -39,6 +39,7 @@ Documento de acompanhamento do que ja foi construido e do que ainda falta para d
 - [x] Tour guiado aplicado no Financeiro.
 - [x] Tour guiado aplicado nos detalhes da lavagem.
 - [x] Tour guiado aplicado na listagem de clientes.
+- [x] Tour guiado aplicado no cadastro e edicao de clientes.
 - [x] Tour guiado aplicado na listagem e formulario de veiculos.
 
 ## Usuarios, ACL e permissoes

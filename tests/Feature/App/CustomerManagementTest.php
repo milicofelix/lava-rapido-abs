@@ -28,7 +28,6 @@ class CustomerManagementTest extends TestCase
             'name' => 'Maria Silva',
             'phone' => '(11) 99999-0000',
             'email' => 'maria@example.com',
-            'cpf' => '123.456.789-00',
             'notes' => 'Prefere contato por WhatsApp.',
         ])->assertRedirect(route('customers.index'));
 
@@ -53,12 +52,27 @@ class CustomerManagementTest extends TestCase
             ->assertSee('Gerenciando clientes');
     }
 
+    public function test_customer_form_has_guided_tour_and_no_cpf_field(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)
+            ->get(route('customers.create'))
+            ->assertOk()
+            ->assertSee('data-onboarding-tour', false)
+            ->assertSee('customers.create.v1')
+            ->assertSee('data-tour="customer-form-name"', false)
+            ->assertSee('data-tour="customer-form-phone"', false)
+            ->assertDontSee('name="cpf"', false)
+            ->assertDontSee('CPF');
+    }
+
     public function test_user_can_import_customers_and_vehicles_from_csv(): void
     {
         $user = User::factory()->create();
         $csv = implode("\n", [
-            'nome,telefone,email,cpf,observacao,placa,marca,modelo,cor,observacao_veiculo',
-            'Maria Importada,(11) 99999-0000,maria.importada@example.com,123.456.789-00,Cliente antigo,abc-1d23,Hyundai,HB20,Prata,Sem adesivos',
+            'nome,telefone,email,observacao,placa,marca,modelo,cor,observacao_veiculo',
+            'Maria Importada,(11) 99999-0000,maria.importada@example.com,Cliente antigo,abc-1d23,Hyundai,HB20,Prata,Sem adesivos',
             'Jose Sem Carro,(11) 98888-0000,,,,,,,',
         ]);
 
@@ -133,7 +147,7 @@ class CustomerManagementTest extends TestCase
 
         $content = $response->streamedContent();
 
-        $this->assertStringContainsString('nome,telefone,email,cpf,observacao,placa,marca,modelo,cor,observacao_veiculo', $content);
+        $this->assertStringContainsString('nome,telefone,email,observacao,placa,marca,modelo,cor,observacao_veiculo', $content);
         $this->assertStringContainsString('Maria Silva', $content);
         $this->assertStringContainsString('Hyundai', $content);
         $this->assertStringContainsString('HB20', $content);
