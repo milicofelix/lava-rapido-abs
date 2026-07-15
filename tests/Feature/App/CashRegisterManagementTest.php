@@ -18,7 +18,7 @@ class CashRegisterManagementTest extends TestCase
     {
         $admin = User::factory()->create(['role' => User::ROLE_ADMIN]);
 
-        $this->actingAs($admin)
+        $response = $this->actingAs($admin)
             ->get(route('finance.cash-registers.index'))
             ->assertOk()
             ->assertSee('data-onboarding-tour', false)
@@ -27,6 +27,11 @@ class CashRegisterManagementTest extends TestCase
             ->assertSee('data-tour="cash-register-open-form"', false)
             ->assertSee('data-tour="cash-register-opening-fields"', false)
             ->assertSee('data-tour="cash-register-history"', false);
+
+        $content = $response->getContent();
+
+        $this->assertMatchesRegularExpression('/<a href="'.preg_quote(route('finance.index'), '/').'" class="[^"]*text-slate-200[^"]*">.*Financeiro/s', $content);
+        $this->assertMatchesRegularExpression('/<a href="'.preg_quote(route('finance.cash-registers.index'), '/').'" class="[^"]*bg-blue-600[^"]*">.*Caixa/s', $content);
     }
 
     public function test_admin_can_open_cash_register(): void

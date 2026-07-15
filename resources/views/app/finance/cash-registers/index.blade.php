@@ -184,45 +184,46 @@
                 <p class="text-xs font-black uppercase tracking-[0.18em] text-slate-500">Histórico</p>
                 <h2 class="mt-1 font-black text-slate-950">Histórico de caixas</h2>
             </div>
-            <div class="divide-y divide-slate-100">
+            <div class="overflow-x-auto">
+                <div class="min-w-[1060px] divide-y divide-slate-100">
                 @forelse ($recentRegisters as $register)
                     @php
                         $summary = $register->cash_summary;
                         $difference = $summary['cash_difference'];
                         $differenceTone = $difference === null || abs($difference) < 0.01 ? 'text-emerald-700' : ($difference > 0 ? 'text-blue-700' : 'text-red-700');
                     @endphp
-                    <article class="grid gap-4 px-5 py-4 xl:grid-cols-[160px_160px_130px_1fr_160px] xl:items-center">
+                    <article class="grid grid-cols-[170px_170px_120px_minmax(470px,1fr)_160px] items-center gap-4 px-5 py-4">
                         <div>
                             <p class="text-xs font-black uppercase tracking-[0.16em] text-slate-500">Abertura</p>
-                            <p class="mt-1 text-sm font-bold text-slate-900">{{ $register->opened_at?->format('d/m/Y H:i') }}</p>
+                            <p class="mt-1 whitespace-nowrap text-sm font-bold text-slate-900">{{ $register->opened_at?->format('d/m/Y H:i') }}</p>
                         </div>
                         <div>
                             <p class="text-xs font-black uppercase tracking-[0.16em] text-slate-500">Fechamento</p>
-                            <p class="mt-1 text-sm font-bold text-slate-900">{{ $register->closed_at?->format('d/m/Y H:i') ?? '-' }}</p>
+                            <p class="mt-1 whitespace-nowrap text-sm font-bold text-slate-900">{{ $register->closed_at?->format('d/m/Y H:i') ?? '-' }}</p>
                         </div>
                         <div>
                             <span class="inline-flex rounded-full bg-slate-100 px-3 py-1 text-xs font-black text-slate-700">{{ $register->statusLabel() }}</span>
                         </div>
-                        <div class="grid gap-2 sm:grid-cols-4">
+                        <div class="grid grid-cols-5 gap-3">
                             <div>
                                 <p class="text-xs font-black uppercase tracking-[0.16em] text-slate-500">Inicial</p>
-                                <p class="mt-1 text-sm font-bold text-slate-900">R$ {{ number_format((float) $register->opening_balance, 2, ',', '.') }}</p>
+                                <p class="mt-1 whitespace-nowrap text-sm font-bold text-slate-900">R$ {{ number_format((float) $register->opening_balance, 2, ',', '.') }}</p>
                             </div>
                             <div>
                                 <p class="text-xs font-black uppercase tracking-[0.16em] text-slate-500">Esperado</p>
-                                <p class="mt-1 text-sm font-bold text-slate-900">R$ {{ number_format((float) $summary['expected_cash'], 2, ',', '.') }}</p>
+                                <p class="mt-1 whitespace-nowrap text-sm font-bold text-slate-900">R$ {{ number_format((float) $summary['expected_cash'], 2, ',', '.') }}</p>
                             </div>
                             <div>
                                 <p class="text-xs font-black uppercase tracking-[0.16em] text-slate-500">Contado</p>
-                                <p class="mt-1 text-sm font-bold text-slate-900">{{ $summary['counted_cash'] !== null ? 'R$ '.number_format((float) $summary['counted_cash'], 2, ',', '.') : '-' }}</p>
+                                <p class="mt-1 whitespace-nowrap text-sm font-bold text-slate-900">{{ $summary['counted_cash'] !== null ? 'R$ '.number_format((float) $summary['counted_cash'], 2, ',', '.') : '-' }}</p>
                             </div>
                             <div>
                                 <p class="text-xs font-black uppercase tracking-[0.16em] text-slate-500">Diferenca</p>
-                                <p class="mt-1 text-sm font-black {{ $differenceTone }}">{{ $difference !== null ? 'R$ '.number_format((float) $difference, 2, ',', '.') : '-' }}</p>
+                                <p class="mt-1 whitespace-nowrap text-sm font-black {{ $differenceTone }}">{{ $difference !== null ? 'R$ '.number_format((float) $difference, 2, ',', '.') : '-' }}</p>
                             </div>
                             <div>
                                 <p class="text-xs font-black uppercase tracking-[0.16em] text-slate-500">Vendas</p>
-                                <p class="mt-1 text-sm font-bold text-slate-900">R$ {{ number_format((float) $summary['payment_total'], 2, ',', '.') }}</p>
+                                <p class="mt-1 whitespace-nowrap text-sm font-bold text-slate-900">R$ {{ number_format((float) $summary['payment_total'], 2, ',', '.') }}</p>
                             </div>
                         </div>
                         <p class="truncate text-sm font-bold text-slate-600">{{ $register->openedBy?->name }}</p>
@@ -230,6 +231,7 @@
                 @empty
                     <p class="px-5 py-10 text-center text-sm text-slate-500">Nenhum caixa registrado.</p>
                 @endforelse
+                </div>
             </div>
             <div class="border-t border-slate-200 px-5 py-4">
                 {{ $recentRegisters->links() }}

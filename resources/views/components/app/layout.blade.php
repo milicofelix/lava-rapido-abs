@@ -40,7 +40,7 @@
     ['label' => 'Lavagens', 'icon' => 'L', 'href' => $canAccess(\App\Support\Access\AccessControl::CREATE_WASH_ORDER) ? route('wash-orders.index') : null, 'active' => request()->routeIs('wash-orders.*')],
     ['label' => 'Kanban', 'icon' => 'K', 'href' => $canAccess(\App\Support\Access\AccessControl::VIEW_KANBAN) ? route('kanban') : null, 'active' => request()->routeIs('kanban')],
     ['label' => 'Clientes', 'icon' => 'C', 'href' => $canAccess(\App\Support\Access\AccessControl::MANAGE_CUSTOMERS) ? route('customers.index') : null, 'active' => request()->routeIs('customers.*')],
-    ['label' => 'Financeiro', 'icon' => '$', 'href' => $canAccess(\App\Support\Access\AccessControl::VIEW_FINANCE) ? route('finance.index') : null, 'active' => request()->routeIs('finance.*')],
+    ['label' => 'Financeiro', 'icon' => '$', 'href' => $canAccess(\App\Support\Access\AccessControl::VIEW_FINANCE) ? route('finance.index') : null, 'active' => request()->routeIs('finance.index')],
 ])->filter(fn ($item) => filled($item['href']))->take(5)->values()->all())
 <body class="{{ $appTheme === 'dark' ? 'bg-slate-950' : 'bg-[#061832]' }} text-slate-950 antialiased" data-theme="{{ $appTheme }}" data-theme-effective="{{ $appTheme === 'system' ? 'light' : $appTheme }}">
     <div class="min-h-screen overflow-x-hidden p-2 lg:p-3" data-app-shell>
@@ -76,13 +76,13 @@
                         ['route' => 'services.index', 'label' => 'Serviços', 'icon' => 'S', 'permission' => \App\Support\Access\AccessControl::MANAGE_SERVICES],
                         ['route' => 'employees.index', 'label' => 'Equipe', 'icon' => 'E', 'permission' => \App\Support\Access\AccessControl::MANAGE_EMPLOYEES],
                         ['route' => 'audit-logs.index', 'label' => 'Auditoria', 'icon' => 'A', 'permission' => \App\Support\Access\AccessControl::VIEW_AUDIT_LOGS],
-                        ['route' => 'finance.index', 'label' => 'Financeiro', 'icon' => '$', 'permission' => \App\Support\Access\AccessControl::VIEW_FINANCE],
-                        ['route' => 'finance.cash-registers.index', 'label' => 'Caixa', 'icon' => 'CX', 'permission' => \App\Support\Access\AccessControl::MANAGE_CASH_REGISTER, 'module' => 'module_cash_register'],
-                        ['route' => 'finance.credit-receivables.index', 'label' => 'Fiado', 'icon' => 'F$', 'permission' => \App\Support\Access\AccessControl::MANAGE_CREDIT_RECEIVABLES, 'module' => 'module_credit_receivables'],
+                        ['route' => 'finance.index', 'label' => 'Financeiro', 'icon' => '$', 'permission' => \App\Support\Access\AccessControl::VIEW_FINANCE, 'active' => request()->routeIs('finance.index')],
+                        ['route' => 'finance.cash-registers.index', 'label' => 'Caixa', 'icon' => 'CX', 'permission' => \App\Support\Access\AccessControl::MANAGE_CASH_REGISTER, 'module' => 'module_cash_register', 'active' => request()->routeIs('finance.cash-registers.*')],
+                        ['route' => 'finance.credit-receivables.index', 'label' => 'Fiado', 'icon' => 'F$', 'permission' => \App\Support\Access\AccessControl::MANAGE_CREDIT_RECEIVABLES, 'module' => 'module_credit_receivables', 'active' => request()->routeIs('finance.credit-receivables.*')],
                     ] as $item)
                         @continue(! $canAccess($item['permission']))
                         @continue(($item['module'] ?? null) && empty($appSettings[$item['module']]))
-                        <a href="{{ route($item['route']) }}" class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition {{ request()->routeIs($item['route']) || request()->routeIs(str_replace('.index', '.*', $item['route'])) ? 'bg-blue-600 text-white shadow-lg shadow-blue-950/30' : 'text-slate-200 hover:bg-white/10 hover:text-white' }}">
+                        <a href="{{ route($item['route']) }}" class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition {{ $item['active'] ?? (request()->routeIs($item['route']) || request()->routeIs(str_replace('.index', '.*', $item['route']))) ? 'bg-blue-600 text-white shadow-lg shadow-blue-950/30' : 'text-slate-200 hover:bg-white/10 hover:text-white' }}">
                             <span class="flex h-6 w-6 shrink-0 items-center justify-center rounded-md border border-white/15 bg-white/10 text-[11px] font-bold">{{ $item['icon'] }}</span>
                             {{ $item['label'] }}
                         </a>
