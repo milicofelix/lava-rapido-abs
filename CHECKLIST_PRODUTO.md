@@ -36,6 +36,7 @@ Documento de acompanhamento do que ja foi construido e do que ainda falta para d
 - [x] Primeiro tour aplicado na abertura de lavagem.
 - [x] Tour guiado aplicado no Kanban operacional.
 - [x] Tour guiado aplicado no Dashboard.
+- [x] Tour guiado aplicado no Financeiro.
 
 ## Usuarios, ACL e permissoes
 
