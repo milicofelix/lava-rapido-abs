@@ -412,7 +412,7 @@
                 <p class="mt-2 leading-6">Comece com Caixa e Fiado desabilitados para clientes pequenos. Habilite apenas quando o lava-rapido tiver rotina de operador, conferencias ou contas a receber.</p>
             </div>
 
-            <div class="rounded-2xl border border-slate-200 bg-white p-5 text-sm shadow-sm" data-tour="settings-profile-summary">
+            <div class="rounded-2xl border border-slate-200 bg-white p-5 text-sm shadow-sm" data-tour="settings-theme-summary">
                 <p class="font-bold text-slate-950">Quando usar tema dark?</p>
                 <p class="mt-2 leading-6 text-slate-500">E uma boa opcao para recepcao com pouca luz, TVs de acompanhamento e uso noturno. Para escritorio claro, mantenha o padrao claro ou sistema.</p>
             </div>

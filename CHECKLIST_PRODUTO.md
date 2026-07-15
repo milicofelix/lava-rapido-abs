@@ -42,6 +42,7 @@ Documento de acompanhamento do que ja foi construido e do que ainda falta para d
 - [x] Tour guiado aplicado no cadastro e edicao de clientes.
 - [x] Tour guiado aplicado na listagem e formulario de veiculos.
 - [x] Tour guiado aplicado em Configuracoes da unidade.
+- [x] Tour guiado aplicado na listagem e formulario de servicos.
 
 ## Usuarios, ACL e permissoes
 
