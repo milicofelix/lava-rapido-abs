@@ -514,6 +514,11 @@ class LoyaltyReportTest extends TestCase
             ->assertSee('Sem retorno recente')
             ->assertSee('Cliente Sumido')
             ->assertSee('https://wa.me/5511988880001', false)
+            ->assertSee('data-onboarding-tour', false)
+            ->assertSee('loyalty-campaigns.index.v1')
+            ->assertSee('data-tour="loyalty-campaigns-grid"', false)
+            ->assertSee('data-tour="loyalty-campaigns-message"', false)
+            ->assertSee('Entendendo as Campanhas')
             ->assertDontSee('Cliente Outra Unidade');
     }
 
