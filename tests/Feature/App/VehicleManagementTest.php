@@ -34,6 +34,28 @@ class VehicleManagementTest extends TestCase
         ]);
     }
 
+    public function test_vehicle_index_has_guided_tour_and_search(): void
+    {
+        $user = User::factory()->create();
+        $customer = Customer::factory()->create(['name' => 'Cliente Veiculo']);
+        Vehicle::factory()->for($customer)->create([
+            'plate' => 'GUI1A23',
+            'brand' => 'Toyota',
+            'model' => 'Corolla',
+        ]);
+
+        $this->actingAs($user)
+            ->get(route('vehicles.index', ['search' => 'GUI1A23']))
+            ->assertOk()
+            ->assertSee('GUI1A23')
+            ->assertSee('Cliente Veiculo')
+            ->assertSee('data-onboarding-tour', false)
+            ->assertSee('vehicles.index.v1')
+            ->assertSee('data-tour="vehicles-search"', false)
+            ->assertSee('data-tour="vehicles-list"', false)
+            ->assertSee('Gerenciando veículos');
+    }
+
     public function test_vehicle_form_uses_brand_and_dependent_model_selects(): void
     {
         $user = User::factory()->create();
@@ -45,6 +67,10 @@ class VehicleManagementTest extends TestCase
             ->assertSee('data-vehicle-brand', false)
             ->assertSee('data-vehicle-model', false)
             ->assertSee('data-vehicle-models', false)
+            ->assertSee('data-onboarding-tour', false)
+            ->assertSee('vehicles.create.v1')
+            ->assertSee('data-tour="vehicle-form-brand"', false)
+            ->assertSee('data-tour="vehicle-form-model"', false)
             ->assertSee('Toyota')
             ->assertSee('Corolla')
             ->assertSee('HB20')
