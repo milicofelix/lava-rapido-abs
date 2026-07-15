@@ -16,7 +16,7 @@ function ProgressStep({ label, done, current }) {
     );
 }
 
-export default function Tracking({ washOrder: initialWashOrder, loyalty: initialLoyalty, statuses, progressStatuses, feedUrl, reviewUrl, logoUrl }) {
+export default function Tracking({ washOrder: initialWashOrder, loyalty: initialLoyalty, statuses, progressStatuses, feedUrl, reviewUrl, logoUrl, onboardingTour }) {
     const [washOrder, setWashOrder] = useState(initialWashOrder);
     const [loyalty, setLoyalty] = useState(initialLoyalty);
     const [realtimeUpdated, setRealtimeUpdated] = useState(false);
@@ -46,6 +46,25 @@ export default function Tracking({ washOrder: initialWashOrder, loyalty: initial
         return () => window.Echo.leave(channelName);
     }, [feedUrl, washOrder.id]);
 
+    useEffect(() => {
+        if (!onboardingTour?.key) {
+            return undefined;
+        }
+
+        const script = document.createElement('script');
+        script.type = 'application/json';
+        script.dataset.onboardingTour = 'true';
+        script.dataset.dynamicTour = onboardingTour.key;
+        script.textContent = JSON.stringify(onboardingTour);
+        document.body.appendChild(script);
+        window.dispatchEvent(new Event('autoflow:tours-ready'));
+
+        return () => {
+            script.remove();
+            document.querySelector(`[data-onboarding-tour-launch="${onboardingTour.key}"]`)?.remove();
+        };
+    }, [onboardingTour]);
+
     const currentIndex = progressStatuses.indexOf(washOrder.status);
     const hasReviewErrors = Boolean(reviewForm.errors.review || reviewForm.errors.rating || reviewForm.errors.comment || reviewForm.errors.publish_consent);
 
@@ -65,7 +84,7 @@ export default function Tracking({ washOrder: initialWashOrder, loyalty: initial
         <>
             <Head title={`Acompanhamento ${washOrder.code} · AutoFlow`} />
             <main className="mx-auto min-h-screen max-w-5xl bg-zinc-50 px-4 py-6 text-zinc-950 sm:px-6 lg:px-8">
-                <header className="flex flex-wrap items-start justify-between gap-4 border-b border-zinc-200 bg-white px-4 py-5 sm:rounded-lg sm:border">
+                <header data-tour="tracking-header" className="flex flex-wrap items-start justify-between gap-4 border-b border-zinc-200 bg-white px-4 py-5 sm:rounded-lg sm:border">
                     <div>
                         <img src={logoUrl || '/images/autoflow-logo.png'} alt="AutoFlow" className="max-h-24 w-40 object-contain" />
                         <h1 className="mt-4 text-3xl font-bold sm:text-4xl">
@@ -80,7 +99,7 @@ export default function Tracking({ washOrder: initialWashOrder, loyalty: initial
                     </div>
                 </header>
 
-                <section className="grid gap-4 py-6 md:grid-cols-3">
+                <section data-tour="tracking-summary" className="grid gap-4 py-6 md:grid-cols-3">
                     <div className="rounded-lg border border-zinc-200 bg-white p-5">
                         <p className="text-sm text-zinc-500">Previsão</p>
                         <p className="mt-2 text-2xl font-semibold">{washOrder.estimated_completion_at}</p>
@@ -96,7 +115,7 @@ export default function Tracking({ washOrder: initialWashOrder, loyalty: initial
                 </section>
 
                 {loyalty?.enabled && (
-                    <section className="mb-5 rounded-lg border border-fuchsia-200 bg-white p-5">
+                    <section data-tour="tracking-loyalty" className="mb-5 rounded-lg border border-fuchsia-200 bg-white p-5">
                         <div className="flex flex-wrap items-start justify-between gap-4">
                             <div>
                                 <p className="text-xs font-black uppercase tracking-[0.18em] text-fuchsia-700">Programa de fidelidade</p>
@@ -141,7 +160,7 @@ export default function Tracking({ washOrder: initialWashOrder, loyalty: initial
                     </section>
                 )}
 
-                <section className="rounded-lg border border-zinc-200 bg-white p-5">
+                <section data-tour="tracking-progress" className="rounded-lg border border-zinc-200 bg-white p-5">
                     <h2 className="text-lg font-semibold">Andamento</h2>
                     <div className="mt-5 grid gap-3 md:grid-cols-7">
                         {progressStatuses.map((status, index) => (
@@ -172,7 +191,7 @@ export default function Tracking({ washOrder: initialWashOrder, loyalty: initial
                 )}
 
                 {(washOrder.review?.can_review || washOrder.review?.submitted) && (
-                    <section className="mt-5 rounded-lg border border-zinc-200 bg-white p-5">
+                    <section data-tour="tracking-review" className="mt-5 rounded-lg border border-zinc-200 bg-white p-5">
                         <div className="flex flex-wrap items-start justify-between gap-3">
                             <div>
                                 <p className="text-xs font-black uppercase tracking-[0.18em] text-cyan-700">Avaliação</p>
@@ -254,7 +273,7 @@ export default function Tracking({ washOrder: initialWashOrder, loyalty: initial
                 )}
 
                 <div className="mt-5 grid gap-5 lg:grid-cols-[1fr_380px]">
-                    <section className="rounded-lg border border-zinc-200 bg-white p-5">
+                    <section data-tour="tracking-services" className="rounded-lg border border-zinc-200 bg-white p-5">
                         <h2 className="text-lg font-semibold">Serviços</h2>
                         <div className="mt-4 divide-y divide-zinc-100">
                             {washOrder.services.map((service, index) => (
@@ -266,7 +285,7 @@ export default function Tracking({ washOrder: initialWashOrder, loyalty: initial
                         </div>
                     </section>
 
-                    <section className="rounded-lg border border-zinc-200 bg-white p-5">
+                    <section data-tour="tracking-history" className="rounded-lg border border-zinc-200 bg-white p-5">
                         <h2 className="text-lg font-semibold">Histórico</h2>
                         <div className="mt-4 space-y-4">
                             {washOrder.status_histories.map((history) => (
