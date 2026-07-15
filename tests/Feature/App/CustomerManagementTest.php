@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\App;
 
+use App\Models\AuditLog;
 use App\Models\Customer;
 use App\Models\LoyaltyCoupon;
 use App\Models\LoyaltyProgram;
@@ -44,7 +45,12 @@ class CustomerManagementTest extends TestCase
 
         $this->actingAs($user)->get(route('customers.index', ['search' => 'ABC1D23']))
             ->assertOk()
-            ->assertSee($customer->name);
+            ->assertSee($customer->name)
+            ->assertSee('data-onboarding-tour', false)
+            ->assertSee('customers.index.v1')
+            ->assertSee('data-tour="customers-search"', false)
+            ->assertSee('data-tour="customers-list"', false)
+            ->assertSee('Gerenciando clientes');
     }
 
     public function test_user_can_import_customers_and_vehicles_from_csv(): void
@@ -400,7 +406,7 @@ class CustomerManagementTest extends TestCase
         $this->assertSame(LoyaltyCoupon::STATUS_CANCELED, $coupon->status);
         $this->assertSame('Emitido por engano.', $coupon->metadata['canceled_reason']);
         $this->assertDatabaseHas('audit_logs', [
-            'action' => \App\Models\AuditLog::ACTION_LOYALTY_COUPON_CANCELED,
+            'action' => AuditLog::ACTION_LOYALTY_COUPON_CANCELED,
             'subject_type' => LoyaltyCoupon::class,
             'subject_id' => $coupon->id,
         ]);
