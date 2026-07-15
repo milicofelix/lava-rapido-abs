@@ -19,7 +19,7 @@
     @endphp
 
     <section class="space-y-5">
-        <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+        <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm" data-tour="executive-report-period">
             <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
                 <div>
                     <p class="text-xs font-black uppercase tracking-[0.18em] text-blue-700">Visão gerencial</p>
@@ -30,7 +30,7 @@
                     </p>
                 </div>
 
-                <form method="GET" action="{{ route('reports.executive') }}" class="grid gap-3 sm:grid-cols-[1fr_1fr_auto_auto_auto] sm:items-end">
+                <form method="GET" action="{{ route('reports.executive') }}" class="grid gap-3 sm:grid-cols-[1fr_1fr_auto_auto_auto] sm:items-end" data-tour="executive-report-filters">
                     <label class="block">
                         <span class="text-xs font-bold text-slate-500">Início</span>
                         <input type="date" name="start" value="{{ $start }}" max="{{ today()->toDateString() }}" class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100">
@@ -52,7 +52,7 @@
             @endif
         </div>
 
-        <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-4" data-tour="executive-report-kpis">
             <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
                 <p class="text-sm font-bold text-slate-500">Receita do período</p>
                 <p class="mt-3 text-3xl font-black text-slate-950">{{ $money($summary['revenue']) }}</p>
@@ -75,7 +75,7 @@
             </div>
         </div>
 
-        <div class="grid gap-4 lg:grid-cols-4">
+        <div class="grid gap-4 lg:grid-cols-4" data-tour="executive-report-operational-kpis">
             <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
                 <p class="text-sm font-bold text-slate-500">Entregues</p>
                 <p class="mt-2 text-2xl font-black text-slate-950">{{ $number($summary['delivered_count']) }}</p>
@@ -95,7 +95,7 @@
         </div>
 
         <div class="grid gap-5 xl:grid-cols-[1.2fr_0.8fr]">
-            <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+            <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm" data-tour="executive-report-top-services">
                 <div class="flex items-center justify-between gap-3">
                     <div>
                         <p class="text-sm font-black text-slate-950">Top serviços</p>
@@ -121,7 +121,7 @@
                 </div>
             </div>
 
-            <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+            <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm" data-tour="executive-report-payments">
                 <p class="text-sm font-black text-slate-950">Pagamentos por método</p>
                 <p class="text-xs text-slate-500">Distribuição financeira do período.</p>
                 <div class="mt-5 space-y-4">
@@ -144,7 +144,7 @@
         </div>
 
         <div class="grid gap-5 xl:grid-cols-3">
-            <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm xl:col-span-2">
+            <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm xl:col-span-2" data-tour="executive-report-top-customers">
                 <p class="text-sm font-black text-slate-950">Top clientes</p>
                 <p class="text-xs text-slate-500">Clientes com mais lavagens no período.</p>
                 <div class="mt-5 divide-y divide-slate-100">
@@ -168,7 +168,7 @@
                 </div>
             </div>
 
-            <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+            <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm" data-tour="executive-report-statuses">
                 <p class="text-sm font-black text-slate-950">Status das lavagens</p>
                 <p class="text-xs text-slate-500">Distribuição operacional.</p>
                 <div class="mt-5 space-y-4">
@@ -189,7 +189,7 @@
             </div>
         </div>
 
-        <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+        <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm" data-tour="executive-report-daily-volume">
             <p class="text-sm font-black text-slate-950">Volume diário</p>
             <p class="text-xs text-slate-500">Ajuda a perceber picos de movimento dentro do período filtrado.</p>
             <div class="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7">
@@ -211,4 +211,62 @@
             </div>
         </div>
     </section>
+
+    @php
+        $executiveReportTour = [
+            'key' => 'reports.executive.v1',
+            'title' => 'Relatórios executivos',
+            'steps' => [
+                [
+                    'target' => '[data-tour="executive-report-period"]',
+                    'title' => 'Visão do período',
+                    'body' => 'O relatório compara o período selecionado com o período anterior para mostrar evolução de receita, volume e clientes.',
+                ],
+                [
+                    'target' => '[data-tour="executive-report-filters"]',
+                    'title' => 'Filtros e exportação',
+                    'body' => 'Use início e fim para analisar uma janela específica, volte ao mês atual ou exporte o PDF para compartilhar.',
+                ],
+                [
+                    'target' => '[data-tour="executive-report-kpis"]',
+                    'title' => 'Indicadores principais',
+                    'body' => 'Receita, lavagens, ticket médio e recorrência mostram rapidamente se a unidade está crescendo ou caindo.',
+                ],
+                [
+                    'target' => '[data-tour="executive-report-operational-kpis"]',
+                    'title' => 'Indicadores operacionais',
+                    'body' => 'Entregues, canceladas, clientes ativos e novos clientes ajudam a separar resultado financeiro de operação.',
+                ],
+                [
+                    'target' => '[data-tour="executive-report-top-services"]',
+                    'title' => 'Top serviços',
+                    'body' => 'Veja quais serviços mais movimentaram a unidade e quanto cada um gerou no período.',
+                ],
+                [
+                    'target' => '[data-tour="executive-report-payments"]',
+                    'title' => 'Métodos de pagamento',
+                    'body' => 'Esta área mostra como o dinheiro entrou: Pix, dinheiro, cartão ou outros métodos.',
+                ],
+                [
+                    'target' => '[data-tour="executive-report-top-customers"]',
+                    'title' => 'Top clientes',
+                    'body' => 'Identifique clientes com mais lavagens e maior faturamento para ações de relacionamento e fidelidade.',
+                ],
+                [
+                    'target' => '[data-tour="executive-report-statuses"]',
+                    'title' => 'Status das lavagens',
+                    'body' => 'A distribuição por status ajuda a encontrar gargalos e cancelamentos no período.',
+                ],
+                [
+                    'target' => '[data-tour="executive-report-daily-volume"]',
+                    'title' => 'Volume diário',
+                    'body' => 'Use o volume por dia para enxergar picos de movimento e planejar equipe ou promoções.',
+                ],
+            ],
+        ];
+    @endphp
+
+    <script type="application/json" data-onboarding-tour>
+        {!! json_encode($executiveReportTour, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) !!}
+    </script>
 </x-app.layout>
