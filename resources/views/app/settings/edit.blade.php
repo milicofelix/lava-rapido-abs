@@ -1,11 +1,11 @@
 <x-app.layout heading="Configurações" title="Configurações · AutoFlow">
     <div class="grid gap-5 xl:grid-cols-[1fr_360px]">
-        <form method="POST" action="{{ route('settings.update') }}" enctype="multipart/form-data" class="space-y-5 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm" data-theme-settings-form>
+        <form method="POST" action="{{ route('settings.update') }}" enctype="multipart/form-data" class="space-y-5 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm" data-theme-settings-form data-tour="settings-form">
             @csrf
             @method('PUT')
             @include('app.components.errors')
 
-            <section>
+            <section data-tour="settings-unit">
                 <p class="text-xs font-bold uppercase tracking-[0.2em] text-blue-700">Geral</p>
                 <h2 class="mt-1 text-xl font-bold text-slate-950">Dados da unidade</h2>
                 <p class="mt-1 text-sm text-slate-500">Use essas informacoes para personalizar o painel e preparar recibos/notificacoes no futuro.</p>
@@ -13,7 +13,7 @@
                 <div class="mt-4 grid gap-4 md:grid-cols-2">
                     <label class="block md:col-span-2">
                         <span class="text-sm font-semibold text-slate-700">Logo da unidade</span>
-                        <div class="mt-1 flex flex-wrap items-center gap-4 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                        <div class="mt-1 flex flex-wrap items-center gap-4 rounded-2xl border border-slate-200 bg-slate-50 p-4" data-tour="settings-logo">
                             <div class="flex h-20 w-32 items-center justify-center overflow-hidden rounded-xl border border-slate-200 bg-white">
                                 @if ($currentLocation?->logo_path)
                                     <img src="{{ asset('storage/'.$currentLocation->logo_path) }}" alt="{{ $currentLocation->name }}" class="max-h-full max-w-full object-contain">
@@ -85,7 +85,7 @@
                         </label>
                     </div>
 
-                    <div class="md:col-span-2 rounded-2xl border border-amber-200 bg-amber-50 p-4">
+                    <div class="md:col-span-2 rounded-2xl border border-amber-200 bg-amber-50 p-4" data-tour="settings-map">
                         <div class="flex flex-wrap items-start justify-between gap-3">
                             <div>
                                 <p class="text-sm font-black text-amber-900">Localização exata no mapa</p>
@@ -112,7 +112,7 @@
                         </div>
                     </div>
 
-                    <div class="md:col-span-2 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                    <div class="md:col-span-2 rounded-2xl border border-slate-200 bg-slate-50 p-4" data-tour="settings-hours">
                         <div class="flex flex-wrap items-start justify-between gap-3">
                             <div>
                                 <p class="text-sm font-black text-slate-900">Horario de funcionamento</p>
@@ -152,7 +152,7 @@
                 </div>
             </section>
 
-            <section class="border-t border-slate-200 pt-5">
+            <section class="border-t border-slate-200 pt-5" data-tour="settings-theme">
                 <p class="text-xs font-bold uppercase tracking-[0.2em] text-blue-700">Aparencia</p>
                 <h2 class="mt-1 text-xl font-bold text-slate-950">Tema do painel</h2>
                 <div class="mt-4 grid gap-3 md:grid-cols-3">
@@ -180,7 +180,7 @@
                 </div>
             </section>
 
-            <section class="border-t border-slate-200 pt-5">
+            <section class="border-t border-slate-200 pt-5" data-tour="settings-modules">
                 <p class="text-xs font-bold uppercase tracking-[0.2em] text-blue-700">Modulos opcionais</p>
                 <h2 class="mt-1 text-xl font-bold text-slate-950">Controle o que aparece no sistema</h2>
                 <p class="mt-1 text-sm text-slate-500">Ideal para lava-rápidos menores que não precisam operar agenda, caixa completo ou fiado.</p>
@@ -212,7 +212,7 @@
                 </div>
             </section>
 
-            <section class="border-t border-slate-200 pt-5">
+            <section class="border-t border-slate-200 pt-5" data-tour="settings-loyalty">
                 <p class="text-xs font-bold uppercase tracking-[0.2em] text-blue-700">Programa de fidelidade</p>
                 <h2 class="mt-1 text-xl font-bold text-slate-950">Cupons para clientes recorrentes</h2>
                 <p class="mt-1 text-sm text-slate-500">Configure quando o cliente ganha um cupom e qual benefício será oferecido.</p>
@@ -301,7 +301,7 @@
                 </div>
             </section>
 
-            <section class="border-t border-slate-200 pt-5">
+            <section class="border-t border-slate-200 pt-5" data-tour="settings-permissions">
                 <p class="text-xs font-bold uppercase tracking-[0.2em] text-blue-700">Permissões da equipe</p>
                 <h2 class="mt-1 text-xl font-bold text-slate-950">Matriz de acesso por perfil</h2>
                 <p class="mt-1 text-sm text-slate-500">Veja o que cada perfil pode acessar hoje. Permissões padrão ficam fixas; exceções configuráveis aparecem destacadas.</p>
@@ -362,7 +362,7 @@
                 </div>
             </section>
 
-            <section class="border-t border-slate-200 pt-5">
+            <section class="border-t border-slate-200 pt-5" data-tour="settings-permission-overrides">
                 <p class="text-xs font-bold uppercase tracking-[0.2em] text-blue-700">Exceções configuráveis</p>
                 <h2 class="mt-1 text-xl font-bold text-slate-950">Privilégios operacionais</h2>
                 <p class="mt-1 text-sm text-slate-500">Ajuste exceções por perfil sem liberar áreas sensíveis como financeiro, assinatura ou administração do produto.</p>
@@ -402,22 +402,22 @@
             </section>
 
             <div class="flex justify-end border-t border-slate-200 pt-5">
-                <button class="rounded-xl bg-blue-700 px-5 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-blue-800">Salvar configuracoes</button>
+                <button class="rounded-xl bg-blue-700 px-5 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-blue-800" data-tour="settings-save">Salvar configuracoes</button>
             </div>
         </form>
 
         <aside class="space-y-4">
-            <div class="rounded-2xl border border-blue-100 bg-blue-50 p-5 text-sm text-blue-950">
+            <div class="rounded-2xl border border-blue-100 bg-blue-50 p-5 text-sm text-blue-950" data-tour="settings-hints">
                 <p class="font-bold">Sugestao de operacao</p>
                 <p class="mt-2 leading-6">Comece com Caixa e Fiado desabilitados para clientes pequenos. Habilite apenas quando o lava-rapido tiver rotina de operador, conferencias ou contas a receber.</p>
             </div>
 
-            <div class="rounded-2xl border border-slate-200 bg-white p-5 text-sm shadow-sm">
+            <div class="rounded-2xl border border-slate-200 bg-white p-5 text-sm shadow-sm" data-tour="settings-profile-summary">
                 <p class="font-bold text-slate-950">Quando usar tema dark?</p>
                 <p class="mt-2 leading-6 text-slate-500">E uma boa opcao para recepcao com pouca luz, TVs de acompanhamento e uso noturno. Para escritorio claro, mantenha o padrao claro ou sistema.</p>
             </div>
 
-            <div class="rounded-2xl border border-slate-200 bg-white p-5 text-sm shadow-sm">
+            <div class="rounded-2xl border border-slate-200 bg-white p-5 text-sm shadow-sm" data-tour="settings-profile-summary">
                 <p class="font-bold text-slate-950">Perfil da unidade</p>
                 <dl class="mt-3 space-y-2 text-slate-600">
                     <div class="flex justify-between gap-4"><dt>Nome</dt><dd class="max-w-44 truncate font-semibold text-slate-900">{{ $currentLocation?->name ?? $settings['company_name'] }}</dd></div>
@@ -429,12 +429,14 @@
                 </dl>
             </div>
 
-            <div class="rounded-2xl border border-slate-200 bg-white p-5 text-sm shadow-sm">
+            <div class="rounded-2xl border border-slate-200 bg-white p-5 text-sm shadow-sm" data-tour="settings-module-summary">
                 <p class="font-bold text-slate-950">Modulos e aparencia</p>
                 <dl class="mt-3 space-y-2 text-slate-600">
-                    @php($cashRegisterEnabled = $settings['module_cash_register'] ?? \App\Models\AppSetting::DEFAULTS['module_cash_register'])
-                    @php($creditReceivablesEnabled = $settings['module_credit_receivables'] ?? \App\Models\AppSetting::DEFAULTS['module_credit_receivables'])
-                    @php($scheduleEnabled = $settings['module_schedule'] ?? \App\Models\AppSetting::DEFAULTS['module_schedule'])
+                    @php
+                        $cashRegisterEnabled = $settings['module_cash_register'] ?? \App\Models\AppSetting::DEFAULTS['module_cash_register'];
+                        $creditReceivablesEnabled = $settings['module_credit_receivables'] ?? \App\Models\AppSetting::DEFAULTS['module_credit_receivables'];
+                        $scheduleEnabled = $settings['module_schedule'] ?? \App\Models\AppSetting::DEFAULTS['module_schedule'];
+                    @endphp
                     <div class="flex justify-between gap-4"><dt>Caixa</dt><dd class="font-semibold {{ $cashRegisterEnabled ? 'text-green-700' : 'text-slate-500' }}">{{ $cashRegisterEnabled ? 'Habilitado' : 'Desabilitado' }}</dd></div>
                     <div class="flex justify-between gap-4"><dt>Fiado</dt><dd class="font-semibold {{ $creditReceivablesEnabled ? 'text-green-700' : 'text-slate-500' }}">{{ $creditReceivablesEnabled ? 'Habilitado' : 'Desabilitado' }}</dd></div>
                     <div class="flex justify-between gap-4"><dt>Agenda</dt><dd class="font-semibold {{ $scheduleEnabled ? 'text-green-700' : 'text-slate-500' }}">{{ $scheduleEnabled ? 'Habilitada' : 'Desabilitada' }}</dd></div>
@@ -444,6 +446,73 @@
             </div>
         </aside>
     </div>
+
+    @php
+        $settingsTour = [
+            'key' => 'settings.edit.v1',
+            'title' => 'Configurações da unidade',
+            'steps' => [
+                [
+                    'target' => '[data-tour="settings-unit"]',
+                    'title' => 'Dados principais',
+                    'body' => 'Aqui ficam as informações que identificam o lava-rápido no painel, no mapa público, recibos e comunicações.',
+                ],
+                [
+                    'target' => '[data-tour="settings-logo"]',
+                    'title' => 'Logo da unidade',
+                    'body' => 'Envie a marca do estabelecimento para substituir o logo padrão nas telas internas da unidade.',
+                ],
+                [
+                    'target' => '[data-tour="settings-map"]',
+                    'title' => 'Localização no mapa',
+                    'body' => 'Confira latitude e longitude para que o lava-rápido apareça no ponto correto no mapa público.',
+                ],
+                [
+                    'target' => '[data-tour="settings-hours"]',
+                    'title' => 'Horário de funcionamento',
+                    'body' => 'Esses horários definem quando a unidade aparece como aberta e também ajudam a bloquear operação fora do expediente.',
+                ],
+                [
+                    'target' => '[data-tour="settings-theme"]',
+                    'title' => 'Tema do painel',
+                    'body' => 'Escolha o visual usado pela equipe. A opção Sistema acompanha a preferência do navegador.',
+                ],
+                [
+                    'target' => '[data-tour="settings-modules"]',
+                    'title' => 'Módulos opcionais',
+                    'body' => 'Ative apenas o que o estabelecimento usa: Agenda, Caixa e Fiado aparecem ou somem do sistema conforme essas chaves.',
+                ],
+                [
+                    'target' => '[data-tour="settings-loyalty"]',
+                    'title' => 'Programa de fidelidade',
+                    'body' => 'Configure metas, validade e prêmio dos cupons para clientes recorrentes.',
+                ],
+                [
+                    'target' => '[data-tour="settings-permissions"]',
+                    'title' => 'Permissões por perfil',
+                    'body' => 'A matriz mostra o que Dono, Administrador, Atendente e Operador podem acessar hoje.',
+                ],
+                [
+                    'target' => '[data-tour="settings-permission-overrides"]',
+                    'title' => 'Exceções operacionais',
+                    'body' => 'Use esta área para liberar privilégios específicos sem abrir áreas sensíveis como financeiro ou assinatura.',
+                ],
+                [
+                    'target' => '[data-tour="settings-module-summary"]',
+                    'title' => 'Resumo lateral',
+                    'body' => 'Antes de salvar, confira rapidamente quais módulos e aparência ficarão ativos.',
+                ],
+                [
+                    'target' => '[data-tour="settings-save"]',
+                    'title' => 'Salvar alterações',
+                    'body' => 'Depois de revisar, salve para aplicar as mudanças na unidade.',
+                ],
+            ],
+        ];
+    @endphp
+    <script type="application/json" data-onboarding-tour>
+        {!! json_encode($settingsTour, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) !!}
+    </script>
 
     <script>
         document.querySelectorAll('[data-theme-settings-form]').forEach((form) => {
