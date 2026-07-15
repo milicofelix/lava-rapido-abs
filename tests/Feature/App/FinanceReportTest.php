@@ -37,7 +37,11 @@ class FinanceReportTest extends TestCase
             ->assertSee('data-onboarding-tour', false)
             ->assertSee('finance.index.v1')
             ->assertSee('data-tour="finance-period"', false)
+            ->assertSee('data-tour="finance-filter-actions"', false)
             ->assertSee('data-tour="finance-statement"', false)
+            ->assertSee('<button type="submit"', false)
+            ->assertSee('Filtrar')
+            ->assertSee('Exportar CSV')
             ->assertSee('Entendendo o Financeiro');
     }
 

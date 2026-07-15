@@ -3,7 +3,7 @@
         $appSettings = \App\Models\AppSetting::allSettings();
     @endphp
 
-    <div class="space-y-5">
+    <div class="mx-auto max-w-7xl space-y-5">
         @include('app.components.errors')
 
         <section class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm" data-tour="finance-header">
@@ -26,7 +26,7 @@
                 @endif
             </div>
 
-            <form method="GET" action="{{ route('finance.index') }}" class="mt-5 grid gap-3 lg:grid-cols-[1fr_1fr_auto_auto] lg:items-end" data-tour="finance-period">
+            <form method="GET" action="{{ route('finance.index') }}" class="mt-5 grid max-w-4xl gap-3 lg:grid-cols-2" data-tour="finance-period">
                 <label class="block">
                     <span class="text-sm font-bold text-slate-700">Início</span>
                     <input data-period-start name="start" type="date" value="{{ $start }}" max="{{ today()->toDateString() }}" class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100">
@@ -37,8 +37,10 @@
                     <input data-period-end name="end" type="date" value="{{ $end }}" min="{{ $start }}" max="{{ today()->toDateString() }}" class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100">
                     @error('end') <span class="mt-1 block text-sm text-red-600">{{ $message }}</span> @enderror
                 </label>
-                <button class="rounded-xl bg-blue-700 px-4 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-blue-800">Filtrar</button>
-                <a href="{{ route('finance.export', ['start' => $start, 'end' => $end]) }}" class="rounded-xl border border-slate-300 px-4 py-2.5 text-center text-sm font-bold text-slate-700 hover:bg-slate-50">Exportar CSV</a>
+                <div class="flex flex-wrap gap-2 lg:col-span-2" data-tour="finance-filter-actions">
+                    <button type="submit" class="rounded-xl bg-blue-700 px-4 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-blue-800">Filtrar</button>
+                    <a href="{{ route('finance.export', ['start' => $start, 'end' => $end]) }}" class="rounded-xl border border-slate-300 px-4 py-2.5 text-center text-sm font-bold text-slate-700 hover:bg-slate-50">Exportar CSV</a>
+                </div>
             </form>
         </section>
 
@@ -67,8 +69,8 @@
             @endif
         </section>
 
-        <section class="grid gap-5 xl:grid-cols-[360px_1fr]">
-            <div class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm" data-tour="finance-methods">
+        <section class="grid min-w-0 gap-5 xl:grid-cols-[320px_minmax(0,1fr)]">
+            <div class="min-w-0 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm" data-tour="finance-methods">
                 <div class="border-b border-slate-200 px-5 py-4">
                     <p class="text-xs font-black uppercase tracking-[0.18em] text-emerald-700">Resumo</p>
                     <h2 class="mt-1 font-black text-slate-950">Por metodo</h2>
@@ -88,7 +90,7 @@
                 </div>
             </div>
 
-            <div class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm" data-tour="finance-statement">
+            <div class="min-w-0 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm" data-tour="finance-statement">
                 <div class="border-b border-slate-200 px-5 py-4">
                     <p class="text-xs font-black uppercase tracking-[0.18em] text-emerald-700">Extrato</p>
                     <h2 class="mt-1 font-black text-slate-950">Pagamentos recebidos</h2>
@@ -119,7 +121,7 @@
                             </div>
                         </article>
                     @empty
-                        <div class="px-5 py-12 text-center">
+                        <div class="px-5 py-8 text-center">
                             <p class="font-black text-slate-950">Nenhum pagamento encontrado</p>
                             <p class="mt-1 text-sm text-slate-500">Ajuste o periodo ou registre pagamentos nas lavagens.</p>
                         </div>
@@ -168,7 +170,12 @@
                 [
                     'target' => '[data-tour="finance-period"]',
                     'title' => 'Período e exportação',
-                    'body' => 'Filtre por data inicial e final. O sistema não permite período invertido nem datas futuras. Use Exportar CSV para conferências externas.',
+                    'body' => 'Escolha data inicial e final, clique em Filtrar para atualizar os indicadores e use Exportar CSV para conferências externas.',
+                ],
+                [
+                    'target' => '[data-tour="finance-filter-actions"]',
+                    'title' => 'Aplicar filtro',
+                    'body' => 'O botão Filtrar recarrega o financeiro com o período escolhido. A exportação usa o mesmo intervalo exibido na tela.',
                 ],
                 [
                     'target' => '[data-tour="finance-indicators"]',
