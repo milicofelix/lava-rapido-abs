@@ -1,12 +1,12 @@
 @include('app.components.errors')
 
-<section class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm" data-tour="customer-form-card">
+<section class="min-w-0 overflow-hidden rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5" data-tour="customer-form-card">
     <div class="border-b border-slate-200 pb-4">
         <p class="text-xs font-black uppercase tracking-[0.18em] text-blue-700">Dados do cliente</p>
         <h2 class="mt-1 text-xl font-black text-slate-950">{{ $customer->exists ? 'Editar cadastro' : 'Novo cadastro' }}</h2>
     </div>
 
-    <div class="mt-5 grid gap-4 md:grid-cols-2">
+    <div class="mt-5 grid min-w-0 gap-4 md:grid-cols-2">
         <label class="block" data-tour="customer-form-name">
             <span class="text-sm font-bold text-slate-700">Nome</span>
             <input name="name" value="{{ old('name', $customer->name) }}" required class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100">
@@ -31,9 +31,9 @@
     </label>
 </section>
 
-<div class="mt-5 flex flex-wrap justify-end gap-3" data-tour="customer-form-actions">
-    <a href="{{ route('customers.index') }}" class="rounded-xl border border-slate-300 px-4 py-2.5 text-sm font-bold text-slate-700 hover:bg-slate-50">Cancelar</a>
-    <button class="rounded-xl bg-blue-700 px-5 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-blue-800">Salvar cliente</button>
+<div class="mt-5 grid min-w-0 gap-3 sm:flex sm:flex-wrap sm:justify-end" data-tour="customer-form-actions">
+    <a href="{{ route('customers.index') }}" class="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-center text-sm font-bold text-slate-700 hover:bg-slate-50 sm:w-auto">Cancelar</a>
+    <button class="w-full rounded-xl bg-blue-700 px-5 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-blue-800 sm:w-auto">Salvar cliente</button>
 </div>
 
 @php

@@ -37,6 +37,17 @@
     @endphp
 
     <style>
+        .loyalty-ticket {
+            -webkit-mask-image:
+                radial-gradient(circle 24px at left center, transparent 98%, #000 100%),
+                radial-gradient(circle 24px at right center, transparent 98%, #000 100%);
+            -webkit-mask-composite: source-in;
+            mask-image:
+                radial-gradient(circle 24px at left center, transparent 98%, #000 100%),
+                radial-gradient(circle 24px at right center, transparent 98%, #000 100%);
+            mask-composite: intersect;
+        }
+
         @media print {
             body {
                 background: #fff !important;
@@ -88,10 +99,12 @@
             <div class="grid lg:grid-cols-[minmax(0,1fr)_390px]">
                 <div class="relative min-h-[620px] overflow-hidden bg-slate-950" data-tour="loyalty-coupon-main">
                     <div class="absolute inset-0 bg-[radial-gradient(circle_at_12%_12%,rgba(14,165,233,0.55),transparent_24%),linear-gradient(135deg,#031b4e,#063c8e_48%,#0b63ce)]"></div>
+                    <div class="absolute inset-0 opacity-35 bg-[radial-gradient(circle_at_10%_8%,rgba(255,255,255,0.45)_0_5px,transparent_6px),radial-gradient(circle_at_18%_4%,rgba(255,255,255,0.28)_0_8px,transparent_9px),radial-gradient(circle_at_22%_15%,rgba(255,255,255,0.22)_0_4px,transparent_5px),radial-gradient(circle_at_6%_20%,rgba(255,255,255,0.18)_0_7px,transparent_8px)]"></div>
                     <div class="absolute -left-24 top-0 h-64 w-[640px] rounded-br-[80%] bg-white shadow-2xl shadow-blue-950/30"></div>
                     <div class="absolute left-0 top-0 h-48 w-64 bg-[radial-gradient(circle,rgba(255,255,255,0.2)_1px,transparent_2px)] [background-size:18px_18px] opacity-40"></div>
-                    <div class="absolute right-0 top-0 h-full w-[58%] bg-[linear-gradient(114deg,transparent_0%,transparent_17%,rgba(255,255,255,0.92)_17%,rgba(255,255,255,0.92)_100%)]"></div>
-                    <div class="absolute right-0 top-0 h-full w-[59%] bg-[radial-gradient(circle_at_70%_28%,rgba(14,165,233,0.22),transparent_34%),linear-gradient(135deg,rgba(255,255,255,0.24),rgba(255,255,255,0.86))]"></div>
+                    <div class="absolute right-0 top-0 h-full w-[54%] bg-[linear-gradient(114deg,transparent_0%,transparent_26%,rgba(255,255,255,0.92)_26%,rgba(255,255,255,0.92)_100%)]"></div>
+                    <div class="absolute right-0 top-0 h-full w-[55%] bg-[radial-gradient(circle_at_72%_28%,rgba(14,165,233,0.24),transparent_32%),radial-gradient(circle_at_55%_58%,rgba(2,132,199,0.16),transparent_30%),linear-gradient(135deg,rgba(255,255,255,0.18),rgba(255,255,255,0.86))]"></div>
+                    <div class="absolute right-0 top-0 h-full w-[55%] opacity-45 bg-[linear-gradient(115deg,transparent_0%,transparent_28%,rgba(148,163,184,0.16)_28%,rgba(148,163,184,0.16)_29%,transparent_29%),radial-gradient(circle_at_46%_22%,rgba(255,255,255,0.55)_0_2px,transparent_3px),radial-gradient(circle_at_62%_38%,rgba(255,255,255,0.55)_0_2px,transparent_3px)]"></div>
                     <div class="absolute right-0 top-0 hidden h-full border-r border-dashed border-blue-200 lg:block"></div>
                     <div class="absolute bottom-0 right-0 h-28 w-[58%] bg-gradient-to-r from-blue-950/70 via-blue-700 to-cyan-500"></div>
                     <div class="absolute bottom-0 right-0 h-28 w-[58%] bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.14))]"></div>
@@ -110,21 +123,24 @@
                         <div class="grid gap-10 lg:grid-cols-[0.72fr_minmax(380px,1fr)] lg:items-center">
                             <div class="text-white">
                                 <div class="mb-9 flex items-center gap-4">
-                                    <span class="flex h-20 w-20 items-center justify-center rounded-full border border-white/25 bg-white/10 text-4xl shadow-lg shadow-blue-950/20">%</span>
+                                    <span class="flex h-20 w-20 items-center justify-center rounded-full border border-white/25 bg-white/10 text-white shadow-lg shadow-blue-950/20">
+                                        <svg class="h-10 w-10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                            <path d="M20.5 13.5 13.5 20.5a2.1 2.1 0 0 1-3 0L3 13V4h9l8.5 8.5a2.1 2.1 0 0 1 0 3Z" />
+                                            <path d="M7.5 7.5h.01" />
+                                        </svg>
+                                    </span>
                                     <span class="h-px flex-1 border-t border-dotted border-cyan-300/70"></span>
                                 </div>
                                 <p class="text-sm font-black uppercase tracking-[0.28em] text-blue-100">Cupom de</p>
-                                <h2 class="mt-3 text-5xl font-black uppercase leading-none tracking-wide text-white xl:text-6xl">Fidelidade</h2>
+                                <h2 class="mt-3 text-5xl font-black uppercase leading-none tracking-wide text-white drop-shadow-[0_3px_8px_rgba(2,6,23,0.45)] xl:text-6xl">Fidelidade</h2>
                                 <div class="mt-8 h-1.5 w-20 rounded-full bg-cyan-300"></div>
                                 <p class="mt-8 max-w-md text-base font-semibold leading-8 text-blue-50">
                                     Benefício exclusivo para o cliente <strong class="text-cyan-200">{{ $customer?->name }}</strong> utilizar na próxima visita à unidade <strong class="text-cyan-200">{{ $location?->name }}</strong>.
                                 </p>
                             </div>
 
-                            <div class="relative mx-auto w-full max-w-lg rounded-[2rem] bg-white p-5 shadow-2xl shadow-blue-950/25" data-tour="loyalty-coupon-code">
-                                <span class="absolute -left-5 top-1/2 h-10 w-10 -translate-y-1/2 rounded-full bg-blue-900"></span>
-                                <span class="absolute -right-5 top-1/2 h-10 w-10 -translate-y-1/2 rounded-full bg-white"></span>
-                                <div class="rounded-[1.5rem] border border-dashed border-slate-300 px-6 py-8 text-center">
+                            <div class="loyalty-ticket relative mx-auto w-full max-w-lg bg-white p-5 shadow-2xl shadow-blue-950/25" data-tour="loyalty-coupon-code">
+                                <div class="rounded-[1.5rem] border-2 border-dashed border-slate-300 px-6 py-8 text-center">
                                     <p class="text-xs font-black uppercase tracking-[0.28em] text-blue-700">Código do cupom</p>
                                     <div class="my-4 flex items-center justify-center gap-3 text-cyan-400">
                                         <span class="h-px w-20 bg-cyan-200"></span>
@@ -134,7 +150,13 @@
                                     <p class="break-words text-4xl font-black uppercase leading-tight tracking-[0.12em] text-slate-950 xl:text-5xl">{{ $coupon->code }}</p>
                                     <div class="mt-5 flex items-center justify-center gap-3 text-blue-700">
                                         <span class="h-px w-20 bg-slate-300"></span>
-                                        <span class="text-2xl">▣</span>
+                                        <svg class="h-7 w-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                            <path d="M6 17h12l1-5H5l1 5Z" />
+                                            <path d="M7 17a2 2 0 1 0 0 4 2 2 0 0 0 0-4Z" />
+                                            <path d="M17 17a2 2 0 1 0 0 4 2 2 0 0 0 0-4Z" />
+                                            <path d="M7 12l2-5h6l2 5" />
+                                            <path d="M9 7h6" />
+                                        </svg>
                                         <span class="h-px w-20 bg-slate-300"></span>
                                     </div>
                                 </div>
@@ -142,7 +164,15 @@
                         </div>
 
                         <div class="mt-8 flex flex-wrap items-center justify-end gap-4 rounded-l-[3rem] bg-blue-950/30 px-5 py-4 text-white backdrop-blur-sm">
-                            <div class="flex h-14 w-14 items-center justify-center rounded-full bg-white/10 text-sm font-black uppercase tracking-[0.16em]">FID</div>
+                            <div class="flex h-14 w-14 items-center justify-center rounded-full bg-white/10 text-white">
+                                <svg class="h-8 w-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                    <path d="M20 12v8a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-8" />
+                                    <path d="M2 8h20v4H2z" />
+                                    <path d="M12 21V8" />
+                                    <path d="M12 8H7.5a2.5 2.5 0 1 1 2-4L12 8Z" />
+                                    <path d="M12 8h4.5a2.5 2.5 0 1 0-2-4L12 8Z" />
+                                </svg>
+                            </div>
                             <div>
                                 <p class="font-black text-cyan-200">Agradecemos sua preferência!</p>
                                 <p class="text-sm font-semibold text-blue-50">Continue cuidando do seu carro com quem entende do assunto.</p>
@@ -155,7 +185,12 @@
                     <dl class="space-y-5">
                         <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm xl:p-6">
                             <dt class="flex items-center gap-3 text-xs font-black uppercase tracking-[0.14em] text-blue-700">
-                                <span class="flex h-12 w-12 items-center justify-center rounded-full bg-blue-700 text-xl text-white">●</span>
+                                <span class="flex h-12 w-12 items-center justify-center rounded-full bg-blue-700 text-white">
+                                    <svg class="h-7 w-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                        <path d="M20 21a8 8 0 0 0-16 0" />
+                                        <circle cx="12" cy="8" r="4" />
+                                    </svg>
+                                </span>
                                 Cliente
                             </dt>
                             <dd class="mt-3 text-lg font-black text-slate-950">{{ $customer?->name }}</dd>
@@ -163,7 +198,12 @@
                         </div>
                         <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm xl:p-6">
                             <dt class="flex items-center gap-3 text-xs font-black uppercase tracking-[0.14em] text-blue-700">
-                                <span class="flex h-12 w-12 items-center justify-center rounded-full bg-blue-700 text-xl text-white">⌖</span>
+                                <span class="flex h-12 w-12 items-center justify-center rounded-full bg-blue-700 text-white">
+                                    <svg class="h-7 w-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                        <path d="M12 21s7-5.2 7-11a7 7 0 1 0-14 0c0 5.8 7 11 7 11Z" />
+                                        <circle cx="12" cy="10" r="2.5" />
+                                    </svg>
+                                </span>
                                 Unidade
                             </dt>
                             <dd class="mt-3 text-lg font-black text-slate-950">{{ $location?->name }}</dd>
@@ -171,17 +211,41 @@
                         </div>
                         <div class="grid grid-cols-2 gap-3">
                             <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-                                <dt class="text-xs font-black uppercase tracking-[0.14em] text-blue-700">Emissão</dt>
+                                <dt class="flex items-center gap-2 text-xs font-black uppercase tracking-[0.14em] text-blue-700">
+                                    <svg class="h-6 w-6 rounded-full bg-blue-50 p-1 text-blue-700" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                        <path d="M8 2v4" />
+                                        <path d="M16 2v4" />
+                                        <path d="M3 10h18" />
+                                        <rect x="3" y="4" width="18" height="18" rx="2" />
+                                    </svg>
+                                    Emissão
+                                </dt>
                                 <dd class="mt-2 font-black text-slate-950">{{ $coupon->earned_at?->format('d/m/Y') ?? '-' }}</dd>
                             </div>
                             <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-                                <dt class="text-xs font-black uppercase tracking-[0.14em] text-blue-700">Validade</dt>
+                                <dt class="flex items-center gap-2 text-xs font-black uppercase tracking-[0.14em] text-blue-700">
+                                    <svg class="h-6 w-6 rounded-full bg-blue-50 p-1 text-blue-700" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                        <path d="M8 2v4" />
+                                        <path d="M16 2v4" />
+                                        <path d="M3 10h18" />
+                                        <rect x="3" y="4" width="18" height="18" rx="2" />
+                                        <path d="m9 16 2 2 4-4" />
+                                    </svg>
+                                    Validade
+                                </dt>
                                 <dd class="mt-2 font-black text-slate-950">{{ $coupon->expires_at?->format('d/m/Y') ?? '-' }}</dd>
                             </div>
                         </div>
                         <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm xl:p-6">
                             <dt class="flex items-center gap-3 text-xs font-black uppercase tracking-[0.14em] text-blue-700">
-                                <span class="flex h-12 w-12 items-center justify-center rounded-full bg-blue-50 text-xl text-blue-700">▣</span>
+                                <span class="flex h-12 w-12 items-center justify-center rounded-full bg-blue-50 text-blue-700">
+                                    <svg class="h-7 w-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                        <path d="M6 17h12l1-5H5l1 5Z" />
+                                        <path d="M7 17a2 2 0 1 0 0 4 2 2 0 0 0 0-4Z" />
+                                        <path d="M17 17a2 2 0 1 0 0 4 2 2 0 0 0 0-4Z" />
+                                        <path d="M7 12l2-5h6l2 5" />
+                                    </svg>
+                                </span>
                                 Lavagem que gerou
                             </dt>
                             <dd class="mt-3 text-lg font-black text-slate-950">{{ $coupon->sourceWashOrder?->code ?? '-' }}</dd>
@@ -208,7 +272,12 @@
             <div class="border-t border-dashed border-slate-200 bg-white px-6 py-5 sm:px-10" data-tour="loyalty-coupon-status">
                 <div class="grid gap-5 lg:grid-cols-[1fr_360px] lg:items-center">
                     <div class="flex items-center gap-5 rounded-2xl border border-slate-100 bg-slate-50 px-5 py-4">
-                        <span class="flex h-16 w-16 shrink-0 items-center justify-center rounded-full border border-blue-100 bg-white text-3xl text-blue-700">◇</span>
+                        <span class="flex h-16 w-16 shrink-0 items-center justify-center rounded-full border border-blue-100 bg-white text-blue-700">
+                            <svg class="h-9 w-9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z" />
+                                <path d="m9 12 2 2 4-4" />
+                            </svg>
+                        </span>
                         <p class="text-sm font-semibold leading-6 text-slate-600">Cupom pessoal e vinculado ao cliente informado. A validade e o status devem ser conferidos antes de aplicar o benefício no atendimento.</p>
                     </div>
                     <div class="flex items-center justify-center gap-4 rounded-2xl border {{ $statusTone['border'] }} {{ $statusTone['bg'] }} px-5 py-4 text-center">
