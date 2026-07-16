@@ -58,7 +58,7 @@
         }
     </style>
 
-    <div class="mx-auto max-w-5xl space-y-5">
+    <div class="mx-auto max-w-7xl space-y-5">
         <div data-coupon-actions class="flex flex-wrap items-center justify-between gap-3" data-tour="loyalty-coupon-actions">
             <a href="{{ route('customers.edit', $customer) }}" class="rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-bold text-slate-700 shadow-sm hover:bg-slate-50">Voltar ao cliente</a>
 
@@ -85,52 +85,53 @@
         @enderror
 
         <section class="overflow-hidden rounded-[2rem] border border-blue-100 bg-white shadow-xl shadow-slate-200/80" data-tour="loyalty-coupon-card">
-            <div class="grid lg:grid-cols-[1fr_360px]">
-                <div class="relative min-h-[560px] overflow-hidden bg-slate-950" data-tour="loyalty-coupon-main">
+            <div class="grid lg:grid-cols-[minmax(0,1fr)_390px]">
+                <div class="relative min-h-[620px] overflow-hidden bg-slate-950" data-tour="loyalty-coupon-main">
                     <div class="absolute inset-0 bg-[radial-gradient(circle_at_12%_12%,rgba(14,165,233,0.55),transparent_24%),linear-gradient(135deg,#031b4e,#063c8e_48%,#0b63ce)]"></div>
-                    <div class="absolute -left-24 top-0 h-56 w-[560px] rounded-br-[80%] bg-white shadow-2xl shadow-blue-950/30"></div>
+                    <div class="absolute -left-24 top-0 h-64 w-[640px] rounded-br-[80%] bg-white shadow-2xl shadow-blue-950/30"></div>
                     <div class="absolute left-0 top-0 h-48 w-64 bg-[radial-gradient(circle,rgba(255,255,255,0.2)_1px,transparent_2px)] [background-size:18px_18px] opacity-40"></div>
-                    <div class="absolute right-0 top-0 h-full w-[54%] bg-[linear-gradient(115deg,transparent_0%,transparent_18%,rgba(255,255,255,0.92)_18%,rgba(255,255,255,0.92)_100%)]"></div>
-                    <div class="absolute right-0 top-0 h-full w-[55%] bg-[radial-gradient(circle_at_70%_28%,rgba(14,165,233,0.22),transparent_34%),linear-gradient(135deg,rgba(255,255,255,0.28),rgba(255,255,255,0.82))]"></div>
+                    <div class="absolute right-0 top-0 h-full w-[58%] bg-[linear-gradient(114deg,transparent_0%,transparent_17%,rgba(255,255,255,0.92)_17%,rgba(255,255,255,0.92)_100%)]"></div>
+                    <div class="absolute right-0 top-0 h-full w-[59%] bg-[radial-gradient(circle_at_70%_28%,rgba(14,165,233,0.22),transparent_34%),linear-gradient(135deg,rgba(255,255,255,0.24),rgba(255,255,255,0.86))]"></div>
+                    <div class="absolute right-0 top-0 hidden h-full border-r border-dashed border-blue-200 lg:block"></div>
                     <div class="absolute bottom-0 right-0 h-28 w-[58%] bg-gradient-to-r from-blue-950/70 via-blue-700 to-cyan-500"></div>
                     <div class="absolute bottom-0 right-0 h-28 w-[58%] bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.14))]"></div>
 
-                    <div class="relative z-10 flex min-h-[560px] flex-col justify-between p-6 sm:p-9">
+                    <div class="relative z-10 flex min-h-[620px] flex-col justify-between p-6 sm:p-9">
                         <div class="flex flex-wrap items-start justify-between gap-4">
-                            <div class="rounded-br-[3.5rem] rounded-tl-[1.5rem] bg-white px-8 py-7 shadow-xl shadow-blue-950/20">
-                                <img src="{{ $location?->logoUrl() ?? asset('images/autoflow-logo.png') }}" alt="{{ $location?->name ?? 'AutoFlow' }}" class="h-24 w-56 object-contain">
+                            <div class="rounded-br-[4.5rem] rounded-tl-[1.5rem] bg-white px-10 py-7 shadow-xl shadow-blue-950/20">
+                                <img src="{{ $location?->logoUrl() ?? asset('images/autoflow-logo.png') }}" alt="{{ $location?->name ?? 'AutoFlow' }}" class="h-24 w-64 object-contain">
                             </div>
-                            <span class="inline-flex items-center gap-2 rounded-full bg-gradient-to-r {{ $statusTone['pill'] }} px-5 py-3 text-sm font-black uppercase tracking-[0.16em] shadow-lg shadow-slate-950/20">
+                            <span class="mr-3 mt-4 inline-flex items-center gap-2 rounded-full bg-gradient-to-r {{ $statusTone['pill'] }} px-6 py-3 text-sm font-black uppercase tracking-[0.16em] shadow-lg shadow-slate-950/20">
                                 <span class="flex h-7 w-7 items-center justify-center rounded-full bg-white/20 text-lg">{{ $statusTone['icon'] }}</span>
                                 {{ $coupon->statusLabel() }}
                             </span>
                         </div>
 
-                        <div class="grid gap-8 lg:grid-cols-[0.75fr_1fr] lg:items-end">
+                        <div class="grid gap-10 lg:grid-cols-[0.72fr_minmax(380px,1fr)] lg:items-center">
                             <div class="text-white">
-                                <div class="mb-10 flex items-center gap-4">
+                                <div class="mb-9 flex items-center gap-4">
                                     <span class="flex h-20 w-20 items-center justify-center rounded-full border border-white/25 bg-white/10 text-4xl shadow-lg shadow-blue-950/20">%</span>
                                     <span class="h-px flex-1 border-t border-dotted border-cyan-300/70"></span>
                                 </div>
                                 <p class="text-sm font-black uppercase tracking-[0.28em] text-blue-100">Cupom de</p>
-                                <h2 class="mt-3 text-5xl font-black uppercase leading-none tracking-wide text-white sm:text-6xl">Fidelidade</h2>
+                                <h2 class="mt-3 text-5xl font-black uppercase leading-none tracking-wide text-white xl:text-6xl">Fidelidade</h2>
                                 <div class="mt-8 h-1.5 w-20 rounded-full bg-cyan-300"></div>
-                                <p class="mt-8 max-w-sm text-base font-semibold leading-8 text-blue-50">
+                                <p class="mt-8 max-w-md text-base font-semibold leading-8 text-blue-50">
                                     Benefício exclusivo para o cliente <strong class="text-cyan-200">{{ $customer?->name }}</strong> utilizar na próxima visita à unidade <strong class="text-cyan-200">{{ $location?->name }}</strong>.
                                 </p>
                             </div>
 
-                            <div class="relative mx-auto w-full max-w-md rounded-[2rem] bg-white p-5 shadow-2xl shadow-blue-950/25" data-tour="loyalty-coupon-code">
-                                <span class="absolute -left-4 top-1/2 h-9 w-9 -translate-y-1/2 rounded-full bg-blue-900"></span>
-                                <span class="absolute -right-4 top-1/2 h-9 w-9 -translate-y-1/2 rounded-full bg-white"></span>
-                                <div class="rounded-[1.5rem] border border-dashed border-slate-300 px-5 py-7 text-center">
+                            <div class="relative mx-auto w-full max-w-lg rounded-[2rem] bg-white p-5 shadow-2xl shadow-blue-950/25" data-tour="loyalty-coupon-code">
+                                <span class="absolute -left-5 top-1/2 h-10 w-10 -translate-y-1/2 rounded-full bg-blue-900"></span>
+                                <span class="absolute -right-5 top-1/2 h-10 w-10 -translate-y-1/2 rounded-full bg-white"></span>
+                                <div class="rounded-[1.5rem] border border-dashed border-slate-300 px-6 py-8 text-center">
                                     <p class="text-xs font-black uppercase tracking-[0.28em] text-blue-700">Código do cupom</p>
                                     <div class="my-4 flex items-center justify-center gap-3 text-cyan-400">
                                         <span class="h-px w-20 bg-cyan-200"></span>
                                         <span>★ ★ ★</span>
                                         <span class="h-px w-20 bg-cyan-200"></span>
                                     </div>
-                                    <p class="break-words text-4xl font-black uppercase leading-tight tracking-[0.12em] text-slate-950 sm:text-5xl">{{ $coupon->code }}</p>
+                                    <p class="break-words text-4xl font-black uppercase leading-tight tracking-[0.12em] text-slate-950 xl:text-5xl">{{ $coupon->code }}</p>
                                     <div class="mt-5 flex items-center justify-center gap-3 text-blue-700">
                                         <span class="h-px w-20 bg-slate-300"></span>
                                         <span class="text-2xl">▣</span>
@@ -140,7 +141,7 @@
                             </div>
                         </div>
 
-                        <div class="mt-8 flex flex-wrap items-center justify-end gap-4 text-white">
+                        <div class="mt-8 flex flex-wrap items-center justify-end gap-4 rounded-l-[3rem] bg-blue-950/30 px-5 py-4 text-white backdrop-blur-sm">
                             <div class="flex h-14 w-14 items-center justify-center rounded-full bg-white/10 text-sm font-black uppercase tracking-[0.16em]">FID</div>
                             <div>
                                 <p class="font-black text-cyan-200">Agradecemos sua preferência!</p>
@@ -150,9 +151,9 @@
                     </div>
                 </div>
 
-                <aside class="border-t border-slate-200 bg-white p-6 lg:border-l lg:border-t-0" data-tour="loyalty-coupon-details">
-                    <dl class="space-y-4">
-                        <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                <aside class="border-t border-slate-200 bg-white p-6 lg:border-l lg:border-t-0 xl:p-8" data-tour="loyalty-coupon-details">
+                    <dl class="space-y-5">
+                        <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm xl:p-6">
                             <dt class="flex items-center gap-3 text-xs font-black uppercase tracking-[0.14em] text-blue-700">
                                 <span class="flex h-12 w-12 items-center justify-center rounded-full bg-blue-700 text-xl text-white">●</span>
                                 Cliente
@@ -160,7 +161,7 @@
                             <dd class="mt-3 text-lg font-black text-slate-950">{{ $customer?->name }}</dd>
                             <dd class="mt-1 text-sm font-semibold text-slate-500">{{ $customer?->phone }}</dd>
                         </div>
-                        <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                        <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm xl:p-6">
                             <dt class="flex items-center gap-3 text-xs font-black uppercase tracking-[0.14em] text-blue-700">
                                 <span class="flex h-12 w-12 items-center justify-center rounded-full bg-blue-700 text-xl text-white">⌖</span>
                                 Unidade
@@ -178,7 +179,7 @@
                                 <dd class="mt-2 font-black text-slate-950">{{ $coupon->expires_at?->format('d/m/Y') ?? '-' }}</dd>
                             </div>
                         </div>
-                        <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                        <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm xl:p-6">
                             <dt class="flex items-center gap-3 text-xs font-black uppercase tracking-[0.14em] text-blue-700">
                                 <span class="flex h-12 w-12 items-center justify-center rounded-full bg-blue-50 text-xl text-blue-700">▣</span>
                                 Lavagem que gerou
@@ -205,14 +206,17 @@
             </div>
 
             <div class="border-t border-dashed border-slate-200 bg-white px-6 py-5 sm:px-10" data-tour="loyalty-coupon-status">
-                <div class="grid gap-4 lg:grid-cols-[1fr_280px] lg:items-center">
-                    <div class="flex items-center gap-4 rounded-2xl border border-slate-100 bg-slate-50 px-5 py-4">
+                <div class="grid gap-5 lg:grid-cols-[1fr_360px] lg:items-center">
+                    <div class="flex items-center gap-5 rounded-2xl border border-slate-100 bg-slate-50 px-5 py-4">
                         <span class="flex h-16 w-16 shrink-0 items-center justify-center rounded-full border border-blue-100 bg-white text-3xl text-blue-700">◇</span>
                         <p class="text-sm font-semibold leading-6 text-slate-600">Cupom pessoal e vinculado ao cliente informado. A validade e o status devem ser conferidos antes de aplicar o benefício no atendimento.</p>
                     </div>
-                    <div class="rounded-2xl border {{ $statusTone['border'] }} {{ $statusTone['bg'] }} px-5 py-4 text-center">
-                        <p class="text-xs font-black uppercase tracking-[0.16em] text-blue-700">Status do cupom</p>
-                        <p class="mt-1 text-4xl font-black uppercase {{ $statusTone['text'] }}">{{ $coupon->statusLabel() }}</p>
+                    <div class="flex items-center justify-center gap-4 rounded-2xl border {{ $statusTone['border'] }} {{ $statusTone['bg'] }} px-5 py-4 text-center">
+                        <span class="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-white text-3xl {{ $statusTone['text'] }} shadow-sm">{{ $statusTone['icon'] }}</span>
+                        <div>
+                            <p class="text-xs font-black uppercase tracking-[0.16em] text-blue-700">Status do cupom</p>
+                            <p class="mt-1 text-4xl font-black uppercase {{ $statusTone['text'] }}">{{ $coupon->statusLabel() }}</p>
+                        </div>
                     </div>
                 </div>
             </div>
