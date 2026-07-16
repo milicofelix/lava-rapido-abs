@@ -14,23 +14,23 @@
             </section>
         @endif
 
-        <section class="grid gap-4 md:grid-cols-2 xl:grid-cols-4" data-tour="subscription-summary">
-            <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+        <section class="grid min-w-0 gap-4 md:grid-cols-2 xl:grid-cols-4" data-tour="subscription-summary">
+            <div class="min-w-0 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
                 <p class="text-sm text-slate-500">Plano atual</p>
-                <p class="mt-2 text-2xl font-black text-slate-950">{{ $activeSubscription?->plan?->name ?? ($currentSubscription?->plan?->name ?? 'Nenhum') }}</p>
+                <p class="mt-2 break-words text-2xl font-black text-slate-950">{{ $activeSubscription?->plan?->name ?? ($currentSubscription?->plan?->name ?? 'Nenhum') }}</p>
             </div>
-            <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+            <div class="min-w-0 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
                 <p class="text-sm text-slate-500">Status</p>
                 <p class="mt-2 text-2xl font-black text-slate-950">{{ $location->accountStatusLabel() }}</p>
                 @if ($currentSubscription)
                     <p class="mt-1 text-xs font-bold text-slate-500">{{ $currentSubscription->statusLabel() }}</p>
                 @endif
             </div>
-            <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+            <div class="min-w-0 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
                 <p class="text-sm text-slate-500">Próxima cobrança</p>
-                <p class="mt-2 text-2xl font-black text-slate-950">{{ $activeSubscription?->ends_at?->format('d/m/Y') ?? $location->subscription_ends_at?->format('d/m/Y') ?? '-' }}</p>
+                <p class="mt-2 whitespace-nowrap text-2xl font-black text-slate-950">{{ $activeSubscription?->ends_at?->format('d/m/Y') ?? $location->subscription_ends_at?->format('d/m/Y') ?? '-' }}</p>
             </div>
-            <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+            <div class="min-w-0 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
                 <p class="text-sm text-slate-500">Dias restantes</p>
                 <p class="mt-2 text-2xl font-black text-slate-950">{{ $location->trialDaysRemaining() ?? ($location->subscription_ends_at ? max(0, (int) now()->startOfDay()->diffInDays($location->subscription_ends_at->copy()->startOfDay(), false)) : '-') }}</p>
             </div>
@@ -111,7 +111,51 @@
             </div>
 
             @if ($subscriptionHistory->isNotEmpty())
-                <div class="overflow-x-auto">
+                <div class="space-y-3 p-4 md:hidden">
+                    @foreach ($subscriptionHistory as $subscription)
+                        @php
+                            $statusClasses = match ($subscription->status) {
+                                \App\Models\Subscription::STATUS_ACTIVE => 'bg-emerald-100 text-emerald-800',
+                                \App\Models\Subscription::STATUS_PENDING => 'bg-amber-100 text-amber-800',
+                                \App\Models\Subscription::STATUS_EXPIRED => 'bg-slate-200 text-slate-700',
+                                \App\Models\Subscription::STATUS_CANCELED => 'bg-rose-100 text-rose-800',
+                                default => 'bg-slate-100 text-slate-700',
+                            };
+                        @endphp
+                        <article class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                            <div class="flex min-w-0 items-start justify-between gap-3">
+                                <div class="min-w-0">
+                                    <p class="break-words font-black text-slate-950">{{ $subscription->plan?->name ?? 'Plano removido' }}</p>
+                                    <p class="mt-1 text-xs font-semibold text-slate-500">Criada em {{ $subscription->created_at->format('d/m/Y H:i') }}</p>
+                                </div>
+                                <span class="shrink-0 rounded-full px-3 py-1 text-xs font-black {{ $statusClasses }}">{{ $subscription->statusLabel() }}</span>
+                            </div>
+
+                            <dl class="mt-4 grid gap-3 text-sm">
+                                <div class="rounded-xl bg-white px-3 py-2">
+                                    <dt class="text-xs font-black uppercase tracking-[0.12em] text-slate-500">Período</dt>
+                                    <dd class="mt-1 font-bold text-slate-800">
+                                        <span class="whitespace-nowrap">Início: {{ $subscription->started_at?->format('d/m/Y') ?? '-' }}</span>
+                                        <span class="mx-1 text-slate-300">•</span>
+                                        <span class="whitespace-nowrap">Fim: {{ $subscription->ends_at?->format('d/m/Y') ?? '-' }}</span>
+                                    </dd>
+                                </div>
+                                <div class="rounded-xl bg-white px-3 py-2">
+                                    <dt class="text-xs font-black uppercase tracking-[0.12em] text-slate-500">Pagamento</dt>
+                                    <dd class="mt-1 font-bold text-slate-800">{{ $subscription->payment_provider === 'mercado_pago' ? 'Mercado Pago' : 'Manual' }}</dd>
+                                    <dd class="mt-1 text-xs font-semibold text-slate-500">Pago em {{ $subscription->paid_at?->format('d/m/Y H:i') ?? '-' }}</dd>
+                                </div>
+                                <div class="rounded-xl bg-white px-3 py-2">
+                                    <dt class="text-xs font-black uppercase tracking-[0.12em] text-slate-500">Referência</dt>
+                                    <dd class="mt-1 break-all text-xs font-semibold text-slate-600">Pagamento: {{ $subscription->provider_payment_id ?? '-' }}</dd>
+                                    <dd class="mt-1 break-all text-xs font-semibold text-slate-600">Preferência: {{ $subscription->provider_preference_id ?? '-' }}</dd>
+                                </div>
+                            </dl>
+                        </article>
+                    @endforeach
+                </div>
+
+                <div class="hidden overflow-x-auto md:block">
                     <table class="min-w-full divide-y divide-slate-200 text-sm">
                         <thead class="bg-slate-50 text-left text-xs font-black uppercase text-slate-500">
                             <tr>
