@@ -13,7 +13,7 @@
     ]
   },
   "resources/js/Pages/Kanban.jsx": {
-    "file": "assets/Kanban-DOEVyZCp.js",
+    "file": "assets/Kanban-DOw_H1vw.js",
     "name": "Kanban",
     "src": "resources/js/Pages/Kanban.jsx",
     "isDynamicEntry": true,
@@ -23,7 +23,7 @@
     ]
   },
   "resources/js/Pages/Tracking.jsx": {
-    "file": "assets/Tracking-gacxs6B6.js",
+    "file": "assets/Tracking-DtL1SGIY.js",
     "name": "Tracking",
     "src": "resources/js/Pages/Tracking.jsx",
     "isDynamicEntry": true,
@@ -33,7 +33,7 @@
     ]
   },
   "resources/js/app.js": {
-    "file": "assets/app-19T3nq-F.js",
+    "file": "assets/app-DPlicTrh.js",
     "name": "app",
     "src": "resources/js/app.js",
     "isEntry": true,
