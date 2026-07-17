@@ -1,0 +1,45 @@
+{
+  "_jsx-runtime-u17CrQMm.js": {
+    "file": "assets/jsx-runtime-u17CrQMm.js",
+    "name": "jsx-runtime"
+  },
+  "resources/css/app.css": {
+    "file": "assets/app-DIkxLDNl.css",
+    "src": "resources/css/app.css",
+    "isEntry": true,
+    "name": "app",
+    "names": [
+      "app.css"
+    ]
+  },
+  "resources/js/Pages/Kanban.jsx": {
+    "file": "assets/Kanban-DOEVyZCp.js",
+    "name": "Kanban",
+    "src": "resources/js/Pages/Kanban.jsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_jsx-runtime-u17CrQMm.js",
+      "resources/js/app.js"
+    ]
+  },
+  "resources/js/Pages/Tracking.jsx": {
+    "file": "assets/Tracking-gacxs6B6.js",
+    "name": "Tracking",
+    "src": "resources/js/Pages/Tracking.jsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_jsx-runtime-u17CrQMm.js",
+      "resources/js/app.js"
+    ]
+  },
+  "resources/js/app.js": {
+    "file": "assets/app-19T3nq-F.js",
+    "name": "app",
+    "src": "resources/js/app.js",
+    "isEntry": true,
+    "dynamicImports": [
+      "resources/js/Pages/Kanban.jsx",
+      "resources/js/Pages/Tracking.jsx"
+    ]
+  }
+}
