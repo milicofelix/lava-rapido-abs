@@ -32,6 +32,20 @@ Documento de acompanhamento do que ja foi construido e do que ainda falta para d
 - [x] Revisao visual final responsiva em todas as telas.
 - [x] Navegacao principal mobile fixa para rotas mais usadas.
 - [x] Padronizar todos os textos acentuados em pt-BR.
+- [x] Base reutilizavel de tour guiado para onboarding de novas funcionalidades.
+- [x] Primeiro tour aplicado na abertura de lavagem.
+- [x] Tour guiado aplicado na listagem de lavagens.
+- [x] Tour guiado aplicado no Kanban operacional.
+- [x] Tour guiado aplicado no Dashboard.
+- [x] Tour guiado aplicado no Financeiro.
+- [x] Tour guiado aplicado nos detalhes da lavagem.
+- [x] Tour guiado aplicado na listagem de clientes.
+- [x] Tour guiado aplicado no cadastro e edicao de clientes.
+- [x] Tour guiado aplicado na listagem e formulario de veiculos.
+- [x] Tour guiado aplicado em Configuracoes da unidade.
+- [x] Tour guiado aplicado na listagem e formulario de servicos.
+- [x] Tour guiado aplicado na listagem e formulario de funcionarios.
+- [x] Tour guiado aplicado na Agenda.
 
 ## Usuarios, ACL e permissoes
 

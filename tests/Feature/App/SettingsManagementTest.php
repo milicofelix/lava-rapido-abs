@@ -82,6 +82,25 @@ class SettingsManagementTest extends TestCase
             ->assertSee('Habilitar Agenda');
     }
 
+    public function test_settings_page_exposes_guided_tour(): void
+    {
+        $admin = User::factory()->create(['role' => User::ROLE_ADMIN]);
+
+        $this->actingAs($admin)
+            ->get(route('settings.edit'))
+            ->assertOk()
+            ->assertSee('data-onboarding-tour', false)
+            ->assertSee('"key":"settings.edit.v1', false)
+            ->assertSee('settings.edit.v1')
+            ->assertSee('Configurações da unidade')
+            ->assertSee('data-tour="settings-unit"', false)
+            ->assertSee('data-tour="settings-hours"', false)
+            ->assertSee('data-tour="settings-modules"', false)
+            ->assertSee('data-tour="settings-loyalty"', false)
+            ->assertSee('data-tour="settings-permissions"', false)
+            ->assertSee('data-tour="settings-save"', false);
+    }
+
     public function test_admin_can_update_modules_and_theme(): void
     {
         $location = WashLocation::factory()->create();

@@ -1,6 +1,6 @@
 <x-app.layout heading="Clientes" title="Clientes · AutoFlow">
     <div class="space-y-5">
-        <section class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+        <section class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm" data-tour="customers-header">
             <div class="flex flex-wrap items-start justify-between gap-4">
                 <div>
                     <p class="text-xs font-black uppercase tracking-[0.18em] text-blue-700">Relacionamento</p>
@@ -10,7 +10,7 @@
                 <a href="{{ route('customers.create') }}" class="rounded-xl bg-blue-700 px-4 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-blue-800">Novo cliente</a>
             </div>
 
-            <form method="GET" class="mt-5 grid gap-3 md:grid-cols-[1fr_auto]">
+            <form method="GET" class="mt-5 grid gap-3 md:grid-cols-[1fr_auto]" data-tour="customers-search">
                 <label class="block">
                     <span class="sr-only">Buscar cliente</span>
                     <input name="search" value="{{ $search }}" placeholder="Buscar por nome, telefone ou placa" class="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100">
@@ -25,8 +25,10 @@
         </section>
 
         @if (session('import_summary'))
-            @php($importSummary = session('import_summary'))
-            <section class="rounded-2xl border border-emerald-200 bg-emerald-50 p-5 shadow-sm">
+            @php
+                $importSummary = session('import_summary');
+            @endphp
+            <section class="rounded-2xl border border-emerald-200 bg-emerald-50 p-5 shadow-sm" data-tour="customers-import-result">
                 <div class="flex flex-wrap items-start justify-between gap-4">
                     <div>
                         <p class="text-xs font-black uppercase tracking-[0.18em] text-emerald-700">Importação</p>
@@ -58,7 +60,7 @@
             </section>
         @endif
 
-        <section class="grid gap-3 md:grid-cols-3">
+        <section class="grid gap-3 md:grid-cols-3" data-tour="customers-indicators">
             <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
                 <p class="text-sm font-bold text-slate-500">Clientes na lista</p>
                 <p class="mt-2 text-3xl font-black text-slate-950">{{ $customers->total() }}</p>
@@ -73,14 +75,14 @@
             </div>
         </section>
 
-        <section class="rounded-2xl border border-blue-100 bg-blue-50 p-5 shadow-sm">
+        <section class="rounded-2xl border border-blue-100 bg-blue-50 p-5 shadow-sm" data-tour="customers-import">
             <div class="grid gap-5 lg:grid-cols-[1fr_420px] lg:items-start">
                 <div>
                     <p class="text-xs font-black uppercase tracking-[0.18em] text-blue-700">Importação em lote</p>
                     <h2 class="mt-1 font-black text-blue-950">Clientes e veículos por CSV</h2>
                     <p class="mt-1 text-sm font-semibold text-blue-800">Use para cadastrar uma carteira antiga sem digitar cliente por cliente. A placa é opcional; quando informada, marca e modelo precisam existir no catálogo de veículos.</p>
                     <div class="mt-3 rounded-2xl bg-white p-3 text-xs font-bold text-slate-600">
-                        Cabeçalho aceito: <span class="text-slate-950">nome,telefone,email,cpf,observacao,placa,marca,modelo,cor,observacao_veiculo</span>
+                        Cabeçalho aceito: <span class="text-slate-950">nome,telefone,email,observacao,placa,marca,modelo,cor,observacao_veiculo</span>
                     </div>
                     <a href="{{ route('customers.import-template') }}" class="mt-3 inline-flex rounded-xl border border-blue-200 bg-white px-4 py-2 text-sm font-black text-blue-700 hover:bg-blue-100">Baixar modelo CSV</a>
                 </div>
@@ -96,7 +98,7 @@
             </div>
         </section>
 
-        <section class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+        <section class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm" data-tour="customers-list">
             <div class="border-b border-slate-200 px-5 py-4">
                 <h2 class="font-black text-slate-950">Lista de clientes</h2>
             </div>
@@ -115,7 +117,9 @@
                             <p class="truncate">{{ $customer->email ?: 'E-mail não informado' }}</p>
                         </div>
                         <div>
-                            @php($progress = $customer->loyalty_progress)
+                            @php
+                                $progress = $customer->loyalty_progress;
+                            @endphp
                             @if ($progress['enabled'])
                                 <div class="flex items-center justify-between gap-2">
                                     <p class="text-xs font-black uppercase tracking-[0.12em] text-slate-500">Fidelidade</p>
@@ -150,4 +154,46 @@
 
         <div>{{ $customers->links() }}</div>
     </div>
+
+    @php
+        $customersTour = [
+            'key' => 'customers.index.v1',
+            'title' => 'Gerenciando clientes',
+            'steps' => [
+                [
+                    'target' => '[data-tour="customers-header"]',
+                    'title' => 'Carteira de clientes',
+                    'body' => 'Aqui você cadastra novos clientes e mantém a base organizada para abrir lavagens com menos erro.',
+                ],
+                [
+                    'target' => '[data-tour="customers-search"]',
+                    'title' => 'Busca rápida',
+                    'body' => 'Pesquise por nome, telefone ou placa. Isso ajuda a encontrar o cliente certo antes de editar ou abrir uma lavagem.',
+                ],
+                [
+                    'target' => '[data-tour="customers-import-result"]',
+                    'title' => 'Resumo da importação',
+                    'body' => 'Depois de importar um CSV, o sistema mostra quantos clientes e veículos foram criados, atualizados ou ignorados.',
+                ],
+                [
+                    'target' => '[data-tour="customers-indicators"]',
+                    'title' => 'Indicadores da lista',
+                    'body' => 'Use estes números para conferir o tamanho da busca atual, veículos carregados na página e quantidade exibida.',
+                ],
+                [
+                    'target' => '[data-tour="customers-import"]',
+                    'title' => 'Importação em lote',
+                    'body' => 'Use o modelo CSV para trazer uma carteira antiga de clientes e veículos. Isso evita cadastrar tudo manualmente.',
+                ],
+                [
+                    'target' => '[data-tour="customers-list"]',
+                    'title' => 'Lista de clientes',
+                    'body' => 'A lista mostra contato, progresso de fidelidade, quantidade de veículos e o botão para editar o cadastro.',
+                ],
+            ],
+        ];
+    @endphp
+    <script type="application/json" data-onboarding-tour>
+        {!! json_encode($customersTour, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) !!}
+    </script>
 </x-app.layout>

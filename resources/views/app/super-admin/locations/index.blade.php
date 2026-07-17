@@ -1,6 +1,6 @@
 <x-app.layout heading="Unidades" title="Unidades · AutoFlow">
     <div class="space-y-5">
-        <div class="rounded-2xl border border-blue-200 bg-blue-50 p-5 text-sm text-blue-950">
+        <div class="rounded-2xl border border-blue-200 bg-blue-50 p-5 text-sm text-blue-950" data-tour="super-locations-intro">
             <p class="font-bold">Painel comercial do Super Admin</p>
             <p class="mt-1">Gerencie o ciclo comercial das unidades: trial, assinatura, suspensão e reativação.</p>
         </div>
@@ -22,7 +22,7 @@
             </div>
         @endif
 
-        <section class="grid gap-4 md:grid-cols-5">
+        <section class="grid gap-4 md:grid-cols-5" data-tour="super-locations-summary">
             <div class="rounded-xl border border-slate-200 bg-white p-5">
                 <p class="text-sm text-slate-500">Trial</p>
                 <p class="mt-2 text-2xl font-black text-amber-700">{{ $summary['trial'] }}</p>
@@ -45,7 +45,7 @@
             </div>
         </section>
 
-        <section class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+        <section class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm" data-tour="super-locations-filters">
             <form method="GET" class="grid gap-3 lg:grid-cols-[1fr_240px_auto_auto]">
                 <input name="search" value="{{ $search }}" placeholder="Buscar por unidade, dono, e-mail, endereço ou cidade" class="rounded-xl border border-slate-300 px-4 py-2 text-sm">
                 <select name="status" class="rounded-xl border border-slate-300 px-4 py-2 text-sm">
@@ -59,7 +59,7 @@
             </form>
         </section>
 
-        <section class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+        <section class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm" data-tour="super-locations-list">
             <div class="border-b border-slate-200 px-5 py-4">
                 <h2 class="font-black text-slate-950">Unidades cadastradas</h2>
                 <p class="mt-1 text-sm text-slate-500">Controle comercial manual antes da integração com pagamento real.</p>
@@ -77,7 +77,7 @@
                             default => 'bg-amber-100 text-amber-800',
                         };
                     @endphp
-                    <article class="grid gap-5 px-5 py-5 xl:grid-cols-[1fr_360px]">
+                    <article class="grid gap-5 px-5 py-5 xl:grid-cols-[1fr_360px]" @if ($loop->first) data-tour="super-locations-row" @endif>
                         <div>
                             <div class="flex flex-wrap items-center gap-2">
                                 <h3 class="text-lg font-black text-slate-950">{{ $location->name }}</h3>
@@ -121,7 +121,7 @@
                             </dl>
                         </div>
 
-                        <div class="space-y-3 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                        <div class="space-y-3 rounded-2xl border border-slate-200 bg-slate-50 p-4" @if ($loop->first) data-tour="super-locations-actions" @endif>
                             <form method="POST" action="{{ route('super-admin.locations.extend-trial', ['washLocation' => $location->id]) }}" class="grid gap-2 sm:grid-cols-[1fr_auto]">
                                 @csrf
                                 @method('PATCH')
@@ -170,4 +170,47 @@
             </div>
         </section>
     </div>
+
+    @php
+        $superLocationsTour = [
+            'key' => 'super-admin.locations.index.v1',
+            'title' => 'Unidades do produto',
+            'steps' => [
+                [
+                    'target' => '[data-tour="super-locations-intro"]',
+                    'title' => 'Painel comercial',
+                    'body' => 'Aqui o Super Admin acompanha o ciclo comercial de cada unidade cadastrada.',
+                ],
+                [
+                    'target' => '[data-tour="super-locations-summary"]',
+                    'title' => 'Situação geral',
+                    'body' => 'Os indicadores mostram trials, assinantes, expiradas, suspensas e total de unidades.',
+                ],
+                [
+                    'target' => '[data-tour="super-locations-filters"]',
+                    'title' => 'Busca por unidade',
+                    'body' => 'Filtre por unidade, dono, e-mail, endereço, cidade ou status comercial.',
+                ],
+                [
+                    'target' => '[data-tour="super-locations-list"]',
+                    'title' => 'Unidades cadastradas',
+                    'body' => 'A lista mostra dados do dono, endereço, trial, assinatura, usuários e visibilidade pública.',
+                ],
+                [
+                    'target' => '[data-tour="super-locations-row"]',
+                    'title' => 'Leitura da unidade',
+                    'body' => 'Use os badges para identificar rapidamente se a operação está liberada, bloqueada ou suspensa.',
+                ],
+                [
+                    'target' => '[data-tour="super-locations-actions"]',
+                    'title' => 'Ações comerciais',
+                    'body' => 'Prorrogue trial, ative assinatura manualmente, suspenda ou reative a unidade quando necessário.',
+                ],
+            ],
+        ];
+    @endphp
+
+    <script type="application/json" data-onboarding-tour>
+        {!! json_encode($superLocationsTour, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) !!}
+    </script>
 </x-app.layout>

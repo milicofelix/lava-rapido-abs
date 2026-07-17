@@ -14,29 +14,29 @@
             </section>
         @endif
 
-        <section class="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-            <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+        <section class="grid min-w-0 gap-4 md:grid-cols-2 xl:grid-cols-4" data-tour="subscription-summary">
+            <div class="min-w-0 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
                 <p class="text-sm text-slate-500">Plano atual</p>
-                <p class="mt-2 text-2xl font-black text-slate-950">{{ $activeSubscription?->plan?->name ?? ($currentSubscription?->plan?->name ?? 'Nenhum') }}</p>
+                <p class="mt-2 break-words text-2xl font-black text-slate-950">{{ $activeSubscription?->plan?->name ?? ($currentSubscription?->plan?->name ?? 'Nenhum') }}</p>
             </div>
-            <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+            <div class="min-w-0 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
                 <p class="text-sm text-slate-500">Status</p>
                 <p class="mt-2 text-2xl font-black text-slate-950">{{ $location->accountStatusLabel() }}</p>
                 @if ($currentSubscription)
                     <p class="mt-1 text-xs font-bold text-slate-500">{{ $currentSubscription->statusLabel() }}</p>
                 @endif
             </div>
-            <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+            <div class="min-w-0 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
                 <p class="text-sm text-slate-500">Próxima cobrança</p>
-                <p class="mt-2 text-2xl font-black text-slate-950">{{ $activeSubscription?->ends_at?->format('d/m/Y') ?? $location->subscription_ends_at?->format('d/m/Y') ?? '-' }}</p>
+                <p class="mt-2 whitespace-nowrap text-2xl font-black text-slate-950">{{ $activeSubscription?->ends_at?->format('d/m/Y') ?? $location->subscription_ends_at?->format('d/m/Y') ?? '-' }}</p>
             </div>
-            <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+            <div class="min-w-0 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
                 <p class="text-sm text-slate-500">Dias restantes</p>
                 <p class="mt-2 text-2xl font-black text-slate-950">{{ $location->trialDaysRemaining() ?? ($location->subscription_ends_at ? max(0, (int) now()->startOfDay()->diffInDays($location->subscription_ends_at->copy()->startOfDay(), false)) : '-') }}</p>
             </div>
         </section>
 
-        <section class="rounded-2xl border border-blue-200 bg-blue-50 p-5 text-sm text-blue-950">
+        <section class="rounded-2xl border border-blue-200 bg-blue-50 p-5 text-sm text-blue-950" data-tour="subscription-choice">
             <p class="font-bold">Escolha de plano</p>
             @if ($mercadoPagoConfigured)
                 <p class="mt-1">Escolha um plano para abrir o checkout do Mercado Pago. A assinatura será ativada automaticamente após a confirmação do pagamento.</p>
@@ -51,7 +51,7 @@
                 <p class="mt-1">Mercado Pago ainda não configurado. Depois de escolher um plano, o Super Admin confirma a assinatura no Admin Produto.</p>
             @endif
             @if ($currentSubscription?->status === \App\Models\Subscription::STATUS_PENDING && $currentSubscription->checkout_url)
-                <div class="mt-4 flex flex-wrap gap-3">
+                <div class="mt-4 flex flex-wrap gap-3" data-tour="subscription-pending">
                     <a href="{{ $currentSubscription->checkout_url }}" class="inline-flex rounded-xl bg-blue-700 px-4 py-2.5 text-sm font-bold text-white hover:bg-blue-800">Continuar pagamento pendente</a>
                     <form method="POST" action="{{ route('subscriptions.cancel-pending') }}">
                         @csrf
@@ -60,7 +60,7 @@
                     </form>
                 </div>
             @elseif ($currentSubscription?->status === \App\Models\Subscription::STATUS_PENDING)
-                <form method="POST" action="{{ route('subscriptions.cancel-pending') }}" class="mt-4">
+                <form method="POST" action="{{ route('subscriptions.cancel-pending') }}" class="mt-4" data-tour="subscription-pending">
                     @csrf
                     @method('PATCH')
                     <button class="rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-bold text-slate-700 hover:bg-slate-50">Cancelar escolha de plano</button>
@@ -68,12 +68,12 @@
             @endif
         </section>
 
-        <section class="grid gap-4 lg:grid-cols-3">
+        <section class="grid gap-4 lg:grid-cols-3" data-tour="subscription-plans">
             @forelse ($plans as $plan)
                 @php
                     $isCurrentPlan = $activePlanId !== null && (int) $activePlanId === (int) $plan->id;
                 @endphp
-                <article class="rounded-2xl border {{ $isCurrentPlan ? 'border-emerald-300 bg-emerald-50/40 ring-2 ring-emerald-100' : 'border-slate-200 bg-white' }} p-5 shadow-sm">
+                <article class="rounded-2xl border {{ $isCurrentPlan ? 'border-emerald-300 bg-emerald-50/40 ring-2 ring-emerald-100' : 'border-slate-200 bg-white' }} p-5 shadow-sm" @if ($loop->first) data-tour="subscription-plan-card" @endif>
                     <div class="flex items-start justify-between gap-3">
                         <div>
                             <h2 class="text-xl font-black text-slate-950">{{ $plan->name }}</h2>
@@ -86,7 +86,7 @@
                         @endif
                     </div>
                     <p class="mt-5 text-3xl font-black {{ $isCurrentPlan ? 'text-emerald-700' : 'text-blue-700' }}">{{ $plan->formattedPrice() }}</p>
-                    <form method="POST" action="{{ route('subscriptions.choose') }}" class="mt-5">
+                    <form method="POST" action="{{ route('subscriptions.choose') }}" class="mt-5" @if ($loop->first) data-tour="subscription-plan-action" @endif>
                         @csrf
                         <input type="hidden" name="plan_id" value="{{ $plan->id }}">
                         <button @if ($isCurrentPlan || ($mercadoPagoConfigured && ! $mercadoPagoLiveCheckoutAllowed)) disabled @endif class="w-full rounded-xl bg-blue-700 px-4 py-2.5 text-sm font-bold text-white hover:bg-blue-800 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-500">{{ $isCurrentPlan ? 'Assinatura ativa' : ($mercadoPagoConfigured ? 'Pagar com Mercado Pago' : 'Escolher plano') }}</button>
@@ -102,7 +102,7 @@
             @endforelse
         </section>
 
-        <section class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+        <section class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm" data-tour="subscription-history">
             <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 px-5 py-4">
                 <div>
                     <h2 class="text-lg font-black text-slate-950">Histórico de assinatura</h2>
@@ -111,7 +111,51 @@
             </div>
 
             @if ($subscriptionHistory->isNotEmpty())
-                <div class="overflow-x-auto">
+                <div class="space-y-3 p-4 md:hidden">
+                    @foreach ($subscriptionHistory as $subscription)
+                        @php
+                            $statusClasses = match ($subscription->status) {
+                                \App\Models\Subscription::STATUS_ACTIVE => 'bg-emerald-100 text-emerald-800',
+                                \App\Models\Subscription::STATUS_PENDING => 'bg-amber-100 text-amber-800',
+                                \App\Models\Subscription::STATUS_EXPIRED => 'bg-slate-200 text-slate-700',
+                                \App\Models\Subscription::STATUS_CANCELED => 'bg-rose-100 text-rose-800',
+                                default => 'bg-slate-100 text-slate-700',
+                            };
+                        @endphp
+                        <article class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                            <div class="flex min-w-0 items-start justify-between gap-3">
+                                <div class="min-w-0">
+                                    <p class="break-words font-black text-slate-950">{{ $subscription->plan?->name ?? 'Plano removido' }}</p>
+                                    <p class="mt-1 text-xs font-semibold text-slate-500">Criada em {{ $subscription->created_at->format('d/m/Y H:i') }}</p>
+                                </div>
+                                <span class="shrink-0 rounded-full px-3 py-1 text-xs font-black {{ $statusClasses }}">{{ $subscription->statusLabel() }}</span>
+                            </div>
+
+                            <dl class="mt-4 grid gap-3 text-sm">
+                                <div class="rounded-xl bg-white px-3 py-2">
+                                    <dt class="text-xs font-black uppercase tracking-[0.12em] text-slate-500">Período</dt>
+                                    <dd class="mt-1 font-bold text-slate-800">
+                                        <span class="whitespace-nowrap">Início: {{ $subscription->started_at?->format('d/m/Y') ?? '-' }}</span>
+                                        <span class="mx-1 text-slate-300">•</span>
+                                        <span class="whitespace-nowrap">Fim: {{ $subscription->ends_at?->format('d/m/Y') ?? '-' }}</span>
+                                    </dd>
+                                </div>
+                                <div class="rounded-xl bg-white px-3 py-2">
+                                    <dt class="text-xs font-black uppercase tracking-[0.12em] text-slate-500">Pagamento</dt>
+                                    <dd class="mt-1 font-bold text-slate-800">{{ $subscription->payment_provider === 'mercado_pago' ? 'Mercado Pago' : 'Manual' }}</dd>
+                                    <dd class="mt-1 text-xs font-semibold text-slate-500">Pago em {{ $subscription->paid_at?->format('d/m/Y H:i') ?? '-' }}</dd>
+                                </div>
+                                <div class="rounded-xl bg-white px-3 py-2">
+                                    <dt class="text-xs font-black uppercase tracking-[0.12em] text-slate-500">Referência</dt>
+                                    <dd class="mt-1 break-all text-xs font-semibold text-slate-600">Pagamento: {{ $subscription->provider_payment_id ?? '-' }}</dd>
+                                    <dd class="mt-1 break-all text-xs font-semibold text-slate-600">Preferência: {{ $subscription->provider_preference_id ?? '-' }}</dd>
+                                </div>
+                            </dl>
+                        </article>
+                    @endforeach
+                </div>
+
+                <div class="hidden overflow-x-auto md:block">
                     <table class="min-w-full divide-y divide-slate-200 text-sm">
                         <thead class="bg-slate-50 text-left text-xs font-black uppercase text-slate-500">
                             <tr>
@@ -163,4 +207,52 @@
             @endif
         </section>
     </div>
+
+    @php
+        $subscriptionTour = [
+            'key' => 'subscriptions.show.v1',
+            'title' => 'Entendendo a assinatura',
+            'steps' => [
+                [
+                    'target' => '[data-tour="subscription-summary"]',
+                    'title' => 'Situação da unidade',
+                    'body' => 'Aqui ficam o plano atual, status da assinatura, próxima cobrança e dias restantes para acompanhar a liberação da unidade.',
+                ],
+                [
+                    'target' => '[data-tour="subscription-choice"]',
+                    'title' => 'Escolha de plano',
+                    'body' => 'Este bloco explica como o checkout está configurado e mostra pendências quando existe uma escolha de plano ainda não concluída.',
+                ],
+                [
+                    'target' => '[data-tour="subscription-pending"]',
+                    'title' => 'Pagamento pendente',
+                    'body' => 'Quando houver uma tentativa em aberto, use estes atalhos para continuar o checkout ou cancelar a escolha antes de selecionar outro plano.',
+                ],
+                [
+                    'target' => '[data-tour="subscription-plans"]',
+                    'title' => 'Planos disponíveis',
+                    'body' => 'Os cards mostram somente planos ativos para contratação. O plano contratado fica destacado como Plano atual.',
+                ],
+                [
+                    'target' => '[data-tour="subscription-plan-card"]',
+                    'title' => 'Card do plano',
+                    'body' => 'Confira nome, trial, preço e selo do plano antes de iniciar a contratação.',
+                ],
+                [
+                    'target' => '[data-tour="subscription-plan-action"]',
+                    'title' => 'Contratação',
+                    'body' => 'Use o botão do card para escolher o plano ou abrir o Mercado Pago quando o checkout estiver configurado.',
+                ],
+                [
+                    'target' => '[data-tour="subscription-history"]',
+                    'title' => 'Histórico',
+                    'body' => 'Aqui ficam as escolhas, pagamentos, renovações e referências do provedor para conferência futura.',
+                ],
+            ],
+        ];
+    @endphp
+
+    <script type="application/json" data-onboarding-tour>
+        {!! json_encode($subscriptionTour, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) !!}
+    </script>
 </x-app.layout>

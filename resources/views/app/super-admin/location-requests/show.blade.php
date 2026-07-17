@@ -27,12 +27,12 @@
             </div>
         @endif
 
-        <div class="flex flex-wrap items-center justify-between gap-3">
+        <div class="flex flex-wrap items-center justify-between gap-3" data-tour="super-request-navigation">
             <a href="{{ route('super-admin.location-requests.index') }}" class="rounded-xl border border-slate-300 px-4 py-2 text-sm font-bold text-slate-700">← Voltar para solicitações</a>
             <span class="rounded-full px-3 py-1 text-xs font-black {{ $badgeClass }}">{{ $locationRequest->statusLabel() }}</span>
         </div>
 
-        <section class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+        <section class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm" data-tour="super-request-detail">
             <div class="flex flex-wrap items-start justify-between gap-4 border-b border-slate-200 pb-5">
                 <div>
                     <p class="text-xs font-black uppercase tracking-[0.22em] text-blue-600">Lava-rápido solicitado</p>
@@ -42,11 +42,11 @@
 
                 @if ($locationRequest->isPending())
                     <div class="grid gap-3 sm:grid-cols-2">
-                        <form method="POST" action="{{ route('super-admin.location-requests.approve', $locationRequest) }}" class="rounded-2xl border border-emerald-200 bg-emerald-50 p-4" data-location-approval-form>
+                        <form method="POST" action="{{ route('super-admin.location-requests.approve', $locationRequest) }}" class="rounded-2xl border border-emerald-200 bg-emerald-50 p-4" data-location-approval-form data-tour="super-request-approval">
                             @csrf
                             @method('PATCH')
                             <label class="text-xs font-black uppercase tracking-[0.18em] text-emerald-700">Aprovar</label>
-                            <div class="mt-3 rounded-xl border border-emerald-200 bg-white/80 p-3">
+                            <div class="mt-3 rounded-xl border border-emerald-200 bg-white/80 p-3" data-tour="super-request-geocode">
                                 <div class="flex flex-wrap items-start justify-between gap-2">
                                     <div>
                                         <p class="text-sm font-black text-slate-950">Localização no mapa</p>
@@ -66,7 +66,7 @@
                                     </div>
                                     <span class="mt-1 block text-xs text-slate-600">Use este campo apenas se a busca automática não encontrar o endereço.</span>
                                 </label>
-                                <div class="mt-3 grid gap-2 sm:grid-cols-2">
+                                <div class="mt-3 grid gap-2 sm:grid-cols-2" data-tour="super-request-coordinates">
                                     <label class="block">
                                         <span class="text-xs font-bold text-slate-600">Latitude</span>
                                         <input type="hidden" name="latitude" value="{{ old('latitude') }}" data-coordinate-payload="latitude">
@@ -99,7 +99,7 @@
                             <button class="mt-3 w-full rounded-xl bg-emerald-600 px-4 py-2 text-sm font-black text-white">Aprovar e iniciar trial</button>
                         </form>
 
-                        <form method="POST" action="{{ route('super-admin.location-requests.reject', $locationRequest) }}" class="rounded-2xl border border-rose-200 bg-rose-50 p-4">
+                        <form method="POST" action="{{ route('super-admin.location-requests.reject', $locationRequest) }}" class="rounded-2xl border border-rose-200 bg-rose-50 p-4" data-tour="super-request-rejection">
                             @csrf
                             @method('PATCH')
                             <label class="text-xs font-black uppercase tracking-[0.18em] text-rose-700">Rejeitar</label>
@@ -132,7 +132,7 @@
             @enderror
 
             @if ($locationRequest->washLocation)
-                <div class="mt-5 rounded-2xl border border-emerald-200 bg-emerald-50 p-5">
+                <div class="mt-5 rounded-2xl border border-emerald-200 bg-emerald-50 p-5" data-tour="super-request-created-location">
                     <p class="text-xs font-black uppercase tracking-[0.18em] text-emerald-700">Unidade criada</p>
                     <div class="mt-3 flex flex-wrap items-center justify-between gap-3">
                         <div>
@@ -149,7 +149,7 @@
                 </div>
             @endif
 
-            <div class="mt-6 grid gap-5 lg:grid-cols-2">
+            <div class="mt-6 grid gap-5 lg:grid-cols-2" data-tour="super-request-data">
                 <div class="rounded-2xl border border-slate-200 p-5">
                     <h3 class="font-black text-slate-950">Responsável</h3>
                     <dl class="mt-4 space-y-3 text-sm">
@@ -184,6 +184,59 @@
             @endif
         </section>
     </div>
+
+    @php
+        $superRequestDetailTour = [
+            'key' => 'super-admin.location-requests.show.v1',
+            'title' => 'Análise da solicitação',
+            'steps' => [
+                [
+                    'target' => '[data-tour="super-request-navigation"]',
+                    'title' => 'Contexto e status',
+                    'body' => 'Volte para a fila ou confira rapidamente se a solicitação ainda está pendente, aprovada ou rejeitada.',
+                ],
+                [
+                    'target' => '[data-tour="super-request-detail"]',
+                    'title' => 'Dados principais',
+                    'body' => 'Revise nome do lava-rápido, data do pedido e informações antes de tomar uma decisão.',
+                ],
+                [
+                    'target' => '[data-tour="super-request-approval"]',
+                    'title' => 'Aprovação',
+                    'body' => 'Ao aprovar, o sistema cria a unidade, o dono e inicia o trial conforme as regras comerciais.',
+                ],
+                [
+                    'target' => '[data-tour="super-request-geocode"]',
+                    'title' => 'Localização no mapa',
+                    'body' => 'Carregue latitude e longitude pelo endereço para evitar unidade publicada em local incorreto.',
+                ],
+                [
+                    'target' => '[data-tour="super-request-coordinates"]',
+                    'title' => 'Coordenadas',
+                    'body' => 'Estes campos entram no payload da aprovação e alimentam o mapa público.',
+                ],
+                [
+                    'target' => '[data-tour="super-request-rejection"]',
+                    'title' => 'Rejeição',
+                    'body' => 'Quando a solicitação não deve seguir, informe o motivo para manter histórico da decisão.',
+                ],
+                [
+                    'target' => '[data-tour="super-request-created-location"]',
+                    'title' => 'Unidade criada',
+                    'body' => 'Após aprovação, este bloco mostra status comercial, trial, coordenadas e link público.',
+                ],
+                [
+                    'target' => '[data-tour="super-request-data"]',
+                    'title' => 'Dados conferidos',
+                    'body' => 'Confira responsável, contato, endereço e observações enviadas pelo solicitante.',
+                ],
+            ],
+        ];
+    @endphp
+
+    <script type="application/json" data-onboarding-tour>
+        {!! json_encode($superRequestDetailTour, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) !!}
+    </script>
 
     <script>
         document.querySelectorAll('[data-location-approval-form]').forEach((form) => {

@@ -78,7 +78,12 @@ class LoyaltyReportTest extends TestCase
             ->assertSee('Cliente Relatorio')
             ->assertSee('FID-ATIVO-001')
             ->assertSee('FID-USADO-001')
-            ->assertSee('R$ 35,00');
+            ->assertSee('R$ 35,00')
+            ->assertSee('data-onboarding-tour', false)
+            ->assertSee('loyalty-reports.index.v1')
+            ->assertSee('data-tour="loyalty-filters"', false)
+            ->assertSee('data-tour="loyalty-coupons"', false)
+            ->assertSee('Entendendo a Fidelidade');
     }
 
     public function test_loyalty_report_filters_by_customer_and_status(): void
@@ -279,7 +284,6 @@ class LoyaltyReportTest extends TestCase
             'wash_location_id' => $location->id,
             'name' => 'Cliente Busca',
             'phone' => '(11) 98888-7777',
-            'cpf' => '111.222.333-44',
         ]);
         $otherCustomer = Customer::factory()->create([
             'wash_location_id' => $location->id,
@@ -510,6 +514,11 @@ class LoyaltyReportTest extends TestCase
             ->assertSee('Sem retorno recente')
             ->assertSee('Cliente Sumido')
             ->assertSee('https://wa.me/5511988880001', false)
+            ->assertSee('data-onboarding-tour', false)
+            ->assertSee('loyalty-campaigns.index.v1')
+            ->assertSee('data-tour="loyalty-campaigns-grid"', false)
+            ->assertSee('data-tour="loyalty-campaigns-message"', false)
+            ->assertSee('Entendendo as Campanhas')
             ->assertDontSee('Cliente Outra Unidade');
     }
 

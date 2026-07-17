@@ -1,16 +1,16 @@
 <x-app.layout heading="Serviços" title="Serviços · AutoFlow">
     <div class="space-y-5">
-        <section class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+        <section class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm" data-tour="services-header">
             <div class="flex flex-wrap items-start justify-between gap-4">
                 <div>
                     <p class="text-xs font-black uppercase tracking-[0.18em] text-blue-700">Catálogo operacional</p>
                     <h2 class="mt-1 text-2xl font-black text-slate-950">Serviços cadastrados</h2>
                     <p class="mt-1 text-sm text-slate-500">Organize os serviços, preços, tempo estimado e disponibilidade para novas lavagens.</p>
                 </div>
-                <a href="{{ route('services.create') }}" class="rounded-xl bg-blue-700 px-4 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-blue-800">Novo serviço</a>
+                <a href="{{ route('services.create') }}" class="rounded-xl bg-blue-700 px-4 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-blue-800" data-tour="services-create">Novo serviço</a>
             </div>
 
-            <form method="GET" class="mt-5 grid gap-3 md:grid-cols-[1fr_auto]">
+            <form method="GET" class="mt-5 grid gap-3 md:grid-cols-[1fr_auto]" data-tour="services-search">
                 <label class="block">
                     <span class="sr-only">Buscar serviço</span>
                     <input name="search" value="{{ $search }}" placeholder="Buscar por nome ou categoria" class="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100">
@@ -24,7 +24,7 @@
             </form>
         </section>
 
-        <section class="grid gap-3 md:grid-cols-3">
+        <section class="grid gap-3 md:grid-cols-3" data-tour="services-indicators">
             <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
                 <p class="text-sm font-bold text-slate-500">Serviços na lista</p>
                 <p class="mt-2 text-3xl font-black text-slate-950">{{ $services->total() }}</p>
@@ -41,14 +41,14 @@
             </div>
         </section>
 
-        <section class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+        <section class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm" data-tour="services-list">
             <div class="border-b border-slate-200 px-5 py-4">
                 <h2 class="font-black text-slate-950">Lista de serviços</h2>
             </div>
 
             <div class="divide-y divide-slate-100">
                 @forelse ($services as $service)
-                    <article class="grid gap-4 px-5 py-4 md:grid-cols-[1fr_160px_130px_120px_auto] md:items-center">
+                    <article class="grid gap-4 px-5 py-4 md:grid-cols-[1fr_160px_130px_120px_auto] md:items-center" @if ($loop->first) data-tour="services-row" @endif>
                         <div class="min-w-0">
                             <p class="truncate font-black text-slate-950">{{ $service->name }}</p>
                             @if ($service->description)
@@ -83,4 +83,46 @@
 
         <div>{{ $services->links() }}</div>
     </div>
+
+    @php
+        $servicesTour = [
+            'key' => 'services.index.v1',
+            'title' => 'Catálogo de serviços',
+            'steps' => [
+                [
+                    'target' => '[data-tour="services-header"]',
+                    'title' => 'Catálogo operacional',
+                    'body' => 'Esta tela reúne os serviços que poderão ser escolhidos na abertura de uma lavagem.',
+                ],
+                [
+                    'target' => '[data-tour="services-create"]',
+                    'title' => 'Novo serviço',
+                    'body' => 'Use este botão para cadastrar novas opções, como lavagem completa, cera, polimento ou higienização.',
+                ],
+                [
+                    'target' => '[data-tour="services-search"]',
+                    'title' => 'Busca rápida',
+                    'body' => 'Procure por nome ou categoria para encontrar serviços em catálogos maiores.',
+                ],
+                [
+                    'target' => '[data-tour="services-indicators"]',
+                    'title' => 'Indicadores do catálogo',
+                    'body' => 'Acompanhe a quantidade de serviços, quantos estão ativos nesta página e o preço médio exibido.',
+                ],
+                [
+                    'target' => '[data-tour="services-list"]',
+                    'title' => 'Lista de serviços',
+                    'body' => 'Cada linha mostra nome, categoria, preço, tempo estimado e se o serviço está disponível para novas lavagens.',
+                ],
+                [
+                    'target' => '[data-tour="services-row"]',
+                    'title' => 'Editar serviço',
+                    'body' => 'Edite um serviço quando precisar ajustar preço, tempo, categoria, descrição ou disponibilidade.',
+                ],
+            ],
+        ];
+    @endphp
+    <script type="application/json" data-onboarding-tour>
+        {!! json_encode($servicesTour, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) !!}
+    </script>
 </x-app.layout>

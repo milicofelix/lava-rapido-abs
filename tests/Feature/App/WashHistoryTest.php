@@ -74,6 +74,12 @@ class WashHistoryTest extends TestCase
             ->assertSee('HST1A23')
             ->assertSee('Lavagem Premium')
             ->assertSee('Ana Secagem')
+            ->assertSee('data-onboarding-tour', false)
+            ->assertSee('history.index.v1')
+            ->assertSee('data-tour="history-filters"', false)
+            ->assertSee('data-tour="history-summary"', false)
+            ->assertSee('data-tour="history-row"', false)
+            ->assertSee('Entendendo o Histórico')
             ->assertDontSee($otherOrder->code);
     }
 

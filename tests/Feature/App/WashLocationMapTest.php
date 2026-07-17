@@ -67,7 +67,18 @@ class WashLocationMapTest extends TestCase
             ->assertSee('Não foi possível acessar sua localização')
             ->assertSee('data-map-geolocation', false)
             ->assertSee('data-map-reset', false)
-            ->assertSee('https://wa.me/5511988881101', false);
+            ->assertSee('https://wa.me/5511988881101', false)
+            ->assertSee('data-onboarding-tour', false)
+            ->assertSee('public.locations.index.v1')
+            ->assertSee('data-tour="public-map-header"', false)
+            ->assertSee('data-tour="public-map-search"', false)
+            ->assertSee('data-tour="public-map-filters"', false)
+            ->assertSee('data-tour="public-map-canvas"', false)
+            ->assertSee('data-tour="public-map-actions"', false)
+            ->assertSee('data-tour="public-map-summary"', false)
+            ->assertSee('data-tour="public-map-favorites"', false)
+            ->assertSee('data-tour="public-map-location-card"', false)
+            ->assertSee('data-tour="public-map-location-actions"', false);
     }
 
     public function test_authenticated_user_sees_panel_action_in_public_headers_instead_of_login(): void
@@ -275,7 +286,18 @@ class WashLocationMapTest extends TestCase
             ->assertDontSee('Polimento de outra unidade')
             ->assertSee('Chamar no WhatsApp')
             ->assertSee('Como chegar')
-            ->assertSee('https://wa.me/5511988881101', false);
+            ->assertSee('https://wa.me/5511988881101', false)
+            ->assertSee('data-onboarding-tour', false)
+            ->assertSee('public.locations.show.v1')
+            ->assertSee('data-tour="public-location-header"', false)
+            ->assertSee('data-tour="public-location-hero"', false)
+            ->assertSee('data-tour="public-location-primary-actions"', false)
+            ->assertSee('data-tour="public-location-summary"', false)
+            ->assertSee('data-tour="public-location-profile"', false)
+            ->assertSee('data-tour="public-location-hours"', false)
+            ->assertSee('data-tour="public-location-reviews"', false)
+            ->assertSee('data-tour="public-location-services"', false)
+            ->assertSee('data-tour="public-location-sidebar-actions"', false);
     }
 
     public function test_public_location_detail_shows_real_time_business_hours_summary(): void

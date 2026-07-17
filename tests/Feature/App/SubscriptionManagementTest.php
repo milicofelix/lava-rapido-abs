@@ -43,7 +43,15 @@ class SubscriptionManagementTest extends TestCase
             ->assertSee('Próxima cobrança')
             ->assertSee('Plano atual')
             ->assertSee('Assinatura ativa')
-            ->assertSee('Este é o plano ativo da unidade.');
+            ->assertSee('Este é o plano ativo da unidade.')
+            ->assertSee('data-onboarding-tour', false)
+            ->assertSee('subscriptions.show.v1')
+            ->assertSee('data-tour="subscription-summary"', false)
+            ->assertSee('data-tour="subscription-choice"', false)
+            ->assertSee('data-tour="subscription-plans"', false)
+            ->assertSee('data-tour="subscription-plan-card"', false)
+            ->assertSee('data-tour="subscription-plan-action"', false)
+            ->assertSee('data-tour="subscription-history"', false);
     }
 
     public function test_owner_ve_plano_atual_no_card_do_plano_contratado(): void

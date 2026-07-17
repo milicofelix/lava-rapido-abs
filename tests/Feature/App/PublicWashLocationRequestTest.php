@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\App;
 
+use App\Models\User;
 use App\Models\WashLocation;
 use App\Models\WashLocationRequest;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -24,7 +25,31 @@ class PublicWashLocationRequestTest extends TestCase
             ->assertSee('data-mask="cep"', false)
             ->assertSee('data-viacep-trigger', false)
             ->assertSee('data-address-field="address"', false)
-            ->assertSee('name="address_number"', false);
+            ->assertSee('name="address_number"', false)
+            ->assertSee('data-onboarding-tour', false)
+            ->assertSee('public.location-requests.create.v1')
+            ->assertSee('data-tour="location-request-header"', false)
+            ->assertSee('data-tour="location-request-flow"', false)
+            ->assertSee('data-tour="location-request-form"', false)
+            ->assertSee('data-tour="location-request-owner"', false)
+            ->assertSee('data-tour="location-request-password"', false)
+            ->assertSee('data-tour="location-request-business"', false)
+            ->assertSee('data-tour="location-request-address"', false)
+            ->assertSee('data-tour="location-request-terms"', false)
+            ->assertSee('data-tour="location-request-submit"', false);
+    }
+
+    public function test_authenticated_user_sees_panel_action_on_location_request_form(): void
+    {
+        $user = User::factory()->create(['name' => 'Adriano Logado']);
+
+        $this->actingAs($user)
+            ->get(route('public.location-requests.create'))
+            ->assertOk()
+            ->assertSee('Adriano Logado')
+            ->assertSee('Painel')
+            ->assertSee(route('dashboard'), false)
+            ->assertDontSee('>Entrar<', false);
     }
 
     public function test_visitor_can_submit_location_request_as_pending_review(): void

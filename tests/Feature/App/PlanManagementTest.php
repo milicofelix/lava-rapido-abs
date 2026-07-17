@@ -11,6 +11,29 @@ class PlanManagementTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_super_admin_visualiza_planos_com_tour_guiado(): void
+    {
+        $superAdmin = User::factory()->create([
+            'role' => User::ROLE_SUPER_ADMIN,
+            'wash_location_id' => null,
+        ]);
+        Plan::factory()->create(['name' => 'Starter', 'price' => 49.90]);
+
+        $this->actingAs($superAdmin)
+            ->get(route('super-admin.plans.index'))
+            ->assertOk()
+            ->assertSee('Planos comerciais')
+            ->assertSee('Starter')
+            ->assertSee('data-onboarding-tour', false)
+            ->assertSee('super-admin.plans.index.v1')
+            ->assertSee('data-tour="super-plans-intro"', false)
+            ->assertSee('data-tour="super-plans-create"', false)
+            ->assertSee('data-tour="super-plans-create-fields"', false)
+            ->assertSee('data-tour="super-plans-list"', false)
+            ->assertSee('data-tour="super-plans-row"', false)
+            ->assertSee('data-tour="super-plans-status-actions"', false);
+    }
+
     public function test_super_admin_cria_plano(): void
     {
         $superAdmin = User::factory()->create([

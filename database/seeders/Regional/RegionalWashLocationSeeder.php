@@ -162,7 +162,6 @@ abstract class RegionalWashLocationSeeder extends Seeder
                 'name' => fake()->name(),
                 'phone' => '(11) 9'.fake()->numerify('####-####'),
                 'email' => fake()->optional(0.55)->safeEmail(),
-                'cpf' => fake()->optional(0.75)->numerify('###.###.###-##'),
                 'notes' => $this->customerNote(),
             ]);
         }

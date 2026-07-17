@@ -13,6 +13,41 @@ class EmployeeManagementTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_employees_index_exposes_guided_tour(): void
+    {
+        $admin = User::factory()->create(['role' => User::ROLE_ADMIN]);
+        User::factory()->create([
+            'name' => 'Operador Tour',
+            'role' => User::ROLE_OPERATOR,
+            'wash_location_id' => $admin->wash_location_id,
+        ]);
+
+        $this->actingAs($admin)
+            ->get(route('employees.index'))
+            ->assertOk()
+            ->assertSee('data-onboarding-tour', false)
+            ->assertSee('employees.index.v1')
+            ->assertSee('data-tour="employees-search"', false)
+            ->assertSee('data-tour="employees-indicators"', false)
+            ->assertSee('data-tour="employees-list"', false)
+            ->assertSee('data-tour="employees-permission-audit"', false);
+    }
+
+    public function test_employee_form_exposes_guided_tour(): void
+    {
+        $admin = User::factory()->create(['role' => User::ROLE_ADMIN]);
+
+        $this->actingAs($admin)
+            ->get(route('employees.create'))
+            ->assertOk()
+            ->assertSee('data-onboarding-tour', false)
+            ->assertSee('employees.create.v1')
+            ->assertSee('data-tour="employee-form-name"', false)
+            ->assertSee('data-tour="employee-form-email"', false)
+            ->assertSee('data-tour="employee-form-role"', false)
+            ->assertSee('data-tour="employee-form-password"', false);
+    }
+
     public function test_admin_can_create_employee(): void
     {
         $admin = User::factory()->create(['role' => 'admin']);

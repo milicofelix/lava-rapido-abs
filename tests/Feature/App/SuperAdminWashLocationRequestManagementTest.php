@@ -28,7 +28,14 @@ class SuperAdminWashLocationRequestManagementTest extends TestCase
             ->assertOk()
             ->assertSee('Solicitações de lava-rápidos')
             ->assertSee('Lava Rapido Central')
-            ->assertSee('Pendente de análise');
+            ->assertSee('Pendente de análise')
+            ->assertSee('data-onboarding-tour', false)
+            ->assertSee('super-admin.location-requests.index.v1')
+            ->assertSee('data-tour="super-requests-intro"', false)
+            ->assertSee('data-tour="super-requests-summary"', false)
+            ->assertSee('data-tour="super-requests-filters"', false)
+            ->assertSee('data-tour="super-requests-list"', false)
+            ->assertSee('data-tour="super-requests-row"', false);
     }
 
     public function test_super_admin_can_filter_requests_by_status(): void
@@ -75,9 +82,17 @@ class SuperAdminWashLocationRequestManagementTest extends TestCase
             ->assertSee('Adriano Freitas')
             ->assertSee('Quero testar o AutoFlow.')
             ->assertSee('Carregar latitude/longitude')
-            ->assertSee('URL do Google Maps');
+            ->assertSee('URL do Google Maps')
+            ->assertSee('data-onboarding-tour', false)
+            ->assertSee('super-admin.location-requests.show.v1')
+            ->assertSee('data-tour="super-request-navigation"', false)
+            ->assertSee('data-tour="super-request-detail"', false)
+            ->assertSee('data-tour="super-request-approval"', false)
+            ->assertSee('data-tour="super-request-geocode"', false)
+            ->assertSee('data-tour="super-request-coordinates"', false)
+            ->assertSee('data-tour="super-request-rejection"', false)
+            ->assertSee('data-tour="super-request-data"', false);
     }
-
 
     public function test_super_admin_dashboard_redirects_to_location_requests(): void
     {

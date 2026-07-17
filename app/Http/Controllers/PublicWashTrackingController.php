@@ -144,6 +144,55 @@ class PublicWashTrackingController extends Controller
             'progressStatuses' => WashOrder::publicProgressStatuses(),
             'feedUrl' => route('tracking.feed', $code),
             'reviewUrl' => route('tracking.review', $code),
+            'onboardingTour' => $this->onboardingTour(),
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function onboardingTour(): array
+    {
+        return [
+            'key' => 'tracking.show.v1',
+            'title' => 'Acompanhamento da lavagem',
+            'steps' => [
+                [
+                    'target' => '[data-tour="tracking-header"]',
+                    'title' => 'Dados da lavagem',
+                    'body' => 'Aqui o cliente confere veículo, placa, código da ordem e status atual do atendimento.',
+                ],
+                [
+                    'target' => '[data-tour="tracking-summary"]',
+                    'title' => 'Resumo rápido',
+                    'body' => 'Previsão, horário de entrada e quantidade de serviços ajudam o cliente a entender o andamento sem precisar ligar.',
+                ],
+                [
+                    'target' => '[data-tour="tracking-loyalty"]',
+                    'title' => 'Fidelidade',
+                    'body' => 'Quando o programa está ativo, o cliente acompanha progresso, cupons disponíveis e benefícios conquistados.',
+                ],
+                [
+                    'target' => '[data-tour="tracking-progress"]',
+                    'title' => 'Etapas do atendimento',
+                    'body' => 'A linha de andamento mostra em qual fase a lavagem está e quais etapas já foram concluídas.',
+                ],
+                [
+                    'target' => '[data-tour="tracking-review"]',
+                    'title' => 'Avaliação',
+                    'body' => 'Depois da entrega, o cliente pode avaliar o atendimento e autorizar a publicação do depoimento.',
+                ],
+                [
+                    'target' => '[data-tour="tracking-services"]',
+                    'title' => 'Serviços contratados',
+                    'body' => 'Esta lista mostra o que foi contratado e o tempo estimado de cada serviço.',
+                ],
+                [
+                    'target' => '[data-tour="tracking-history"]',
+                    'title' => 'Histórico',
+                    'body' => 'O histórico registra as mudanças de status para dar transparência ao cliente durante a operação.',
+                ],
+            ],
         ];
     }
 }

@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\App;
 
+use App\Models\AuditLog;
 use App\Models\Customer;
 use App\Models\LoyaltyCoupon;
 use App\Models\LoyaltyProgram;
@@ -27,7 +28,6 @@ class CustomerManagementTest extends TestCase
             'name' => 'Maria Silva',
             'phone' => '(11) 99999-0000',
             'email' => 'maria@example.com',
-            'cpf' => '123.456.789-00',
             'notes' => 'Prefere contato por WhatsApp.',
         ])->assertRedirect(route('customers.index'));
 
@@ -44,15 +44,35 @@ class CustomerManagementTest extends TestCase
 
         $this->actingAs($user)->get(route('customers.index', ['search' => 'ABC1D23']))
             ->assertOk()
-            ->assertSee($customer->name);
+            ->assertSee($customer->name)
+            ->assertSee('data-onboarding-tour', false)
+            ->assertSee('customers.index.v1')
+            ->assertSee('data-tour="customers-search"', false)
+            ->assertSee('data-tour="customers-list"', false)
+            ->assertSee('Gerenciando clientes');
+    }
+
+    public function test_customer_form_has_guided_tour_and_no_cpf_field(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)
+            ->get(route('customers.create'))
+            ->assertOk()
+            ->assertSee('data-onboarding-tour', false)
+            ->assertSee('customers.create.v1')
+            ->assertSee('data-tour="customer-form-name"', false)
+            ->assertSee('data-tour="customer-form-phone"', false)
+            ->assertDontSee('name="cpf"', false)
+            ->assertDontSee('CPF');
     }
 
     public function test_user_can_import_customers_and_vehicles_from_csv(): void
     {
         $user = User::factory()->create();
         $csv = implode("\n", [
-            'nome,telefone,email,cpf,observacao,placa,marca,modelo,cor,observacao_veiculo',
-            'Maria Importada,(11) 99999-0000,maria.importada@example.com,123.456.789-00,Cliente antigo,abc-1d23,Hyundai,HB20,Prata,Sem adesivos',
+            'nome,telefone,email,observacao,placa,marca,modelo,cor,observacao_veiculo',
+            'Maria Importada,(11) 99999-0000,maria.importada@example.com,Cliente antigo,abc-1d23,Hyundai,HB20,Prata,Sem adesivos',
             'Jose Sem Carro,(11) 98888-0000,,,,,,,',
         ]);
 
@@ -127,7 +147,7 @@ class CustomerManagementTest extends TestCase
 
         $content = $response->streamedContent();
 
-        $this->assertStringContainsString('nome,telefone,email,cpf,observacao,placa,marca,modelo,cor,observacao_veiculo', $content);
+        $this->assertStringContainsString('nome,telefone,email,observacao,placa,marca,modelo,cor,observacao_veiculo', $content);
         $this->assertStringContainsString('Maria Silva', $content);
         $this->assertStringContainsString('Hyundai', $content);
         $this->assertStringContainsString('HB20', $content);
@@ -321,8 +341,24 @@ class CustomerManagementTest extends TestCase
             ->assertSee('Cliente Cupom')
             ->assertSee('Lava Rapido Central')
             ->assertSee('Ducha simples')
+            ->assertSee('Código do cupom')
+            ->assertSee('Status do cupom')
+            ->assertSee('Agradecemos sua preferência')
             ->assertSee('Compartilhar via WhatsApp')
-            ->assertSee('https://wa.me/5511999990000', false);
+            ->assertSee('Baixar imagem')
+            ->assertSee('https://wa.me/5511999990000', false)
+            ->assertSee('data-coupon-download', false)
+            ->assertSee('data-coupon-card', false)
+            ->assertSee('data-onboarding-tour', false)
+            ->assertSee('loyalty-coupons.show.v1')
+            ->assertSee('data-tour="loyalty-coupon-actions"', false)
+            ->assertSee('data-tour="loyalty-coupon-card"', false)
+            ->assertSee('data-tour="loyalty-coupon-main"', false)
+            ->assertSee('data-tour="loyalty-coupon-code"', false)
+            ->assertSee('data-tour="loyalty-coupon-details"', false)
+            ->assertSee('data-tour="loyalty-coupon-status"', false)
+            ->assertSee('data-tour="loyalty-coupon-message"', false)
+            ->assertSee('data-tour="loyalty-coupon-internal-control"', false);
     }
 
     public function test_user_cannot_open_loyalty_coupon_from_another_location(): void
@@ -400,7 +436,7 @@ class CustomerManagementTest extends TestCase
         $this->assertSame(LoyaltyCoupon::STATUS_CANCELED, $coupon->status);
         $this->assertSame('Emitido por engano.', $coupon->metadata['canceled_reason']);
         $this->assertDatabaseHas('audit_logs', [
-            'action' => \App\Models\AuditLog::ACTION_LOYALTY_COUPON_CANCELED,
+            'action' => AuditLog::ACTION_LOYALTY_COUPON_CANCELED,
             'subject_type' => LoyaltyCoupon::class,
             'subject_id' => $coupon->id,
         ]);

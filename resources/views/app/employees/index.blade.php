@@ -2,17 +2,17 @@
     @include('app.components.errors')
 
     <div class="space-y-5">
-        <section class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+        <section class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm" data-tour="employees-header">
             <div class="flex flex-wrap items-start justify-between gap-4">
                 <div>
                     <p class="text-xs font-black uppercase tracking-[0.18em] text-blue-700">Acessos e operacao</p>
                     <h2 class="mt-1 text-2xl font-black text-slate-950">Usuarios da equipe</h2>
                     <p class="mt-1 text-sm text-slate-500">Controle quem acessa o sistema e qual perfil cada pessoa utiliza na unidade.</p>
                 </div>
-                <a href="{{ route('employees.create') }}" class="rounded-xl bg-blue-700 px-4 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-blue-800">Novo usuario</a>
+                <a href="{{ route('employees.create') }}" class="rounded-xl bg-blue-700 px-4 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-blue-800" data-tour="employees-create">Novo usuario</a>
             </div>
 
-            <form method="GET" class="mt-5 grid gap-3 md:grid-cols-[1fr_auto]">
+            <form method="GET" class="mt-5 grid gap-3 md:grid-cols-[1fr_auto]" data-tour="employees-search">
                 <label class="block">
                     <span class="sr-only">Buscar usuario</span>
                     <input name="search" value="{{ $search }}" placeholder="Buscar por nome, e-mail, telefone ou perfil" class="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100">
@@ -26,7 +26,7 @@
             </form>
         </section>
 
-        <section class="grid gap-3 md:grid-cols-3">
+        <section class="grid gap-3 md:grid-cols-3" data-tour="employees-indicators">
             <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
                 <p class="text-sm font-bold text-slate-500">Usuarios na lista</p>
                 <p class="mt-2 text-3xl font-black text-slate-950">{{ $employees->total() }}</p>
@@ -41,7 +41,7 @@
             </div>
         </section>
 
-        <section class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+        <section class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm" data-tour="employees-list">
             <div class="border-b border-slate-200 px-5 py-4">
                 <h2 class="font-black text-slate-950">Lista da equipe</h2>
                 <p class="mt-1 text-sm text-slate-500">Audite rapidamente os acessos efetivos de cada usuário antes de liberar novas responsabilidades.</p>
@@ -57,7 +57,7 @@
                         $enabledOverrides = collect($audit['enabled_overrides']);
                         $blockedOverrides = collect($audit['blocked_overrides']);
                     @endphp
-                    <article class="grid gap-4 px-5 py-4 lg:grid-cols-[1fr_150px_200px_180px_auto] lg:items-start">
+                    <article class="grid gap-4 px-5 py-4 lg:grid-cols-[1fr_150px_200px_180px_auto] lg:items-start" @if ($loop->first) data-tour="employees-row" @endif>
                         <div class="min-w-0">
                             <p class="truncate font-black text-slate-950">{{ $employee->name }}</p>
                             <p class="mt-1 truncate text-sm text-slate-500">{{ $employee->email }}</p>
@@ -86,7 +86,7 @@
                                 </form>
                             @endif
                         </div>
-                        <div class="rounded-2xl border border-slate-100 bg-slate-50 p-4 lg:col-span-5">
+                        <div class="rounded-2xl border border-slate-100 bg-slate-50 p-4 lg:col-span-5" @if ($loop->first) data-tour="employees-permission-audit" @endif>
                             <div class="flex flex-wrap items-center justify-between gap-3">
                                 <div>
                                     <p class="text-xs font-black uppercase tracking-[0.16em] text-slate-500">Auditoria de permissões</p>
@@ -153,4 +153,51 @@
 
         <div>{{ $employees->links() }}</div>
     </div>
+
+    @php
+        $employeesTour = [
+            'key' => 'employees.index.v1',
+            'title' => 'Equipe e permissões',
+            'steps' => [
+                [
+                    'target' => '[data-tour="employees-header"]',
+                    'title' => 'Equipe da unidade',
+                    'body' => 'Aqui você controla quem acessa o sistema e qual função cada pessoa terá no lava-rápido.',
+                ],
+                [
+                    'target' => '[data-tour="employees-create"]',
+                    'title' => 'Novo usuário',
+                    'body' => 'Cadastre operadores, atendentes ou administradores para participar das lavagens e acessar o painel.',
+                ],
+                [
+                    'target' => '[data-tour="employees-search"]',
+                    'title' => 'Filtro da equipe',
+                    'body' => 'Busque por nome, e-mail, telefone ou perfil quando a equipe crescer.',
+                ],
+                [
+                    'target' => '[data-tour="employees-indicators"]',
+                    'title' => 'Resumo da lista',
+                    'body' => 'Veja rapidamente quantos usuários existem, quantos estão ativos e quantos perfis aparecem na página.',
+                ],
+                [
+                    'target' => '[data-tour="employees-list"]',
+                    'title' => 'Lista da equipe',
+                    'body' => 'Cada linha mostra dados de contato, perfil, status de acesso e último login.',
+                ],
+                [
+                    'target' => '[data-tour="employees-permission-audit"]',
+                    'title' => 'Auditoria de permissões',
+                    'body' => 'Esta área mostra os acessos efetivos do usuário e destaca exceções liberadas ou bloqueadas pela configuração.',
+                ],
+                [
+                    'target' => '[data-tour="employees-row"]',
+                    'title' => 'Editar ou desativar',
+                    'body' => 'Use as ações da linha para atualizar perfil, contato, senha provisória ou bloquear um acesso.',
+                ],
+            ],
+        ];
+    @endphp
+    <script type="application/json" data-onboarding-tour>
+        {!! json_encode($employeesTour, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) !!}
+    </script>
 </x-app.layout>

@@ -62,6 +62,17 @@ class ExecutiveReportTest extends TestCase
                 ->assertSee('Clientes recorrentes')
                 ->assertSee('Pix')
                 ->assertSee('Dinheiro')
+                ->assertSee('data-onboarding-tour', false)
+                ->assertSee('reports.executive.v1')
+                ->assertSee('data-tour="executive-report-period"', false)
+                ->assertSee('data-tour="executive-report-filters"', false)
+                ->assertSee('data-tour="executive-report-kpis"', false)
+                ->assertSee('data-tour="executive-report-operational-kpis"', false)
+                ->assertSee('data-tour="executive-report-top-services"', false)
+                ->assertSee('data-tour="executive-report-payments"', false)
+                ->assertSee('data-tour="executive-report-top-customers"', false)
+                ->assertSee('data-tour="executive-report-statuses"', false)
+                ->assertSee('data-tour="executive-report-daily-volume"', false)
                 ->assertDontSee('Servico de Outra Unidade')
                 ->assertDontSee('R$ 999,00');
         } finally {

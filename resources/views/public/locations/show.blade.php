@@ -83,7 +83,7 @@
     @endphp
 
     <div class="min-h-screen bg-[radial-gradient(circle_at_top_left,#0ea5e9_0,transparent_32%),linear-gradient(135deg,#020617,#0f172a_55%,#082f49)] px-4 py-5 sm:px-6 lg:px-8">
-        <header class="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-4 rounded-3xl border border-white/10 bg-white/95 px-5 py-4 shadow-2xl shadow-black/25 backdrop-blur">
+        <header class="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-4 rounded-3xl border border-white/10 bg-white/95 px-5 py-4 shadow-2xl shadow-black/25 backdrop-blur" data-tour="public-location-header">
             <a href="{{ route('public.locations.index') }}" class="flex items-center gap-3">
                 <img src="{{ $location->logoUrl() }}" alt="{{ $location->name }}" class="h-12 max-w-36 object-contain">
                 <div class="hidden sm:block">
@@ -114,13 +114,13 @@
 
         <main class="mx-auto mt-6 grid max-w-5xl gap-5 lg:grid-cols-[1fr_320px]">
             <section class="overflow-hidden rounded-3xl border border-white/10 bg-white shadow-2xl shadow-black/25">
-                <div class="border-b border-slate-200 p-6 sm:p-8">
+                <div class="border-b border-slate-200 p-6 sm:p-8" data-tour="public-location-hero">
                     <p class="text-xs font-bold uppercase tracking-[0.24em] text-blue-600">Lava-rápido</p>
                     <div class="mt-3 flex flex-wrap items-start justify-between gap-4">
                         <div>
                             <h1 class="text-3xl font-black text-slate-950 sm:text-4xl">{{ $location->name }}</h1>
                             <p class="mt-2 max-w-2xl text-sm leading-6 text-slate-500">{{ $location->fullAddress() }}</p>
-                            <div class="mt-4 flex flex-wrap gap-2">
+                            <div class="mt-4 flex flex-wrap gap-2" data-tour="public-location-primary-actions">
                                 <a href="{{ $directionsUrl }}" target="_blank" rel="noopener" class="rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-black text-white shadow-lg shadow-blue-900/20 hover:bg-blue-700">Como chegar</a>
                                 @if ($whatsappUrl)
                                     <a href="{{ $whatsappUrl }}" target="_blank" rel="noopener" class="rounded-xl bg-green-600 px-4 py-2.5 text-sm font-black text-white shadow-lg shadow-green-900/20 hover:bg-green-700">Chamar no WhatsApp</a>
@@ -135,7 +135,7 @@
                     </div>
                 </div>
 
-                <div class="grid gap-4 p-6 sm:grid-cols-3 sm:p-8">
+                <div class="grid gap-4 p-6 sm:grid-cols-3 sm:p-8" data-tour="public-location-summary">
                     <div class="rounded-2xl bg-blue-50 p-4">
                         <p class="text-xs font-semibold text-slate-500">Status</p>
                         <p class="mt-1 text-lg font-black text-blue-800">{{ $operatingSummary['status_label'] }}</p>
@@ -151,7 +151,7 @@
                     </div>
                 </div>
 
-                <div class="border-t border-slate-200 p-6 sm:p-8">
+                <div class="border-t border-slate-200 p-6 sm:p-8" data-tour="public-location-profile">
                     <div class="grid gap-4 lg:grid-cols-[1fr_260px]">
                         <div>
                             <h2 class="text-xl font-black text-slate-950">Perfil da unidade</h2>
@@ -175,7 +175,7 @@
                     </div>
                 </div>
 
-                <div class="border-t border-slate-200 p-6 sm:p-8">
+                <div class="border-t border-slate-200 p-6 sm:p-8" data-tour="public-location-hours">
                     <h2 class="text-xl font-black text-slate-950">Horários de funcionamento</h2>
                     <div class="mt-5 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
                         @foreach ($businessHours as $day)
@@ -187,7 +187,7 @@
                     </div>
                 </div>
 
-                <div class="border-t border-slate-200 p-6 sm:p-8">
+                <div class="border-t border-slate-200 p-6 sm:p-8" data-tour="public-location-reviews">
                     <div class="flex flex-wrap items-start justify-between gap-4">
                         <div>
                             <h2 class="text-xl font-black text-slate-950">Avaliações dos clientes</h2>
@@ -225,7 +225,7 @@
                     </div>
                 </div>
 
-                <div class="border-t border-slate-200 p-6 sm:p-8">
+                <div class="border-t border-slate-200 p-6 sm:p-8" data-tour="public-location-services">
                     <h2 class="text-xl font-black text-slate-950">Serviços disponíveis</h2>
                     <p class="mt-1 text-sm text-slate-500">Lista pública dos serviços cadastrados na plataforma.</p>
 
@@ -251,7 +251,7 @@
             </section>
 
             <aside class="space-y-4">
-                <section class="rounded-3xl border border-white/10 bg-white p-5 shadow-2xl shadow-black/20">
+                <section class="rounded-3xl border border-white/10 bg-white p-5 shadow-2xl shadow-black/20" data-tour="public-location-sidebar-actions">
                     <h2 class="text-lg font-black text-slate-950">Ações rápidas</h2>
                     <div class="mt-4 grid gap-2">
                         @if ($whatsappUrl)
@@ -285,5 +285,63 @@
             </aside>
         </main>
     </div>
+
+    @php
+        $publicLocationTour = [
+            'key' => 'public.locations.show.v1',
+            'title' => 'Detalhes do lava-rápido',
+            'steps' => [
+                [
+                    'target' => '[data-tour="public-location-header"]',
+                    'title' => 'Página da unidade',
+                    'body' => 'Esta página reúne as informações públicas do lava-rápido para o visitante decidir se quer ir até a unidade.',
+                ],
+                [
+                    'target' => '[data-tour="public-location-hero"]',
+                    'title' => 'Nome, endereço e status',
+                    'body' => 'Confira rapidamente onde fica a unidade, se está aberta e qual é o próximo evento de funcionamento.',
+                ],
+                [
+                    'target' => '[data-tour="public-location-primary-actions"]',
+                    'title' => 'Contato e rota',
+                    'body' => 'Os botões principais levam ao Google Maps e ao WhatsApp quando o contato está disponível.',
+                ],
+                [
+                    'target' => '[data-tour="public-location-summary"]',
+                    'title' => 'Resumo rápido',
+                    'body' => 'Status, atendimentos em andamento e telefone ajudam o visitante a decidir antes de sair de casa.',
+                ],
+                [
+                    'target' => '[data-tour="public-location-profile"]',
+                    'title' => 'Perfil da unidade',
+                    'body' => 'Aqui ficam endereço, contato e funcionamento de hoje em formato mais detalhado.',
+                ],
+                [
+                    'target' => '[data-tour="public-location-hours"]',
+                    'title' => 'Horários',
+                    'body' => 'Veja os horários por dia da semana para evitar chegar com a unidade fechada.',
+                ],
+                [
+                    'target' => '[data-tour="public-location-reviews"]',
+                    'title' => 'Avaliações',
+                    'body' => 'Depoimentos publicados ajudam novos clientes a avaliar qualidade e experiência de atendimento.',
+                ],
+                [
+                    'target' => '[data-tour="public-location-services"]',
+                    'title' => 'Serviços',
+                    'body' => 'A lista mostra serviços ativos, duração estimada e preço divulgado pela unidade.',
+                ],
+                [
+                    'target' => '[data-tour="public-location-sidebar-actions"]',
+                    'title' => 'Ações rápidas',
+                    'body' => 'Na lateral ficam atalhos permanentes para WhatsApp, rota e retorno ao mapa.',
+                ],
+            ],
+        ];
+    @endphp
+
+    <script type="application/json" data-onboarding-tour>
+        {!! json_encode($publicLocationTour, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) !!}
+    </script>
 </body>
 </html>

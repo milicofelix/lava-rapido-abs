@@ -2,7 +2,7 @@
     <div class="space-y-5">
         @include('app.components.errors')
 
-        <section class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+        <section class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm" data-tour="credit-receivables-intro">
             <div class="flex flex-wrap items-start justify-between gap-4">
                 <div>
                     <p class="text-xs font-black uppercase tracking-[0.18em] text-amber-700">Recebimento posterior</p>
@@ -18,7 +18,7 @@
             </div>
         </section>
 
-        <section class="grid gap-3 md:grid-cols-3">
+        <section class="grid gap-3 md:grid-cols-3" data-tour="credit-receivables-summary">
             <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
                 <p class="text-sm font-bold text-slate-500">Total pendente</p>
                 <p class="mt-2 text-3xl font-black text-slate-950">R$ {{ number_format((float) $totalPending, 2, ',', '.') }}</p>
@@ -33,14 +33,14 @@
             </div>
         </section>
 
-        <section class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+        <section class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm" data-tour="credit-receivables-list">
             <div class="border-b border-slate-200 px-5 py-4">
                 <p class="text-xs font-black uppercase tracking-[0.18em] text-amber-700">Pendencias</p>
                 <h2 class="mt-1 font-black text-slate-950">Contas em aberto</h2>
             </div>
             <div class="divide-y divide-slate-100">
                 @forelse ($orders as $order)
-                    <article class="grid gap-4 px-5 py-5 xl:grid-cols-[1fr_420px]">
+                    <article class="grid gap-4 px-5 py-5 xl:grid-cols-[1fr_420px]" @if ($loop->first) data-tour="credit-receivables-order" @endif>
                         <div>
                             <div class="flex flex-wrap items-center gap-2">
                                 <a href="{{ route('wash-orders.show', $order) }}" class="text-lg font-black text-blue-700 hover:text-blue-900">{{ $order->code }}</a>
@@ -52,7 +52,7 @@
                             <p class="mt-4 text-3xl font-black text-slate-950">R$ {{ number_format((float) $order->total_amount, 2, ',', '.') }}</p>
                         </div>
 
-                        <form method="POST" action="{{ route('finance.credit-receivables.receive', $order) }}" class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                        <form method="POST" action="{{ route('finance.credit-receivables.receive', $order) }}" class="rounded-2xl border border-slate-200 bg-slate-50 p-4" @if ($loop->first) data-tour="credit-receivables-receive-form" @endif>
                             @csrf
                             @method('PATCH')
                             <div class="grid gap-3 md:grid-cols-2">
@@ -88,4 +88,42 @@
             </div>
         </section>
     </div>
+
+    @php
+        $creditReceivablesTour = [
+            'key' => 'finance.credit-receivables.index.v1',
+            'title' => 'Fiado e contas a receber',
+            'steps' => [
+                [
+                    'target' => '[data-tour="credit-receivables-intro"]',
+                    'title' => 'Recebimento posterior',
+                    'body' => 'Esta tela reúne lavagens marcadas como fiado para baixa quando o cliente efetivamente pagar.',
+                ],
+                [
+                    'target' => '[data-tour="credit-receivables-summary"]',
+                    'title' => 'Resumo do fiado',
+                    'body' => 'Acompanhe o total pendente, quantidade de ordens abertas e o próximo passo de cobrança.',
+                ],
+                [
+                    'target' => '[data-tour="credit-receivables-list"]',
+                    'title' => 'Contas em aberto',
+                    'body' => 'A lista mostra apenas contas ainda não recebidas. Depois da baixa, a lavagem sai desta fila.',
+                ],
+                [
+                    'target' => '[data-tour="credit-receivables-order"]',
+                    'title' => 'Dados da lavagem',
+                    'body' => 'Confira código, cliente, veículo, data de entrada e valor antes de registrar o recebimento.',
+                ],
+                [
+                    'target' => '[data-tour="credit-receivables-receive-form"]',
+                    'title' => 'Baixar recebimento',
+                    'body' => 'Informe método, valor e observação. Ao marcar como recebido, o pagamento entra no financeiro.',
+                ],
+            ],
+        ];
+    @endphp
+
+    <script type="application/json" data-onboarding-tour>
+        {!! json_encode($creditReceivablesTour, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) !!}
+    </script>
 </x-app.layout>

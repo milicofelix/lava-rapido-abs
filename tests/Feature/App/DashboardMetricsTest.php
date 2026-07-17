@@ -2,14 +2,14 @@
 
 namespace Tests\Feature\App;
 
-use App\Models\Payment;
 use App\Models\Customer;
+use App\Models\Payment;
 use App\Models\Service;
 use App\Models\User;
 use App\Models\Vehicle;
 use App\Models\WashOrder;
-use Illuminate\Support\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Carbon;
 use Tests\TestCase;
 
 class DashboardMetricsTest extends TestCase
@@ -135,7 +135,12 @@ class DashboardMetricsTest extends TestCase
             ->assertSee('Resumo Financeiro')
             ->assertSee('Serviços mais realizados')
             ->assertSee('Lavagem premium')
-            ->assertSee('Atividades recentes');
+            ->assertSee('Atividades recentes')
+            ->assertSee('data-onboarding-tour', false)
+            ->assertSee('dashboard.overview.v1')
+            ->assertSee('data-tour="dashboard-executive"', false)
+            ->assertSee('data-tour="dashboard-flow"', false)
+            ->assertSee('Conhecendo o Dashboard');
 
         Carbon::setTestNow();
     }

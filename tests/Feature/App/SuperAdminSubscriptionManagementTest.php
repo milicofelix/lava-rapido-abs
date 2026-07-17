@@ -43,7 +43,15 @@ class SuperAdminSubscriptionManagementTest extends TestCase
             ->assertSee('Unidades cadastradas')
             ->assertSee('Lava Rapido Central')
             ->assertSee('Joao Owner')
-            ->assertSee('Trial');
+            ->assertSee('Trial')
+            ->assertSee('data-onboarding-tour', false)
+            ->assertSee('super-admin.locations.index.v1')
+            ->assertSee('data-tour="super-locations-intro"', false)
+            ->assertSee('data-tour="super-locations-summary"', false)
+            ->assertSee('data-tour="super-locations-filters"', false)
+            ->assertSee('data-tour="super-locations-list"', false)
+            ->assertSee('data-tour="super-locations-row"', false)
+            ->assertSee('data-tour="super-locations-actions"', false);
     }
 
     public function test_super_admin_lista_unidade_sem_slug_legado(): void

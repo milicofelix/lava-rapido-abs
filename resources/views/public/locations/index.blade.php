@@ -635,7 +635,7 @@
 </head>
 <body class="bg-slate-950 text-slate-950 antialiased">
     <div class="min-h-screen bg-[radial-gradient(circle_at_top_left,#0ea5e9_0,transparent_32%),linear-gradient(135deg,#020617,#0f172a_55%,#082f49)] px-4 py-5 sm:px-6 lg:px-8">
-        <header class="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-4 rounded-3xl border border-white/10 bg-white/95 px-5 py-4 shadow-2xl shadow-black/25 backdrop-blur">
+        <header class="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-4 rounded-3xl border border-white/10 bg-white/95 px-5 py-4 shadow-2xl shadow-black/25 backdrop-blur" data-tour="public-map-header">
             <a href="{{ route('public.locations.index') }}" class="flex items-center gap-3">
                 <img src="{{ asset('images/autoflow-logo.png') }}" alt="AutoFlow" class="h-12 w-auto">
                 <div class="hidden sm:block">
@@ -667,7 +667,7 @@
 
         <main class="mx-auto mt-6 grid max-w-7xl gap-5 xl:grid-cols-[1fr_420px]">
             <section class="overflow-hidden rounded-3xl border border-white/10 bg-white shadow-2xl shadow-black/25">
-                <div class="flex flex-wrap items-center justify-between gap-4 border-b border-slate-200 px-5 py-4">
+                <div class="flex flex-wrap items-center justify-between gap-4 border-b border-slate-200 px-5 py-4" data-tour="public-map-search">
                     <div>
                         <p class="text-xs font-bold uppercase tracking-[0.24em] text-blue-600">Mapa público</p>
                         <h1 class="mt-1 text-2xl font-black text-slate-950 sm:text-3xl">Encontre um lava-rápido próximo</h1>
@@ -675,7 +675,7 @@
                         <p class="mt-2 text-xs font-semibold text-slate-500">Tem um lava-rápido? <a href="{{ route('public.location-requests.create') }}" class="font-black text-blue-600 hover:text-blue-700">Solicite seu cadastro no AutoFlow</a>.</p>
                     </div>
 
-                    <form method="GET" class="grid w-full gap-2 sm:w-auto sm:min-w-[440px] sm:grid-cols-[1fr_auto] xl:min-w-[520px]" data-public-map-filters>
+                    <form method="GET" class="grid w-full gap-2 sm:w-auto sm:min-w-[440px] sm:grid-cols-[1fr_auto] xl:min-w-[520px]" data-public-map-filters data-tour="public-map-filters">
                         <label class="sr-only" for="public-location-search">Buscar lava-rápido, bairro ou endereço</label>
                         <input
                             id="public-location-search"
@@ -707,9 +707,9 @@
                     </form>
                 </div>
 
-                <div class="relative">
+                <div class="relative" data-tour="public-map-canvas">
                     <div id="autoflow-public-map" class="w-full" data-locations='@json($mapLocations)'></div>
-                    <div class="autoflow-map-actions" aria-label="Controles do mapa">
+                    <div class="autoflow-map-actions" aria-label="Controles do mapa" data-tour="public-map-actions">
                         <button type="button" class="autoflow-map-action-button is-primary" data-map-geolocation>
                             <span aria-hidden="true">📍</span>
                             <span>Minha localização</span>
@@ -728,7 +728,7 @@
             </section>
 
             <aside id="lista" class="space-y-4">
-                <section class="rounded-3xl border border-white/10 bg-white p-5 shadow-2xl shadow-black/20">
+                <section class="rounded-3xl border border-white/10 bg-white p-5 shadow-2xl shadow-black/20" data-tour="public-map-summary">
                     <div class="grid grid-cols-3 gap-3 text-center">
                         <div class="rounded-2xl bg-blue-50 p-3">
                             <p class="text-2xl font-black text-blue-700">{{ $locations->count() }}</p>
@@ -745,7 +745,7 @@
                     </div>
                 </section>
 
-                <section class="rounded-3xl border border-white/10 bg-white p-5 shadow-2xl shadow-black/20">
+                <section class="rounded-3xl border border-white/10 bg-white p-5 shadow-2xl shadow-black/20" data-tour="public-map-list">
                     <div class="flex flex-wrap items-center justify-between gap-3">
                         <div>
                             <h2 class="text-lg font-black text-slate-950">Lava-rápidos cadastrados</h2>
@@ -757,7 +757,7 @@
                                 @endif
                             </p>
                         </div>
-                        <div class="flex flex-wrap items-center gap-2">
+                        <div class="flex flex-wrap items-center gap-2" data-tour="public-map-favorites">
                             <button type="button" data-favorites-filter class="autoflow-favorites-toggle" aria-pressed="false">
                                 ⭐ Meus favoritos
                                 <span data-favorites-count>0</span>
@@ -779,7 +779,7 @@
                                 $whatsapp = $location->whatsappUrl();
                                 $reviewSummary = $reviewSummaries[$location->id] ?? null;
                             @endphp
-                            <article id="unidade-{{ $location->id }}" data-location-card data-location-id="{{ $location->id }}" data-latitude="{{ $location->mapLatitude() }}" data-longitude="{{ $location->mapLongitude() }}" class="autoflow-location-card rounded-2xl border border-slate-200 p-4 transition hover:border-blue-200 hover:shadow-sm">
+                            <article id="unidade-{{ $location->id }}" data-location-card data-location-id="{{ $location->id }}" data-latitude="{{ $location->mapLatitude() }}" data-longitude="{{ $location->mapLongitude() }}" class="autoflow-location-card rounded-2xl border border-slate-200 p-4 transition hover:border-blue-200 hover:shadow-sm" @if ($loop->first) data-tour="public-map-location-card" @endif>
                                 <div class="flex items-start justify-between gap-3">
                                     <div class="min-w-0">
                                         <h3 class="truncate font-black text-slate-950">{{ $location->name }}</h3>
@@ -812,7 +812,7 @@
                                 </div>
                                 <p class="mt-3 rounded-xl bg-blue-50 px-3 py-2 text-xs font-bold leading-5 text-blue-900">{{ $location->opening_hours ?: $location->openingHoursSummary() }}</p>
 
-                                <div class="mt-4 flex flex-wrap gap-2">
+                                <div class="mt-4 flex flex-wrap gap-2" @if ($loop->first) data-tour="public-map-location-actions" @endif>
                                     <button type="button" data-favorite-toggle data-location-id="{{ $location->id }}" class="autoflow-favorite-button" aria-pressed="false">☆ Favoritar</button>
                                     @if ($location->hasCoordinates())
                                         <a href="#" data-focus-location="{{ $location->id }}" class="rounded-xl border border-slate-200 px-3 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50">Ver no mapa</a>
@@ -836,6 +836,64 @@
             </aside>
         </main>
     </div>
+
+    @php
+        $publicMapTour = [
+            'key' => 'public.locations.index.v1',
+            'title' => 'Mapa de lava-rápidos',
+            'steps' => [
+                [
+                    'target' => '[data-tour="public-map-header"]',
+                    'title' => 'Mapa público',
+                    'body' => 'Esta é a vitrine pública do AutoFlow: visitantes encontram lava-rápidos, acessam detalhes e podem solicitar cadastro.',
+                ],
+                [
+                    'target' => '[data-tour="public-map-search"]',
+                    'title' => 'Busca rápida',
+                    'body' => 'Use nome, bairro ou endereço para encontrar unidades específicas sem precisar navegar pelo mapa inteiro.',
+                ],
+                [
+                    'target' => '[data-tour="public-map-filters"]',
+                    'title' => 'Filtros',
+                    'body' => 'Combine status e opção somente abertos para mostrar unidades mais úteis naquele momento.',
+                ],
+                [
+                    'target' => '[data-tour="public-map-canvas"]',
+                    'title' => 'Mapa interativo',
+                    'body' => 'Clique nos marcadores para ver endereço, status, rota, detalhes e contato da unidade.',
+                ],
+                [
+                    'target' => '[data-tour="public-map-actions"]',
+                    'title' => 'Localização',
+                    'body' => 'Minha localização ordena as unidades por proximidade. Centralizar retorna o mapa para a visão geral.',
+                ],
+                [
+                    'target' => '[data-tour="public-map-summary"]',
+                    'title' => 'Resumo',
+                    'body' => 'Estes números mostram unidades encontradas, abertas e lavagens em atendimento conforme os filtros aplicados.',
+                ],
+                [
+                    'target' => '[data-tour="public-map-favorites"]',
+                    'title' => 'Favoritos e distância',
+                    'body' => 'O visitante pode favoritar unidades no navegador e, ao liberar localização, ver distância e mais próximo.',
+                ],
+                [
+                    'target' => '[data-tour="public-map-location-card"]',
+                    'title' => 'Card da unidade',
+                    'body' => 'Cada card mostra endereço, status, avaliações, atendimento em andamento, contato e horário de funcionamento.',
+                ],
+                [
+                    'target' => '[data-tour="public-map-location-actions"]',
+                    'title' => 'Ações da unidade',
+                    'body' => 'Use Ver no mapa, Ver detalhes ou WhatsApp para avançar no contato com o lava-rápido escolhido.',
+                ],
+            ],
+        ];
+    @endphp
+
+    <script type="application/json" data-onboarding-tour>
+        {!! json_encode($publicMapTour, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) !!}
+    </script>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
     <script>

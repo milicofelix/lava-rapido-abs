@@ -40,10 +40,10 @@
     ['label' => 'Lavagens', 'icon' => 'L', 'href' => $canAccess(\App\Support\Access\AccessControl::CREATE_WASH_ORDER) ? route('wash-orders.index') : null, 'active' => request()->routeIs('wash-orders.*')],
     ['label' => 'Kanban', 'icon' => 'K', 'href' => $canAccess(\App\Support\Access\AccessControl::VIEW_KANBAN) ? route('kanban') : null, 'active' => request()->routeIs('kanban')],
     ['label' => 'Clientes', 'icon' => 'C', 'href' => $canAccess(\App\Support\Access\AccessControl::MANAGE_CUSTOMERS) ? route('customers.index') : null, 'active' => request()->routeIs('customers.*')],
-    ['label' => 'Financeiro', 'icon' => '$', 'href' => $canAccess(\App\Support\Access\AccessControl::VIEW_FINANCE) ? route('finance.index') : null, 'active' => request()->routeIs('finance.*')],
+    ['label' => 'Financeiro', 'icon' => '$', 'href' => $canAccess(\App\Support\Access\AccessControl::VIEW_FINANCE) ? route('finance.index') : null, 'active' => request()->routeIs('finance.index')],
 ])->filter(fn ($item) => filled($item['href']))->take(5)->values()->all())
 <body class="{{ $appTheme === 'dark' ? 'bg-slate-950' : 'bg-[#061832]' }} text-slate-950 antialiased" data-theme="{{ $appTheme }}" data-theme-effective="{{ $appTheme === 'system' ? 'light' : $appTheme }}">
-    <div class="min-h-screen p-2 lg:p-3" data-app-shell>
+    <div class="min-h-screen overflow-x-hidden p-2 lg:p-3" data-app-shell>
         <aside data-sidebar class="fixed inset-y-3 left-3 z-30 hidden w-[17rem] flex-col rounded-2xl {{ $appTheme === 'dark' ? 'bg-slate-950' : 'bg-[#061b36]' }} px-3 py-3 text-white shadow-2xl shadow-black/30 transition-transform duration-200 lg:flex">
             <a href="{{ $homeRoute }}" class="block shrink-0 rounded-xl bg-white px-4 py-4 shadow-inner shadow-slate-200">
                 <img src="{{ $brandLogoUrl }}" alt="{{ $brandLogoAlt }}" class="mx-auto h-auto max-h-24 w-40 object-contain">
@@ -76,13 +76,13 @@
                         ['route' => 'services.index', 'label' => 'Serviços', 'icon' => 'S', 'permission' => \App\Support\Access\AccessControl::MANAGE_SERVICES],
                         ['route' => 'employees.index', 'label' => 'Equipe', 'icon' => 'E', 'permission' => \App\Support\Access\AccessControl::MANAGE_EMPLOYEES],
                         ['route' => 'audit-logs.index', 'label' => 'Auditoria', 'icon' => 'A', 'permission' => \App\Support\Access\AccessControl::VIEW_AUDIT_LOGS],
-                        ['route' => 'finance.index', 'label' => 'Financeiro', 'icon' => '$', 'permission' => \App\Support\Access\AccessControl::VIEW_FINANCE],
-                        ['route' => 'finance.cash-registers.index', 'label' => 'Caixa', 'icon' => 'CX', 'permission' => \App\Support\Access\AccessControl::MANAGE_CASH_REGISTER, 'module' => 'module_cash_register'],
-                        ['route' => 'finance.credit-receivables.index', 'label' => 'Fiado', 'icon' => 'F$', 'permission' => \App\Support\Access\AccessControl::MANAGE_CREDIT_RECEIVABLES, 'module' => 'module_credit_receivables'],
+                        ['route' => 'finance.index', 'label' => 'Financeiro', 'icon' => '$', 'permission' => \App\Support\Access\AccessControl::VIEW_FINANCE, 'active' => request()->routeIs('finance.index')],
+                        ['route' => 'finance.cash-registers.index', 'label' => 'Caixa', 'icon' => 'CX', 'permission' => \App\Support\Access\AccessControl::MANAGE_CASH_REGISTER, 'module' => 'module_cash_register', 'active' => request()->routeIs('finance.cash-registers.*')],
+                        ['route' => 'finance.credit-receivables.index', 'label' => 'Fiado', 'icon' => 'F$', 'permission' => \App\Support\Access\AccessControl::MANAGE_CREDIT_RECEIVABLES, 'module' => 'module_credit_receivables', 'active' => request()->routeIs('finance.credit-receivables.*')],
                     ] as $item)
                         @continue(! $canAccess($item['permission']))
                         @continue(($item['module'] ?? null) && empty($appSettings[$item['module']]))
-                        <a href="{{ route($item['route']) }}" class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition {{ request()->routeIs($item['route']) || request()->routeIs(str_replace('.index', '.*', $item['route'])) ? 'bg-blue-600 text-white shadow-lg shadow-blue-950/30' : 'text-slate-200 hover:bg-white/10 hover:text-white' }}">
+                        <a href="{{ route($item['route']) }}" class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition {{ $item['active'] ?? (request()->routeIs($item['route']) || request()->routeIs(str_replace('.index', '.*', $item['route']))) ? 'bg-blue-600 text-white shadow-lg shadow-blue-950/30' : 'text-slate-200 hover:bg-white/10 hover:text-white' }}">
                             <span class="flex h-6 w-6 shrink-0 items-center justify-center rounded-md border border-white/15 bg-white/10 text-[11px] font-bold">{{ $item['icon'] }}</span>
                             {{ $item['label'] }}
                         </a>
@@ -114,7 +114,7 @@
             </div>
         </aside>
 
-        <div data-content class="min-h-[calc(100vh-16px)] overflow-visible rounded-2xl {{ $appTheme === 'dark' ? 'bg-slate-900 text-slate-100' : 'bg-slate-50' }} shadow-2xl shadow-black/30 transition-[margin] duration-200 lg:ml-[18rem]">
+        <div data-content class="min-h-[calc(100vh-16px)] w-full max-w-full overflow-visible rounded-2xl {{ $appTheme === 'dark' ? 'bg-slate-900 text-slate-100' : 'bg-slate-50' }} shadow-2xl shadow-black/30 transition-[margin,width] duration-200 lg:ml-[18rem] lg:w-[calc(100%-18rem)]">
             <header class="sticky top-0 z-20 border-b {{ $appTheme === 'dark' ? 'border-slate-800 bg-slate-950/95' : 'border-slate-200 bg-white/95' }} px-3 py-3 backdrop-blur sm:px-6 lg:px-7">
                 <div class="flex flex-wrap items-center justify-between gap-2 sm:gap-3">
                     <div class="flex min-w-0 items-center gap-3">
@@ -276,7 +276,7 @@
                 </nav>
             </header>
 
-            <main class="px-4 pb-24 pt-5 sm:px-6 lg:px-8 lg:pb-5">
+            <main class="min-w-0 max-w-full px-4 pb-24 pt-5 sm:px-6 lg:px-8 lg:pb-5">
                 @if (session('status'))
                     <div class="mb-5 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">{{ session('status') }}</div>
                 @endif
@@ -333,6 +333,8 @@
             sidebar.classList.toggle('-translate-x-[calc(100%+1rem)]', collapsed);
             content.classList.toggle('lg:ml-[18rem]', !collapsed);
             content.classList.toggle('lg:ml-0', collapsed);
+            content.classList.toggle('lg:w-[calc(100%-18rem)]', !collapsed);
+            content.classList.toggle('lg:w-full', collapsed);
             sidebarToggle.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
             sidebarToggle.setAttribute('aria-label', collapsed ? 'Mostrar menu' : 'Ocultar menu');
             sidebarToggle.setAttribute('title', collapsed ? 'Mostrar menu' : 'Ocultar menu');

@@ -3,8 +3,8 @@
 namespace App\Http\Controllers\App;
 
 use App\Http\Controllers\Controller;
-use App\Models\Customer;
 use App\Models\AuditLog;
+use App\Models\Customer;
 use App\Models\LoyaltyCoupon;
 use App\Models\LoyaltyProgram;
 use App\Models\Payment;
@@ -111,7 +111,6 @@ class CustomerController extends Controller
                 'nome',
                 'telefone',
                 'email',
-                'cpf',
                 'observacao',
                 'placa',
                 'marca',
@@ -123,7 +122,6 @@ class CustomerController extends Controller
                 'Maria Silva',
                 '(11) 99999-0000',
                 'maria@email.com',
-                '123.456.789-00',
                 'Prefere contato por WhatsApp',
                 'ABC1D23',
                 'Hyundai',
@@ -135,7 +133,6 @@ class CustomerController extends Controller
                 'João Santos',
                 '(11) 98888-0000',
                 'joao@email.com',
-                '',
                 'Cliente sem veículo no primeiro cadastro',
                 '',
                 '',
@@ -175,9 +172,9 @@ class CustomerController extends Controller
     {
         TenantContext::abortUnlessModelBelongsToTenant($customer);
 
-        $before = $customer->only(['name', 'phone', 'email', 'cpf', 'notes']);
+        $before = $customer->only(['name', 'phone', 'email', 'notes']);
         $customer->update($this->validated($request));
-        $after = $customer->only(['name', 'phone', 'email', 'cpf', 'notes']);
+        $after = $customer->only(['name', 'phone', 'email', 'notes']);
         $changedFields = array_keys(array_diff_assoc($after, $before));
 
         AuditLogger::record(
@@ -196,7 +193,6 @@ class CustomerController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'phone' => ['required', 'string', 'max:30'],
             'email' => ['nullable', 'email', 'max:255'],
-            'cpf' => ['nullable', 'string', 'max:20'],
             'notes' => ['nullable', 'string', 'max:2000'],
         ]);
     }

@@ -8,14 +8,14 @@
             </div>
         @endif
 
-        <section class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+        <section class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm" data-tour="schedule-header">
             <div class="flex flex-wrap items-center justify-between gap-3">
                 <div>
                     <p class="text-xs font-black uppercase tracking-[0.18em] text-blue-700">Agenda diaria</p>
                     <h2 class="mt-1 text-2xl font-black text-slate-950">{{ $selectedDate->format('d/m/Y') }}</h2>
                     <p class="mt-1 text-sm text-slate-500">Lavagens abertas na data selecionada, ordenadas por previsao/entrada.</p>
                 </div>
-                <div class="flex flex-wrap gap-2">
+                <div class="flex flex-wrap gap-2" data-tour="schedule-actions">
                     <a href="{{ route('schedule.index', ['date' => $previousDate]) }}" class="rounded-xl border border-slate-200 px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50">Dia anterior</a>
                     <a href="{{ route('schedule.index') }}" class="rounded-xl border border-blue-200 bg-blue-50 px-4 py-2 text-sm font-bold text-blue-700 hover:bg-blue-100">Hoje</a>
                     <a href="{{ route('schedule.index', ['date' => $nextDate]) }}" class="rounded-xl border border-slate-200 px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50">Proximo dia</a>
@@ -27,7 +27,7 @@
                 </div>
             </div>
 
-            <form method="GET" action="{{ route('schedule.index') }}" class="mt-5 grid gap-3 sm:grid-cols-[220px_auto_1fr]">
+            <form method="GET" action="{{ route('schedule.index') }}" class="mt-5 grid gap-3 sm:grid-cols-[220px_auto_1fr]" data-tour="schedule-date-filter">
                 <label class="block">
                     <span class="text-sm font-semibold text-slate-700">Data</span>
                     <input type="date" name="date" value="{{ $selectedDate->toDateString() }}" class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100">
@@ -39,7 +39,7 @@
         </section>
 
         <section class="grid gap-3 lg:grid-cols-[280px_1fr]">
-            <div class="rounded-2xl border {{ $businessDay['is_open'] ? 'border-emerald-200 bg-emerald-50' : 'border-slate-200 bg-slate-100' }} p-4 shadow-sm">
+            <div class="rounded-2xl border {{ $businessDay['is_open'] ? 'border-emerald-200 bg-emerald-50' : 'border-slate-200 bg-slate-100' }} p-4 shadow-sm" data-tour="schedule-business-hours">
                 <p class="text-xs font-black uppercase tracking-[0.18em] {{ $businessDay['is_open'] ? 'text-emerald-700' : 'text-slate-500' }}">Expediente do dia</p>
                 <p class="mt-2 text-2xl font-black {{ $businessDay['is_open'] ? 'text-emerald-950' : 'text-slate-700' }}">{{ $businessDay['label'] }}</p>
                 <p class="mt-1 text-sm font-semibold {{ $businessDay['is_open'] ? 'text-emerald-800' : 'text-slate-500' }}">
@@ -47,7 +47,7 @@
                 </p>
             </div>
 
-            <div class="min-w-0 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+            <div class="min-w-0 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm" data-tour="schedule-hourly-slots">
                 <div class="flex flex-wrap items-center justify-between gap-3">
                     <div>
                         <p class="text-xs font-black uppercase tracking-[0.18em] text-blue-700">Ocupação</p>
@@ -69,7 +69,7 @@
             </div>
         </section>
 
-        <section class="grid gap-3 md:grid-cols-4">
+        <section class="grid gap-3 md:grid-cols-4" data-tour="schedule-summary">
             @foreach ([
                 ['label' => 'Lavagens no dia', 'value' => $summary['total'], 'color' => 'bg-blue-50 text-blue-700'],
                 ['label' => 'Em aberto', 'value' => $summary['open'], 'color' => 'bg-amber-50 text-amber-700'],
@@ -83,7 +83,7 @@
             @endforeach
         </section>
 
-        <section class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+        <section class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm" data-tour="schedule-employees">
             <div class="flex flex-wrap items-start justify-between gap-3">
                 <div>
                     <p class="text-xs font-black uppercase tracking-[0.18em] text-blue-700">Disponibilidade da equipe</p>
@@ -110,7 +110,7 @@
                         };
                     @endphp
 
-                    <article class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                    <article class="rounded-2xl border border-slate-200 bg-slate-50 p-4" @if ($loop->first) data-tour="schedule-employee-card" @endif>
                         <div class="flex items-start justify-between gap-3">
                             <div class="min-w-0">
                                 <p class="truncate text-sm font-black text-slate-950">{{ $employee['name'] }}</p>
@@ -146,7 +146,7 @@
             </div>
         </section>
 
-        <section class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+        <section class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm" data-tour="schedule-timeline">
             <div class="flex items-center justify-between gap-3">
                 <h2 class="text-xl font-black text-slate-950">Linha do dia</h2>
                 <a href="{{ route('kanban') }}" class="rounded-xl border border-slate-200 px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50">Abrir Kanban</a>
@@ -160,7 +160,7 @@
                         $canManageScheduleOrder = $washOrder->status === \App\Models\WashOrder::STATUS_AWAITING && ! $washOrder->hasIdentifiedPayment();
                     @endphp
 
-                    <article class="rounded-2xl border {{ $isDelayed ? 'border-red-200 bg-red-50/70' : 'border-slate-200 bg-slate-50' }} p-4 transition hover:border-blue-200 hover:bg-blue-50/40">
+                    <article class="rounded-2xl border {{ $isDelayed ? 'border-red-200 bg-red-50/70' : 'border-slate-200 bg-slate-50' }} p-4 transition hover:border-blue-200 hover:bg-blue-50/40" @if ($loop->first) data-tour="schedule-timeline-item" @endif>
                         <div class="grid gap-3 md:grid-cols-[120px_1fr_auto]">
                             <div>
                                 <p class="text-xs font-black uppercase tracking-[0.16em] text-slate-500">Horario</p>
@@ -188,7 +188,7 @@
                         </div>
 
                         @if ($canManageScheduleOrder)
-                            <div class="mt-4 grid gap-3 border-t border-slate-200 pt-4 lg:grid-cols-2">
+                            <div class="mt-4 grid gap-3 border-t border-slate-200 pt-4 lg:grid-cols-2" data-tour="schedule-manage-item">
                                 <form method="POST" action="{{ route('schedule.reschedule', $washOrder) }}" class="rounded-2xl border border-blue-100 bg-white p-3">
                                     @csrf
                                     @method('PATCH')
@@ -220,4 +220,71 @@
             </div>
         </section>
     </div>
+
+    @php
+        $scheduleTour = [
+            'key' => 'schedule.index.v1',
+            'title' => 'Agenda diária',
+            'steps' => [
+                [
+                    'target' => '[data-tour="schedule-header"]',
+                    'title' => 'Agenda da data',
+                    'body' => 'Esta tela mostra as lavagens abertas ou agendadas para o dia selecionado, respeitando o horário de funcionamento da unidade.',
+                ],
+                [
+                    'target' => '[data-tour="schedule-actions"]',
+                    'title' => 'Navegação rápida',
+                    'body' => 'Use Dia anterior, Hoje e Próximo dia para mudar a data sem precisar digitar. Nova lavagem já abre com horário sugerido.',
+                ],
+                [
+                    'target' => '[data-tour="schedule-date-filter"]',
+                    'title' => 'Filtro por data',
+                    'body' => 'Escolha uma data específica para consultar agendamentos futuros ou revisar dias anteriores.',
+                ],
+                [
+                    'target' => '[data-tour="schedule-business-hours"]',
+                    'title' => 'Expediente',
+                    'body' => 'Aqui aparece se a unidade abre nesta data e qual intervalo permite criar ou reagendar lavagens.',
+                ],
+                [
+                    'target' => '[data-tour="schedule-hourly-slots"]',
+                    'title' => 'Ocupação por horário',
+                    'body' => 'As faixas mostram quantas lavagens caem em cada horário, ajudando a evitar concentração de serviço.',
+                ],
+                [
+                    'target' => '[data-tour="schedule-summary"]',
+                    'title' => 'Resumo do dia',
+                    'body' => 'Acompanhe total de lavagens, itens em aberto, atrasos e entregas da data filtrada.',
+                ],
+                [
+                    'target' => '[data-tour="schedule-employees"]',
+                    'title' => 'Disponibilidade da equipe',
+                    'body' => 'Veja quem está ocupado, livre ou com atraso, considerando os responsáveis vinculados às lavagens.',
+                ],
+                [
+                    'target' => '[data-tour="schedule-employee-card"]',
+                    'title' => 'Carga por funcionário',
+                    'body' => 'Cada card mostra quantas lavagens o funcionário tem no dia, quantas seguem abertas e qual é o próximo horário.',
+                ],
+                [
+                    'target' => '[data-tour="schedule-timeline"]',
+                    'title' => 'Linha do dia',
+                    'body' => 'A linha organiza as lavagens da data com horário, cliente, veículo, status, equipe e valor.',
+                ],
+                [
+                    'target' => '[data-tour="schedule-timeline-item"]',
+                    'title' => 'Abrir lavagem',
+                    'body' => 'Use Abrir lavagem para ver detalhes, registrar pagamento, acompanhar cupons e revisar o histórico operacional.',
+                ],
+                [
+                    'target' => '[data-tour="schedule-manage-item"]',
+                    'title' => 'Reagendar ou cancelar',
+                    'body' => 'Quando a lavagem ainda está aguardando e sem pagamento, é possível reagendar dentro do expediente ou cancelar com motivo.',
+                ],
+            ],
+        ];
+    @endphp
+    <script type="application/json" data-onboarding-tour>
+        {!! json_encode($scheduleTour, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) !!}
+    </script>
 </x-app.layout>

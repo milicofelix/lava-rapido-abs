@@ -1,11 +1,11 @@
 <x-app.layout heading="Solicitações de lava-rápidos" title="Solicitações · AutoFlow">
     <div class="space-y-5">
-        <div class="rounded-2xl border border-amber-200 bg-amber-50 p-5 text-sm text-amber-950">
+        <div class="rounded-2xl border border-amber-200 bg-amber-50 p-5 text-sm text-amber-950" data-tour="super-requests-intro">
             <p class="font-bold">Área do dono do produto</p>
             <p class="mt-1">Ao aprovar uma solicitação, a unidade nasce em trial e passa a seguir as regras de assinatura do SaaS.</p>
         </div>
 
-        <section class="grid gap-4 md:grid-cols-4">
+        <section class="grid gap-4 md:grid-cols-4" data-tour="super-requests-summary">
             <div class="rounded-xl border border-slate-200 bg-white p-5">
                 <p class="text-sm text-slate-500">Pendentes</p>
                 <p class="mt-2 text-2xl font-black text-amber-700">{{ $summary['pending'] }}</p>
@@ -24,7 +24,7 @@
             </div>
         </section>
 
-        <section class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+        <section class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm" data-tour="super-requests-filters">
             <form method="GET" class="grid gap-3 lg:grid-cols-[1fr_240px_auto_auto]">
                 <input name="search" value="{{ $search }}" placeholder="Buscar por responsável, e-mail, telefone, lava-rápido ou cidade" class="rounded-xl border border-slate-300 px-4 py-2 text-sm">
                 <select name="status" class="rounded-xl border border-slate-300 px-4 py-2 text-sm">
@@ -38,7 +38,7 @@
             </form>
         </section>
 
-        <section class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+        <section class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm" data-tour="super-requests-list">
             <div class="border-b border-slate-200 px-5 py-4">
                 <h2 class="font-black text-slate-950">Solicitações recebidas</h2>
                 <p class="mt-1 text-sm text-slate-500">Controle manual antes de publicar qualquer unidade no mapa.</p>
@@ -53,7 +53,7 @@
                             default => 'bg-amber-100 text-amber-800',
                         };
                     @endphp
-                    <article class="grid gap-4 px-5 py-5 lg:grid-cols-[1fr_220px]">
+                    <article class="grid gap-4 px-5 py-5 lg:grid-cols-[1fr_220px]" @if ($loop->first) data-tour="super-requests-row" @endif>
                         <div>
                             <div class="flex flex-wrap items-center gap-2">
                                 <a href="{{ route('super-admin.location-requests.show', $requestItem) }}" class="text-lg font-black text-blue-700 hover:text-blue-900">{{ $requestItem->business_name }}</a>
@@ -80,4 +80,42 @@
             </div>
         </section>
     </div>
+
+    @php
+        $superRequestsTour = [
+            'key' => 'super-admin.location-requests.index.v1',
+            'title' => 'Solicitações de lava-rápidos',
+            'steps' => [
+                [
+                    'target' => '[data-tour="super-requests-intro"]',
+                    'title' => 'Administração do produto',
+                    'body' => 'Esta é a entrada das solicitações públicas. Cada aprovação cria uma unidade em trial.',
+                ],
+                [
+                    'target' => '[data-tour="super-requests-summary"]',
+                    'title' => 'Resumo das solicitações',
+                    'body' => 'Acompanhe rapidamente pendentes, aprovadas, rejeitadas e o volume total recebido.',
+                ],
+                [
+                    'target' => '[data-tour="super-requests-filters"]',
+                    'title' => 'Busca e status',
+                    'body' => 'Filtre por responsável, contato, nome do lava-rápido, cidade ou situação da solicitação.',
+                ],
+                [
+                    'target' => '[data-tour="super-requests-list"]',
+                    'title' => 'Fila de análise',
+                    'body' => 'A lista centraliza os cadastros que precisam de conferência antes de publicar a unidade.',
+                ],
+                [
+                    'target' => '[data-tour="super-requests-row"]',
+                    'title' => 'Abrir detalhes',
+                    'body' => 'Entre no detalhe para revisar endereço, coordenadas, senha inicial e aprovar ou rejeitar.',
+                ],
+            ],
+        ];
+    @endphp
+
+    <script type="application/json" data-onboarding-tour>
+        {!! json_encode($superRequestsTour, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) !!}
+    </script>
 </x-app.layout>

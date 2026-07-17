@@ -47,6 +47,14 @@ class PublicWashTrackingTest extends TestCase
                 ->where('washOrder.status_label', 'Lavando')
                 ->where('washOrder.services.0.name', 'Lavagem completa')
                 ->where('logoUrl', $washOrder->washLocation->fresh()->logoUrl())
+                ->where('onboardingTour.key', 'tracking.show.v1')
+                ->where('onboardingTour.steps.0.target', '[data-tour="tracking-header"]')
+                ->where('onboardingTour.steps.1.target', '[data-tour="tracking-summary"]')
+                ->where('onboardingTour.steps.2.target', '[data-tour="tracking-loyalty"]')
+                ->where('onboardingTour.steps.3.target', '[data-tour="tracking-progress"]')
+                ->where('onboardingTour.steps.4.target', '[data-tour="tracking-review"]')
+                ->where('onboardingTour.steps.5.target', '[data-tour="tracking-services"]')
+                ->where('onboardingTour.steps.6.target', '[data-tour="tracking-history"]')
             );
     }
 
