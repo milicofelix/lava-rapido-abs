@@ -191,6 +191,58 @@ class SettingsManagementTest extends TestCase
         $this->assertSame('-46.4207678', (string) $location->longitude);
     }
 
+    public function test_admin_can_correct_coordinates_manually_from_settings(): void
+    {
+        $location = WashLocation::factory()->create([
+            'latitude' => -23.5000000,
+            'longitude' => -46.4000000,
+        ]);
+        $admin = User::factory()->create([
+            'role' => User::ROLE_ADMIN,
+            'wash_location_id' => $location->id,
+        ]);
+
+        $this->actingAs($admin)
+            ->put(route('settings.update'), [
+                'company_name' => $location->name,
+                'company_whatsapp' => $location->phone,
+                'address' => $location->address,
+                'district' => $location->district,
+                'city' => $location->city,
+                'state' => $location->state ?? 'SP',
+                'latitude' => '-23.5191405',
+                'longitude' => '-46.4207678',
+                'theme' => AppSetting::THEME_LIGHT,
+                'module_schedule' => '1',
+            ])
+            ->assertRedirect()
+            ->assertSessionHasNoErrors();
+
+        $location->refresh();
+
+        $this->assertSame('-23.5191405', (string) $location->latitude);
+        $this->assertSame('-46.4207678', (string) $location->longitude);
+    }
+
+    public function test_settings_page_renders_coordinate_inputs_as_editable_payload_fields(): void
+    {
+        $location = WashLocation::factory()->create([
+            'latitude' => -23.5191405,
+            'longitude' => -46.4207678,
+        ]);
+        $admin = User::factory()->create([
+            'role' => User::ROLE_ADMIN,
+            'wash_location_id' => $location->id,
+        ]);
+
+        $this->actingAs($admin)
+            ->get(route('settings.edit'))
+            ->assertOk()
+            ->assertSee('name="latitude"', false)
+            ->assertSee('name="longitude"', false)
+            ->assertDontSee('data-coordinate-payload', false);
+    }
+
     public function test_admin_can_update_structured_business_hours(): void
     {
         $location = WashLocation::factory()->create();

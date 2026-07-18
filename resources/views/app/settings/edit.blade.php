@@ -98,18 +98,17 @@
                         <div class="mt-4 grid gap-4 md:grid-cols-2">
                             <label class="block">
                                 <span class="text-sm font-semibold text-slate-700">Latitude</span>
-                                <input type="hidden" name="latitude" value="{{ old('latitude', $currentLocation?->mapLatitude()) }}" data-coordinate-payload="latitude">
-                                <input value="{{ old('latitude', $currentLocation?->mapLatitude()) }}" inputmode="decimal" placeholder="-23.5489100" data-coordinate-display="latitude" class="mt-1 w-full rounded-xl border border-amber-200 px-3 py-2.5 text-sm shadow-sm focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-100 disabled:bg-white disabled:text-slate-900">
+                                <input name="latitude" value="{{ old('latitude', $currentLocation?->mapLatitude()) }}" inputmode="decimal" placeholder="-23.5489100" class="mt-1 w-full rounded-xl border border-amber-200 px-3 py-2.5 text-sm shadow-sm focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-100">
                                 @error('latitude') <span class="text-sm text-red-600">{{ $message }}</span> @enderror
                             </label>
 
                             <label class="block">
                                 <span class="text-sm font-semibold text-slate-700">Longitude</span>
-                                <input type="hidden" name="longitude" value="{{ old('longitude', $currentLocation?->mapLongitude()) }}" data-coordinate-payload="longitude">
-                                <input value="{{ old('longitude', $currentLocation?->mapLongitude()) }}" inputmode="decimal" placeholder="-46.6341200" data-coordinate-display="longitude" class="mt-1 w-full rounded-xl border border-amber-200 px-3 py-2.5 text-sm shadow-sm focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-100 disabled:bg-white disabled:text-slate-900">
+                                <input name="longitude" value="{{ old('longitude', $currentLocation?->mapLongitude()) }}" inputmode="decimal" placeholder="-46.6341200" class="mt-1 w-full rounded-xl border border-amber-200 px-3 py-2.5 text-sm shadow-sm focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-100">
                                 @error('longitude') <span class="text-sm text-red-600">{{ $message }}</span> @enderror
                             </label>
                         </div>
+                        <p class="mt-3 text-xs leading-5 text-amber-800">Se o ponto do mapa público não bater com o endereço, ajuste estes campos e salve a unidade.</p>
                     </div>
 
                     <div class="md:col-span-2 rounded-2xl border border-slate-200 bg-slate-50 p-4" data-tour="settings-hours">
@@ -127,22 +126,22 @@
                                     $dayHours = $businessHours[$day] ?? ['is_open' => false, 'opens' => '08:00', 'closes' => '18:00'];
                                     $isOpen = (bool) old('business_hours.'.$day.'.is_open', $dayHours['is_open']);
                                 @endphp
-                                <div class="grid gap-3 rounded-xl border border-slate-200 bg-white p-3 md:grid-cols-[150px_1fr_1fr] md:items-end">
+                                <div class="grid min-w-0 gap-3 rounded-xl border border-slate-200 bg-white p-3 md:grid-cols-[150px_minmax(0,1fr)_minmax(0,1fr)] md:items-end">
                                     <label class="flex items-center gap-3 md:pb-2">
                                         <input type="hidden" name="business_hours[{{ $day }}][is_open]" value="0">
                                         <input type="checkbox" name="business_hours[{{ $day }}][is_open]" value="1" @checked($isOpen) class="h-4 w-4 rounded border-slate-300 text-blue-700">
                                         <span class="text-sm font-black text-slate-900">{{ $label }}</span>
                                     </label>
 
-                                    <label class="block">
+                                    <label class="block min-w-0">
                                         <span class="text-xs font-bold text-slate-500">Abertura</span>
-                                        <input type="time" name="business_hours[{{ $day }}][opens]" value="{{ old('business_hours.'.$day.'.opens', $dayHours['opens']) }}" class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100">
+                                        <input type="time" name="business_hours[{{ $day }}][opens]" value="{{ old('business_hours.'.$day.'.opens', $dayHours['opens']) }}" class="mt-1 w-full min-w-0 max-w-full rounded-xl border border-slate-300 px-2 py-2 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100 sm:px-3">
                                         @error('business_hours.'.$day.'.opens') <span class="text-sm text-red-600">{{ $message }}</span> @enderror
                                     </label>
 
-                                    <label class="block">
+                                    <label class="block min-w-0">
                                         <span class="text-xs font-bold text-slate-500">Fechamento</span>
-                                        <input type="time" name="business_hours[{{ $day }}][closes]" value="{{ old('business_hours.'.$day.'.closes', $dayHours['closes']) }}" class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100">
+                                        <input type="time" name="business_hours[{{ $day }}][closes]" value="{{ old('business_hours.'.$day.'.closes', $dayHours['closes']) }}" class="mt-1 w-full min-w-0 max-w-full rounded-xl border border-slate-300 px-2 py-2 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100 sm:px-3">
                                         @error('business_hours.'.$day.'.closes') <span class="text-sm text-red-600">{{ $message }}</span> @enderror
                                     </label>
                                 </div>
@@ -516,21 +515,6 @@
 
     <script>
         document.querySelectorAll('[data-theme-settings-form]').forEach((form) => {
-            const syncCoordinates = () => {
-                form.querySelectorAll('[data-coordinate-display]').forEach((displayInput) => {
-                    const field = displayInput.dataset.coordinateDisplay;
-                    const payloadInput = form.querySelector(`[data-coordinate-payload="${field}"]`);
-
-                    if (payloadInput) {
-                        payloadInput.value = displayInput.value;
-                    }
-                });
-            };
-
-            form.addEventListener('input', syncCoordinates);
-            form.addEventListener('change', syncCoordinates);
-            form.addEventListener('submit', syncCoordinates);
-
             const loyaltyActive = form.querySelector('[data-loyalty-active]');
             const countScope = form.querySelector('[data-loyalty-count-scope]');
             const rewardType = form.querySelector('[data-loyalty-reward-type]');
