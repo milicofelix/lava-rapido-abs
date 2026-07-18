@@ -987,6 +987,10 @@
             };
 
             const buildDirectionsUrl = (location) => {
+                if (location.directions_url) {
+                    return location.directions_url;
+                }
+
                 const latitude = Number(location.latitude);
                 const longitude = Number(location.longitude);
 

@@ -80,6 +80,7 @@ class PublicWashLocationMapController extends Controller
                     'status_label' => $location->publicStatusLabel(),
                     'opening_hours' => $location->opening_hours ?: $location->openingHoursSummary(),
                     'phone' => $location->phone,
+                    'directions_url' => $this->directionsUrl($location),
                     'active_orders_count' => $location->active_orders_count,
                     'rating_average' => $summary['average'] ?? null,
                     'rating_count' => $summary['count'] ?? 0,

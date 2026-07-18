@@ -49,6 +49,7 @@ class WashLocationMapTest extends TestCase
             ->assertSee('Av. das Nacoes, 1580')
             ->assertSee('-23.54891')
             ->assertSee('-46.63412')
+            ->assertSee('destination=-23.54891,-46.63412', false)
             ->assertSee('Minha localização')
             ->assertSee('Centralizar')
             ->assertSee('Use sua localização para ordenar por proximidade')
@@ -445,6 +446,7 @@ class WashLocationMapTest extends TestCase
             ->assertSee('Mapa pendente')
             ->assertSee('"latitude":null', false)
             ->assertSee('"longitude":null', false)
+            ->assertSee('query=Rua%20Sem%20Fake%2C%20123%20-%20Centro%20-%20Campinas%2FSP', false)
             ->assertDontSee('destination=-23.55052,-46.63331', false);
 
         $this->get(route('public.locations.show', $location))

@@ -135,13 +135,13 @@
 
                                     <label class="block min-w-0">
                                         <span class="text-xs font-bold text-slate-500">Abertura</span>
-                                        <input type="time" name="business_hours[{{ $day }}][opens]" value="{{ old('business_hours.'.$day.'.opens', $dayHours['opens']) }}" class="mt-1 w-full min-w-0 max-w-full rounded-xl border border-slate-300 px-2 py-2 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100 sm:px-3">
+                                        <input type="time" name="business_hours[{{ $day }}][opens]" value="{{ old('business_hours.'.$day.'.opens', $dayHours['opens']) }}" class="mt-1 w-32 min-w-0 max-w-full rounded-xl border border-slate-300 px-2 py-2 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100 sm:w-full sm:px-3">
                                         @error('business_hours.'.$day.'.opens') <span class="text-sm text-red-600">{{ $message }}</span> @enderror
                                     </label>
 
                                     <label class="block min-w-0">
                                         <span class="text-xs font-bold text-slate-500">Fechamento</span>
-                                        <input type="time" name="business_hours[{{ $day }}][closes]" value="{{ old('business_hours.'.$day.'.closes', $dayHours['closes']) }}" class="mt-1 w-full min-w-0 max-w-full rounded-xl border border-slate-300 px-2 py-2 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100 sm:px-3">
+                                        <input type="time" name="business_hours[{{ $day }}][closes]" value="{{ old('business_hours.'.$day.'.closes', $dayHours['closes']) }}" class="mt-1 w-32 min-w-0 max-w-full rounded-xl border border-slate-300 px-2 py-2 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100 sm:w-full sm:px-3">
                                         @error('business_hours.'.$day.'.closes') <span class="text-sm text-red-600">{{ $message }}</span> @enderror
                                     </label>
                                 </div>
