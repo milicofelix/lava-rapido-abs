@@ -46,6 +46,7 @@ class PublicWashTrackingTest extends TestCase
                 ->where('washOrder.vehicle.plate', $washOrder->vehicle->plate)
                 ->where('washOrder.status_label', 'Lavando')
                 ->where('washOrder.services.0.name', 'Lavagem completa')
+                ->where('feedUrl', route('tracking.feed', 'ABS-TRACK-1'))
                 ->where('logoUrl', $washOrder->washLocation->fresh()->logoUrl())
                 ->where('onboardingTour.key', 'tracking.show.v1')
                 ->where('onboardingTour.steps.0.target', '[data-tour="tracking-header"]')
@@ -56,6 +57,23 @@ class PublicWashTrackingTest extends TestCase
                 ->where('onboardingTour.steps.5.target', '[data-tour="tracking-services"]')
                 ->where('onboardingTour.steps.6.target', '[data-tour="tracking-history"]')
             );
+    }
+
+    public function test_tracking_feed_returns_latest_status_payload(): void
+    {
+        $washOrder = WashOrder::factory()->create([
+            'code' => 'ABS-FEED-1',
+            'status' => WashOrder::STATUS_WASHING,
+        ]);
+
+        $washOrder->update(['status' => WashOrder::STATUS_READY]);
+
+        $this->getJson(route('tracking.feed', 'ABS-FEED-1'))
+            ->assertOk()
+            ->assertJsonPath('washOrder.code', 'ABS-FEED-1')
+            ->assertJsonPath('washOrder.status', WashOrder::STATUS_READY)
+            ->assertJsonPath('washOrder.status_label', 'Pronto para retirada')
+            ->assertJsonPath('feedUrl', route('tracking.feed', 'ABS-FEED-1'));
     }
 
     public function test_unknown_tracking_code_returns_not_found(): void

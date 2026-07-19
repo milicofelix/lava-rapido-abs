@@ -1,5 +1,8 @@
 import { Head, useForm, usePage } from '@inertiajs/react';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
+
+const TERMINAL_STATUSES = ['entregue', 'cancelado'];
+const POLLING_INTERVAL_MS = 5000;
 
 function ProgressStep({ label, done, current }) {
     const classes = current
@@ -19,7 +22,7 @@ function ProgressStep({ label, done, current }) {
 export default function Tracking({ washOrder: initialWashOrder, loyalty: initialLoyalty, statuses, progressStatuses, feedUrl, reviewUrl, logoUrl, onboardingTour }) {
     const [washOrder, setWashOrder] = useState(initialWashOrder);
     const [loyalty, setLoyalty] = useState(initialLoyalty);
-    const [realtimeUpdated, setRealtimeUpdated] = useState(false);
+    const [autoUpdated, setAutoUpdated] = useState(false);
     const { props } = usePage();
     const reviewForm = useForm({
         rating: '',
@@ -27,12 +30,12 @@ export default function Tracking({ washOrder: initialWashOrder, loyalty: initial
         publish_consent: false,
     });
 
-    const refreshFeed = async () => {
+    const refreshFeed = useCallback(async () => {
         const { data } = await window.axios.get(feedUrl);
         setWashOrder(data.washOrder);
         setLoyalty(data.loyalty);
-        setRealtimeUpdated(true);
-    };
+        setAutoUpdated(true);
+    }, [feedUrl]);
 
     useEffect(() => {
         if (!window.Echo) {
@@ -44,7 +47,17 @@ export default function Tracking({ washOrder: initialWashOrder, loyalty: initial
         channel.listen('.WashOrderStatusChanged', refreshFeed);
 
         return () => window.Echo.leave(channelName);
-    }, [feedUrl, washOrder.id]);
+    }, [refreshFeed, washOrder.id]);
+
+    useEffect(() => {
+        if (TERMINAL_STATUSES.includes(washOrder.status)) {
+            return undefined;
+        }
+
+        const interval = window.setInterval(refreshFeed, POLLING_INTERVAL_MS);
+
+        return () => window.clearInterval(interval);
+    }, [refreshFeed, washOrder.status]);
 
     useEffect(() => {
         if (!onboardingTour?.key) {
@@ -91,7 +104,7 @@ export default function Tracking({ washOrder: initialWashOrder, loyalty: initial
                             {washOrder.vehicle.model} {washOrder.vehicle.color} - {washOrder.vehicle.plate}
                         </h1>
                         <p className="mt-2 text-sm text-zinc-500">Código {washOrder.code}</p>
-                        {realtimeUpdated && <p className="mt-1 text-xs font-medium text-cyan-700">Atualizado em tempo real.</p>}
+                        {autoUpdated && <p className="mt-1 text-xs font-medium text-cyan-700">Atualizado automaticamente.</p>}
                     </div>
                     <div className="rounded-lg border border-cyan-200 bg-cyan-50 px-4 py-3 text-right">
                         <p className="text-sm text-cyan-800">Status atual</p>
