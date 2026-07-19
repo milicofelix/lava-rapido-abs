@@ -57,7 +57,7 @@ class MercadoPagoCheckoutService
 
         if ($subscription->external_reference !== $externalReference) {
             $subscription->forceFill([
-                'payment_provider' => 'mercado_pago',
+                'payment_provider' => Subscription::PAYMENT_PROVIDER_MERCADO_PAGO,
                 'external_reference' => $externalReference,
             ])->save();
         }
@@ -97,7 +97,7 @@ class MercadoPagoCheckoutService
             ->json();
 
         $subscription->forceFill([
-            'payment_provider' => 'mercado_pago',
+            'payment_provider' => Subscription::PAYMENT_PROVIDER_MERCADO_PAGO,
             'external_reference' => $externalReference,
             'provider_preference_id' => $response['id'] ?? null,
             'checkout_url' => $response['init_point'] ?? $response['sandbox_init_point'] ?? null,

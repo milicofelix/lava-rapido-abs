@@ -17,14 +17,14 @@ export default defineConfig({
         host: '0.0.0.0',
         port: 5179,
         strictPort: true,
-        origin: 'http://192.168.1.69:5179', //Casa Dona Cida
-        //origin: 'http://192.168.18.6:5179', //Casa Mãe
-        // origin: 'http://192.168.1.3:5179', //Casa Ferraz
+        // origin: 'http://192.168.1.69:5179', //Casa Dona Cida
+        // origin: 'http://192.168.18.6:5179', //Casa Mãe
+        origin: 'http://192.168.1.3:5179', //Casa Ferraz
         
         hmr: {
-            host: '192.168.1.69',//Casa Dona Cida
-            //host: '192.168.18.6', //Casa Mãe
-            // host: '192.168.1.3', //Casa Ferraz
+            // host: '192.168.1.69',//Casa Dona Cida
+            // host: '192.168.18.6', //Casa Mãe
+            host: '192.168.1.3', //Casa Ferraz
             port: 5179,
         },
         cors: {

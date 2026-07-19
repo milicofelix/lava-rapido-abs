@@ -20,6 +20,12 @@ class Subscription extends Model
 
     public const STATUS_EXPIRED = 'expired';
 
+    public const PAYMENT_PROVIDER_MANUAL = 'manual';
+
+    public const PAYMENT_PROVIDER_MANUAL_PIX = 'manual_pix';
+
+    public const PAYMENT_PROVIDER_MERCADO_PAGO = 'mercado_pago';
+
     protected $fillable = [
         'wash_location_id',
         'plan_id',
@@ -58,6 +64,16 @@ class Subscription extends Model
     public function statusLabel(): string
     {
         return self::statuses()[$this->status] ?? $this->status;
+    }
+
+    public function paymentProviderLabel(): string
+    {
+        return match ($this->payment_provider) {
+            self::PAYMENT_PROVIDER_MERCADO_PAGO => 'Mercado Pago',
+            self::PAYMENT_PROVIDER_MANUAL_PIX => 'Pix manual',
+            self::PAYMENT_PROVIDER_MANUAL, null => 'Manual',
+            default => $this->payment_provider,
+        };
     }
 
     public function washLocation(): BelongsTo

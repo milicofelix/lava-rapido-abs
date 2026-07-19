@@ -38,8 +38,9 @@
 
         <section class="rounded-2xl border border-blue-200 bg-blue-50 p-5 text-sm text-blue-950" data-tour="subscription-choice">
             <p class="font-bold">Escolha de plano</p>
+            <p class="mt-1">Escolha um plano e ative por Pix manual com conferência do comprovante. O Mercado Pago continua disponível para testes e para quando a cobrança automática for liberada.</p>
+            <p class="mt-3 inline-flex rounded-full bg-white px-3 py-1 text-xs font-black text-blue-800">Pix da assinatura: {{ $pixKey }}</p>
             @if ($mercadoPagoConfigured)
-                <p class="mt-1">Escolha um plano para abrir o checkout do Mercado Pago. A assinatura será ativada automaticamente após a confirmação do pagamento.</p>
                 @if ($mercadoPagoEnvironment === 'teste')
                     <p class="mt-3 inline-flex rounded-full bg-emerald-100 px-3 py-1 text-xs font-black text-emerald-800">Mercado Pago em modo teste</p>
                 @elseif ($mercadoPagoLiveCheckoutAllowed)
@@ -50,6 +51,53 @@
             @else
                 <p class="mt-1">Mercado Pago ainda não configurado. Depois de escolher um plano, o Super Admin confirma a assinatura no Admin Produto.</p>
             @endif
+            @if ($currentSubscription?->status === \App\Models\Subscription::STATUS_PENDING && $currentSubscription->payment_provider === \App\Models\Subscription::PAYMENT_PROVIDER_MANUAL_PIX)
+                @php
+                    $pixPayload = $currentSubscription->provider_payload ?? [];
+                @endphp
+                <div class="mt-5 rounded-2xl border border-emerald-200 bg-white p-4 text-slate-800" data-tour="subscription-pending">
+                    <div class="flex flex-wrap items-start justify-between gap-4">
+                        <div>
+                            <p class="text-xs font-black uppercase tracking-[0.16em] text-emerald-700">Pagamento Pix pendente</p>
+                            <h2 class="mt-1 text-lg font-black text-slate-950">{{ $currentSubscription->plan?->name ?? 'Plano selecionado' }} · {{ $currentSubscription->plan?->formattedPrice() }}</h2>
+                            <p class="mt-1 text-sm text-slate-500">Após pagar, envie o comprovante informando a referência abaixo para ativação manual da assinatura.</p>
+                        </div>
+                        <span class="rounded-full bg-amber-100 px-3 py-1 text-xs font-black text-amber-800">Aguardando conferência</span>
+                    </div>
+
+                    <dl class="mt-4 grid gap-3 md:grid-cols-3">
+                        <div class="rounded-xl bg-slate-50 p-3">
+                            <dt class="text-xs font-black uppercase tracking-[0.14em] text-slate-500">Chave Pix</dt>
+                            <dd class="mt-1 break-all font-black text-slate-950">{{ $pixPayload['pix_key'] ?? $pixKey }}</dd>
+                        </div>
+                        <div class="rounded-xl bg-slate-50 p-3">
+                            <dt class="text-xs font-black uppercase tracking-[0.14em] text-slate-500">Valor</dt>
+                            <dd class="mt-1 font-black text-emerald-700">{{ $currentSubscription->plan?->formattedPrice() }}</dd>
+                        </div>
+                        <div class="rounded-xl bg-slate-50 p-3">
+                            <dt class="text-xs font-black uppercase tracking-[0.14em] text-slate-500">Referência</dt>
+                            <dd class="mt-1 break-all font-black text-slate-950">{{ $currentSubscription->external_reference }}</dd>
+                        </div>
+                    </dl>
+
+                    @if (! empty($pixPayload['copy_paste']))
+                        <label class="mt-4 block">
+                            <span class="text-xs font-black uppercase tracking-[0.14em] text-slate-500">Pix Copia e Cola</span>
+                            <textarea readonly rows="4" data-subscription-pix-code class="mt-2 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-700">{{ $pixPayload['copy_paste'] }}</textarea>
+                        </label>
+                    @endif
+
+                    <div class="mt-4 flex flex-wrap gap-3">
+                        <button type="button" data-copy-subscription-pix class="rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-bold text-white hover:bg-emerald-700">Copiar Pix Copia e Cola</button>
+                        <button type="button" data-copy-value="{{ $pixPayload['pix_key'] ?? $pixKey }}" class="rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-bold text-slate-700 hover:bg-slate-50">Copiar chave Pix</button>
+                        <form method="POST" action="{{ route('subscriptions.cancel-pending') }}">
+                            @csrf
+                            @method('PATCH')
+                            <button class="rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-bold text-slate-700 hover:bg-slate-50">Cancelar pendência</button>
+                        </form>
+                    </div>
+                </div>
+            @endif
             @if ($currentSubscription?->status === \App\Models\Subscription::STATUS_PENDING && $currentSubscription->checkout_url)
                 <div class="mt-4 flex flex-wrap gap-3" data-tour="subscription-pending">
                     <a href="{{ $currentSubscription->checkout_url }}" class="inline-flex rounded-xl bg-blue-700 px-4 py-2.5 text-sm font-bold text-white hover:bg-blue-800">Continuar pagamento pendente</a>
@@ -59,7 +107,7 @@
                         <button class="rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-bold text-slate-700 hover:bg-slate-50">Cancelar pendência</button>
                     </form>
                 </div>
-            @elseif ($currentSubscription?->status === \App\Models\Subscription::STATUS_PENDING)
+            @elseif ($currentSubscription?->status === \App\Models\Subscription::STATUS_PENDING && $currentSubscription->payment_provider !== \App\Models\Subscription::PAYMENT_PROVIDER_MANUAL_PIX)
                 <form method="POST" action="{{ route('subscriptions.cancel-pending') }}" class="mt-4" data-tour="subscription-pending">
                     @csrf
                     @method('PATCH')
@@ -86,16 +134,23 @@
                         @endif
                     </div>
                     <p class="mt-5 text-3xl font-black {{ $isCurrentPlan ? 'text-emerald-700' : 'text-blue-700' }}">{{ $plan->formattedPrice() }}</p>
-                    <form method="POST" action="{{ route('subscriptions.choose') }}" class="mt-5" @if ($loop->first) data-tour="subscription-plan-action" @endif>
-                        @csrf
-                        <input type="hidden" name="plan_id" value="{{ $plan->id }}">
-                        <button @if ($isCurrentPlan || ($mercadoPagoConfigured && ! $mercadoPagoLiveCheckoutAllowed)) disabled @endif class="w-full rounded-xl bg-blue-700 px-4 py-2.5 text-sm font-bold text-white hover:bg-blue-800 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-500">{{ $isCurrentPlan ? 'Assinatura ativa' : ($mercadoPagoConfigured ? 'Pagar com Mercado Pago' : 'Escolher plano') }}</button>
-                        @if ($mercadoPagoConfigured && ! $mercadoPagoLiveCheckoutAllowed)
-                            <p class="mt-2 text-xs font-bold text-amber-700">Checkout bloqueado até habilitar MERCADO_PAGO_LIVE_ENABLED=true.</p>
-                        @elseif ($isCurrentPlan)
-                            <p class="mt-2 text-xs font-bold text-emerald-700">Este é o plano ativo da unidade.</p>
-                        @endif
-                    </form>
+                    <div class="mt-5 space-y-2" @if ($loop->first) data-tour="subscription-plan-action" @endif>
+                        <form method="POST" action="{{ route('subscriptions.choose-pix') }}">
+                            @csrf
+                            <input type="hidden" name="plan_id" value="{{ $plan->id }}">
+                            <button @if ($isCurrentPlan) disabled @endif class="w-full rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-bold text-white hover:bg-emerald-700 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-500">{{ $isCurrentPlan ? 'Assinatura ativa' : 'Pagar via Pix' }}</button>
+                        </form>
+                        <form method="POST" action="{{ route('subscriptions.choose') }}">
+                            @csrf
+                            <input type="hidden" name="plan_id" value="{{ $plan->id }}">
+                            <button @if ($isCurrentPlan || ($mercadoPagoConfigured && ! $mercadoPagoLiveCheckoutAllowed)) disabled @endif class="w-full rounded-xl border border-blue-200 bg-white px-4 py-2.5 text-sm font-bold text-blue-700 hover:bg-blue-50 disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-100 disabled:text-slate-500">{{ $isCurrentPlan ? 'Assinatura ativa' : ($mercadoPagoConfigured ? 'Pagar com Mercado Pago' : 'Escolher plano') }}</button>
+                            @if ($mercadoPagoConfigured && ! $mercadoPagoLiveCheckoutAllowed)
+                                <p class="mt-2 text-xs font-bold text-amber-700">Checkout bloqueado até habilitar MERCADO_PAGO_LIVE_ENABLED=true.</p>
+                            @elseif ($isCurrentPlan)
+                                <p class="mt-2 text-xs font-bold text-emerald-700">Este é o plano ativo da unidade.</p>
+                            @endif
+                        </form>
+                    </div>
                 </article>
             @empty
                 <p class="rounded-2xl border border-dashed border-slate-200 bg-white px-5 py-10 text-center text-sm text-slate-500 lg:col-span-3">Nenhum plano ativo disponível no momento.</p>
@@ -142,7 +197,7 @@
                                 </div>
                                 <div class="rounded-xl bg-white px-3 py-2">
                                     <dt class="text-xs font-black uppercase tracking-[0.12em] text-slate-500">Pagamento</dt>
-                                    <dd class="mt-1 font-bold text-slate-800">{{ $subscription->payment_provider === 'mercado_pago' ? 'Mercado Pago' : 'Manual' }}</dd>
+                                    <dd class="mt-1 font-bold text-slate-800">{{ $subscription->paymentProviderLabel() }}</dd>
                                     <dd class="mt-1 text-xs font-semibold text-slate-500">Pago em {{ $subscription->paid_at?->format('d/m/Y H:i') ?? '-' }}</dd>
                                 </div>
                                 <div class="rounded-xl bg-white px-3 py-2">
@@ -190,7 +245,7 @@
                                         <p class="mt-1">Fim: {{ $subscription->ends_at?->format('d/m/Y') ?? '-' }}</p>
                                     </td>
                                     <td class="px-5 py-4 text-slate-700">
-                                        <p>{{ $subscription->payment_provider === 'mercado_pago' ? 'Mercado Pago' : 'Manual' }}</p>
+                                        <p>{{ $subscription->paymentProviderLabel() }}</p>
                                         <p class="mt-1 text-xs text-slate-500">Pago em {{ $subscription->paid_at?->format('d/m/Y H:i') ?? '-' }}</p>
                                     </td>
                                     <td class="px-5 py-4 text-xs text-slate-500">
@@ -241,7 +296,7 @@
                 [
                     'target' => '[data-tour="subscription-plan-action"]',
                     'title' => 'Contratação',
-                    'body' => 'Use o botão do card para escolher o plano ou abrir o Mercado Pago quando o checkout estiver configurado.',
+                    'body' => 'Use o botão do card para gerar o Pix manual ou abrir o Mercado Pago quando o checkout estiver configurado.',
                 ],
                 [
                     'target' => '[data-tour="subscription-history"]',
@@ -254,5 +309,54 @@
 
     <script type="application/json" data-onboarding-tour>
         {!! json_encode($subscriptionTour, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) !!}
+    </script>
+    <script>
+        document.querySelectorAll('[data-copy-subscription-pix]').forEach((button) => {
+            button.addEventListener('click', async () => {
+                const textarea = document.querySelector('[data-subscription-pix-code]');
+
+                if (! textarea) {
+                    return;
+                }
+
+                textarea.select();
+                textarea.setSelectionRange(0, textarea.value.length);
+
+                try {
+                    await navigator.clipboard.writeText(textarea.value);
+                } catch (error) {
+                    document.execCommand('copy');
+                }
+
+                button.textContent = 'Pix copiado';
+                setTimeout(() => {
+                    button.textContent = 'Copiar Pix Copia e Cola';
+                }, 2200);
+            });
+        });
+
+        document.querySelectorAll('[data-copy-value]').forEach((button) => {
+            button.addEventListener('click', async () => {
+                const originalText = button.textContent;
+
+                try {
+                    await navigator.clipboard.writeText(button.dataset.copyValue || '');
+                } catch (error) {
+                    const textarea = document.createElement('textarea');
+                    textarea.value = button.dataset.copyValue || '';
+                    textarea.style.position = 'fixed';
+                    textarea.style.opacity = '0';
+                    document.body.appendChild(textarea);
+                    textarea.select();
+                    document.execCommand('copy');
+                    textarea.remove();
+                }
+
+                button.textContent = 'Chave copiada';
+                setTimeout(() => {
+                    button.textContent = originalText;
+                }, 2200);
+            });
+        });
     </script>
 </x-app.layout>

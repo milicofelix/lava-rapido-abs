@@ -42,6 +42,12 @@ return [
         'sandbox_payer_email' => env('MERCADO_PAGO_SANDBOX_PAYER_EMAIL'),
     ],
 
+    'subscription_pix' => [
+        'key' => env('SUBSCRIPTION_PIX_KEY', 'milicofelix@gmail.com'),
+        'receiver_name' => env('SUBSCRIPTION_PIX_RECEIVER_NAME', 'AutoFlow ABS'),
+        'receiver_city' => env('SUBSCRIPTION_PIX_RECEIVER_CITY', 'SAO PAULO'),
+    ],
+
     'slack' => [
         'notifications' => [
             'bot_user_oauth_token' => env('SLACK_BOT_USER_OAUTH_TOKEN'),

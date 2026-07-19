@@ -139,6 +139,7 @@ Documento de acompanhamento do que ja foi construido e do que ainda falta para d
 - [x] Bloqueio de cobranca real sem flag explicita.
 - [x] Diagnostico de Mercado Pago.
 - [x] Indicador correto de plano atual.
+- [x] Ativacao manual por Pix com referencia e Pix Copia e Cola.
 - [ ] Pagamento real em producao.
 - [ ] Renovacao recorrente automatica.
 - [ ] Cancelamento via provedor.

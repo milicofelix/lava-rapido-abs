@@ -66,6 +66,13 @@ Use este documento antes de colocar uma nova versao em homologacao ou producao.
 - [ ] `MERCADO_PAGO_SUCCESS_URL`, `MERCADO_PAGO_FAILURE_URL`, `MERCADO_PAGO_PENDING_URL` configurados.
 - [ ] `MERCADO_PAGO_LIVE_ENABLED=false` ate liberar cobranca real.
 
+### Pix manual para assinatura
+
+- [ ] `SUBSCRIPTION_PIX_KEY` configurado com a chave Pix oficial.
+- [ ] `SUBSCRIPTION_PIX_RECEIVER_NAME` configurado com o recebedor exibido no app bancario.
+- [ ] `SUBSCRIPTION_PIX_RECEIVER_CITY` configurado.
+- [ ] Processo manual definido para conferir comprovante e ativar assinatura no Admin Produto.
+
 ## 3. Build e comandos de deploy
 
 Executar em ambiente de deploy:

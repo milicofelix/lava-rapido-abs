@@ -95,6 +95,7 @@ Route::middleware('auth')->group(function () {
     Route::middleware('role:'.User::ROLE_OWNER)->group(function () {
         Route::get('configuracoes/assinatura', [OwnerSubscriptionController::class, 'show'])->name('subscriptions.show');
         Route::post('configuracoes/assinatura/escolher-plano', [OwnerSubscriptionController::class, 'choose'])->name('subscriptions.choose');
+        Route::post('configuracoes/assinatura/pix', [OwnerSubscriptionController::class, 'choosePix'])->name('subscriptions.choose-pix');
         Route::patch('configuracoes/assinatura/cancelar-pendente', [OwnerSubscriptionController::class, 'cancelPending'])->name('subscriptions.cancel-pending');
     });
 

@@ -5,14 +5,15 @@ namespace App\Http\Controllers\App;
 use App\Http\Controllers\Controller;
 use App\Models\Plan;
 use App\Models\Subscription;
+use App\Services\Subscriptions\ManualPixSubscriptionService;
 use App\Services\Subscriptions\MercadoPagoCheckoutService;
 use App\Support\TenantContext;
+use Illuminate\Http\Client\RequestException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Http\Client\RequestException;
 use Illuminate\Validation\Rule;
-use RuntimeException;
 use Illuminate\View\View;
+use RuntimeException;
 
 class OwnerSubscriptionController extends Controller
 {
@@ -45,6 +46,7 @@ class OwnerSubscriptionController extends Controller
             'mercadoPagoConfigured' => $mercadoPago->isConfigured(),
             'mercadoPagoEnvironment' => $mercadoPago->environmentLabel(),
             'mercadoPagoLiveCheckoutAllowed' => $mercadoPago->isLiveCheckoutAllowed(),
+            'pixKey' => config('services.subscription_pix.key', 'milicofelix@gmail.com'),
             'paymentReturn' => $this->paymentReturnMessage($request),
         ]);
     }
@@ -94,6 +96,23 @@ class OwnerSubscriptionController extends Controller
         }
 
         return back()->with('status', 'Plano escolhido. A assinatura ficará ativa após confirmação manual do Super Admin.');
+    }
+
+    public function choosePix(Request $request, ManualPixSubscriptionService $manualPix): RedirectResponse
+    {
+        $location = TenantContext::currentLocation();
+        abort_unless($location, 404);
+
+        $data = $request->validate([
+            'plan_id' => ['required', 'integer', Rule::exists('plans', 'id')->where('is_active', true)],
+        ]);
+        $plan = Plan::query()->active()->findOrFail($data['plan_id']);
+
+        $subscription = $manualPix->createPending($location, $plan);
+
+        return redirect()
+            ->route('subscriptions.show')
+            ->with('status', "Pix gerado para o plano {$subscription->plan->name}. Envie o comprovante para ativarmos sua assinatura.");
     }
 
     public function cancelPending(): RedirectResponse

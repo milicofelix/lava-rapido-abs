@@ -149,6 +149,51 @@ class SubscriptionManagementTest extends TestCase
         ]);
     }
 
+    public function test_owner_escolhe_plano_com_pix_manual(): void
+    {
+        config([
+            'services.subscription_pix.key' => 'milicofelix@gmail.com',
+            'services.subscription_pix.receiver_name' => 'AutoFlow ABS',
+            'services.subscription_pix.receiver_city' => 'SAO PAULO',
+        ]);
+
+        $location = WashLocation::factory()->create([
+            'account_status' => WashLocation::ACCOUNT_STATUS_TRIAL,
+            'subscription_status' => WashLocation::ACCOUNT_STATUS_TRIAL,
+            'trial_ends_at' => now()->subDay(),
+        ]);
+        $owner = User::factory()->create([
+            'role' => User::ROLE_OWNER,
+            'wash_location_id' => $location->id,
+        ]);
+        $plan = Plan::factory()->create(['name' => 'Starter', 'price' => 49.90]);
+
+        $this->actingAs($owner)
+            ->from(route('subscriptions.show'))
+            ->post(route('subscriptions.choose-pix'), ['plan_id' => $plan->id])
+            ->assertRedirect(route('subscriptions.show'))
+            ->assertSessionHas('status', 'Pix gerado para o plano Starter. Envie o comprovante para ativarmos sua assinatura.');
+
+        $subscription = Subscription::query()->firstOrFail();
+
+        $this->assertSame(Subscription::STATUS_PENDING, $subscription->status);
+        $this->assertSame(Subscription::PAYMENT_PROVIDER_MANUAL_PIX, $subscription->payment_provider);
+        $this->assertSame('milicofelix@gmail.com', $subscription->provider_payload['pix_key']);
+        $this->assertSame('49.90', $subscription->provider_payload['amount']);
+        $this->assertStringStartsWith('PIX-AF-', $subscription->external_reference);
+        $this->assertStringContainsString('br.gov.bcb.pix', $subscription->provider_payload['copy_paste']);
+
+        $this->actingAs($owner)
+            ->get(route('subscriptions.show'))
+            ->assertOk()
+            ->assertSee('Pagamento Pix pendente')
+            ->assertSee('Aguardando conferência')
+            ->assertSee('milicofelix@gmail.com')
+            ->assertSee($subscription->external_reference)
+            ->assertSee('Pix Copia e Cola')
+            ->assertSee('Pix manual');
+    }
+
     public function test_owner_acessa_assinatura_mesmo_com_trial_expirado(): void
     {
         $location = WashLocation::factory()->create([
