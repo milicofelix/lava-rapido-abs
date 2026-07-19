@@ -171,7 +171,8 @@ class AppNotificationCenterTest extends TestCase
             ->get(route('dashboard'))
             ->assertOk()
             ->assertDontSee('Trial expira em 2 dias')
-            ->assertDontSee('Trial em andamento');
+            ->assertDontSee('Trial em andamento')
+            ->assertDontSee('Período gratuito em andamento');
     }
 
     public function test_owner_sees_expired_subscription_notification_on_subscription_page(): void
@@ -237,7 +238,7 @@ class AppNotificationCenterTest extends TestCase
             ->assertOk()
             ->assertSee('Pagamento pendente')
             ->assertSee('Finalize o pagamento do plano Starter')
-            ->assertSee('Continuar pagamento');
+            ->assertSee('Ver assinatura');
     }
 
     public function test_owner_sees_recent_approved_payment_notification(): void

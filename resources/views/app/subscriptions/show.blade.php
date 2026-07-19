@@ -38,19 +38,7 @@
 
         <section class="rounded-2xl border border-blue-200 bg-blue-50 p-5 text-sm text-blue-950" data-tour="subscription-choice">
             <p class="font-bold">Escolha de plano</p>
-            <p class="mt-1">Escolha um plano e ative por Pix manual com conferência do comprovante. O Mercado Pago continua disponível para testes e para quando a cobrança automática for liberada.</p>
-            <p class="mt-3 inline-flex rounded-full bg-white px-3 py-1 text-xs font-black text-blue-800">Pix da assinatura: {{ $pixKey }}</p>
-            @if ($mercadoPagoConfigured)
-                @if ($mercadoPagoEnvironment === 'teste')
-                    <p class="mt-3 inline-flex rounded-full bg-emerald-100 px-3 py-1 text-xs font-black text-emerald-800">Mercado Pago em modo teste</p>
-                @elseif ($mercadoPagoLiveCheckoutAllowed)
-                    <p class="mt-3 inline-flex rounded-full bg-rose-100 px-3 py-1 text-xs font-black text-rose-800">Mercado Pago em produção: cobrança real habilitada</p>
-                @else
-                    <p class="mt-3 inline-flex rounded-full bg-amber-100 px-3 py-1 text-xs font-black text-amber-800">Token de produção detectado, mas cobrança real bloqueada</p>
-                @endif
-            @else
-                <p class="mt-1">Mercado Pago ainda não configurado. Depois de escolher um plano, o Super Admin confirma a assinatura no Admin Produto.</p>
-            @endif
+            <p class="mt-1">Escolha o plano ideal para sua unidade. O pagamento é feito por Pix e a assinatura será liberada após a confirmação.</p>
             @if ($currentSubscription?->status === \App\Models\Subscription::STATUS_PENDING && $currentSubscription->payment_provider === \App\Models\Subscription::PAYMENT_PROVIDER_MANUAL_PIX)
                 @php
                     $pixPayload = $currentSubscription->provider_payload ?? [];
@@ -60,7 +48,7 @@
                         <div>
                             <p class="text-xs font-black uppercase tracking-[0.16em] text-emerald-700">Pagamento Pix pendente</p>
                             <h2 class="mt-1 text-lg font-black text-slate-950">{{ $currentSubscription->plan?->name ?? 'Plano selecionado' }} · {{ $currentSubscription->plan?->formattedPrice() }}</h2>
-                            <p class="mt-1 text-sm text-slate-500">Após pagar, envie o comprovante informando a referência abaixo para ativação manual da assinatura.</p>
+                            <p class="mt-1 text-sm text-slate-500">Após pagar, envie o comprovante informando a referência abaixo para liberar sua assinatura.</p>
                         </div>
                         <span class="rounded-full bg-amber-100 px-3 py-1 text-xs font-black text-amber-800">Aguardando conferência</span>
                     </div>
@@ -98,7 +86,7 @@
                     </div>
                 </div>
             @endif
-            @if ($currentSubscription?->status === \App\Models\Subscription::STATUS_PENDING && $currentSubscription->checkout_url)
+            @if ($currentSubscription?->status === \App\Models\Subscription::STATUS_PENDING && $currentSubscription->checkout_url && $currentSubscription->payment_provider !== \App\Models\Subscription::PAYMENT_PROVIDER_MERCADO_PAGO)
                 <div class="mt-4 flex flex-wrap gap-3" data-tour="subscription-pending">
                     <a href="{{ $currentSubscription->checkout_url }}" class="inline-flex rounded-xl bg-blue-700 px-4 py-2.5 text-sm font-bold text-white hover:bg-blue-800">Continuar pagamento pendente</a>
                     <form method="POST" action="{{ route('subscriptions.cancel-pending') }}">
@@ -125,7 +113,7 @@
                     <div class="flex items-start justify-between gap-3">
                         <div>
                             <h2 class="text-xl font-black text-slate-950">{{ $plan->name }}</h2>
-                            <p class="mt-1 text-sm text-slate-500">Trial de {{ $plan->trial_days }} dia{{ $plan->trial_days === 1 ? '' : 's' }}</p>
+                            <p class="mt-1 text-sm text-slate-500">Período gratuito de {{ $plan->trial_days }} dia{{ $plan->trial_days === 1 ? '' : 's' }}</p>
                         </div>
                         @if ($isCurrentPlan)
                             <span class="rounded-full bg-emerald-100 px-3 py-1 text-xs font-black text-emerald-800">Plano atual</span>
@@ -140,6 +128,7 @@
                             <input type="hidden" name="plan_id" value="{{ $plan->id }}">
                             <button @if ($isCurrentPlan) disabled @endif class="w-full rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-bold text-white hover:bg-emerald-700 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-500">{{ $isCurrentPlan ? 'Assinatura ativa' : 'Pagar via Pix' }}</button>
                         </form>
+                        {{-- Mercado Pago preservado no backend para uma próxima fase de cobrança automática.
                         <form method="POST" action="{{ route('subscriptions.choose') }}">
                             @csrf
                             <input type="hidden" name="plan_id" value="{{ $plan->id }}">
@@ -150,6 +139,10 @@
                                 <p class="mt-2 text-xs font-bold text-emerald-700">Este é o plano ativo da unidade.</p>
                             @endif
                         </form>
+                        --}}
+                        @if ($isCurrentPlan)
+                            <p class="mt-2 text-xs font-bold text-emerald-700">Este é o plano ativo da unidade.</p>
+                        @endif
                     </div>
                 </article>
             @empty
@@ -276,7 +269,7 @@
                 [
                     'target' => '[data-tour="subscription-choice"]',
                     'title' => 'Escolha de plano',
-                    'body' => 'Este bloco explica como o checkout está configurado e mostra pendências quando existe uma escolha de plano ainda não concluída.',
+                    'body' => 'Este bloco explica como escolher um plano e mostra pendências quando existe uma escolha ainda não concluída.',
                 ],
                 [
                     'target' => '[data-tour="subscription-pending"]',
@@ -291,12 +284,12 @@
                 [
                     'target' => '[data-tour="subscription-plan-card"]',
                     'title' => 'Card do plano',
-                    'body' => 'Confira nome, trial, preço e selo do plano antes de iniciar a contratação.',
+                    'body' => 'Confira nome, período gratuito, preço e selo do plano antes de iniciar a contratação.',
                 ],
                 [
                     'target' => '[data-tour="subscription-plan-action"]',
                     'title' => 'Contratação',
-                    'body' => 'Use o botão do card para gerar o Pix manual ou abrir o Mercado Pago quando o checkout estiver configurado.',
+                    'body' => 'Use o botão do card para gerar o pagamento via Pix do plano escolhido.',
                 ],
                 [
                     'target' => '[data-tour="subscription-history"]',

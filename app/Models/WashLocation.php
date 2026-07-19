@@ -260,7 +260,7 @@ class WashLocation extends Model
     public static function accountStatuses(): array
     {
         return [
-            self::ACCOUNT_STATUS_TRIAL => 'Trial',
+            self::ACCOUNT_STATUS_TRIAL => 'Período gratuito',
             self::ACCOUNT_STATUS_ACTIVE => 'Ativo',
             self::ACCOUNT_STATUS_SUSPENDED => 'Suspenso',
             self::ACCOUNT_STATUS_EXPIRED => 'Expirado',

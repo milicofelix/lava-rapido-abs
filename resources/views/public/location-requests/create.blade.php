@@ -40,9 +40,9 @@
 
         <main class="mx-auto mt-6 grid max-w-5xl gap-5 lg:grid-cols-[0.9fr_1.1fr]">
             <section class="rounded-3xl border border-white/10 bg-white/95 p-6 shadow-2xl shadow-black/25" data-tour="location-request-flow">
-                <p class="text-xs font-black uppercase tracking-[0.24em] text-blue-600">Trial sob aprovação</p>
+                <p class="text-xs font-black uppercase tracking-[0.24em] text-blue-600">Período gratuito sob aprovação</p>
                 <h1 class="mt-3 text-3xl font-black tracking-tight text-slate-950 sm:text-4xl">Cadastre seu lava-rápido no AutoFlow</h1>
-                <p class="mt-4 text-base leading-7 text-slate-600">Envie os dados do estabelecimento para análise. Depois da aprovação, sua unidade poderá iniciar um trial de 15 dias e aparecer no mapa público.</p>
+                <p class="mt-4 text-base leading-7 text-slate-600">Envie os dados do estabelecimento para análise. Depois da aprovação, sua unidade poderá iniciar um período gratuito de 15 dias e aparecer no mapa público.</p>
 
                 <div class="mt-6 space-y-3 rounded-2xl bg-slate-50 p-4 text-sm text-slate-600 ring-1 ring-slate-200">
                     <div class="flex gap-3">
@@ -55,7 +55,7 @@
                     </div>
                     <div class="flex gap-3">
                         <span class="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-blue-600 text-xs font-black text-white">3</span>
-                        <p><strong class="text-slate-950">Trial:</strong> após aprovação, o teste gratuito começa com controle pelo painel.</p>
+                        <p><strong class="text-slate-950">Período gratuito:</strong> após aprovação, o acesso inicial começa com controle pelo painel.</p>
                     </div>
                 </div>
             </section>
@@ -189,7 +189,7 @@
                 [
                     'target' => '[data-tour="location-request-flow"]',
                     'title' => 'Como funciona',
-                    'body' => 'O cadastro passa por revisão manual, validação de dados e, após aprovação, libera o trial da unidade.',
+                    'body' => 'O cadastro passa por revisão manual, validação de dados e, após aprovação, libera o período gratuito da unidade.',
                 ],
                 [
                     'target' => '[data-tour="location-request-form"]',

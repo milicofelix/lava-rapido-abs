@@ -70,7 +70,7 @@ class Subscription extends Model
     {
         return match ($this->payment_provider) {
             self::PAYMENT_PROVIDER_MERCADO_PAGO => 'Mercado Pago',
-            self::PAYMENT_PROVIDER_MANUAL_PIX => 'Pix manual',
+            self::PAYMENT_PROVIDER_MANUAL_PIX => 'Pix',
             self::PAYMENT_PROVIDER_MANUAL, null => 'Manual',
             default => $this->payment_provider,
         };

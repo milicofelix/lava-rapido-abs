@@ -14,7 +14,7 @@
             <div class="mx-auto mt-7 grid h-16 w-16 place-items-center rounded-full bg-green-100 text-3xl">✓</div>
             <p class="mt-6 text-xs font-black uppercase tracking-[0.24em] text-blue-600">Solicitação recebida</p>
             <h1 class="mt-3 text-3xl font-black text-slate-950">Cadastro enviado para análise</h1>
-            <p class="mt-4 text-sm leading-6 text-slate-600">Recebemos os dados do seu lava-rápido. Agora a solicitação ficará como <strong>pendente de análise</strong>. Em breve entraremos em contato para validar as informações e liberar o trial.</p>
+            <p class="mt-4 text-sm leading-6 text-slate-600">Recebemos os dados do seu lava-rápido. Agora a solicitação ficará como <strong>pendente de análise</strong>. Em breve entraremos em contato para validar as informações e liberar o período gratuito.</p>
 
             @if (session('status'))
                 <p class="mt-5 rounded-2xl bg-green-50 px-4 py-3 text-sm font-bold text-green-700 ring-1 ring-green-100">{{ session('status') }}</p>

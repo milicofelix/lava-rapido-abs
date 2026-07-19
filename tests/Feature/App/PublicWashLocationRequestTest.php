@@ -17,7 +17,7 @@ class PublicWashLocationRequestTest extends TestCase
         $this->get(route('public.location-requests.create'))
             ->assertOk()
             ->assertSee('Cadastre seu lava-rápido no AutoFlow')
-            ->assertSee('Trial sob aprovação')
+            ->assertSee('Período gratuito sob aprovação')
             ->assertSee('Solicitação de cadastro')
             ->assertSee('Enviar solicitação')
             ->assertSee('Senha de primeiro acesso')

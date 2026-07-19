@@ -159,7 +159,7 @@ class MercadoPagoSubscriptionTest extends TestCase
             ->from(route('subscriptions.show'))
             ->post(route('subscriptions.choose'), ['plan_id' => $plan->id])
             ->assertRedirect(route('subscriptions.show'))
-            ->assertSessionHas('status', 'Não foi possível abrir o checkout do Mercado Pago agora. Verifique as credenciais e tente novamente.');
+            ->assertSessionHas('status', 'Não foi possível iniciar o pagamento agora. Tente novamente em instantes.');
 
         $this->assertDatabaseHas('subscriptions', [
             'wash_location_id' => $location->id,
@@ -193,7 +193,7 @@ class MercadoPagoSubscriptionTest extends TestCase
             ->from(route('subscriptions.show'))
             ->post(route('subscriptions.choose'), ['plan_id' => $plan->id])
             ->assertRedirect(route('subscriptions.show'))
-            ->assertSessionHas('status', 'Checkout real bloqueado. Defina MERCADO_PAGO_LIVE_ENABLED=true para liberar cobranças em produção.');
+            ->assertSessionHas('status', 'Não foi possível iniciar o pagamento agora. Tente novamente em instantes.');
 
         Http::assertNothingSent();
 
@@ -226,8 +226,11 @@ class MercadoPagoSubscriptionTest extends TestCase
         $this->actingAs($owner)
             ->get(route('subscriptions.show'))
             ->assertOk()
-            ->assertSee('Token de produção detectado, mas cobrança real bloqueada')
-            ->assertSee('Checkout bloqueado até habilitar MERCADO_PAGO_LIVE_ENABLED=true.');
+            ->assertSee('Escolha o plano ideal para sua unidade')
+            ->assertSee('Pagar via Pix')
+            ->assertDontSee('Token de produção detectado, mas cobrança real bloqueada')
+            ->assertDontSee('Checkout bloqueado até habilitar MERCADO_PAGO_LIVE_ENABLED=true.')
+            ->assertDontSee('Pagar com Mercado Pago');
     }
 
     public function test_credencial_app_usr_em_ambiente_sandbox_pode_abrir_checkout(): void
@@ -282,7 +285,7 @@ class MercadoPagoSubscriptionTest extends TestCase
             ->get(route('subscriptions.show', ['collection_status' => 'approved']))
             ->assertOk()
             ->assertSee('Pagamento aprovado')
-            ->assertSee('webhook confirmar o pagamento');
+            ->assertSee('Sua assinatura será atualizada após a confirmação.');
     }
 
     public function test_owner_cancela_assinatura_pendente(): void

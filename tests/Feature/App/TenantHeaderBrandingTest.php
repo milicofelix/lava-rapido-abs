@@ -2,10 +2,10 @@
 
 namespace Tests\Feature\App;
 
+use App\Models\RolePermissionSetting;
 use App\Models\User;
 use App\Models\WashLocation;
 use App\Models\WashOrder;
-use App\Models\RolePermissionSetting;
 use App\Support\Access\AccessControl;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -34,7 +34,7 @@ class TenantHeaderBrandingTest extends TestCase
             ->assertSee('Unidade atual')
             ->assertSee('Lava Rápido Header Owner')
             ->assertSee('storage/wash-location-logos/header-owner.png', false)
-            ->assertSee('Trial:')
+            ->assertSee('Período gratuito:')
             ->assertDontSee('Lava Rapido Central');
     }
 

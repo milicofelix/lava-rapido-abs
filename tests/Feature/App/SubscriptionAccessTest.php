@@ -106,6 +106,6 @@ class SubscriptionAccessTest extends TestCase
         $this->actingAs($owner)
             ->get(route('dashboard'))
             ->assertOk()
-            ->assertSee('Trial em andamento');
+            ->assertSee('Período gratuito em andamento');
     }
 }

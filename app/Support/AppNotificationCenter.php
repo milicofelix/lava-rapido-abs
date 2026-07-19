@@ -220,8 +220,8 @@ class AppNotificationCenter
                 'title' => 'Pagamento pendente',
                 'body' => 'Finalize o pagamento do plano '.($currentSubscription->plan?->name ?? 'selecionado').' para ativar a assinatura.',
                 'tone' => 'warning',
-                'url' => $currentSubscription->checkout_url ?: route('subscriptions.show'),
-                'action' => $currentSubscription->checkout_url ? 'Continuar pagamento' : 'Ver assinatura',
+                'url' => route('subscriptions.show'),
+                'action' => 'Ver assinatura',
             ];
         }
 
@@ -232,7 +232,7 @@ class AppNotificationCenter
         ) {
             $notifications[] = [
                 'title' => 'Pagamento não aprovado',
-                'body' => 'O Mercado Pago recusou ou cancelou a última tentativa. Escolha um plano para tentar novamente.',
+                'body' => 'A última tentativa de pagamento não foi concluída. Escolha um plano para tentar novamente.',
                 'tone' => 'danger',
                 'url' => route('subscriptions.show'),
                 'action' => 'Tentar novamente',

@@ -172,7 +172,7 @@ class SubscriptionManagementTest extends TestCase
             ->from(route('subscriptions.show'))
             ->post(route('subscriptions.choose-pix'), ['plan_id' => $plan->id])
             ->assertRedirect(route('subscriptions.show'))
-            ->assertSessionHas('status', 'Pix gerado para o plano Starter. Envie o comprovante para ativarmos sua assinatura.');
+            ->assertSessionHas('status', 'Pix gerado para o plano Starter. Após a confirmação do pagamento, sua assinatura será liberada.');
 
         $subscription = Subscription::query()->firstOrFail();
 
@@ -191,7 +191,9 @@ class SubscriptionManagementTest extends TestCase
             ->assertSee('milicofelix@gmail.com')
             ->assertSee($subscription->external_reference)
             ->assertSee('Pix Copia e Cola')
-            ->assertSee('Pix manual');
+            ->assertSee('Pix')
+            ->assertDontSee('Mercado Pago em modo teste')
+            ->assertDontSee('Pagar com Mercado Pago');
     }
 
     public function test_owner_acessa_assinatura_mesmo_com_trial_expirado(): void
@@ -234,9 +236,10 @@ class SubscriptionManagementTest extends TestCase
         $this->actingAs($owner)
             ->get(route('subscriptions.show'))
             ->assertOk()
-            ->assertSee('Trial expirado')
+            ->assertSee('Período gratuito expirado')
             ->assertSee('escolha um plano para reativar a unidade')
-            ->assertDontSee('Trial em andamento');
+            ->assertDontSee('Trial em andamento')
+            ->assertDontSee('Período gratuito em andamento');
     }
 
     public function test_super_admin_ativa_assinatura(): void

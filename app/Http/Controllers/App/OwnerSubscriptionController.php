@@ -79,11 +79,13 @@ class OwnerSubscriptionController extends Controller
 
                 report($exception);
 
-                return back()->with('status', 'Não foi possível abrir o checkout do Mercado Pago agora. Verifique as credenciais e tente novamente.');
+                return back()->with('status', 'Não foi possível iniciar o pagamento agora. Tente novamente em instantes.');
             } catch (RuntimeException $exception) {
                 $subscription->forceFill(['status' => Subscription::STATUS_CANCELED])->save();
 
-                return back()->with('status', $exception->getMessage());
+                report($exception);
+
+                return back()->with('status', 'Não foi possível iniciar o pagamento agora. Tente novamente em instantes.');
             }
 
             $checkoutUrl = $preference['init_point'] ?? $preference['sandbox_init_point'] ?? null;
@@ -92,7 +94,7 @@ class OwnerSubscriptionController extends Controller
                 return redirect()->away($checkoutUrl);
             }
 
-            return back()->with('status', 'Plano escolhido, mas o Mercado Pago não retornou o link de pagamento. Tente novamente em instantes.');
+            return back()->with('status', 'Plano escolhido, mas não foi possível iniciar o pagamento. Tente novamente em instantes.');
         }
 
         return back()->with('status', 'Plano escolhido. A assinatura ficará ativa após confirmação manual do Super Admin.');
@@ -112,7 +114,7 @@ class OwnerSubscriptionController extends Controller
 
         return redirect()
             ->route('subscriptions.show')
-            ->with('status', "Pix gerado para o plano {$subscription->plan->name}. Envie o comprovante para ativarmos sua assinatura.");
+            ->with('status', "Pix gerado para o plano {$subscription->plan->name}. Após a confirmação do pagamento, sua assinatura será liberada.");
     }
 
     public function cancelPending(): RedirectResponse
@@ -140,12 +142,12 @@ class OwnerSubscriptionController extends Controller
             'approved' => [
                 'type' => 'success',
                 'title' => 'Pagamento aprovado',
-                'message' => 'Recebemos o retorno do Mercado Pago. A assinatura será ativada assim que o webhook confirmar o pagamento.',
+                'message' => 'Recebemos o retorno do pagamento. Sua assinatura será atualizada após a confirmação.',
             ],
             'pending', 'in_process' => [
                 'type' => 'warning',
                 'title' => 'Pagamento em análise',
-                'message' => 'O Mercado Pago ainda está processando o pagamento. A assinatura será atualizada automaticamente quando houver confirmação.',
+                'message' => 'O pagamento ainda está em análise. Sua assinatura será atualizada quando houver confirmação.',
             ],
             'rejected', 'cancelled', 'failure' => [
                 'type' => 'danger',
