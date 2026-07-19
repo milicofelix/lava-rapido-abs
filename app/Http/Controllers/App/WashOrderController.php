@@ -95,6 +95,20 @@ class WashOrderController extends Controller
                 ->withInput();
         }
 
+        $activeWashOrder = TenantContext::scopeWashOrders(WashOrder::query())
+            ->where('vehicle_id', $vehicle->id)
+            ->whereIn('status', WashOrder::activeStatuses())
+            ->latest('entered_at')
+            ->first();
+
+        if ($activeWashOrder) {
+            return back()
+                ->withErrors([
+                    'vehicle_id' => "Este veículo já possui uma lavagem em aberto ({$activeWashOrder->code}). Finalize ou cancele a ordem atual antes de abrir outra.",
+                ])
+                ->withInput();
+        }
+
         $scheduledAt = filled($data['scheduled_at'] ?? null)
             && AppSetting::isModuleEnabled('module_schedule')
             ? Carbon::parse($data['scheduled_at'])

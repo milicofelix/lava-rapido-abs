@@ -443,4 +443,68 @@ class WashOrderManagementTest extends TestCase
 
         $this->assertDatabaseCount('wash_orders', 0);
     }
+
+    public function test_vehicle_cannot_have_more_than_one_active_wash_order(): void
+    {
+        $user = User::factory()->create();
+        $customer = Customer::factory()->create(['wash_location_id' => $user->wash_location_id]);
+        $vehicle = Vehicle::factory()->for($customer)->create([
+            'wash_location_id' => $user->wash_location_id,
+            'plate' => 'DUP1A23',
+        ]);
+        $service = Service::factory()->create([
+            'wash_location_id' => $user->wash_location_id,
+            'active' => true,
+        ]);
+        $activeWashOrder = WashOrder::factory()->create([
+            'wash_location_id' => $user->wash_location_id,
+            'customer_id' => $customer->id,
+            'vehicle_id' => $vehicle->id,
+            'status' => WashOrder::STATUS_WASHING,
+        ]);
+
+        $this->actingAs($user)->post(route('wash-orders.store'), [
+            'customer_id' => $customer->id,
+            'vehicle_id' => $vehicle->id,
+            'service_ids' => [$service->id],
+        ])
+            ->assertSessionHasErrors('vehicle_id')
+            ->assertSessionHasErrors([
+                'vehicle_id' => "Este veículo já possui uma lavagem em aberto ({$activeWashOrder->code}). Finalize ou cancele a ordem atual antes de abrir outra.",
+            ]);
+
+        $this->assertDatabaseCount('wash_orders', 1);
+    }
+
+    public function test_vehicle_can_open_new_wash_order_after_previous_order_is_terminal(): void
+    {
+        $user = User::factory()->create();
+        $customer = Customer::factory()->create(['wash_location_id' => $user->wash_location_id]);
+        $vehicle = Vehicle::factory()->for($customer)->create([
+            'wash_location_id' => $user->wash_location_id,
+            'plate' => 'OKN1A23',
+        ]);
+        $service = Service::factory()->create([
+            'wash_location_id' => $user->wash_location_id,
+            'active' => true,
+        ]);
+        WashOrder::factory()->create([
+            'wash_location_id' => $user->wash_location_id,
+            'customer_id' => $customer->id,
+            'vehicle_id' => $vehicle->id,
+            'status' => WashOrder::STATUS_DELIVERED,
+        ]);
+
+        $this->actingAs($user)->post(route('wash-orders.store'), [
+            'customer_id' => $customer->id,
+            'vehicle_id' => $vehicle->id,
+            'service_ids' => [$service->id],
+        ])->assertRedirect();
+
+        $this->assertDatabaseCount('wash_orders', 2);
+        $this->assertDatabaseHas('wash_orders', [
+            'vehicle_id' => $vehicle->id,
+            'status' => WashOrder::STATUS_AWAITING,
+        ]);
+    }
 }
