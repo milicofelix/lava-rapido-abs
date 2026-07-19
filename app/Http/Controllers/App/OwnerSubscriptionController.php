@@ -7,6 +7,7 @@ use App\Models\Plan;
 use App\Models\Subscription;
 use App\Services\Subscriptions\ManualPixSubscriptionService;
 use App\Services\Subscriptions\MercadoPagoCheckoutService;
+use App\Services\Subscriptions\SubscriptionExpirationService;
 use App\Support\TenantContext;
 use Illuminate\Http\Client\RequestException;
 use Illuminate\Http\RedirectResponse;
@@ -17,15 +18,23 @@ use RuntimeException;
 
 class OwnerSubscriptionController extends Controller
 {
-    public function show(Request $request, MercadoPagoCheckoutService $mercadoPago): View
+    public function show(Request $request, MercadoPagoCheckoutService $mercadoPago, SubscriptionExpirationService $expirationService): View
     {
-        $location = TenantContext::currentLocation()?->load(['currentSubscription.plan', 'activeSubscription.plan']);
+        $location = TenantContext::currentLocation();
         abort_unless($location, 404);
+
+        $expirationService->expireLocationIfOverdue($location);
+
+        $location->load(['currentSubscription.plan', 'activeSubscription.plan']);
 
         $activeSubscription = $location->activeSubscription
             ?: $location->subscriptions()
                 ->with('plan')
                 ->where('status', Subscription::STATUS_ACTIVE)
+                ->where(function ($query): void {
+                    $query->whereNull('ends_at')
+                        ->orWhere('ends_at', '>=', now()->startOfDay());
+                })
                 ->latest()
                 ->first();
         $currentSubscription = $location->currentSubscription;

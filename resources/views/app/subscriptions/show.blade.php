@@ -14,10 +14,17 @@
             </section>
         @endif
 
+        @if ($location->subscriptionStatus() === \App\Models\WashLocation::ACCOUNT_STATUS_EXPIRED)
+            <section class="rounded-2xl border border-rose-200 bg-rose-50 p-5 text-sm text-rose-950">
+                <p class="font-black">Assinatura expirada</p>
+                <p class="mt-1">Escolha um plano e solicite a ativação para liberar a operação.</p>
+            </section>
+        @endif
+
         <section class="grid min-w-0 gap-4 md:grid-cols-2 xl:grid-cols-4" data-tour="subscription-summary">
             <div class="min-w-0 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
                 <p class="text-sm text-slate-500">Plano atual</p>
-                <p class="mt-2 break-words text-2xl font-black text-slate-950">{{ $activeSubscription?->plan?->name ?? ($currentSubscription?->plan?->name ?? 'Nenhum') }}</p>
+                <p class="mt-2 break-words text-2xl font-black text-slate-950">{{ $activeSubscription?->plan?->name ?? 'Nenhum' }}</p>
             </div>
             <div class="min-w-0 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
                 <p class="text-sm text-slate-500">Status</p>
@@ -28,7 +35,7 @@
             </div>
             <div class="min-w-0 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
                 <p class="text-sm text-slate-500">Próxima cobrança</p>
-                <p class="mt-2 whitespace-nowrap text-2xl font-black text-slate-950">{{ $activeSubscription?->ends_at?->format('d/m/Y') ?? $location->subscription_ends_at?->format('d/m/Y') ?? '-' }}</p>
+                <p class="mt-2 whitespace-nowrap text-2xl font-black text-slate-950">{{ $activeSubscription?->ends_at?->format('d/m/Y') ?? '-' }}</p>
             </div>
             <div class="min-w-0 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
                 <p class="text-sm text-slate-500">Dias restantes</p>

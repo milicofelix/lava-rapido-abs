@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Services\Subscriptions\SubscriptionExpirationService;
 use App\Support\TenantContext;
 use Closure;
 use Illuminate\Http\RedirectResponse;
@@ -10,6 +11,8 @@ use Symfony\Component\HttpFoundation\Response;
 
 class EnsureActiveSubscription
 {
+    public function __construct(private readonly SubscriptionExpirationService $expirationService) {}
+
     public function handle(Request $request, Closure $next): Response|RedirectResponse
     {
         $user = $request->user();
@@ -19,6 +22,10 @@ class EnsureActiveSubscription
         }
 
         $location = TenantContext::currentLocation();
+
+        if ($location) {
+            $this->expirationService->expireLocationIfOverdue($location);
+        }
 
         if (! $location || ! $location->canAccessOperationalArea()) {
             if ($request->routeIs('subscription.blocked')) {

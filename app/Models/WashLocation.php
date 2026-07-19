@@ -128,6 +128,10 @@ class WashLocation extends Model
     {
         return $this->hasOne(Subscription::class)
             ->where('status', Subscription::STATUS_ACTIVE)
+            ->where(function ($query): void {
+                $query->whereNull('ends_at')
+                    ->orWhere('ends_at', '>=', now()->startOfDay());
+            })
             ->latestOfMany();
     }
 

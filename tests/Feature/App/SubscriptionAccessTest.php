@@ -74,6 +74,33 @@ class SubscriptionAccessTest extends TestCase
             ->assertOk();
     }
 
+    public function test_assinatura_vencida_e_bloqueada_mesmo_sem_rotina_diaria(): void
+    {
+        $location = WashLocation::factory()->create([
+            'account_status' => WashLocation::ACCOUNT_STATUS_ACTIVE,
+            'subscription_status' => WashLocation::ACCOUNT_STATUS_ACTIVE,
+            'trial_ends_at' => now()->subMonth(),
+            'subscription_ends_at' => now()->subDay(),
+            'blocked_at' => null,
+        ]);
+
+        $admin = User::factory()->create([
+            'role' => User::ROLE_ADMIN,
+            'wash_location_id' => $location->id,
+            'is_active' => true,
+        ]);
+
+        $this->actingAs($admin)
+            ->get(route('kanban'))
+            ->assertRedirect(route('subscription.blocked'));
+
+        $this->assertDatabaseHas('wash_locations', [
+            'id' => $location->id,
+            'subscription_status' => WashLocation::ACCOUNT_STATUS_EXPIRED,
+            'account_status' => WashLocation::ACCOUNT_STATUS_EXPIRED,
+        ]);
+    }
+
     public function test_super_admin_acessa_admin_produto_sem_unidade(): void
     {
         $superAdmin = User::factory()->create([

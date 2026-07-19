@@ -88,6 +88,51 @@ class SubscriptionManagementTest extends TestCase
         $this->assertMatchesRegularExpression('/<h2[^>]*>Professional<\/h2>.*Plano atual/s', $content);
     }
 
+    public function test_assinatura_vencida_nao_aparece_como_plano_atual(): void
+    {
+        $location = WashLocation::factory()->create([
+            'account_status' => WashLocation::ACCOUNT_STATUS_ACTIVE,
+            'subscription_status' => WashLocation::ACCOUNT_STATUS_ACTIVE,
+            'subscription_ends_at' => now()->subDay(),
+            'blocked_at' => null,
+        ]);
+        $owner = User::factory()->create([
+            'role' => User::ROLE_OWNER,
+            'wash_location_id' => $location->id,
+        ]);
+        $plan = Plan::factory()->create(['name' => 'Starter', 'price' => 49.90]);
+
+        $subscription = Subscription::factory()->create([
+            'wash_location_id' => $location->id,
+            'plan_id' => $plan->id,
+            'status' => Subscription::STATUS_ACTIVE,
+            'started_at' => now()->subMonth(),
+            'ends_at' => now()->subDay(),
+        ]);
+
+        $response = $this->actingAs($owner)
+            ->get(route('subscriptions.show'))
+            ->assertOk()
+            ->assertSee('Plano atual')
+            ->assertSee('Nenhum')
+            ->assertSee('Status')
+            ->assertSee('Expirado')
+            ->assertDontSee('Assinatura ativa');
+
+        $content = $response->getContent();
+
+        $this->assertMatchesRegularExpression('/<h2[^>]*>Starter<\/h2>.*Disponível/s', $content);
+        $this->assertDatabaseHas('wash_locations', [
+            'id' => $location->id,
+            'subscription_status' => WashLocation::ACCOUNT_STATUS_EXPIRED,
+            'account_status' => WashLocation::ACCOUNT_STATUS_EXPIRED,
+        ]);
+        $this->assertDatabaseHas('subscriptions', [
+            'id' => $subscription->id,
+            'status' => Subscription::STATUS_EXPIRED,
+        ]);
+    }
+
     public function test_owner_visualiza_historico_de_assinaturas(): void
     {
         $location = WashLocation::factory()->create([
@@ -236,8 +281,8 @@ class SubscriptionManagementTest extends TestCase
         $this->actingAs($owner)
             ->get(route('subscriptions.show'))
             ->assertOk()
-            ->assertSee('Período gratuito expirado')
-            ->assertSee('escolha um plano para reativar a unidade')
+            ->assertSee('Assinatura expirada')
+            ->assertSee('Escolha um plano e solicite a ativação para liberar a operação.')
             ->assertDontSee('Trial em andamento')
             ->assertDontSee('Período gratuito em andamento');
     }
