@@ -36,13 +36,21 @@ class WashKanbanController extends Controller
             ->whereIn('status', collect(self::columns())->pluck('statuses')->flatten()->all())
             ->when($filters['start_at'], fn ($query, Carbon $startAt) => $query->where('entered_at', '>=', $startAt))
             ->when($filters['end_at'], fn ($query, Carbon $endAt) => $query->where('entered_at', '<=', $endAt))
-            ->oldest('entered_at')
             ->get();
+        $washOrders = $washOrders
+            ->when($filters['overdue_only'], fn ($orders) => $orders->filter(fn (WashOrder $washOrder) => $this->isOverdue($washOrder)))
+            ->sortBy(fn (WashOrder $washOrder) => sprintf(
+                '%d-%010d',
+                $this->isOverdue($washOrder) ? 0 : 1,
+                $washOrder->entered_at->timestamp,
+            ))
+            ->values();
 
         $currentLocation = TenantContext::currentLocation();
         $queryFilters = array_filter([
             'period' => $filters['period'] === 'today' ? null : $filters['period'],
             'date' => $filters['period'] === 'date' ? $filters['date'] : null,
+            'overdue' => $filters['overdue_only'] ? '1' : null,
         ]);
 
         return [
@@ -61,6 +69,7 @@ class WashKanbanController extends Controller
                 'date' => $filters['date'],
                 'label' => $filters['label'],
                 'show_outside_day_badge' => $filters['show_outside_day_badge'],
+                'overdue_only' => $filters['overdue_only'],
             ],
             'periodOptions' => self::periodOptions(),
             'feedUrl' => route('kanban.feed', $queryFilters),
@@ -88,6 +97,7 @@ class WashKanbanController extends Controller
     private function serializeOrder(WashOrder $washOrder): array
     {
         $canViewDetails = AccessControl::allows(TenantContext::user(), AccessControl::VIEW_WASH_ORDERS);
+        $isOverdue = $this->isOverdue($washOrder);
 
         return [
             'id' => $washOrder->id,
@@ -95,6 +105,11 @@ class WashKanbanController extends Controller
             'status' => $washOrder->status,
             'status_label' => $washOrder->statusLabel(),
             'entered_at_for_humans' => $washOrder->entered_at->diffForHumans(null, true),
+            'estimated_completion_label' => $washOrder->estimated_completion_at?->format('H:i'),
+            'is_overdue' => $isOverdue,
+            'overdue_label' => $isOverdue && $washOrder->estimated_completion_at
+                ? 'Atrasada há '.$washOrder->estimated_completion_at->diffForHumans(null, true)
+                : null,
             'entered_at_date_label' => $washOrder->entered_at->isToday()
                 ? 'Hoje'
                 : $washOrder->entered_at->format('d/m/Y'),
@@ -120,6 +135,27 @@ class WashKanbanController extends Controller
                 'name' => $service->pivot->service_name,
             ])->all(),
             'can_update_status' => $this->userCanUpdateOrderStatus($washOrder, TenantContext::user()),
+        ];
+    }
+
+    private function isOverdue(WashOrder $washOrder): bool
+    {
+        return $washOrder->estimated_completion_at !== null
+            && $washOrder->estimated_completion_at->isPast()
+            && in_array($washOrder->status, $this->overdueEligibleStatuses(), true);
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    private function overdueEligibleStatuses(): array
+    {
+        return [
+            WashOrder::STATUS_PREPARING,
+            WashOrder::STATUS_WASHING,
+            WashOrder::STATUS_VACUUMING,
+            WashOrder::STATUS_WAXING,
+            WashOrder::STATUS_FINISHING,
         ];
     }
 
@@ -238,8 +274,9 @@ class WashKanbanController extends Controller
         $period = array_key_exists($period, self::periodOptions()) ? $period : 'today';
         $today = now()->startOfDay();
         $date = (string) $request->query('date', now()->toDateString());
+        $overdueOnly = $request->boolean('overdue');
 
-        return match ($period) {
+        $filters = match ($period) {
             'yesterday' => [
                 'period' => $period,
                 'date' => now()->subDay()->toDateString(),
@@ -282,6 +319,14 @@ class WashKanbanController extends Controller
                 'show_outside_day_badge' => false,
             ],
         };
+
+        $filters['overdue_only'] = $overdueOnly;
+
+        if ($overdueOnly) {
+            $filters['label'] .= ' · atrasadas';
+        }
+
+        return $filters;
     }
 
     /**

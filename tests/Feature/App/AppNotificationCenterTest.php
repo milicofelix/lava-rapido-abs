@@ -7,9 +7,9 @@ use App\Models\CashRegister;
 use App\Models\Plan;
 use App\Models\Subscription;
 use App\Models\User;
-use App\Models\WashOrder;
 use App\Models\WashLocation;
 use App\Models\WashLocationRequest;
+use App\Models\WashOrder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
 use Tests\TestCase;
@@ -146,8 +146,9 @@ class AppNotificationCenterTest extends TestCase
                 ->get(route('dashboard'))
                 ->assertOk()
                 ->assertSee('1 lavagem atrasada')
-                ->assertSee('Abrir Agenda')
-                ->assertSee('agenda', false);
+                ->assertSee('Lavagem passou do tempo estimado')
+                ->assertSee('Ver atrasadas')
+                ->assertSee(route('kanban', ['overdue' => 1]), false);
         } finally {
             Carbon::setTestNow();
         }

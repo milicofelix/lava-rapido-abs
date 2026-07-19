@@ -128,6 +128,53 @@ class WashKanbanTest extends TestCase
         Carbon::setTestNow();
     }
 
+    public function test_kanban_highlights_sorts_and_filters_overdue_orders(): void
+    {
+        Carbon::setTestNow('2026-06-17 14:00:00');
+
+        $user = User::factory()->create();
+        $currentOrder = WashOrder::factory()->create([
+            'status' => WashOrder::STATUS_WASHING,
+            'entered_at' => now()->setTime(9, 30),
+            'estimated_completion_at' => now()->setTime(16, 0),
+        ]);
+        $overdueOrder = WashOrder::factory()->create([
+            'status' => WashOrder::STATUS_WASHING,
+            'entered_at' => now()->setTime(10, 0),
+            'estimated_completion_at' => now()->setTime(11, 0),
+        ]);
+        WashOrder::factory()->create([
+            'status' => WashOrder::STATUS_AWAITING,
+            'entered_at' => now()->setTime(8, 0),
+            'estimated_completion_at' => now()->setTime(9, 0),
+        ]);
+
+        $this->actingAs($user)->get(route('kanban'))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('filters.overdue_only', false)
+                ->has('columns.1.orders', 2)
+                ->where('columns.1.orders.0.id', $overdueOrder->id)
+                ->where('columns.1.orders.0.is_overdue', true)
+                ->where('columns.1.orders.0.estimated_completion_label', '11:00')
+                ->where('columns.1.orders.0.overdue_label', 'Atrasada há 3 horas')
+                ->where('columns.1.orders.1.id', $currentOrder->id)
+                ->where('columns.1.orders.1.is_overdue', false)
+            );
+
+        $this->actingAs($user)->get(route('kanban', ['overdue' => 1]))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('filters.overdue_only', true)
+                ->where('filters.label', 'Hoje · atrasadas')
+                ->has('columns.1.orders', 1)
+                ->where('columns.1.orders.0.id', $overdueOrder->id)
+                ->has('columns.0.orders', 0)
+            );
+
+        Carbon::setTestNow();
+    }
+
     public function test_user_can_move_card_to_next_status_from_kanban_action(): void
     {
         $user = User::factory()->create(['role' => User::ROLE_OPERATOR]);

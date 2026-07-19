@@ -4,7 +4,7 @@
     "name": "jsx-runtime"
   },
   "resources/css/app.css": {
-    "file": "assets/app-DEh2Qpw9.css",
+    "file": "assets/app-CIEwKymW.css",
     "src": "resources/css/app.css",
     "isEntry": true,
     "name": "app",
@@ -13,7 +13,7 @@
     ]
   },
   "resources/js/Pages/Kanban.jsx": {
-    "file": "assets/Kanban-DFUbyp91.js",
+    "file": "assets/Kanban-DSAqrbCj.js",
     "name": "Kanban",
     "src": "resources/js/Pages/Kanban.jsx",
     "isDynamicEntry": true,
@@ -23,7 +23,7 @@
     ]
   },
   "resources/js/Pages/Tracking.jsx": {
-    "file": "assets/Tracking-B3jb7KoR.js",
+    "file": "assets/Tracking-B6FQLgww.js",
     "name": "Tracking",
     "src": "resources/js/Pages/Tracking.jsx",
     "isDynamicEntry": true,
@@ -33,7 +33,7 @@
     ]
   },
   "resources/js/app.js": {
-    "file": "assets/app-D5tyn8fC.js",
+    "file": "assets/app-C9EhD-HK.js",
     "name": "app",
     "src": "resources/js/app.js",
     "isEntry": true,

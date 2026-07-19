@@ -111,10 +111,12 @@ class AppNotificationCenter
         if ($delayedCount > 0) {
             $notifications[] = [
                 'title' => $delayedCount.' lavagem'.($delayedCount === 1 ? '' : 's').' atrasada'.($delayedCount === 1 ? '' : 's'),
-                'body' => 'Existem lavagens abertas com previsão vencida hoje. Priorize a fila da operação.',
+                'body' => $delayedCount === 1
+                    ? 'Lavagem passou do tempo estimado. Decida pelo Kanban se ela deve avançar.'
+                    : 'Lavagens passaram do tempo estimado. Decida pelo Kanban quais devem avançar.',
                 'tone' => 'danger',
-                'url' => AppSetting::isModuleEnabled('module_schedule') ? route('schedule.index') : route('kanban'),
-                'action' => AppSetting::isModuleEnabled('module_schedule') ? 'Abrir Agenda' : 'Abrir Kanban',
+                'url' => route('kanban', ['overdue' => 1]),
+                'action' => 'Ver atrasadas',
             ];
         }
 

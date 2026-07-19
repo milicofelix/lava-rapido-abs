@@ -55,6 +55,7 @@ function OrderCard({ order, statuses, onMove, canUpdateStatus, columnKey, showOu
         ? `${teamNames.slice(0, 2).join(', ')}${teamNames.length > 2 ? ` +${teamNames.length - 2}` : ''}`
         : 'Sem equipe';
     const style = columnStyles[columnKey] ?? columnStyles.awaiting;
+    const isOverdue = Boolean(order.is_overdue);
 
     const handleDragStart = (event) => {
         event.dataTransfer.effectAllowed = 'move';
@@ -68,7 +69,7 @@ function OrderCard({ order, statuses, onMove, canUpdateStatus, columnKey, showOu
     return (
         <article
             data-tour="kanban-card"
-            className="group rounded-lg border border-slate-200 bg-white p-3 text-slate-950 shadow-sm transition hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-md"
+            className={`group rounded-lg border p-3 text-slate-950 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md ${isOverdue ? 'border-red-200 bg-red-50 ring-1 ring-red-100 hover:border-red-300' : 'border-slate-200 bg-white hover:border-blue-200'}`}
             draggable={canMoveOrder}
             onDragStart={handleDragStart}
         >
@@ -88,6 +89,11 @@ function OrderCard({ order, statuses, onMove, canUpdateStatus, columnKey, showOu
                             Fora do dia · {order.entered_at_date_label}
                         </span>
                     )}
+                    {isOverdue && (
+                        <span className="rounded-full bg-red-100 px-2 py-0.5 text-[10px] font-black uppercase text-red-700">
+                            Tempo estourado
+                        </span>
+                    )}
                 </div>
             </div>
 
@@ -99,8 +105,19 @@ function OrderCard({ order, statuses, onMove, canUpdateStatus, columnKey, showOu
                 <div className="shrink-0 text-right">
                     <p className="font-black text-slate-900">R$ {order.total_amount}</p>
                     <p className="mt-1 text-slate-500">{order.entered_at_for_humans}</p>
+                    {order.estimated_completion_label && (
+                        <p className={`mt-1 font-bold ${isOverdue ? 'text-red-700' : 'text-slate-500'}`}>
+                            Prev.: {order.estimated_completion_label}
+                        </p>
+                    )}
                 </div>
             </div>
+
+            {isOverdue && order.overdue_label && (
+                <div className="mt-3 rounded-lg border border-red-200 bg-white px-3 py-2 text-xs font-bold text-red-700">
+                    {order.overdue_label}. Decida se deve avançar para a próxima etapa.
+                </div>
+            )}
 
             <div className="mt-3 flex flex-wrap gap-1.5">
                 {visibleServices.slice(1).map((service, index) => (
@@ -225,6 +242,7 @@ export default function Kanban({
 }) {
     const [columns, setColumns] = useState(initialColumns);
     const [selectedDate, setSelectedDate] = useState(filters?.date ?? '');
+    const [overdueOnly, setOverdueOnly] = useState(Boolean(filters?.overdue_only));
     const [realtimeUpdated, setRealtimeUpdated] = useState(false);
     const [statusError, setStatusError] = useState(null);
     const [activeMobileColumn, setActiveMobileColumn] = useState(initialColumns[0]?.key ?? null);
@@ -232,6 +250,10 @@ export default function Kanban({
     const canUpdateStatus = ['owner', 'admin', 'operator'].includes(auth?.user?.role);
     const activePeriod = filters?.period ?? 'today';
     const showOutsideDayBadge = Boolean(filters?.show_outside_day_badge);
+    const overdueOrders = useMemo(
+        () => columns.reduce((total, column) => total + column.orders.filter((order) => order.is_overdue).length, 0),
+        [columns],
+    );
     const totalOrders = useMemo(
         () => columns.reduce((total, column) => total + column.orders.length, 0),
         [columns],
@@ -248,6 +270,7 @@ export default function Kanban({
         router.get(filterUrl, {
             period: period === 'today' ? undefined : period,
             date: period === 'date' ? date : undefined,
+            overdue: (nextFilters.overdueOnly ?? overdueOnly) ? 1 : undefined,
         }, {
             preserveScroll: true,
             replace: true,
@@ -279,6 +302,7 @@ export default function Kanban({
     useEffect(() => {
         setColumns(initialColumns);
         setSelectedDate(filters?.date ?? '');
+        setOverdueOnly(Boolean(filters?.overdue_only));
         setActiveMobileColumn((current) => {
             if (current && initialColumns.some((column) => column.key === current)) {
                 return current;
@@ -286,7 +310,7 @@ export default function Kanban({
 
             return initialColumns.find((column) => column.orders.length > 0)?.key ?? initialColumns[0]?.key ?? null;
         });
-    }, [initialColumns, filters?.date]);
+    }, [initialColumns, filters?.date, filters?.overdue_only]);
 
     const focusMobileColumn = (columnKey) => {
         setActiveMobileColumn(columnKey);
@@ -417,6 +441,9 @@ export default function Kanban({
                                 <p className="mt-1 text-sm font-bold text-slate-900">{filters?.label ?? 'Hoje'}</p>
                                 <div className="mt-2 flex flex-wrap gap-2 text-xs font-black text-slate-600">
                                     <span className="rounded-full bg-white px-3 py-1 ring-1 ring-slate-200">{totalOrders} lavagem{totalOrders === 1 ? '' : 'ns'}</span>
+                                    <span className={`rounded-full px-3 py-1 ring-1 ${overdueOrders > 0 ? 'bg-red-50 text-red-700 ring-red-100' : 'bg-white ring-slate-200'}`}>
+                                        {overdueOrders} atrasada{overdueOrders === 1 ? '' : 's'}
+                                    </span>
                                     {busiestColumn?.title && (
                                         <span className="rounded-full bg-white px-3 py-1 ring-1 ring-slate-200">Maior fila: {busiestColumn.title}</span>
                                     )}
@@ -449,12 +476,25 @@ export default function Kanban({
                                 {activePeriod === 'date' && (
                                     <button
                                         type="button"
-                                        onClick={() => applyFilters({ period: 'date', date: selectedDate })}
+                                        onClick={() => applyFilters({ period: 'date', date: selectedDate, overdueOnly })}
                                         className="rounded-lg bg-slate-950 px-4 py-2 text-sm font-bold text-white shadow-sm hover:bg-blue-700"
                                     >
                                         Aplicar
                                     </button>
                                 )}
+                                <label className="flex cursor-pointer items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-slate-700 shadow-sm">
+                                    <input
+                                        type="checkbox"
+                                        checked={overdueOnly}
+                                        onChange={(event) => {
+                                            const checked = event.target.checked;
+                                            setOverdueOnly(checked);
+                                            applyFilters({ overdueOnly: checked });
+                                        }}
+                                        className="rounded border-slate-300 text-red-600 focus:ring-red-500"
+                                    />
+                                    Somente atrasadas
+                                </label>
                             </div>
                         </div>
 
